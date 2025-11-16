@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VPrime Sistemas — Transforme suas planilhas em sistemas</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --accent:#06b6d4; --muted:#9aa4b2; --glass:rgba(255,255,255,0.04);
+      --radius:14px; --maxw:1100px; --gap:20px; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; background:linear-gradient(180deg,#071024 0%, #071228 60%); color:#e6eef6}
+    a{color:var(--accent); text-decoration:none}
+    .container{max-width:var(--maxw); margin:0 auto; padding:28px}
+
+    /* Header */
+    header{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0}
+    .brand{display:flex; align-items:center; gap:12px}
+    .logo{width:52px; height:52px; border-radius:12px; background:linear-gradient(135deg,var(--accent),#7c3aed); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; color:#031018}
+    nav{display:flex; gap:18px; align-items:center}
+    .btn{background:var(--accent); color:#042430; padding:10px 14px; border-radius:12px; font-weight:600; box-shadow:0 6px 18px rgba(6,182,212,0.12); border:none; cursor:pointer}
+    .ghost{background:transparent; border:1px solid rgba(255,255,255,0.06); padding:8px 12px; border-radius:10px}
+
+    /* Hero */
+    .hero{display:grid; grid-template-columns:1fr 420px; gap:32px; align-items:center; padding:36px 0}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02)); border-radius:var(--radius); padding:26px; box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    h1{font-size:34px; margin:0 0 10px}
+    p.lead{color:var(--muted); margin:0 0 22px}
+    .features{display:flex; gap:12px; flex-wrap:wrap}
+    .feature{background:var(--glass); padding:12px 14px; border-radius:10px; font-size:13px}
+
+    /* Showcase area */
+    .showcase{display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:18px}
+    .mock{height:220px; border-radius:12px; overflow:hidden; position:relative; background:linear-gradient(180deg,#03182b,#02101a); display:flex; align-items:center; justify-content:center}
+    .mock img{width:100%; height:100%; object-fit:cover}
+    .badge{position:absolute; top:12px; left:12px; background:rgba(3,6,20,0.6); padding:8px 10px; border-radius:10px; font-weight:600}
+
+    /* Services */
+    .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--gap); margin-top:22px}
+    .service{padding:18px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01)); min-height:120px}
+    .service h3{margin:0 0 8px}
+    .service p{margin:0; color:var(--muted); font-size:14px}
+
+    /* How it works */
+    .steps{display:flex; gap:12px; margin-top:22px; flex-wrap:wrap}
+    .step{background:var(--card); border-radius:12px; padding:16px; flex:1; min-width:180px}
+
+    /* CTA strip */
+    .cta-strip{margin:28px 0; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px; border-radius:12px; background:linear-gradient(90deg, rgba(6,182,212,0.06), rgba(124,58,237,0.04))}
+
+    /* Footer */
+    footer{margin-top:36px; padding:20px 0; color:var(--muted); font-size:14px}
+
+    /* Responsive */
+    @media (max-width:980px){
+      .hero{grid-template-columns:1fr;}
+      .showcase{grid-template-columns:1fr}
+      .grid-3{grid-template-columns:1fr}
+    }
+
+    /* Small interactions */
+    .pill{display:inline-block; padding:8px 12px; border-radius:999px; background:rgba(255,255,255,0.03); font-weight:600}
+    .carousel{position:relative}
+    .carousel .dots{display:flex; gap:8px; justify-content:center; margin-top:10px}
+    .dot{width:8px; height:8px; border-radius:99px; background:rgba(255,255,255,0.06)}
+    .dot.active{background:var(--accent)}
+
+    /* contact modal */
+    .modal-backdrop{position:fixed; inset:0; background:rgba(2,6,23,0.6); display:flex; align-items:center; justify-content:center; z-index:60}
+    .modal{width:100%; max-width:720px; background:#041826; border-radius:12px; padding:22px}
+    .input, textarea{width:100%; padding:12px; border-radius:10px; background:transparent; border:1px solid rgba(255,255,255,0.04); color:inherit}
+    .row{display:flex; gap:12px}
+    .row > *{flex:1}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">VP</div>
+        <div>
+          <div style="font-weight:800">VPrime Sistemas</div>
+          <div style="font-size:13px;color:var(--muted)">Soluções digitais para fluxos do dia a dia</div>
+        </div>
+      </div>
+      <nav>
+        <a href="#servicos">Serviços</a>
+        <a href="#exemplos">Exemplos</a>
+        <a href="#contato" class="ghost">Contato</a>
+        <button class="btn" id="btn-contact">Quero uma solução</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero card" style="display:flex; gap:20px; align-items:stretch">
+        <div style="flex:1">
+          <span class="pill">Transforme suas planilhas</span>
+          <h1>Do Excel/Planilhas a um sistema sob medida — rápido, intuitivo e sem complicação.</h1>
+          <p class="lead">Automatizamos tarefas, eliminamos etapas repetitivas e entregamos painéis, formulários, controles e integrações para que sua rotina fique mais eficiente.</p>
+
+          <div class="features">
+            <div class="feature">Automação de processos</div>
+            <div class="feature">Dashboards e relatórios</div>
+            <div class="feature">Formulários e inputs mobile</div>
+            <div class="feature">Gestão de permissões</div>
+            <div class="feature">Integrações com e-mail e planilhas</div>
+          </div>
+
+          <div style="margin-top:18px; display:flex; gap:10px">
+            <button class="btn" id="cta-primary">Solicitar proposta</button>
+            <a class="ghost" href="#exemplos">Ver exemplos</a>
+          </div>
+
+          <div style="margin-top:16px; color:var(--muted); font-size:13px">Trabalhamos com empresas de vários tamanhos — processos administrativos, vendas, logística, RH, financeiro e muito mais.</div>
+        </div>
+
+        <aside style="width:420px; display:flex; flex-direction:column; gap:12px">
+          <div class="card" style="flex:1">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+              <strong>Exemplo rápido</strong>
+              <small style="color:var(--muted); font-size:12px">Demonstração</small>
+            </div>
+            <div class="showcase">
+              <div class="mock">
+                <div class="badge">Nutriprime</div>
+                <!-- placeholder image -->
+                <img src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder" alt="Nutriprime screenshot" loading="lazy">
+              </div>
+              <div class="mock">
+                <div class="badge">Checklist de Frota</div>
+                <img src="https://images.unsplash.com/photo-1519744792095-2f2205e87b6f?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder" alt="Checklist screenshot" loading="lazy">
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px; display:flex; align-items:center; justify-content:space-between">
+            <div>
+              <div style="font-weight:700">Receba um diagnóstico grátis</div>
+              <div style="font-size:13px; color:var(--muted)">Conte-nos seu processo e indicamos automações rápidas.</div>
+            </div>
+            <button class="btn" id="btn-diagnostico">Quero diagnóstico</button>
+          </div>
+        </aside>
+      </section>
+
+      <!-- Serviços -->
+      <section id="servicos" class="card" style="margin-top:20px">
+        <h2>O que oferecemos</h2>
+        <div class="grid-3">
+          <div class="service">
+            <h3>Transformação de planilhas</h3>
+            <p>Organizamos seus dados, criamos interfaces fáceis e fluxos que substituem planilhas espalhadas.</p>
+          </div>
+          <div class="service">
+            <h3>Automação de tarefas</h3>
+            <p>Envio automático de relatórios, notificações, lembretes e rotinas que funcionam sem intervenção manual.</p>
+          </div>
+          <div class="service">
+            <h3>Dashboards interativos</h3>
+            <p>Painéis para tomada de decisão: métricas, gráficos e filtros que contam a história do seu negócio.</p>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-top:18px">
+          <div class="service">
+            <h3>Gestão de usuários</h3>
+            <p>Perfis e permissões por função — o usuário vê apenas o que precisa.</p>
+          </div>
+          <div class="service">
+            <h3>Integrações</h3>
+            <p>Conectamos seu sistema com e-mail, APIs, planilhas e serviços já existentes.</p>
+          </div>
+          <div class="service">
+            <h3>Treinamento & suporte</h3>
+            <p>Entregamos com documentação, treinamento remoto e suporte inicial para adoção.</p>
+          </div>
+        </div>
+
+        <div class="steps">
+          <div class="step">1) Diagnóstico gratuito — entendemos o seu processo</div>
+          <div class="step">2) Protótipo rápido — interface e fluxo de validação</div>
+          <div class="step">3) Entrega e treinamento — acompanhamento de adoção</div>
+        </div>
+      </section>
+
+      <!-- Exemplos -->
+      <section id="exemplos" class="card" style="margin-top:20px">
+        <h2>Exemplos de sistemas</h2>
+        <p class="lead">Alguns de nossos projetos.</p>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
+          <article class="card">
+            <h3>Nutriprime — Sistema para Nutricionistas e Clínica de Nutrição</h3>
+            <p style="color:var(--muted)">Sistema para gerenciar seu consultório, atender e acompanhar pacientes, elaborar planos alimentares e muito mais, simples, completos e funcional.</p>
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center">
+              <button class="ghost" onclick="openDemo('nutriprime')">Ver demo</button>
+              <a href="#contato">Solicitar case</a>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>VPrime Auto Check - Checklist de Frota </h3>
+            <p style="color:var(--muted)">Ferramenta para inspeções diárias, controle de manutenção, agendamento e notificações para frotas automotivas.</p>
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center">
+              <button class="ghost" onclick="openDemo('frota')">Ver protótipo</button>
+              <a href="#contato">Peça adaptação</a>
+            </div>
+          </article>
+        </div>
+
+        <div style="margin-top:16px; color:var(--muted); font-size:13px"></div>
+      </section>
+
+      <!-- CTA strip -->
+      <section class="cta-strip">
+        <div>
+          <strong style="font-size:16px">Pronto para automatizar sua rotina?</strong>
+          <div style="color:var(--muted); font-size:13px">Solicite um diagnóstico e receba uma proposta objetiva.</div>
+        </div>
+        <div style="display:flex; gap:10px">
+          <button class="btn" id="cta-contact">Solicitar diagnóstico</button>
+          <a href="#servicos" class="ghost">Ver serviços</a>
+        </div>
+      </section>
+
+      <!-- Contato -->
+      <section id="contato" class="card" style="margin-top:20px">
+        <h2>Contato</h2>
+        <p style="color:var(--muted)">Deixe suas informações ou envie uma descrição do seu processo. Respondemos em até 2 dias úteis.</p>
+        <form id="contact-form" onsubmit="handleSubmit(event)">
+          <div class="row" style="margin-bottom:10px">
+            <input class="input" id="nome" placeholder="Nome / Empresa" required>
+            <input class="input" id="email" placeholder="E‑mail" type="email" required>
+          </div>
+          <textarea id="descricao" rows="4" placeholder="Descreva seu processo ou desafio" required style="margin-bottom:10px"></textarea>
+          <div style="display:flex; gap:10px; align-items:center">
+            <button class="btn" type="submit">Enviar</button>
+            <button type="button" class="ghost" onclick="copyEmail()">Enviar por e‑mail</button>
+            <span style="color:var(--muted); font-size:13px">ou envie para: contato@vprime.com.br</span>
+          </div>
+        </form>
+      </section>
+
+    </main>
+
+    <footer>
+      <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap">
+        <div>© <strong>VPrime Sistemas</strong> • Soluções sob medida</div>
+        <div style="color:var(--muted)">Telefone: (00) 0 0000-0000 • contato@vprime.com.br</div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal template -->
+  <div id="modal-root" style="display:none"></div>
+
+  <script>
+    // Simple interactions: open modal, handle form, small demo placeholders
+    document.getElementById('btn-contact').addEventListener('click', openContactModal);
+    document.getElementById('cta-primary').addEventListener('click', openContactModal);
+    document.getElementById('cta-contact').addEventListener('click', openContactModal);
+    document.getElementById('btn-diagnostico').addEventListener('click', openContactModal);
+
+    function openDemo(id){
+      const content = id === 'nutriprime'
+        ? '<h3>Nutriprime — demo</h3><p>Enviar vídeo ou link privado mediante solicitação.</p>'
+        : '<h3>Checklist de Frota — protótipo</h3><p>Protótipo disponível para apresentação. Podemos adaptar para sua frota.</p>';
+      showModal(content);
+    }
+
+    function openContactModal(){
+      showModal('<h3>Solicitar proposta</h3><p>Preencha o formulário de contato ou envie um e‑mail para <strong>contato@vprime.com.br</strong>.</p>');
+    }
+
+    function showModal(html){
+      const root = document.getElementById('modal-root');
+      root.style.display = 'block';
+      root.innerHTML = `
+        <div class="modal-backdrop" onclick="closeModal(event)">
+          <div class="modal" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center">
+              <div></div>
+              <button class="ghost" onclick="closeModal(event)">Fechar</button>
+            </div>
+            <div style="margin-top:12px">${html}</div>
+            <div style="margin-top:16px"><button class="btn" onclick="closeModal(event)">OK</button></div>
+          </div>
+        </div>
+      `;
+    }
+    function closeModal(e){
+      const root = document.getElementById('modal-root');
+      root.style.display='none'; root.innerHTML='';
+    }
+
+    function handleSubmit(e){
+      e.preventDefault();
+      const data = {
+        nome: document.getElementById('nome').value,
+        email: document.getElementById('email').value,
+        descricao: document.getElementById('descricao').value
+      };
+      // Since there's no backend in this static page, we'll open a mailto as fallback
+      const subject = encodeURIComponent('Contato - VPrime Sistemas');
+      const body = encodeURIComponent(`Nome: ${data.nome}\nE-mail: ${data.email}\n\nDescrição:\n${data.descricao}`);
+      window.location.href = `mailto:contato@vprime.com.br?subject=${subject}&body=${body}`;
+    }
+
+    function copyEmail(){
+      navigator.clipboard && navigator.clipboard.writeText('contato@vprime.com.br').then(()=>{
+        alert('E‑mail copiado para área de transferência.');
+      }, ()=>{
+        prompt('Copie este e‑mail:', 'contato@vprime.com.br');
+      });
+    }
+  </script>
+</body>
+</html>
