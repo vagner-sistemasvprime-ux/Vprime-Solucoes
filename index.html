@@ -331,26 +331,32 @@
       root.style.display='none'; root.innerHTML='';
     }
 
-    function handleSubmit(e){
-      e.preventDefault();
-      const data = {
-        nome: document.getElementById('nome').value,
-        email: document.getElementById('email').value,
-        descricao: document.getElementById('descricao').value
-      };
-      // Since there's no backend in this static page, we'll open a mailto as fallback
-      const subject = encodeURIComponent('Contato - VPrime Sistemas');
-      const body = encodeURIComponent(`Nome: ${data.nome}\nE-mail: ${data.email}\n\nDescrição:\n${data.descricao}`);
-      window.location.href = `mailto:contato@vprime.com.br?subject=${subject}&body=${body}`;
-    }
+function handleSubmit(e) {
+  e.preventDefault();
 
-    function copyEmail(){
-      navigator.clipboard && navigator.clipboard.writeText('contato@vprime.com.br').then(()=>{
-        alert('E‑mail copiado para área de transferência.');
-      }, ()=>{
-        prompt('Copie este e‑mail:', 'contato@vprime.com.br');
-      });
-    }
-  </script>
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "SUA_URL_WEB_APP_AQUI";
+  form.style.display = "none";
+
+  // cria campos e envia
+  ["nome","email","descricao"].forEach(id => {
+    const input = document.createElement("input");
+    input.name = id;
+    input.value = document.getElementById(id).value;
+    form.appendChild(input);
+  });
+
+  document.body.appendChild(form);
+  form.submit();
+
+  showModal("<h3>Mensagem enviada!</h3><p>Entraremos em contato em até 2 dias úteis.</p>");
+}
+
+</script>
+
+
+
+
 </body>
 </html>
