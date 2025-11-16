@@ -331,27 +331,36 @@
       root.style.display='none'; root.innerHTML='';
     }
 
-function handleSubmit(e) {
+async function handleSubmit(e){
   e.preventDefault();
 
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = "https://script.google.com/macros/s/AKfycbxP2Td0iJaLdXo7_yAI5ToI7UUWSW-d58t0vKZj2mNB2Bf6DMzMW7qShb_44DKGYrQ/exec";
-  form.style.display = "none";
+  const payload = {
+    nome: document.getElementById('nome').value,
+    email: document.getElementById('email').value,
+    descricao: document.getElementById('descricao').value
+  };
 
-  // cria campos e envia
-  ["nome","email","descricao"].forEach(id => {
-    const input = document.createElement("input");
-    input.name = id;
-    input.value = document.getElementById(id).value;
-    form.appendChild(input);
-  });
+  try {
+    const resposta = await fetch("https://script.google.com/macros/s/AKfycbxP2Td0iJaLdXo7_yAI5ToI7UUWSW-d58t0vKZj2mNB2Bf6DMzMW7qShb_44DKGYrQ/exec", {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  document.body.appendChild(form);
-  form.submit();
+    const r = await resposta.json();
 
-  showModal("<h3>Mensagem enviada!</h3><p>Entraremos em contato em até 2 dias úteis.</p>");
+    if (r.success) {
+      showModal("<h3>Enviado com sucesso!</h3><p>Retornaremos em até 2 dias úteis.</p>");
+    } else {
+      showModal("<h3>Erro ao enviar</h3><p>Envie diretamente para contato@vprime.com.br</p>");
+    }
+
+  } catch (err) {
+    showModal("<h3>Erro ao enviar</h3><p>Falha de comunicação. Tente novamente.</p>");
+  }
 }
+
 
 </script>
 
