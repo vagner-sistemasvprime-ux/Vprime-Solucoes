@@ -1,31 +1,324 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!doctype html>
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vprime Sistemas</title>
-  <link rel="icon" type="image/png" href="https://i.postimg.cc/SQP3G32Q/Logo-Vprime.png">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 99%;
-      width: 100%;
-    }
+<title>Vprime Sistemas</title>
+<link rel="icon" type="image/png" href="https://i.postimg.cc/zBVW5Vzg/Logo-Vprime.png">
 
-    body {
-      font-family: Arial, sans-serif;
-    }
+<meta name="description" content="Suporte de TI para empresas e comércios na Região dos Lagos. Atendimento em Tamoios, Rio das Ostras, Barra de São João e Búzios. Atendimento remoto e presencial.">
 
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-  </style>
+<meta name="keywords" content="suporte de ti, manutenção de computadores, suporte técnico, sistemas personalizados, criação de sites">
+<meta name="author" content="VPrime Sistemas">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#162235;
+  --card:#1b2c45;
+  --accent:#13c4e3;
+  --muted:#d0d9e2;
+  --glass:rgba(255,255,255,0.07);
+  --radius:14px;
+  --maxw:1100px;
+  font-family:'Inter',system-ui;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:linear-gradient(180deg,#05111a,#06111a);
+  color:#f8fbff;
+}
+a{text-decoration:none;color:inherit}
+.container{max-width:var(--maxw);margin:auto;padding:20px}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:14px
+}
+nav{display:flex;gap:14px;flex-wrap:wrap}
+
+.logo{
+  width:56px;
+  height:56px;
+  border-radius:12px;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.logo img{
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+}
+
+.btn{
+  background:var(--accent);
+  color:#062838;
+  padding:12px 16px;
+  border-radius:12px;
+  font-weight:700;
+}
+.ghost{
+  border:1px solid rgba(255,255,255,.18);
+  padding:10px 14px;
+  border-radius:10px
+}
+
+.card{
+  background:var(--card);
+  padding:24px;
+  border-radius:var(--radius);
+  margin-top:22px;
+  box-shadow:0 6px 20px rgba(0,0,0,.35)
+}
+
+.hero{
+  display:flex;
+  gap:24px;
+  flex-wrap:wrap;
+  align-items:center
+}
+.hero-left{flex:1 1 320px}
+.hero-right{flex:1 1 300px}
+
+.hero-logo{
+  max-width:160px;
+  margin-bottom:14px;
+}
+
+.grid-3{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px
+}
+.service{
+  background:var(--glass);
+  padding:18px;
+  border-radius:12px
+}
+
+.whatsapp-float{
+  position:fixed;
+  bottom:18px;
+  right:18px;
+  background:#25D366;
+  color:#fff;
+  padding:14px 18px;
+  border-radius:50px;
+  font-weight:700;
+  z-index:999
+}
+
+footer{
+  margin-top:40px;
+  color:var(--muted);
+  font-size:14px
+}
+
+@media(max-width:900px){
+  .grid-3{grid-template-columns:1fr}
+}
+
+@media(max-width:600px){
+  .hero-logo{display:none}
+}
+
+
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.atendimento-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:22px;
+  align-items:center;
+  margin-top:16px;
+}
+
+.lista-atendimento{
+  margin:0;
+  padding-left:18px;
+  line-height:1.9;
+  font-size:15px;
+}
+
+.texto-remoto{
+  margin-top:12px;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.mapa-box{
+  width:100%;
+  height:320px;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 6px 20px rgba(0,0,0,.35);
+}
+
+.mapa-box iframe{
+  width:100%;
+  height:100%;
+  border:0;
+}
+
+/* MOBILE */
+@media(max-width:900px){
+  .atendimento-grid{
+    grid-template-columns:1fr;
+  }
+
+  .mapa-box{
+    height:240px;
+  }
+}
+
+
+
+</style>
 </head>
+
 <body>
-  <iframe src="https://script.google.com/macros/s/AKfycbzjM7On83l-xYKJn01SKkvCoXOih6VOC7uhUCU_SPt8EZGLJwMfAKKkbr768SntnGh3/exec" title="Vprime sistemas"></iframe>
+
+<a class="whatsapp-float"
+   href="https://wa.me/5522997397075?text=Olá,%20preciso%20de%20suporte%20de%20TI"
+   target="_blank">💬 WhatsApp</a>
+
+<div class="container">
+
+  <header style="
+     display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  padding:24px 0;
+">
+
+    <!-- LOGO -->
+    <img 
+      src="logo-vprime.png"
+      alt="VPrime Sistemas - Suporte de TI para empresas na Região dos Lagos"
+      style="
+        width:150px;
+        height:auto;
+        flex-shrink:0;
+      "
+    >
+
+    <!-- TEXTO AO LADO DA LOGO -->
+    <div style="
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      line-height:1.4;
+    ">
+
+      <!-- H1 INVISÍVEL (SEO) -->
+      <h1 class="visually-hidden">
+        VPrime Sistemas — Suporte de TI para Empresas na Região dos Lagos
+      </h1>
+
+      <p style="color:var(--muted);font-size:14px;margin:0">
+        📍 Atendimento presencial na Região dos Lagos
+      </p>
+
+      <small style="color:var(--muted);font-size:14px">
+        Suporte de TI • Sistemas • Sites
+      </small>
+
+    </div>
+
+  </header>
+
+</div>
+
+<!-- HERO -->
+<section class="hero card">
+  <div class="hero-left">
+
+
+
+    <h1>Suporte de TI para empresas e comércios</h1>
+    <p style="color:var(--muted)">
+      Atendimento remoto e presencial para computadores, sistemas e internet.
+    </p>
+    <a class="btn" href="https://wa.me/5522981166221" target="_blank">
+      Falar com suporte
+    </a>
+  </div>
+
+  <div class="hero-right">
+    <div class="service">
+      ✔ Atendimento rápido<br>
+      ✔ Diagnóstico gratuito<br>
+      ✔ Atendimento local e remoto
+    </div>
+  </div>
+</section>
+
+<section id="servicos" class="card">
+<h2>Serviços</h2>
+
+<div class="grid-3">
+  <div class="service"><h3>Suporte técnico</h3><p>Problemas do dia a dia resolvidos rápido.</p></div>
+  <div class="service"><h3>Manutenção</h3><p>Computadores e notebooks.</p></div>
+  <div class="service"><h3>Redes e internet</h3><p>Wi-Fi, roteadores e estabilidade.</p></div>
+  <div class="service"><h3>Backup e segurança</h3><p>Proteção contra perda de dados.</p></div>
+  <div class="service"><h3>Sistemas personalizados</h3><p>Desenvolvimento sob viabilidade.</p></div>
+  <div class="service"><h3>Criação de sites</h3><p>Sites profissionais para empresas.</p></div>
+</div>
+</section>
+
+<section class="card">
+  <h2>Região de atendimento</h2>
+
+  <div class="atendimento-grid">
+
+    <div>
+      <ul class="lista-atendimento">
+        <li>📍 Tamoios (Cabo Frio)</li>
+        <li>📍 Rio das Ostras</li>
+        <li>📍 Barra de São João</li>
+
+      </ul>
+
+      <p class="texto-remoto">
+        Atendimento remoto disponível para outras regiões do Brasil.
+      </p>
+    </div>
+
+    <div class="mapa-box">
+      <!-- COLE O IFRAME AQUI -->
+      <iframe src="https://www.google.com/maps/d/u/0/embed?mid=1krPubRHRD08nTMIRuWDE83xYL1zMzf4&ehbc=2E312F" width="640" height="480"></iframe>
+    </div>
+
+  </div>
+</section>
+
+
+
+
+
+<footer>
+© VPrime Sistemas — Suporte de TI local e remoto
+</footer>
+
+</div>
 </body>
 </html>
