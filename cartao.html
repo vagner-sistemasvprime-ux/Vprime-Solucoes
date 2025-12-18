@@ -15,19 +15,21 @@
       justify-content: center;
       padding: 20px;
     }
-    .card {
-      background: #05101A;
-      width: 100%;
-      max-width: 420px;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-      padding: 30px 24px;
-      text-align: center;
-    }
-    .logo {
+      .card {
+  background: #05101A;
   width: 100%;
-  max-width: 320px;   /* controla o tamanho da logo */
-  margin: 0 auto 20px;
+  max-width: 420px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  padding: 30px 24px;
+  text-align: center;
+  overflow: hidden; /* 🔥 corta o que passar do card */
+}
+
+   .logo {
+  width: 100%;
+  max-width: 320px;
+  margin: -60px auto 10px; /* SOBE a logo */
   display: flex;
   justify-content: center;
 }
@@ -119,9 +121,13 @@
         🌐 Acessar o site
       </a>
 
+      
+      <!--
       <a class="btn-site" href="tel:+5522981166221">
         📞 Ligar agora
       </a>
+
+      -->
 
       <a class="btn-maps" href="https://www.google.com/maps/d/u/0/embed?mid=1krPubRHRD08nTMIRuWDE83xYL1zMzf4&ehbc=2E312F" target="_blank">
         📍 Área de atendimento
