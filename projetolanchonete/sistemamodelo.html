@@ -10,8 +10,9 @@
     html, body {
       margin: 0;
       padding: 0;
-      height: 99%;
+      height: 100%; /* Ajustei para 100% para não sobrar espaço */
       width: 100%;
+      overflow: hidden; /* Evita barras de rolagem duplas */
     }
 
     body {
@@ -26,6 +27,22 @@
   </style>
 </head>
 <body>
-  <iframe src="https://script.google.com/macros/s/AKfycbzrb_qL6mPOKKV_VR1yBxd-9LnBxcgDsimQUO2dfVRpFORLZb1e31P_r7pFZrnMxcrMxw/exec" allow="clipboard-read; clipboard-write" title="Vprime sistemas - Sistema modelo"></iframe>
+  <iframe id="sistemaIframe" src="" allow="clipboard-read; clipboard-write" title="Vprime sistemas - Sistema modelo"></iframe>
+
+  <script>
+    (function() {
+      // 1. Sua URL atualizada do Google Apps Script
+      const urlBase = "https://script.google.com/macros/s/AKfycbzrb_qL6mPOKKV_VR1yBxd-9LnBxcgDsimQUO2dfVRpFORLZb1e31P_r7pFZrnMxcrMxw/exec";
+
+      // 2. Pega os parâmetros da URL (ex: ?mesa=1)
+      const queryParams = window.location.search;
+
+      // 3. Monta a URL final (Base + parâmetros)
+      const urlFinal = urlBase + queryParams;
+
+      // 4. Carrega o sistema no Iframe
+      document.getElementById('sistemaIframe').src = urlFinal;
+    })();
+  </script>
 </body>
 </html>
