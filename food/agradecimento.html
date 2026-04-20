@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento Concluído</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #1c1e21;
+        }
+
+        .card {
+            background-color: #ffffff;
+            padding: 50px 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .success-icon {
+            font-size: 60px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #000;
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #4b4f56;
+            margin-bottom: 20px;
+        }
+
+        .instruction-box {
+            background-color: #fff9e6;
+            border-left: 4px solid #ffba00;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+
+        .instruction-box b {
+            color: #856404;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .close-hint {
+            display: block;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #bcc0c4;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="success-icon">✓</div>
+        <h1>Pagamento Recebido!</h1>
+        
+        <p>Sua transação foi concluída com sucesso e o sistema já foi liberado.</p>
+
+        <div class="instruction-box">
+            <b>Próximo passo:</b>
+            Pode fechar esta aba e voltar para a janela principal do sistema para continuar seu acesso.
+        </div>
+
+
+    </div>
+
+
+<script>
+  // Tenta fechar a aba automaticamente após 5 segundos
+  setTimeout(function(){
+    window.close();
+  }, 10000);
+</script>
+</body>
+</html>
