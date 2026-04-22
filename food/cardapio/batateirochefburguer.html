@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batateiro Chef Burguer - Cardápio</title>
+  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1KJF47PL-ZOzT09hxp1uJM4gGNrDBh5ro">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+    iframe { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+  <iframe id="iframeCardapio" src="" title="Vprime sistemas - Cardápio Digital"></iframe>
+
+  <script>
+    (function() {
+      // URL do Script do Cardápio que você enviou
+      const urlCardapio = "https://script.google.com/macros/s/AKfycbzn4u1Iq4wjEkWWs5SzbKyqnjNcz5viUxV16AjoBUoRuS34DkmhMqDtu7VM3GFoRqMk/exec";
+      
+      // Captura os parâmetros (ex: ?mesa=1)
+      const params = window.location.search;
+      
+      // Carrega o Iframe com a mesa
+      document.getElementById('iframeCardapio').src = urlCardapio + params;
+    })();
+  </script>
+</body>
+</html>
