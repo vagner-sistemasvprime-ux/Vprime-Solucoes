@@ -22,14 +22,15 @@
 
   <script>
     (function() {
-      // URL do Script do Cardápio que você enviou
-      const urlCardapio = "https://script.google.com/macros/s/AKfycbxavZWd4Xlritspz6ik_RRghYm06u1hZsTmAif9u9G57XE20c0HVvZlLqYwugjFQHqM/exec";
-      
-      // Captura os parâmetros (ex: ?mesa=1)
+
+      const urlCardapio =
+      "https://script.google.com/macros/s/AKfycbxavZWd4Xlritspz6ik_RRghYm06u1hZsTmAif9u9G57XE20c0HVvZlLqYwugjFQHqM/exec";
+
       const params = window.location.search;
-      
-      // Carrega o Iframe com a mesa
-      document.getElementById('iframeCardapio').src = urlCardapio + params;
+
+      // REDIRECIONA
+      window.location.href = urlCardapio + params;
+
     })();
   </script>
 </body>
