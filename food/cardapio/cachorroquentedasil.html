@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cachorro Quente da Sil - Cardápio</title>
+  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/15lROS10Mnu0h036ia99VOU-QZdpiffaS">
+
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+    iframe { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+  <iframe
+  id="iframeCardapio"
+  src=""
+  title="Cachorro Quente da Sil - Cardápio Digital"
+  allow="clipboard-read; clipboard-write"
+  style="width:100%;height:100%;border:none;"
+></iframe>
+
+  <script>
+    (function() {
+      // URL do Script do Cardápio que você enviou
+      const urlCardapio = "https://script.google.com/macros/s/AKfycbzpkKb2mjRCRQt6-j5RfDitxZ_-JDRHtmTuxA5pRALQ50CMYMtN3zZW_ptXVyQZw2SY/exec";
+      
+      // Captura os parâmetros (ex: ?mesa=1)
+      const params = window.location.search;
+      
+      // Carrega o Iframe com a mesa
+      document.getElementById('iframeCardapio').src = urlCardapio + params;
+    })();
+  </script>
+</body>
+</html>
