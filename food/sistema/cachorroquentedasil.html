@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cachorro Quente da Sil</title>
+  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1hgOJW-IyNDlRfar8g39wTUN_egXHe1V1">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%; /* Ajustei para 100% para não sobrar espaço */
+      width: 100%;
+      overflow: hidden; /* Evita barras de rolagem duplas */
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="sistemaIframe" src="" allow="clipboard-read; clipboard-write" title="Cachorro Quente da Sil"></iframe>
+
+  <script>
+    (function() {
+      // 1. Sua URL atualizada do Google Apps Script
+      const urlBase = "https://script.google.com/macros/s/AKfycbyOFqdz0Z1l922_LDtmkfAqRD8w3w66KLTCE2T_4VgEZOLtQypiB722wUjV4rr09h_ckw/exec";
+
+      // 2. Pega os parâmetros da URL (ex: ?mesa=1)
+      const queryParams = window.location.search;
+
+      // 3. Monta a URL final (Base + parâmetros)
+      const urlFinal = urlBase + queryParams;
+
+      // 4. Carrega o sistema no Iframe
+      document.getElementById('sistemaIframe').src = urlFinal;
+    })();
+  </script>
+</body>
+</html>
