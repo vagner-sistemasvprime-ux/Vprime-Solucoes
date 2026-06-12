@@ -11866,15 +11866,36 @@ function processarBuscaServidor(termo, resultadoDiv) {
 
 
 
+/* =========================================================================
+   📦 SUBSISTEMA: APP MOTOBOY - GESTÃO E TRACKING DE ENTREGAS (FETCH)
+   ========================================================================= */
+
 function fecharModalPesquisaPedidos() {
-  document.getElementById("modalPesquisaPedidos").style.display = "none";
+  const modal = document.getElementById("modalPesquisaPedidos");
+  if (modal) modal.style.display = "none";
 }
 
+/**
+ * CORE LOGÍSTICA: Carrega, filtra e renderiza os cards de despacho do entregador logado
+ */
 function carregarTelaMotoboy(usuario) {
   const lista = document.getElementById('listaEntregas');
+  if (!lista) return;
+  
   lista.innerHTML = "<p>⏳ Sincronizando pedidos e taxas...</p>";
 
-  google.script.run.withSuccessHandler(function (pedidos) {
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "LISTAR_PEDIDOS_PLANILHA",
+      nomeLoja: CONFIG.cliente.nomeFixo
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro ao obter base consolidada de remessas.");
+    return response.json();
+  })
+  .then(pedidos => {
     if (!Array.isArray(pedidos) || pedidos.length === 0) {
       lista.innerHTML = "<p>🎉 Nenhum pedido pendente.</p>";
       return;
@@ -11882,7 +11903,7 @@ function carregarTelaMotoboy(usuario) {
 
     const usuarioNorm = String(usuario || "").trim().toUpperCase();
 
-    // ✅ FILTRA PEDIDOS DO MOTOBOY
+    // FILTRA PEDIDOS DO MOTOBOY
     const pedidosDoMotoboy = pedidos.filter(p => {
       const motoboy = String(p.Motoboy || "").trim().toUpperCase();
       const status = String(p.Status || "").trim().toUpperCase();
@@ -11896,38 +11917,48 @@ function carregarTelaMotoboy(usuario) {
 
     lista.innerHTML = "";
 
+    // Mapeamento assíncrono de opções permitidas por entrega
     pedidosDoMotoboy.forEach(pedido => {
-      google.script.run.withSuccessHandler(function (opcoes) {
-        
+      fetch(URL_API_GOOGLE, {
+        method: "POST",
+        body: JSON.stringify({
+          acao: "GERAR_OPCOES_PARA_PEDIDO",
+          nomeLoja: CONFIG.cliente.nomeFixo,
+          pedidoId: pedido.Pedido
+        })
+      })
+      .then(resOp => {
+        if (!resOp.ok) throw new Error("Falha na carga das chaves de validação.");
+        return resOp.json();
+      })
+      .then(opcoes => {
         const card = document.createElement("div");
         card.style.cssText = "border:1px solid #ddd; padding:12px; border-radius:10px; margin-bottom:12px; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.08); display:flex; flex-direction:column;";
 
-        // ✅ MAPEIA ITENS COMPLETOS (VINDOS DA VENDAS)
-        const listaItensHtml = pedido.ItensCompletos.map(i => `• ${i.prod} (${i.qtd})`).join("<br>");
+        // MAPEIA ITENS COMPLETOS (VINDOS DE VENDAS)
+        const listaItensHtml = (pedido.ItensCompletos || []).map(i => `• ${i.prod} (${i.qtd})`).join("<br>");
 
-        const isBloqueado = String(pedido.Status).trim().toUpperCase() === "BLOQUEADO";
+        const isBloqueado = String(pedido.Status || "").trim().toUpperCase() === "BLOQUEADO";
         
-        // ✅ LÓGICA FINANCEIRA
-        const isPago = String(pedido.StatusFinanceiro).trim().toUpperCase() === "PAGO";
-        const valorFormatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.ValorTotal);
+        // LÓGICA FINANCEIRA
+        const isPago = String(pedido.StatusFinanceiro || "").trim().toUpperCase() === "PAGO";
+        const valorFormatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.ValorTotal || 0);
         const corFinanceiro = isPago ? "#e8f5e9" : "#fff3e0"; 
         const corTextoFinan = isPago ? "#2e7d32" : "#ef6c00";
         const labelFinanceiro = isPago ? "✅ PEDIDO JÁ PAGO" : "💰 COBRAR NA ENTREGA";
 
-        // ✅ LÓGICA DE ENDEREÇO E WHATSAPP
+        // LÓGICA DE ENDEREÇO E INTEGRAÇÃO WHATSAPP / GPS
         let enderecoParaGps = (pedido.Endereço || "").replace(/^RUA,\s*/i, "").replace(/\s*\(.*?\)\s*/g, "").trim();
         let enderecoEncoded = encodeURIComponent(enderecoParaGps);
         let urlWaze = "https://waze.com/ul?q=" + enderecoEncoded + "&navigate=yes";
         let urlGoogleMaps = "https://www.google.com/maps/search/?api=1&query=" + enderecoEncoded;
         
         let foneLimpo = String(pedido.Telefone || "").replace(/\D/g, '');
-        let msgWhats = `Olá ${pedido.NomeCliente}! Sou o entregador e já estou a caminho!`;
+        let msgWhats = `Olá ${pedido.NomeCliente || ''}! Sou o entregador e já estou a caminho!`;
         let urlWhats = "https://wa.me/55" + foneLimpo + "?text=" + encodeURIComponent(msgWhats);         
 
         card.innerHTML = `
-          
           <strong style="font-size:16px;">📦 Pedido: ${pedido.Pedido}</strong>
-
 
           <div style="margin-top:5px; font-size:13px;">
             <strong>Cliente:</strong> ${pedido.NomeCliente || "-"}<br>
@@ -11940,9 +11971,9 @@ function carregarTelaMotoboy(usuario) {
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <span style="font-size:18px; font-weight:900;">${valorFormatado}</span>
-              <span style="font-size:12px;"><b>Meio:</b> ${pedido.Pagamento}</span>
+              <span style="font-size:12px;"><b>Meio:</b> ${pedido.Pagamento || "-"}</span>
             </div>
-            ${!isPago ? `<div style="font-size:12px; margin-top:5px; border-top:1px dashed ${corTextoFinan}; padding-top:5px;"><b>Troco:</b> ${pedido.Troco}</div>` : ""}
+            ${!isPago ? `<div style="font-size:12px; margin-top:5px; border-top:1px dashed ${corTextoFinan}; padding-top:5px;"><b>Troco:</b> ${pedido.Troco || "R$ 0,00"}</div>` : ""}
           </div>
 
           <div style="display: flex; gap: 8px; margin-bottom: 12px;">
@@ -11962,48 +11993,52 @@ function carregarTelaMotoboy(usuario) {
           ` : ""}
 
           <select id="codigo-${pedido.Pedido}" ${isBloqueado ? 'disabled' : ''} style="width:100%; padding:10px; border-radius:6px; margin-bottom:10px;">
-            ${opcoes.map(op => `<option value="${op}">${op}</option>`).join("")}
+            ${(opcoes || []).map(op => `<option value="${op}">${op}</option>`).join("")}
           </select>
 
-          <button 
+          <button  
             id="btn-confirmar-${pedido.Pedido}"
             onclick="prepararEntrega('${pedido.Pedido}', '${usuario}')" 
             ${isBloqueado ? 'disabled' : ''}
-            style="padding:15px; background:${isBloqueado ? '#ccc' : '#2bb1ff'}; color:#fff; border:none; border-radius:6px; font-weight:bold; width:100%;">
+            style="padding:15px; background:${isBloqueado ? '#ccc' : '#2bb1ff'}; color:#fff; border:none; border-radius:6px; font-weight:bold; width:100%; cursor:${isBloqueado ? 'not-allowed' : 'pointer'};">
             ${isBloqueado ? 'BLOQUEADO' : 'Confirmar Entrega'}
           </button>
         `;
 
         lista.appendChild(card);
-      }).gerarOpcoesParaPedido(pedido.Pedido);
+      })
+      .catch(err => console.error("Falha ao injetar card de entrega individual:", err));
     });
-  }).listarPedidosPlanilha();
+  })
+  .catch(err => {
+    console.error("Falha geral no barramento do motoboy:", err);
+    lista.innerHTML = "<p style='color:red;'>Erro ao sincronizar informações.</p>";
+  });
 }
 
-
-
-
 function mostrarAguarde() {
-  document.getElementById('modalAguarde').style.display = 'flex';
+  const modal = document.getElementById('modalAguarde');
+  if (modal) modal.style.display = 'flex';
 }
 
 function esconderAguarde() {
-  document.getElementById('modalAguarde').style.display = 'none';
+  const modal = document.getElementById('modalAguarde');
+  if (modal) modal.style.display = 'none';
 }
 
-
+/**
+ * INTERCEPTOR DOM: Prepara elementos visuais e previne múltiplos cliques em processamento
+ */
 function prepararEntrega(pedidoId, usuario) {
-  // ✅ Ajustado para o ID correto que está no HTML do card
   const btn = document.getElementById(`btn-confirmar-${pedidoId}`);
   const selectElement = document.getElementById(`codigo-${pedidoId}`);
   const codigoSelecionado = selectElement ? selectElement.value : "";
 
   if (!codigoSelecionado) {
-    toast("Selecione o código!", "erro");
+    if (typeof toast === "function") toast("Selecione o código!", "erro");
     return;
   }
 
-  // Trava o botão imediatamente para evitar cliques duplos
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = "⏳ AGUARDANDO...";
@@ -12011,45 +12046,103 @@ function prepararEntrega(pedidoId, usuario) {
     btn.style.cursor = "not-allowed";
   }
 
-  // Passa o btn para a próxima função tratar o erro/sucesso
   tentarEntrega(pedidoId, codigoSelecionado, usuario, btn);
 }
 
+/**
+ * VALIDATOR PIPELINE: Submete código de encerramento do pedido fornecido pelo cliente
+ */
+function tentarEntrega(pedidoId, codigo, usuario, btnAlvo) {
+  if (typeof toast === "function") toast("Validando código...", "info");
 
-// Função auxiliar para tentar entrega e mostrar modais de info
-function tentarEntrega(pedidoId, codigo, usuario) {
-  // Substituímos o mostrarAguarde por um toast discreto ou loader
-  toast("Validando código...", "info");
-
-  google.script.run.withSuccessHandler(success => {
-    
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "CONFIRMAR_ENTREGA_PLANILHA",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      pedidoId: pedidoId,
+      codigo: codigo
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Servidor inacessível no momento.");
+    return response.json();
+  })
+  .then(success => {
     if (success) {
-      // SUCESSO: Código bateu, entrega realizada
       exibirModal({
         titulo: "Entrega Confirmada!",
         mensagem: `O pedido ${pedidoId} foi finalizado com sucesso. Bom trabalho!`,
         tipo: "sucesso",
-        aoConfirmar: () => carregarTelaMotoboy(usuario) // Recarrega a lista ao clicar em OK
+        aoConfirmar: () => carregarTelaMotoboy(usuario)
       });
     } else {
-      // ERRO: Código errado ou problema no servidor
       exibirModal({
         titulo: "Erro na Entrega",
         mensagem: "Código incorreto. Verifique com o cliente ou tente novamente.",
         tipo: "erro",
-        aoConfirmar: () => carregarTelaMotoboy(usuario) // Recarrega para limpar o campo
+        aoConfirmar: () => carregarTelaMotoboy(usuario)
       });
     }
-  }).confirmarEntregaPlanilha(pedidoId, codigo);
+  })
+  .catch(err => {
+    console.error("Falha no check de encerramento de corrida:", err);
+    if (btnAlvo) {
+      btnAlvo.disabled = false;
+      btnAlvo.innerHTML = "Confirmar Entrega";
+      btnAlvo.style.background = "#2bb1ff";
+      btnAlvo.style.cursor = "pointer";
+    }
+  });
 }
 
+function confirmarEntrega(pedidoId, codigo) {
+  if (typeof toast === "function") toast("Confirmando entrega...", "info");
 
-// Funções de modais (para adicionar no mesmo arquivo JS)
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "ATUALIZAR_ENTREGA",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      pedidoId: pedidoId,
+      codigo: codigo,
+      dataTimestamp: new Date().toISOString()
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro de barramento.");
+    return response.json();
+  })
+  .then(() => {
+    exibirModal({
+      titulo: "Entrega Confirmada",
+      mensagem: `O pedido ${pedidoId} foi finalizado com sucesso!`,
+      tipo: "sucesso",
+      aoConfirmar: () => {
+        if (typeof motoboy === 'function') motoboy(); 
+      }
+    });
+  })
+  .catch(err => {
+    exibirModal({
+      titulo: "Falha na Confirmação",
+      mensagem: "Erro ao validar: " + err.message,
+      tipo: "erro"
+    });
+  });
+}
+
+/* =========================================================================
+   🚨 INTERFACE: COMPONENTES MODAIS DE DIÁLOGO E ALERTA LOGÍSTICO
+   ========================================================================= */
+
 function mostrarModalAtencao(mensagem, callbackContinuar) {
   const modal = document.getElementById('modalAtencao');
   const msg = document.getElementById('mensagemModal');
   const btnCancelar = document.getElementById('btnModalCancelar');
   const btnConfirmar = document.getElementById('btnModalConfirmar');
+
+  if (!modal || !msg || !btnCancelar || !btnConfirmar) return;
 
   msg.innerText = mensagem;
   modal.style.display = 'flex';
@@ -12066,6 +12159,8 @@ function mostrarModalInfo(mensagem, callbackFechar) {
   const msg = document.getElementById('mensagemInfo');
   const btnFechar = document.getElementById('btnFecharInfo');
 
+  if (!modal || !msg || !btnFechar) return;
+
   msg.innerText = mensagem;
   modal.style.display = 'flex';
 
@@ -12075,45 +12170,31 @@ function mostrarModalInfo(mensagem, callbackFechar) {
   };
 }
 
+/* =========================================================================
+   💼 SUBSISTEMA: MONITORIA E HISTÓRICO DE AUDITORIA DE CAIXA (FETCH)
+   ========================================================================= */
 
-
-function confirmarEntrega(pedidoId, codigo) {
-  // Opcional: Adicionar um toast de carregamento
-  toast("Confirmando entrega...", "info");
-
-  google.script.run
-    .withSuccessHandler(() => {
-      exibirModal({
-        titulo: "Entrega Confirmada",
-        mensagem: `O pedido ${pedidoId} foi finalizado com sucesso!`,
-        tipo: "sucesso",
-        // Só atualiza a tela do motoboy quando ele clicar no botão do modal
-        aoConfirmar: () => {
-          if (typeof motoboy === 'function') motoboy(); 
-        }
-      });
-    })
-    .withFailureHandler(err => {
-      exibirModal({
-        titulo: "Falha na Confirmação",
-        mensagem: "Erro ao validar: " + err.message,
-        tipo: "erro"
-      });
-    })
-    .atualizarEntrega(pedidoId, codigo, new Date());
-}
-
-
-
-
-// ============================
-// FUNÇÃO PRINCIPAL - CARREGA HISTÓRICO
-// ============================
+/**
+ * CORE AUDITORIA: Busca, calcula os diferenciais de quebra de caixa e monta a tabela principal
+ */
 function carregarHistoricoCaixa() {
   const div = document.getElementById("listaCaixasAdmin");
+  if (!div) return;
+  
   div.innerHTML = `<p style="text-align:center;">⏳ Carregando lista de caixas...</p>`;
 
-  google.script.run.withSuccessHandler(lista => {
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "LISTAR_TODOS_CAIXAS",
+      nomeLoja: CONFIG.cliente.nomeFixo
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro de resposta na rede ao buscar histórico de caixas.");
+    return response.json();
+  })
+  .then(lista => {
     if (!lista || lista.length === 0) {
       div.innerHTML = `<p style="text-align:center;">✅ Nenhum caixa registrado.</p>`;
       return;
@@ -12132,19 +12213,20 @@ function carregarHistoricoCaixa() {
         </thead>
         <tbody>
     `;
-lista.forEach((c, index) => {
+
+    lista.forEach((c, index) => {
       const dataFormatada = c.abertura ? new Date(c.abertura).toLocaleString("pt-BR") : "-";
       
-      // Lógica de Cores e Sinais
+      // Lógica matemática de Cores, Quebras de Caixa e Sinais
       const diff = Number(c.diferenca) || 0;
-      let corDiferenca = "#64748b"; // Cinza para zero
+      let corDiferenca = "#64748b"; // Neutro (sem quebra)
       let sinal = "";
 
       if (diff > 0) {
-        corDiferenca = "#22c55e"; // Verde para sobra
+        corDiferenca = "#22c55e"; // Sobra de caixa
         sinal = "+";
       } else if (diff < 0) {
-        corDiferenca = "#ef4444"; // Vermelho para falta
+        corDiferenca = "#ef4444"; // Falta/Quebra negativa
       }
 
       html += `
@@ -12152,13 +12234,13 @@ lista.forEach((c, index) => {
             style="cursor:pointer;"
             onclick="abrirModalFechamentoHistorico(${index})">
           <td>${dataFormatada}</td>
-          <td>${c.usuario}</td>
-          <td>${formatBRL(c.total)}</td>
+          <td>${c.usuario || "-"}</td>
+          <td>${formatBRL(c.total || 0)}</td>
           <td style="color:${corDiferenca}; font-weight:bold;">
             ${sinal}${formatBRL(diff)}
           </td>
           <td>
-             <span class="status-badge ${c.status.toLowerCase()}">${c.status}</span>
+             <span class="status-badge ${(c.status || "").toLowerCase()}">${c.status || ""}</span>
           </td>
         </tr>
       `;
@@ -12167,33 +12249,36 @@ lista.forEach((c, index) => {
     html += `</tbody></table>`;
     div.innerHTML = html;
 
-    window.historicoCaixas = lista; // salva globalmente
-
-  }).listarTodosCaixas();
+    // Cache no escopo do objeto global para manuseio nos modais downstream
+    window.historicoCaixas = lista; 
+  })
+  .catch(err => {
+    console.error("Falha no barramento de sincronismo de caixas:", err);
+    div.innerHTML = `<p style="text-align:center; color:red;">Erro ao processar balanço de caixas.</p>`;
+  });
 }
 
-// ============================
-// FORMATA VALORES EM BRL
-// ============================
+/**
+ * FORMATTER: Transforma float puro em String monetária pt-BR
+ */
 function formatBRL(valor) {
-  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-// ============================
-// MODAL HISTÓRICO CUSTOM
-// ============================
+/**
+ * MODAL CONSOLE: Monta a cockpit de conferência cega e fechamento físico de valores
+ */
 function abrirModalFechamentoHistorico(index) {
+  if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
-  if (!caixa) return;
 
-  // Remove se já existir
   const antigo = document.getElementById("modalFechamentoHistorico");
   if (antigo) antigo.remove();
 
   const modal = document.createElement("div");
   modal.id = "modalFechamentoHistorico";
   
-  // Estilo do Overlay (fundo escuro)
+  // Design de Overlay Assíncrono com Desfoque de Fundo
   modal.style.cssText = `
     position:fixed; inset:0; background:rgba(0,0,0,0.6);
     display:flex; align-items:center; justify-content:center; z-index:9999;
@@ -12207,12 +12292,12 @@ function abrirModalFechamentoHistorico(index) {
       
       <div style="background:#2c3e50; color:#fff; padding:15px; text-align:center;">
         <h3 style="margin:0; font-size:18px;">Gestão de Caixa</h3>
-        <p style="margin:5px 0 0; font-size:12px; opacity:0.8;">Operador: ${usuario} | ${status}</p>
+        <p style="margin:5px 0 0; font-size:12px; opacity:0.8;">Operador: ${usuario || "-"} | ${status || ""}</p>
       </div>
 
       <div style="padding:20px;">
         <p style="font-size:13px; color:#666; margin-bottom:15px; text-align:center;">
-          Aberto em: <b>${new Date(abertura).toLocaleString("pt-BR")}</b>
+          Aberto em: <b>${abertura ? new Date(abertura).toLocaleString("pt-BR") : "-"}</b>
         </p>
 
         <table style="width:100%; border-collapse:collapse; font-size:14px;">
@@ -12273,80 +12358,120 @@ function abrirModalFechamentoHistorico(index) {
 
   document.body.appendChild(modal);
 }
-// ============================
-// FORMATA INPUT TEXT EM BRL ENQUANTO DIGITA
-// ============================
+
+/**
+ * INTERCEPTOR MÁSCARA: Processa em real-time a digitação do operador convertendo em moeda local
+ */
 function formatBRLInput(input) {
-  let valor = input.value.replace(/\D/g, ''); // remove tudo que não é número
-  valor = (valor / 100).toFixed(2);           // transforma em decimal
+  if (!input) return;
+  let valor = input.value.replace(/\D/g, ''); 
+  valor = (valor / 100).toFixed(2);           
   input.value = Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-// ============================
-// CONVERTE VALOR BRL DE VOLTA PARA NÚMERO
-// ============================
+/**
+ * REVERSE PARSER: Converte o valor string formatado da View em Float puro para o Servidor
+ */
 function parseBRL(valorBRL) {
   if (!valorBRL) return 0;
   return Number(valorBRL.replace(/\D/g, '')) / 100;
 }
 
-// ============================
-// CONFIRMAR FECHAMENTO USANDO INPUT TEXT BRL
-// ============================
+/**
+ * ACTION PIPELINE: Finaliza as contas e submete o balanço cego ao servidor
+ */
 function confirmarFechamentoHistorico(index) {
+  if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
 
-  const valorDinheiro = parseBRL(document.getElementById("valorDinheiro").value);
-  const valorPix = parseBRL(document.getElementById("valorPix").value);
-  const valorCartao = parseBRL(document.getElementById("valorCartao").value);
+  const inputDinheiro = document.getElementById("valorDinheiro");
+  const inputPix = document.getElementById("valorPix");
+  const inputCartao = document.getElementById("valorCartao");
+
+  const valorDinheiro = inputDinheiro ? parseBRL(inputDinheiro.value) : 0;
+  const valorPix = inputPix ? parseBRL(inputPix.value) : 0;
+  const valorCartao = inputCartao ? parseBRL(inputCartao.value) : 0;
 
   const valorTotal = valorDinheiro + valorPix + valorCartao;
 
-  if (!valorTotal) return mostrarToast("Informe ao menos um valor!", "vermelho");
+  if (!valorTotal && typeof mostrarToast === "function") {
+    return mostrarToast("Informe ao menos um valor!", "vermelho");
+  }
 
-  google.script.run.withSuccessHandler(() => {
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "FECHAR_CAIXA",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      valorDinheiro: valorDinheiro,
+      valorPix: valorPix,
+      valorCartao: valorCartao,
+      usuario: caixa.usuario
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro ao enviar dados do fechamento.");
+    return response.json();
+  })
+  .then(() => {
     fecharModalHistorico();
     carregarHistoricoCaixa();
-    mostrarToast("✅ Caixa fechado!", "verde");
-  }).fecharCaixa(valorDinheiro, valorPix, valorCartao, caixa.usuario);
+    if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
+  })
+  .catch(err => {
+    console.error("Erro no processamento de fechamento:", err);
+    if (typeof mostrarToast === "function") mostrarToast("Erro no encerramento.", "vermelho");
+  });
 }
 
-
-// ============================
-// FECHAR MODAL
-// ============================
 function fecharModalHistorico() {
   const modal = document.getElementById("modalFechamentoHistorico");
   if (modal) modal.remove();
 }
 
-
-// ============================
-// CONFIRMAR REABERTURA
-// ============================
+/**
+ * ACTION PIPELINE: Reverte o status de um caixa arquivado de volta ao estado operacional
+ */
 function confirmarReaberturaHistorico(index) {
+  if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
 
-  google.script.run.withSuccessHandler(() => {
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "REABRIR_CAIXA",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      linha: caixa.linha
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Falha no comando remoto de reabertura.");
+    return response.json();
+  })
+  .then(() => {
     fecharModalHistorico();
-    carregarHistoricoCaixa(); // atualiza a tabela
-    mostrarToast("✅ Caixa reaberto!", "laranja");
-  }).reabrirCaixa(caixa.linha);
+    carregarHistoricoCaixa(); 
+    if (typeof mostrarToast === "function") mostrarToast("✅ Caixa reaberto!", "laranja");
+  })
+  .catch(err => console.error("Erro na reabertura do caixa:", err));
 }
 
-// ============================
-// ESTILO CSS
-// ============================
+/* =========================================================================
+   🎨 ENGINE VISUAL: INJEÇÃO DOS ESTILOS E BADGES DO HISTÓRICO
+   ========================================================================= */
 const style = document.createElement("style");
 style.textContent = `
-.historico-tabela { width:100%; border-collapse:collapse; text-align:center; margin-top:10px; }
-.historico-tabela th, .historico-tabela td { border:1px solid #ddd; padding:8px; }
-.historico-tabela tr:hover { background:#f2f2f2; cursor:pointer; }
-.historico-tabela tr.aberto { background:#e0ffe0; }
-.historico-tabela tr.fechado { background:#fff; }
-.btn-verde { background:#27ae60; color:#fff; border:none; padding:8px; border-radius:6px; cursor:pointer; margin-top:6px; width:100%; }
-.btn-laranja { background:#e67e22; color:#fff; border:none; padding:8px; border-radius:6px; cursor:pointer; margin-top:6px; width:100%; }
-.btn-cinza { background:#ccc; color:#000; border:none; padding:8px; border-radius:6px; cursor:pointer; margin-top:6px; width:100%; }
+  .historico-tabela { width:100%; border-collapse:collapse; text-align:center; margin-top:10px; font-size:14px; }
+  .historico-tabela th, .historico-tabela td { border:1px solid #ddd; padding:10px; }
+  .historico-tabela tr:hover { background:#f8f9fa; cursor:pointer; }
+  .historico-tabela tr.aberto { background:#e8f5e9; }
+  .historico-tabela tr.fechado { background:#ffffff; }
+  .status-badge { padding:3px 8px; border-radius:12px; font-size:11px; font-weight:bold; color:#fff; text-transform:uppercase; }
+  .status-badge.aberto { background:#2e7d32; }
+  .status-badge.fechado { background:#78909c; }
+  .btn-verde { background:#27ae60; color:#fff; border:none; padding:8px; border-radius:6px; cursor:pointer; margin-top:6px; width:100%; font-weight:bold; }
+  .btn-laranja { background:#e67e22; color:#fff; border:none; padding:8px; border-radius:6px; cursor:pointer; margin-top:6px; width:100%; font-weight:bold; }
+  .btn-cinza { background:#ccc; color:#000; border:none; padding:8px; border-radius:6px; cursor:pointer; margin-top:6px; width:100%; }
 `;
 document.head.appendChild(style);
 
@@ -12354,17 +12479,35 @@ document.head.appendChild(style);
 
 
 
+/* =========================================================================
+   🍳 SUBSISTEMA: CONTROLE DE COZINHA E EXPEDIÇÃO DINÂMICA (FETCH)
+   ========================================================================= */
 
-
+/**
+ * MUTATOR: Define globalmente o nível de carga/status operacional da cozinha
+ */
 function setCozinha(status) {
-  google.script.run
-    .withSuccessHandler(() => {
-      carregarStatusCozinha();
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "SET_STATUS_COZINHA",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      status: status
     })
-    .setStatusCozinha(status);
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro de comunicação ao redefinir status da cozinha.");
+    return response.json();
+  })
+  .then(() => {
+    carregarStatusCozinha();
+  })
+  .catch(err => console.error("Falha na alteração da retaguarda:", err));
 }
 
-// Função para atualizar botão ativo + span
+/**
+ * RENDER COZINHA: Gerencia o Dark Mode dinâmico do painel e atualiza cronômetros
+ */
 function carregarStatusCozinha() {
   const span = document.getElementById("statusAtualCozinha");
   const corpoPagina = document.body;
@@ -12374,108 +12517,138 @@ function carregarStatusCozinha() {
     return;
   }
 
-  google.script.run
-    .withSuccessHandler(cfg => {
-      if (!cfg) return;
-
-      span.textContent = `${cfg.titulo} • ${cfg.tempo} min`;
-
-      // 1. Lógica de cores da interface
-      if (cfg.cor === "PRETO") {
-        corpoPagina.style.backgroundColor = "#1a1a1a"; // Fundo escuro
-        // Em vez de mudar o 'color' do body todo, mudamos apenas os títulos principais
-        document.querySelectorAll("h2, h3, b, #statusAtualCozinha").forEach(el => {
-          el.style.color = "white";
-        });
-        span.style.color = "#ff4d4d"; // Destaque para o tempo
-      } else {
-        // Volta ao padrão
-        corpoPagina.style.backgroundColor = "";
-        document.querySelectorAll("h2, h3, b, #statusAtualCozinha").forEach(el => {
-          el.style.color = "";
-        });
-        span.style.color = "black";
-      }
-
-      // 2. Atualiza os botões
-      document.querySelectorAll(".btnCozinha").forEach(b => b.classList.remove("ativo"));
-      const btn = document.querySelector(`.btnCozinha.${cfg.cor.toLowerCase()}`);
-      if (btn) btn.classList.add("ativo");
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "GET_SITUACAO_COZINHA",
+      nomeLoja: CONFIG.cliente.nomeFixo
     })
-    .getSituacaoCozinha();
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro de rede ao obter situação operacional.");
+    return response.json();
+  })
+  .then(cfg => {
+    if (!cfg) return;
+
+    span.textContent = `${cfg.titulo} • ${cfg.tempo} min`;
+
+    // Lógica de cores da interface (Garante legibilidade adaptativa)
+    if (String(cfg.cor).toUpperCase() === "PRETO") {
+      corpoPagina.style.backgroundColor = "#1a1a1a";
+      document.querySelectorAll("h2, h3, b, #statusAtualCozinha").forEach(el => {
+        el.style.color = "white";
+      });
+      span.style.color = "#ff4d4d"; 
+    } else {
+      corpoPagina.style.backgroundColor = "";
+      document.querySelectorAll("h2, h3, b, #statusAtualCozinha").forEach(el => {
+        el.style.color = "";
+      });
+      span.style.color = "black";
+    }
+
+    // Gerenciamento de classes ativas nos seletores de estado da cozinha
+    document.querySelectorAll(".btnCozinha").forEach(b => b.classList.remove("ativo"));
+    const btn = document.querySelector(`.btnCozinha.${String(cfg.cor || "").toLowerCase()}`);
+    if (btn) btn.classList.add("ativo");
+  })
+  .catch(err => console.error("Erro no sincronismo do painel da cozinha:", err));
 }
 
-// Função chamada ao clicar no botão de cor
-function setCozinha(status) {
-  google.script.run.withSuccessHandler(() => {
-    carregarStatusCozinha(); // Atualiza imediatamente o botão e span
-  }).setStatusCozinha(status);
-}
-
+/**
+ * VIEW MONITOR: Atualiza widgets e banners informativos para a experiência do cliente
+ */
 function atualizarAvisoCozinha() {
-  google.script.run
-    .withSuccessHandler(cfg => {
-      if (!cfg) return;
-
-      const aviso  = document.getElementById("avisoCozinha");
-      const titulo = document.getElementById("avisoTitulo");
-      const tempo  = document.getElementById("avisoTempo");
-
-      if (!aviso || !titulo || !tempo) return;
-
-      // 1. Remove todas as classes de cores possíveis para não acumular
-      aviso.classList.remove("verde", "amarelo", "vermelho", "preto", "extremo");
-
-      // 2. Adiciona a classe vinda do servidor (convertida para minúsculo)
-      // Se no servidor for "PRETO", aqui vira a classe "preto"
-      const corClasse = cfg.cor.toLowerCase();
-      aviso.classList.add(corClasse);
-
-      // 3. Atualiza os textos
-      titulo.textContent = cfg.titulo;
-      
-      // Lógica especial para o status PRETO (Fluxo Extremo)
-      if (cfg.cor === "PRETO") {
-        tempo.textContent = "Pedidos temporariamente suspensos";
-      } else {
-        tempo.textContent = `Pedidos prontos em até ${cfg.tempo} min`;
-      }
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "GET_SITUACAO_COZINHA",
+      nomeLoja: CONFIG.cliente.nomeFixo
     })
-    .withFailureHandler(err => console.error("Erro ao atualizar aviso:", err))
-    .getSituacaoCozinha(); // Chama a função que criamos no .gs
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro de resposta ao ler monitor de contingência.");
+    return response.json();
+  })
+  .then(cfg => {
+    if (!cfg) return;
+
+    const aviso  = document.getElementById("avisoCozinha");
+    const titulo = document.getElementById("avisoTitulo");
+    const tempo  = document.getElementById("avisoTempo");
+
+    if (!aviso || !titulo || !tempo) return;
+
+    // Reseta classes dinâmicas para evitar colisões no DOM
+    aviso.classList.remove("verde", "amarelo", "vermelho", "preto", "extremo");
+
+    const corClasse = String(cfg.cor || "").toLowerCase();
+    aviso.classList.add(corClasse);
+
+    titulo.textContent = cfg.titulo;
+    
+    // Tratamento de interrupção forçada (Fluxo Extremo)
+    if (String(cfg.cor).toUpperCase() === "PRETO") {
+      tempo.textContent = "Pedidos temporariamente suspensos";
+    } else {
+      tempo.textContent = `Pedidos prontos em até ${cfg.tempo} min`;
+    }
+  })
+  .catch(err => console.error("Erro ao atualizar aviso da cozinha:", err));
 }
 
+/* =========================================================================
+   🚚 MÓDULO: CHECKOUT, LOGÍSTICA DE FRETE E PRECIFICAÇÃO DINÂMICA
+   ========================================================================= */
+
+/**
+ * CALCULATOR: Avalia o raio de entrega, monta select de bairros e altera carrinhoData
+ */
 function atualizarFrete() {
   const chkEntrega = document.getElementById("paraEntrega");
   const divBairro = document.getElementById("campoBairro");
   const selectBairro = document.getElementById("selectBairro");
+  
+  if (!chkEntrega || !divBairro || !selectBairro) return;
+
+  // Busca index do frete utilizando escopo global de controle do ERP
   const existeFreteIndex = carrinhoData.findIndex(i => i.id === "FRETE");
 
-  // Mostra ou esconde o campo de bairro conforme o checkbox
   divBairro.style.display = chkEntrega.checked ? "block" : "none";
 
   if (!chkEntrega.checked) {
-    // Se desmarcou entrega, remove o frete do carrinho
     if (existeFreteIndex !== -1) {
       carrinhoData.splice(existeFreteIndex, 1);
-      renderCarrinho();
+      if (typeof renderCarrinho === "function") renderCarrinho();
     }
     return;
   }
 
-  // Se marcou entrega, busca as configurações (que agora incluem a lista de bairros)
-  google.script.run.withSuccessHandler(cfg => {
-    // 1. Popular o select de bairros caso esteja vazio (primeira vez)
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "GET_CONFIGURACAO",
+      nomeLoja: CONFIG.cliente.nomeFixo
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro ao obter matriz de fretes cadastrados.");
+    return response.json();
+  })
+  .then(cfg => {
+    if (!cfg) return;
+
+    // Popula o elemento select dinamicamente na primeira requisição
     if (selectBairro.options.length <= 1 && cfg.taxasPorBairro) {
       cfg.taxasPorBairro.forEach(b => {
         let opt = document.createElement("option");
-        opt.value = b.taxa; // Guardamos o preço no value
+        opt.value = b.taxa; 
         opt.text = b.bairro;
         selectBairro.add(opt);
       });
     }
 
-    // 2. Pegar o valor do bairro selecionado
     const valorFrete = parseFloat(selectBairro.value) || 0;
     const nomeBairro = selectBairro.options[selectBairro.selectedIndex].text;
 
@@ -12489,75 +12662,78 @@ function atualizarFrete() {
       };
 
       if (existeFreteIndex !== -1) {
-        // Se já existe frete, apenas atualiza o valor e o nome do bairro
         carrinhoData[existeFreteIndex] = itemFrete;
       } else {
-        // Se não existe, adiciona
         carrinhoData.push(itemFrete);
       }
     } else {
-      // Se selecionou "Selecione..." ou bairro sem taxa, remove do carrinho para não cobrar errado
       if (existeFreteIndex !== -1) {
         carrinhoData.splice(existeFreteIndex, 1);
       }
     }
 
-    renderCarrinho();
-  }).getConfiguracao(); // Usando a função que criamos no passo anterior
+    if (typeof renderCarrinho === "function") renderCarrinho();
+  })
+  .catch(err => console.error("Falha crítica no cálculo de taxas dinâmicas:", err));
 }
 
 
 
 
 
+/* =========================================================================
+   🍽️ SUBSISTEMA: MAPA DE MESAS, GESTÃO DE SALÃO E CONCORRÊNCIA (FETCH)
+   ========================================================================= */
 
-
-/* ============================================================
-   VARIÁVEIS DE CONTROLE ISOLADAS
-   ============================================================ */
 let modoMesaAtivo = false;
 let mesaSelecionadaGlobal = null;
 let carrinhoMesa = []; 
 
-/* ============================================================
-   FUNÇÕES DE ABERTURA E CARREGAMENTO (MODAL PRINCIPAL)
-   ============================================================ */
+/**
+ * CONTROL INTERFACE: Inicializa o cockpit do salão e injeta o usuário logado
+ */
 function abrirModalMesas() {
-  document.getElementById("modalMesas").style.display = "flex";
+  const modal = document.getElementById("modalMesas");
+  if (modal) modal.style.display = "flex";
 
   const spanNome = document.getElementById("txtNomeUsuario");
   if (spanNome && typeof user !== 'undefined' && user.usuario) {
-    spanNome.innerText = user.usuario.toUpperCase().trim();
+    spanNome.innerText = String(user.usuario).toUpperCase().trim();
   }
 
   carregarMesasModal();
 }
 
-// A função principal que fecha o modal de detalhes/itens
 function fecharModalDetalhes() {
   const modal = document.getElementById("modalDetalhesMesa");
-  if (modal) {
-    modal.style.display = "none";
-  }
+  if (modal) modal.style.display = "none";
 }
 
-// 🔥 Criamos este "apelido" para resolver o seu erro ReferenceError
+/**
+ * BRIDGE: Acoplador estrutural para chamadas secundárias de fechamento de Views
+ */
+function abrirModalSecundario(mesa) {
+  // Mantido para compatibilidade com o fluxo de abertura de detalhes da mesa
+  const modal = document.getElementById("modalDetalhesMesa");
+  if (modal) modal.style.display = "flex";
+  // Injetar lógica interna do modal de detalhes aqui se necessário
+}
+
 function fecharModalSecundario() {
   fecharModalDetalhes();
 }
 
-// Sua função atual corrigida (agora ela vai achar a função acima)
 function fecharModalMesas() { 
   const modalPrincipal = document.getElementById("modalMesas");
   if (modalPrincipal) modalPrincipal.style.display = "none";
   
-  fecharModalSecundario(); // Agora essa linha funciona!
-
-  // 🔄 Reset do modo mesa
+  fecharModalSecundario(); 
   modoMesaAtivo = false;
 }
 
-
+/**
+ * ENGINE: Sincroniza a malha de consumo de mesas ativa com a planilha do servidor
+ */
 function carregarMesasModal() {
   const container = document.getElementById("listaMesas");
   const spinner = document.getElementById("spinnerMesas");
@@ -12565,43 +12741,58 @@ function carregarMesasModal() {
   if (container) container.innerHTML = "";
   if (spinner) spinner.style.display = "block";
 
-  google.script.run.withSuccessHandler(mesas => {
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "GET_MESAS",
+      nomeLoja: CONFIG.cliente.nomeFixo
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro de barramento ao listar mesas.");
+    return response.json();
+  })
+  .then(mesas => {
     if (spinner) spinner.style.display = "none";
     if (!mesas || mesas.length === 0) {
       if (container) container.innerHTML = "<p>Nenhuma mesa configurada.</p>";
       return;
     }
     gerarCardsMesas(mesas);
-  }).getMesas();
+  })
+  .catch(err => {
+    console.error("Falha ao processar mapa de mesas:", err);
+    if (spinner) spinner.style.display = "none";
+    if (container) container.innerHTML = "<p style='color:red;'>Erro ao carregar salão.</p>";
+  });
 }
 
-/* ============================================================
-   GERAÇÃO DOS CARDS (MAPA DE MESAS)
-   ============================================================ */
+/**
+ * RENDER MAP: Constrói a malha de cartões dinâmicos com travas e contadores de tempo
+ */
 function gerarCardsMesas(mesas) {
   const container = document.getElementById("listaMesas");
   if (!container) return;
   container.innerHTML = "";
 
-  const usuarioLogado = (user && user.usuario) ? user.usuario.toString().trim() : "SISTEMA";
+  const usuarioLogado = (user && user.usuario) ? String(user.usuario).toString().trim().toUpperCase() : "SISTEMA";
 
   mesas.forEach(mesa => {
     const card = document.createElement("div");
-    const statusOriginal = (mesa.status || 'livre').toLowerCase().trim();
+    const statusOriginal = String(mesa.status || 'livre').toLowerCase().trim();
     
-    // --- CORREÇÃO DA LÓGICA DE NOTIFICAÇÃO ---
-    // Agora usando exatamente o nome que vem do seu getMesas() no servidor
-    const temItemPronto = mesa.temPedidoPronto === true || mesa.temPedidoPronto === "true";
+    // Alerta de pedido pronto expedido pela cozinha
+    const temItemPronto = mesa.temPedidoPronto === true || String(mesa.temPedidoPronto).trim() === "true";
 
-    // --- LÓGICA DE VISUALIZAÇÃO DE BLOQUEIO ---
-    const bloqueadaPorOutro = mesa.bloqueadaPor && mesa.bloqueadaPor.toString().trim() !== usuarioLogado;
+    // Lógica restritiva de concorrência multi-atendente (Mutex do Salão)
+    const bloqueadaPorOutro = mesa.bloqueadaPor && String(mesa.bloqueadaPor).trim().toUpperCase() !== usuarioLogado;
 
     card.className = `mesa-card status-${statusOriginal}`;
-    card.style.position = "relative"; // Importante para posicionar o sinal de "!"
+    card.style.position = "relative"; 
     
     if (bloqueadaPorOutro) card.classList.add('mesa-bloqueada');
 
-    // --- CÁLCULO DO TEMPO DE ATENDIMENTO ---
+    // Cronometragem progressiva de permanência do cliente na mesa
     let tempoHtml = "";
     if (statusOriginal !== 'livre' && mesa.tempo) {
       const agora = new Date();
@@ -12613,28 +12804,16 @@ function gerarCardsMesas(mesas) {
       tempoHtml = `<div style="font-size: 0.7rem; color: #64748b; margin-top: 2px;">⏱️ ${tempoFormatado}</div>`;
     }
 
-    const atendenteHtml = mesa.atendente ? `<div style="font-size:0.65rem; border-top:1px dashed #ccc; margin-top:5px; padding-top:2px;">👤 ${mesa.atendente.toUpperCase()}</div>` : "";
-    const avisoBloqueio = bloqueadaPorOutro ? `<div style="color:red; font-weight:bold; font-size:0.6rem;">🔒 EM EDIÇÃO: ${mesa.bloqueadaPor.toUpperCase()}</div>` : "";
+    const atendenteHtml = mesa.atendente ? `<div style="font-size:0.65rem; border-top:1px dashed #ccc; margin-top:5px; padding-top:2px;">👤 ${String(mesa.atendente).toUpperCase()}</div>` : "";
+    const avisoBloqueio = bloqueadaPorOutro ? `<div style="color:red; font-weight:bold; font-size:0.6rem;">🔒 EM EDIÇÃO: ${String(mesa.bloqueadaPor).toUpperCase()}</div>` : "";
 
-    // --- HTML DO SINAL DE NOTIFICAÇÃO (BOLINHA PISCANTE) ---
+    // Markup da bolinha pulsante de notificação para o garçom
     const notificacaoHtml = temItemPronto ? `
       <div class="notificacao-alerta" style="
-        position: absolute;
-        top: -10px;
-        right: -10px;
-        background: #ef4444;
-        color: white;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        font-weight: 900;
-        box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
-        z-index: 100;
-        border: 2px solid white;
+        position: absolute; top: -10px; right: -10px; background: #ef4444; color: white;
+        width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center;
+        justify-content: center; font-size: 14px; font-weight: 900;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.6); z-index: 100; border: 2px solid white;
         animation: pulse-notificacao 1.5s infinite;
       ">!</div>
     ` : "";
@@ -12644,26 +12823,36 @@ function gerarCardsMesas(mesas) {
       <div style="font-size: 0.75rem; opacity: 0.7;">MESA</div>
       <div style="font-size: 1.8rem; font-weight: 800; line-height: 1;">${mesa.num}</div>
       <div style="margin-top: 5px; font-weight: 600;">
-        ${statusOriginal === 'livre' ? 'LIVRE' : 'R$ ' + Number(mesa.valor).toFixed(2)}
+        ${statusOriginal === 'livre' ? 'LIVRE' : 'R$ ' + Number(mesa.valor || 0).toFixed(2)}
       </div>
       ${tempoHtml}
       ${atendenteHtml}
       ${avisoBloqueio}
     `;
 
-    // --- EVENTO DE CLIQUE ---
+    // Interceptação e validação de concorrência ao clicar no cartão
     card.onclick = () => {
       if (bloqueadaPorOutro) {
-        exibirModal({
-          tipo: 'erro',
-          titulo: 'Mesa Bloqueada',
-          mensagem: `Acesso Negado! O atendente ${mesa.bloqueadaPor} está editando esta mesa agora.`
-        });
+        if (typeof exibirModal === "function") {
+          exibirModal({
+            tipo: 'erro',
+            titulo: 'Mesa Bloqueada',
+            mensagem: `Acesso Negado! O atendente ${mesa.bloqueadaPor} está editando esta mesa agora.`
+          });
+        }
         return;
       }
 
+      // Desbloqueia mesa anterior deixada aberta em background
       if (window.mesaAbertaAgora && window.mesaAbertaAgora !== mesa.num) {
-        google.script.run.liberarBloqueioManual(window.mesaAbertaAgora);
+        fetch(URL_API_GOOGLE, {
+          method: "POST",
+          body: JSON.stringify({
+            acao: "LIBERAR_BLOQUEIO_MANUAL",
+            nomeLoja: CONFIG.cliente.nomeFixo,
+            mesaNum: window.mesaAbertaAgora
+          })
+        }).catch(err => console.error("Erro ao liberar mesa residual:", err));
       }
 
       const loadingDiv = document.createElement("div");
@@ -12671,79 +12860,123 @@ function gerarCardsMesas(mesas) {
       loadingDiv.innerHTML = `<div class="spinner"></div><h2>Verificando mesa ${mesa.num}...</h2>`;
       document.body.appendChild(loadingDiv);
 
-      google.script.run
-        .withSuccessHandler(res => {
-          if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
-          
-          if (res.sucesso) {
-            window.mesaAbertaAgora = mesa.num; 
-            abrirModalSecundario(mesa);
-          } else {
+      fetch(URL_API_GOOGLE, {
+        method: "POST",
+        body: JSON.stringify({
+          acao: "TENTAR_BLOQUEAR_MESA",
+          nomeLoja: CONFIG.cliente.nomeFixo,
+          mesaNum: mesa.num,
+          usuario: usuarioLogado
+        })
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("Erro no servidor ao tentar alocar mesa.");
+        return response.json();
+      })
+      .then(res => {
+        if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
+        
+        if (res.sucesso) {
+          window.mesaAbertaAgora = mesa.num; 
+          abrirModalSecundario(mesa);
+        } else {
+          if (typeof exibirModal === "function") {
             exibirModal({
               tipo: 'alerta',
               titulo: 'Mesa Ocupada',
               mensagem: `A mesa foi acessada por ${res.dono} em outro terminal.`,
-              aoConfirmar: () => { if(typeof carregarMesas === 'function') carregarMesas(); }
+              aoConfirmar: () => { if (typeof carregarMesasModal === 'function') carregarMesasModal(); }
             });
           }
-        })
-        .withFailureHandler(() => {
-          if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
+        }
+      })
+      .catch(err => {
+        if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
+        if (typeof exibirModal === "function") {
           exibirModal({ tipo: 'erro', titulo: 'Erro', mensagem: 'Erro de conexão com o servidor.' });
-        })
-        .tentarBloquearMesa(mesa.num, usuarioLogado);
+        }
+      });
     };
 
     container.appendChild(card);
   });
 }
 
-
-function marcarEntregueClique(numLinha, nomeItem, numMesa) {
+/**
+ * ACTION PIPELINE: Acionamento local de baixa/entrega física do prato na mesa
+ */
+function marcarEntregueClique(numLinha, nomeItem, numMesa, event) {
+  if (!event) return;
   const btn = event.currentTarget;
   const textoOriginal = btn.innerHTML;
   
   btn.disabled = true;
   btn.innerHTML = "⌛";
 
-  google.script.run.withSuccessHandler(function(sucesso) {
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "MARCAR_ITEM_ESPECIFICO_ENTREGUE",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      linha: numLinha
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro na baixa do item.");
+    return response.json();
+  })
+  .then(sucesso => {
     if (sucesso) {
-      toast(`✅ ${nomeItem} entregue!`, "success");
+      if (typeof toast === "function") toast(`✅ ${nomeItem} entregue!`, "success");
 
-      // Atualiza os dados para refletir a mudança no modal e nos cards
-      google.script.run.withSuccessHandler(function(mesas) {
+      // Atualiza o mapa de dados do salão após alteração do estado lógico do registro
+      fetch(URL_API_GOOGLE, {
+        method: "POST",
+        body: JSON.stringify({
+          acao: "GET_MESAS",
+          nomeLoja: CONFIG.cliente.nomeFixo
+        })
+      })
+      .then(r => r.json())
+      .then(mesas => {
         if (typeof gerarCardsMesas === 'function') gerarCardsMesas(mesas);
         const mesaAtualizada = mesas.find(m => m.num == numMesa);
         if (mesaAtualizada) abrirModalSecundario(mesaAtualizada); 
-      }).getMesas();
+      });
       
     } else {
-      toast("Erro ao marcar como entregue", "error");
+      if (typeof toast === "function") toast("Erro ao marcar como entregue", "error");
       btn.disabled = false;
       btn.innerHTML = textoOriginal;
     }
-  }).marcarItemEspecificoEntregue(numLinha); // Chama o servidor passando apenas a LINHA
+  })
+  .catch(err => {
+    console.error("Falha ao registrar entrega física do item:", err);
+    btn.disabled = false;
+    btn.innerHTML = textoOriginal;
+  });
 }
-/* ============================================================
-   DETALHES DA MESA (MODAL SECUNDÁRIO)
-   ============================================================ */
-/* ============================================================
-   FUNÇÃO: DETALHES DA MESA (COM ALTURA FIXA E SCROLL)
-/* ============================================================ 
-   MODAL DE DETALHES DA MESA (COM ATUALIZAÇÃO POR ID ÚNICO)
-============================================================ */
+
+/* =========================================================================
+   📝 SUBSISTEMA: CONSOLE DE DETALHES DA MESA, AUDITORIA E EXPEDIÇÃO (FETCH)
+   ========================================================================= */
+
+/**
+ * CORE VIEW: Renderiza o ciclo de vida completo da mesa (Ocupada, Limpeza ou Sincronização)
+ */
 function abrirModalSecundario(mesa) {
   const modal = document.getElementById("modalDetalhesMesa");
   const corpoDetalhes = document.getElementById("detalhesMesa");
   const tituloMesa = document.getElementById("nomeMesaDestaque");
 
-  if (!mesa) return;
+  if (!mesa || !modal || !corpoDetalhes) return;
+  
   modal.style.display = "flex";
   if (tituloMesa) tituloMesa.innerText = `📝 Mesa ${mesa.num}`;
 
   const statusInicial = mesa.status ? mesa.status.toString().toUpperCase().trim() : 'LIVRE';
 
-  // Lógica de Limpeza (Mantida)
+  // INTERCEPTOR: Lógica de Limpeza e Higienização de Mesa
   if (statusInicial === "LIMPEZA") {
     corpoDetalhes.innerHTML = `
       <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
@@ -12759,9 +12992,26 @@ function abrirModalSecundario(mesa) {
     return;
   }
 
-  corpoDetalhes.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;padding:50px 20px;"><div class="loader-mesa"></div><p>Sincronizando itens...</p></div>`;
+  // Viewport Placeholder durante a sincronização HTTP assíncrona
+  corpoDetalhes.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;padding:50px 20px;">
+      <div class="loader-mesa"></div>
+      <p style="margin-top:10px; color:#64748b; font-family:sans-serif;">Sincronizando itens...</p>
+    </div>`;
 
-  google.script.run.withSuccessHandler(function(res) {
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "BUSCAR_STATUS_ITENS_MESA",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      mesaNum: mesa.num
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro ao buscar a situação dos itens na cozinha.");
+    return response.json();
+  })
+  .then(res => {
     const statusCozinha = res.itens || [];
     const obsBackend = res.obsGeral || "";
     const statusLimpo = mesa.status ? mesa.status.toString().toUpperCase().trim() : 'LIVRE';
@@ -12773,13 +13023,13 @@ function abrirModalSecundario(mesa) {
     if (statusLimpo === 'OCUPADA' && mesa.itens) {
       let itensArray = mesa.itens.split('|').map(i => i.trim()).filter(i => i !== "");
       
-      // --- Lógica da Versão Antiga: Detectar Obs Geral Automática ---
+      // Inteligência Algorítmica: Dedução e agrupamento de observações repetidas
       const todasAsObs = itensArray.map(txt => {
         const match = txt.match(/\((.*?)\)/);
         return match ? match[1].trim() : null;
       });
       const contagemObs = {};
-      todasAsObs.forEach(obs => { if(obs) contagemObs[obs] = (contagemObs[obs] || 0) + 1; });
+      todasAsObs.forEach(obs => { if (obs) contagemObs[obs] = (contagemObs[obs] || 0) + 1; });
       obsGeralDetectada = Object.keys(contagemObs).find(key => contagemObs[key] > 1);
 
       listaItensHtml = itensArray.map((itemTexto, index) => {
@@ -12788,7 +13038,7 @@ function abrirModalSecundario(mesa) {
         const nomeComQtd = partes[0].trim(); 
         let obsItem = partes[1] ? partes[1].trim() : null;
 
-        // Se a obs do item for a mesma da mesa inteira, não repetimos no item
+        // Se a observação individual for idêntica à global, oculta para limpar a interface
         const mostrarObsIndividual = obsItem && obsItem !== obsGeralDetectada;
 
         const statusReal = infoCozinha.status ? infoCozinha.status.toLowerCase() : "pendente";
@@ -12811,7 +13061,7 @@ function abrirModalSecundario(mesa) {
 
               <div style="min-width: 80px; text-align: right;">
                 ${isPronto ? 
-                  `<button onclick="marcarEntregueClique(${infoCozinha.linha},'${infoCozinha.nome || nomeComQtd}','${mesa.num}')" style="background:#22c55e;color:white;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:0.65rem;font-weight:800;">ENTREGAR</button>` : 
+                  `<button onclick="marcarEntregueClique(${infoCozinha.linha},'${infoCozinha.nome || nomeComQtd}','${mesa.num}', event)" style="background:#22c55e;color:white;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:0.65rem;font-weight:800;">ENTREGAR</button>` : 
                   isEntregue ? `<span style="font-size:0.65rem;color:#94a3b8;font-weight:800;">✓ OK</span>` : 
                   `<span style="font-size:0.65rem;color:#f59e0b;font-weight:600;">⏳ COZINHA</span>`}
               </div>
@@ -12820,7 +13070,7 @@ function abrirModalSecundario(mesa) {
       }).join('');
     }
 
-    // Prioridade de Observação: 1. Backend, 2. Global, 3. Detectada Automática
+    // Cascata de prioridade para exibição da observação geral
     let obsFinal = obsBackend || window.observacaoGeralMesa || obsGeralDetectada || "";
 
     corpoDetalhes.innerHTML = `
@@ -12846,7 +13096,7 @@ function abrirModalSecundario(mesa) {
 
         <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
            <button onclick="iniciarPedidoParaMesa(${mesa.num})" style="width: 100%; background: #6366f1; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 6px rgba(99,102,241,0.2);">
-            ➕ ADICIONAR ITEM
+             ➕ ADICIONAR ITEM
            </button>
            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
              <button onclick="fecharContaMesa(${mesa.num}, ${mesa.valor}, '${mesa.itens}')" style="background: #22c55e; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer;">FECHAR CONTA</button>
@@ -12854,95 +13104,142 @@ function abrirModalSecundario(mesa) {
            </div>
         </div>
       </div>`;
-  }).buscarStatusItensMesa(mesa.num);
+  })
+  .catch(err => {
+    console.error("Erro na carga crítica de itens da mesa:", err);
+    corpoDetalhes.innerHTML = `<p style="text-align:center; padding:20px; color:red;">Erro ao sincronizar mesa com a retaguarda.</p>`;
+  });
 }
 
+/**
+ * MUTATOR REST: Remove uma linha específica de item e reavalia os cartões em background
+ */
 function removerItemMesaPorLinha(numMesa, linhaPlanilha) {
-  if (!linhaPlanilha) return toast("Erro: Linha não identificada", "erro");
+  if (!linhaPlanilha) {
+    if (typeof toast === "function") toast("Erro: Linha não identificada", "erro");
+    return;
+  }
+
+  if (typeof exibirModal !== "function") return;
 
   exibirModal({
     titulo: "Excluir Item",
     mensagem: "Deseja remover este item permanentemente da cozinha e da mesa?",
     tipo: "pergunta",
     aoConfirmar: () => {
-      toast("Excluindo item...", "info");
+      if (typeof toast === "function") toast("Excluindo item...", "info");
       
-      google.script.run
-        .withSuccessHandler(res => {
-          if (res.sucesso) {
-            toast("Item removido!", "success");
-            abrirModalSecundario(res.mesa); // Reabre com dados atualizados
-            if (typeof gerarCardsMesas === 'function') {
-               google.script.run.withSuccessHandler(gerarCardsMesas).getMesas();
-            }
-          } else {
-            exibirModal({ titulo: "Erro", mensagem: res.erro, tipo: "erro" });
-          }
+      fetch(URL_API_GOOGLE, {
+        method: "POST",
+        body: JSON.stringify({
+          acao: "EXCLUIR_ITEM_POR_LINHA_SERVIDOR",
+          nomeLoja: CONFIG.cliente.nomeFixo,
+          mesaNum: numMesa,
+          linha: linhaPlanilha
         })
-        .excluirItemPorLinhaServidor(numMesa, linhaPlanilha); // Nova função no servidor
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("Erro na requisição HTTP de exclusão.");
+        return response.json();
+      })
+      .then(res => {
+        if (res.sucesso) {
+          if (typeof toast === "function") toast("Item removido!", "success");
+          abrirModalSecundario(res.mesa); 
+          
+          if (typeof gerarCardsMesas === 'function') {
+            fetch(URL_API_GOOGLE, {
+              method: "POST",
+              body: JSON.stringify({ acao: "GET_MESAS", nomeLoja: CONFIG.cliente.nomeFixo })
+            })
+            .then(r => r.json())
+            .then(mesas => gerarCardsMesas(mesas));
+          }
+        } else {
+          exibirModal({ titulo: "Erro", mensagem: res.erro, tipo: "erro" });
+        }
+      })
+      .catch(err => console.error("Falha ao deletar item físico do banco:", err));
     }
   });
 }
 
-// Função de apoio para concluir a limpeza
+/**
+ * PIPELINE DE LIBERAÇÃO: Conclui a rotina de higienização e abre a mesa para novos consumos
+ */
 function concluirLimpezaMesa(num) {
   const btn = document.getElementById("btn-liberar-mesa");
   if (!btn) return;
 
-  // 1. Estado de Carregamento
   const textoOriginal = btn.innerHTML;
   btn.disabled = true;
-  btn.style.background = "#94a3b8"; // Cinza
+  btn.style.background = "#94a3b8"; 
   btn.innerHTML = `<span class="spinner"></span> LIBERANDO...`;
 
-  google.script.run
-    .withSuccessHandler(() => {
-      // 2. Estado de Sucesso
-      btn.style.background = "#059669"; // Verde escuro
-      btn.innerHTML = "✅ LIBERADA!";
-      
-      // Pequeno atraso para o usuário ver o "LIBERADA!" antes de fechar tudo
-      setTimeout(() => {
-        fecharModalDetalhes();
-        google.script.run.withSuccessHandler(gerarCardsMesas).getMesas();
-      }, 800);
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "MARCAR_MESA_LIVRE",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      mesaNum: num
     })
-    .withFailureHandler((err) => {
-      // 3. Estado de Erro
-      btn.disabled = false;
-      btn.style.background = "#ef4444"; // Vermelho
-      btn.innerHTML = "❌ ERRO AO LIBERAR";
-      console.error(err);
-      
-      // Volta ao normal após 2 segundos para tentar de novo
-      setTimeout(() => {
-        btn.style.background = "#22c55e";
-        btn.innerHTML = textoOriginal;
-      }, 2000);
-    })
-    .marcarMesaLivre(num);
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Falha ao tentar mudar estado lógico da mesa.");
+    return response.json();
+  })
+  .then(() => {
+    btn.style.background = "#059669"; 
+    btn.innerHTML = "✅ LIBERADA!";
+    
+    setTimeout(() => {
+      fecharModalDetalhes();
+      if (typeof gerarCardsMesas === 'function') {
+        fetch(URL_API_GOOGLE, {
+          method: "POST",
+          body: JSON.stringify({ acao: "GET_MESAS", nomeLoja: CONFIG.cliente.nomeFixo })
+        })
+        .then(r => r.json())
+        .then(mesas => gerarCardsMesas(mesas));
+      }
+    }, 800);
+  })
+  .catch(err => {
+    btn.disabled = false;
+    btn.style.background = "#ef4444"; 
+    btn.innerHTML = "❌ ERRO AO LIBERAR";
+    console.error("Erro operacional no encerramento de faxina:", err);
+    
+    setTimeout(() => {
+      btn.style.background = "#22c55e";
+      btn.innerHTML = textoOriginal;
+    }, 2000);
+  });
 }
-/* ============================================================
-   FLUXO DE PEDIDO (CARDÁPIO -> MESA)
-   ============================================================ */
+
+  
+/* =========================================================================
+   🛒 SUBSISTEMA: FLUXO DE LANÇAMENTO, ADICIONAIS E EXPEDIÇÃO DE COMANDAS (FETCH)
+   ========================================================================= */
+
+/**
+ * PIPELINE ENTRY: Prepara a interface do salão e chaveia a View para o Cardápio
+ */
 function iniciarPedidoParaMesa(num) {
-  // 1. Identifica os elementos
-  const modalGestao = document.getElementById('modalMesas'); // O modal principal
+  const modalGestao = document.getElementById('modalMesas'); 
   const secaoMesas = document.getElementById('secaoMesas');
   const secaoCardapio = document.getElementById('secaoCardapio');
   const detalhesMesa = document.getElementById('modalDetalhesMesa');
 
-  // 2. Limpeza de Interface: Esconde o que não deve aparecer
   if (detalhesMesa) detalhesMesa.style.display = 'none';
   if (secaoMesas) secaoMesas.style.display = 'none';
 
-  // 3. Exibição: Mostra o cardápio dentro do modal de gestão
   if (secaoCardapio) {
     secaoCardapio.style.display = 'flex';
     secaoCardapio.style.flexDirection = 'column';
   }
 
-  // 4. Configura a mesa ativa
+  // Isolamento do Estado Operacional da Comanda
   mesaSelecionadaGlobal = num;
   modoMesaAtivo = true;
   carrinhoMesa = [];
@@ -12950,24 +13247,30 @@ function iniciarPedidoParaMesa(num) {
   const aviso = document.getElementById('avisoMesaAtiva');
   if (aviso) aviso.innerText = `📍 Editando Mesa ${num}`;
 
-  // 5. Renderiza os itens
-  renderizarProdutosParaMesa();
-  atualizarBarraCarrinhoMesa();
+  if (typeof renderizarProdutosParaMesa === "function") renderizarProdutosParaMesa();
+  if (typeof atualizarBarraCarrinhoMesa === "function") atualizarBarraCarrinhoMesa();
 }
 
+/**
+ * VIEW COMANDA: Renderiza a folha de consumo temporária e calcula precificação agregada
+ */
 function abrirCarrinhoMesa() {
   if (carrinhoMesa.length === 0) {
-    return exibirModal({ 
-      titulo: "Carrinho Vazio", 
-      mensagem: "Adicione itens primeiro.", 
-      tipo: "alerta" 
-    });
+    if (typeof exibirModal === "function") {
+      exibirModal({ 
+        titulo: "Carrinho Vazio", 
+        mensagem: "Adicione itens primeiro.", 
+        tipo: "alerta" 
+      });
+    }
+    return;
   }
 
   const modal = document.getElementById("modalComandaMesa");
   const corpo = document.getElementById("corpoComandaMesa");
+  if (!modal || !corpo) return;
 
-  // 1. Cálculo do Total Geral (Produto já com preço promocional + Adicionais)
+  // Algoritmo de Redução: Acumula Preço Base + Sub-Matriz de Adicionais Ativos
   const totalMesa = carrinhoMesa.reduce((sum, item) => {
     const precoAdicionais = (item.adicionais || []).reduce((s, a) => s + (a.qtd * a.preco), 0);
     return sum + (item.qtd * (item.preco + precoAdicionais));
@@ -12979,12 +13282,10 @@ function abrirCarrinhoMesa() {
       
       <div style="max-height: 350px; overflow-y: auto; margin: 15px 0; padding-right: 5px;">
         ${carrinhoMesa.map((item, idx) => {
-          // 2. Lógica de Adicionais e Subtotal
           const totalAdicionaisItem = (item.adicionais || []).reduce((s, a) => s + (a.qtd * a.preco), 0);
           const subtotalItem = (item.preco + totalAdicionaisItem) * item.qtd;
 
-          // 3. Verificação de Promoção para o Visual
-          // Consideramos promoção se o preço atual for menor que o preço original salvo no addAoCarrinho
+          // Flag Booleana para acionamento do Badge promocional
           const temDesconto = item.precoOriginal && Number(item.preco) < Number(item.precoOriginal);
 
           return `
@@ -13052,8 +13353,13 @@ function abrirCarrinhoMesa() {
   modal.style.display = "flex";
 }
 
+/**
+ * ADICIONAIS CONTROLLER: Valida travas de inserção baseadas na parametrização de categorias
+ */
 function abrirModalAdicionaisMesa(indexNoCarrinho) {
   const item = carrinhoMesa[indexNoCarrinho];
+  if (!item) return;
+
   const infoCategoria = listaCategoriasGlobal.find(cat => 
     cat.nome.toUpperCase() === item.categoria.toUpperCase()
   );
@@ -13066,13 +13372,11 @@ function abrirModalAdicionaisMesa(indexNoCarrinho) {
   });
 
   if (adicionaisFiltrados.length === 0) {
-    toast("Não há adicionais para esta categoria.", "info");
+    if (typeof toast === "function") toast("Não há adicionais para esta categoria.", "info");
     return;
   }
 
   const totalJaAdicionado = (item.adicionais || []).reduce((acc, curr) => acc + curr.qtd, 0);
-  
-  // VERIFICAÇÃO PARA O ESTADO INICIAL
   const limiteAtingido = totalJaAdicionado >= limiteMax;
 
   let html = `
@@ -13113,8 +13417,7 @@ function abrirModalAdicionaisMesa(indexNoCarrinho) {
                                background: ${limiteAtingido ? '#cbd5e1' : '#6366f1'}; 
                                color:white; cursor: ${limiteAtingido ? 'not-allowed' : 'pointer'}; font-weight:bold;">+</button>
               </div>
-            </div>
-          `;
+            </div>`;
         }).join('')}
       </div>
 
@@ -13125,22 +13428,26 @@ function abrirModalAdicionaisMesa(indexNoCarrinho) {
     </div>
   `;
 
-  document.getElementById("corpoComandaMesa").innerHTML = html;
+  const comandaCorpo = document.getElementById("corpoComandaMesa");
+  if (comandaCorpo) comandaCorpo.innerHTML = html;
 }
 
+/**
+ * STATE ENFORCER: Modifica reativamente os contadores do DOM e bloqueia inserções extras ao atingir o teto
+ */
 function ajustarAdicionalMesa(idxItem, nomeAdicional, mudança) {
   const item = carrinhoMesa[idxItem];
+  if (!item) return;
   if (!item.adicionais) item.adicionais = [];
 
   const categoriaInfo = listaCategoriasGlobal.find(cat => 
     cat.nome.toUpperCase() === item.categoria.toUpperCase()
   );
   const limiteMax = (categoriaInfo && categoriaInfo.limite > 0) ? categoriaInfo.limite : 999;
-
   const totalAtual = item.adicionais.reduce((soma, ad) => soma + ad.qtd, 0);
 
   if (mudança > 0 && totalAtual >= limiteMax) {
-    toast(`Limite de ${limiteMax} atingido!`, "warning");
+    if (typeof toast === "function") toast(`Limite de ${limiteMax} atingido!`, "warning");
     return;
   }
 
@@ -13152,11 +13459,11 @@ function ajustarAdicionalMesa(idxItem, nomeAdicional, mudança) {
     if (adNoItem.qtd <= 0) {
       item.adicionais = item.adicionais.filter(a => a.nome !== nomeAdicional);
     }
-  } else if (mudança > 0) {
+  } else if (mudança > 0 && infoAd) {
     item.adicionais.push({ nome: infoAd.nome, preco: infoAd.preco, qtd: 1 });
   }
 
-  // ATUALIZAÇÃO DA TELA
+  // Sincronização em tempo real do DOM sem re-renderização estrutural
   const novaQtdIndividual = item.adicionais.find(a => a.nome === nomeAdicional)?.qtd || 0;
   const elementoQtd = document.getElementById(`qtd-ad-${nomeAdicional.replace(/\s+/g, '')}`);
   if (elementoQtd) elementoQtd.innerText = novaQtdIndividual;
@@ -13165,7 +13472,6 @@ function ajustarAdicionalMesa(idxItem, nomeAdicional, mudança) {
   const elementoLimite = document.getElementById("label-limite");
   if (elementoLimite) elementoLimite.innerText = novoTotalGeral;
 
-  // --- LOGICA PARA DESABILITAR/HABILITAR TODOS OS BOTÕES DE MAIS ---
   const atingiuLimite = novoTotalGeral >= limiteMax;
   const botoesMais = document.querySelectorAll('.btn-mais-adicional');
   
@@ -13176,11 +13482,11 @@ function ajustarAdicionalMesa(idxItem, nomeAdicional, mudança) {
   });
 }
 
-
+/**
+ * DATA PARSER & POST: Serializa os objetos complexos e despacha o payload do pedido via HTTP
+ */
 function finalizarLancamentoMesa() {
   const btn = document.getElementById("btnFinalizarPedido");
-  
-  // 1. Capturamos o texto do campo EXTRA (geral)
   const obsExtraGeral = document.getElementById("obsPedidoMesa")?.value.trim() || "";
   
   if (btn) {
@@ -13188,21 +13494,18 @@ function finalizarLancamentoMesa() {
     btn.innerHTML = "Enviando...";
   }
 
-  // 2. FORMATANDO ITENS (Individuais + Adicionais)
+  // Agrega e concatena strings de adicionais + observações individuais por linha
   const itensFormatados = carrinhoMesa.map(item => {
     const obsIndividual = (item.obs || "").trim();
-    
-    // --- Lógica de Adicionais ---
     const listaAds = item.adicionais || [];
+    
     const textoAdicionais = listaAds.length > 0 
       ? " + " + listaAds.map(a => `${a.qtd}x ${a.nome}`).join(", ") 
       : "";
     
-    // Cálculo do preço real deste item (Preço base + soma dos preços dos adicionais)
     const precoAdicionais = listaAds.reduce((s, a) => s + (a.qtd * a.preco), 0);
     const precoFinalUnitario = item.preco + precoAdicionais;
 
-    // Montagem do nome que aparecerá na cozinha/relatório
     let nomeFinal = item.nome + textoAdicionais;
     if (obsIndividual !== "") {
       nomeFinal += ` (${obsIndividual.toUpperCase()})`;
@@ -13211,51 +13514,76 @@ function finalizarLancamentoMesa() {
     return {
       ...item,
       nome: nomeFinal,
-      preco: precoFinalUnitario, // Enviamos o preço já somado para o banco
+      preco: precoFinalUnitario, 
       obs: "",
-      adicionais: listaAds // Mantemos o array original caso seu backend use separadamente
+      adicionais: listaAds 
     };
   });
 
-  // 3. MONTAGEM DO PEDIDO
   const pedido = {
     numMesa: mesaSelecionadaGlobal,
     itens: itensFormatados,
-    totalPedido: itensFormatados.reduce((sum, i) => sum + (i.qtd * i.preco), 0), // Total calculado
+    totalPedido: itensFormatados.reduce((sum, i) => sum + (i.qtd * i.preco), 0), 
     observacao: obsExtraGeral.toUpperCase(), 
     data: new Date().toISOString(),
     atendente: (typeof user !== 'undefined' && user.usuario) ? user.usuario : "SISTEMA"
   };
 
-  toast("Enviando pedido...", "info");
+  if (typeof toast === "function") toast("Enviando pedido...", "info");
 
-  // Chamada ao servidor
-  google.script.run.withSuccessHandler(res => {
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "REGISTRAR_PEDIDO_CARDAPIO",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      pedido: pedido
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Falha no transporte HTTP do pedido.");
+    return response.json();
+  })
+  .then(res => {
     if (res.sucesso) {
       carrinhoMesa = []; 
       if (typeof atualizarBarraCarrinhoMesa === 'function') atualizarBarraCarrinhoMesa(); 
-      fecharComandaMesa();
+      if (typeof fecharComandaMesa === 'function') fecharComandaMesa();
 
-      document.getElementById("secaoCardapio").style.display = "none";
-      document.getElementById("secaoMesas").style.display = "flex";
+      const cardapioSecao = document.getElementById("secaoCardapio");
+      const mesasSecao = document.getElementById("secaoMesas");
+      if (cardapioSecao) cardapioSecao.style.display = "none";
+      if (mesasSecao) mesasSecao.style.display = "flex";
 
-      exibirModal({
-        titulo: "Pedido Enviado!",
-        mensagem: `Mesa ${mesaSelecionadaGlobal} registrada com sucesso.`,
-        tipo: "sucesso"
-      });
+      if (typeof exibirModal === "function") {
+        exibirModal({
+          titulo: "Pedido Enviado!",
+          mensagem: `Mesa ${mesaSelecionadaGlobal} registrada com sucesso.`,
+          tipo: "sucesso"
+        });
+      }
 
       if (typeof abrirModalSecundario === 'function') abrirModalSecundario(res.mesa);
       if (typeof carregarMesasModal === 'function') carregarMesasModal(); 
     } else {
-      exibirModal({ titulo: "Erro", mensagem: res.erro, tipo: "erro" });
+      if (typeof exibirModal === "function") {
+        exibirModal({ titulo: "Erro", mensagem: res.erro, tipo: "erro" });
+      }
       if (btn) {
         btn.disabled = false;
         btn.innerHTML = "ENVIAR PARA COZINHA";
       }
     }
-  }).registrarPedidoCardapio(pedido);
+  })
+  .catch(err => {
+    console.error("Erro crítico no envio da comanda:", err);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = "ENVIAR PARA COZINHA";
+    }
+  });
 }
+
+  
 /* ============================================================
    FUNÇÕES AUXILIARES E LIMPEZA
    ============================================================ */
