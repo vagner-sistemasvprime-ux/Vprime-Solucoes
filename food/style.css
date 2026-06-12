@@ -1,0 +1,2299 @@
+
+/* =====================================================
+   VARIÁVEIS DE TEMA
+===================================================== */
+:root {
+  --bg: #f4f6f8;
+  --card: #ffffff;
+  --primary: #2563eb;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+  --info: #06b6d4;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --radius: 12px;
+}
+
+/* =====================================================
+   RESET BÁSICO
+===================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* =====================================================
+   INPUTS, SELECTS E TEXTAREAS
+===================================================== */
+input, select, textarea {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 8px;
+ 
+}
+
+ textarea {
+width: 95%;
+  }
+/* =====================================================
+   BOTÕES GLOBAIS
+===================================================== */
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+button:hover { opacity: 0.9; }
+
+.btn-primary { background: var(--primary); color:#fff; }
+.btn-success { background: var(--success); color:#fff; }
+.btn-danger  { background: var(--danger); color:#fff; }
+.btn-info    { background: var(--info); color:#fff; }
+
+.btn-logout {
+  background: #f97316;
+  color: #fff;
+}
+
+.btn-add {
+  background: #F59E0B; color: white; border: none;
+  padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;
+}
+
+.btn-limpar-carrinho {
+  background-color: #f44336; /* Vermelho */
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.btn-limpar-carrinho:hover {
+  background-color: #d32f2f;
+}
+
+.btn-limpar-carrinho:active {
+  transform: scale(0.98);
+}
+
+#txtMensagemTransmissao, #configMensagem {
+  text-transform: none !important;
+}
+
+/* =====================================================
+   ADMIN LAYOUT
+===================================================== */
+.admin-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* 🔑 ocupa a tela toda */
+}
+
+
+/* HEADER */
+.admin-header {
+  background: var(--card);
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.admin-header .logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-header .logo-area img {
+  height: 60px;
+}
+
+/* MENU ADMIN */
+.admin-menu {
+  background: var(--card);
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  height: 60px;
+  flex-shrink: 0; 
+}
+
+.admin-menu button {
+  background: transparent;
+  padding: 10px 14px;
+  border-radius: 10px;
+  transition: 0.2s;
+}
+
+.admin-menu button:hover,
+.admin-menu button.ativo {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* CONTEÚDO ADMIN */
+.admin-content {
+  position: relative;
+  flex: 1;               /* 🔑 ocupa TODO espaço restante */
+  overflow-y: auto;
+  padding: 18px;
+}
+
+
+
+
+.admin-section h3 {
+  margin: 0 0 16px 0;
+}
+
+
+
+
+.admin-section {
+  position: absolute;
+  inset: 0;              /* 🔑 top, right, bottom, left = 0 */
+  display: none;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+
+
+@keyframes fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* CARDS ADMIN */
+
+.admin-layout .dash-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  margin-bottom: 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 80px;
+  transition: transform 0.2s;
+}
+
+.admin-layout .dash-card:hover {
+  transform: translateY(-3px);
+}
+
+@media (max-width: 800px) {
+    #card-produtos > div {
+        flex-direction: column !important;
+    }
+    #card-produtos > div > div {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+    }
+}
+
+.dash-cancelados {
+  background: #ffe5e5;
+  color: #a10000;
+  font-weight: bold;
+}
+
+/* DASHBOARD / GRID */
+.admin-layout .dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+/* SUBMENU CADASTROS */
+.admin-layout .submenu {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+/* FILTROS GERAIS */
+.dash-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+  align-items: stretch;
+}
+
+.dash-filtros > div,
+.dash-filtros > button {
+  flex: 1 1 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-filtros > button {
+  align-self: flex-start;
+}
+
+/
+/* TABELAS */
+#sec-relatorios table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#sec-relatorios div[style*="overflow-x:auto"] {
+  overflow-x: auto;
+}
+
+/* BADGES */
+.badge-pedido {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.badge-balcao {
+  background: #f1c40f;
+  color: #000;
+}
+
+.badge-delivery {
+  background: #2ecc71;
+  color: #fff;
+}
+
+/* MODAIS */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background: #fff;
+  width: 95%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-content * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.modal-content input,
+.modal-content textarea,
+.modal-content select {
+  width: 100%;
+  max-width: 100%;
+}
+
+.modal-botoes {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.modal-botoes button {
+  flex: 1;
+}
+
+/* TOASTS */
+.toast, #msg, #msgcadastro {
+  min-width: 220px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  color: #fff;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateY(20px);
+  
+}
+
+#msg.info, #msgcadastro.info { background-color: #06b6d4; }
+#msg.success, #msgcadastro.success { background-color: #16a34a; }
+#msg.error, #msgcadastro.error { background-color: #dc2626; }
+
+.toast.show, #msg.show, #msgcadastro.show { opacity: 1; transform: translateY(0); }
+
+/* LOADING GLOBAL */
+.loading-overlay {
+  position: fixed;
+  top:0; left:0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000007;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #ddd;
+  border-top: 5px solid #2ecc71;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* RESPONSIVIDADE */
+@media (max-width: 900px) {
+  .dash-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+  }
+ 
+  #submenuRelatorios {
+    min-width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    height: 100px;
+  
+  }
+}
+
+@media (max-width: 600px) {
+  .modal-content { width: 95%; max-height: 95vh; padding: 12px; }
+}
+
+
+
+/* ===============================
+   ADMIN CARDS (CATEG / USER / PROD)
+================================ */
+
+.admin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+ 
+}
+
+/* Título */
+.admin-card h3 {
+  font-size: 18px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+/* Formulários */
+.admin-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-form input,
+.admin-form select {
+  flex: 1;
+  min-width: 160px;
+}
+
+.admin-form button {
+  min-width: 120px;
+}
+
+/* Grid para produtos */
+.admin-form.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+  gap: 10px;
+}
+
+/* Listas */
+.admin-list {
+  margin-top: 8px;
+  list-style: none;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #fafafa;
+}
+
+/* Itens da lista */
+.admin-list li {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.admin-list li:last-child {
+  border-bottom: none;
+}
+
+.admin-list li:hover {
+  background: #eef4ff;
+  transform: translateX(4px);
+}
+
+/* Produtos: lista maior */
+.lista-produtos {
+  max-height: 340px;
+}
+
+/* Filtros de produtos */
+.filtros-produtos {
+  margin-top: 10px;
+}
+
+
+/* ===============================
+   CAIXA – LAYOUT EXCLUSIVO
+================================ */
+
+.caixa-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.caixa-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* Colunas */
+.caixa-coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Cards */
+.caixa-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.caixa-card h2,
+.caixa-card h3,
+.caixa-card h4 {
+  margin-bottom: 10px;
+}
+
+/* Carrinho */
+.caixa-carrinho table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.caixa-carrinho th,
+.caixa-carrinho td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+/* Total */
+.caixa-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f1f5f9;
+  border-left: 6px solid #16a34a;
+  font-size: 18px;
+}
+
+/* Pagamento */
+.caixa-pagamentos {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.caixa-pagamentos button {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: #e5e7eb;
+  font-weight: 600;
+}
+
+.caixa-pagamentos button.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* Botão Finalizar */
+.caixa-finalizar {
+  margin-top: 10px;
+  padding: 14px;
+  font-size: 18px;
+  border-radius: 12px;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .caixa-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ===============================
+   PRODUTOS DO CAIXA – GRID 5 COLUNAS
+================================ */
+#produtosCaixa {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+
+  max-height: 180px;   /* mantém a altura reduzida */
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* Card individual do produto */
+.produto-caixa {
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 13px;
+  transition: 0.15s;
+}
+
+.produto-caixa:hover {
+  background: #eef2ff;
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.produto-caixa strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.produto-caixa span {
+  font-size: 12px;
+  color: var(--muted);
+}
+@media (max-width: 900px) {
+  #produtosCaixa {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  #produtosCaixa {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+/* ===============================
+   FORMAS DE PAGAMENTO – ATIVO
+================================ */
+.pagamento-formas button {
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.pagamento-formas button.ativo {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+/* ===========================
+   STATUS DOS PEDIDOS – CAIXA
+=========================== */
+
+.status-pedidos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+
+#observacoes{
+
+width: 98%;
+}
+
+.status-box {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 180px; 
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.status-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* BADGES */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.status-badge.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.info {
+  background: #cffafe;
+  color: #155e75;
+}
+
+/* DESTAQUES POR TIPO */
+.status-box.bloqueado {
+  border-left: 5px solid #dc2626;
+}
+
+.status-box.pendente {
+  border-left: 5px solid #f59e0b;
+}
+
+.status-box.pronto {
+  border-left: 5px solid #16a34a;
+}
+
+.status-box.delivery {
+  border-left: 5px solid #06b6d4;
+}
+/* ===========================
+   ITENS DAS LISTAS – CAIXA
+=========================== */
+
+.status-list > div {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Remove margem do último item */
+.status-list > div:last-child {
+  margin-bottom: 0;
+}
+
+/* HOVER */
+.status-list > div:hover {
+  background: #f1f5f9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+}
+
+
+.coluna-status .lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
+
+
+.app-header {
+  height: 64px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* LOGO */
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-area img {
+  height: 36px;
+  width: auto;
+}
+
+.logo-area span {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+/* AÇÕES */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* BOTÕES */
+.header-actions button {
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Atualizar */
+.btn-refresh {
+  background: #fa9643;
+  color: #e2e8f0;
+}
+
+.btn-refresh:hover {
+  background: #475569;
+}
+
+/* Logout */
+.btn-logout {
+  background: #dc2626;
+  color: #fff;
+}
+
+.btn-logout:hover {
+  background: #b91c1c;
+}
+
+
+/* OVERLAY */
+.app-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+}
+
+/* CONTAINER */
+.app-modal {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  animation: modalScale .25s ease;
+}
+
+/* HEADER */
+.app-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.app-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+#appModalIcon {
+  font-size: 22px;
+}
+
+/* BODY */
+.app-modal-body {
+  padding: 16px;
+  font-size: 15px;
+  color: #334155;
+}
+
+/* FOOTER */
+.app-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* BOTÕES */
+.app-modal-footer button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* TIPOS */
+.btn-confirm {
+  background: #22c55e;
+  color: #052e16;
+}
+
+.btn-confirm:hover {
+  background: #16a34a;
+}
+
+.btn-cancel {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.btn-cancel:hover {
+  background: #d1d5db;
+}
+
+/* ANIMAÇÃO */
+@keyframes modalScale {
+  from { transform: scale(.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+
+
+.toast {
+  min-width: 260px;
+  padding: 14px 18px;
+  margin-top: 80px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateX(50px);
+  transition: all 0.4s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,.2);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast.vermelho {
+  background: #d32f2f;
+}
+
+.toast.urgente {
+  background: #f57c00;
+  font-weight: bold;
+}
+
+
+/* ===============================
+   TOAST FECHAMENTO DE CAIXA
+================================ */
+
+.toast-fechamento {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  max-width: 360px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  z-index: 99999;
+  display: none;
+  animation: slideInToast 0.4s ease;
+}
+
+/* 🔴 Fora do horário */
+.toast-fechamento.vermelho {
+  background: linear-gradient(135deg, #c62828, #b71c1c);
+  border-left: 6px solid #ff5252;
+}
+
+/* 🟠 Aviso / urgente */
+.toast-fechamento.urgente {
+  background: linear-gradient(135deg, #f57c00, #ef6c00);
+  border-left: 6px solid #ffd54f;
+}
+
+/* Texto forte no título */
+.toast-fechamento strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+/* Animação */
+@keyframes slideInToast {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .toast-fechamento {
+    right: 10px;
+    left: 10px;   
+    max-width: unset;
+  }
+}
+
+
+.produto-card {
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  margin: 8px;
+  padding: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+
+.produto-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+
+.produto-imagem img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.produto-info {
+  text-align: center;
+  margin-top: 5px;
+}
+
+.produto-nome {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.produto-preco {
+  color: #555;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.btn-detalhes {
+  margin-top: 8px;
+  padding: 3px 6px;
+  font-size: 12px;
+  border-radius: 5px;
+  border: none;
+  background-color: #2196F3;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-detalhes:hover {
+  background-color: #1976D2;
+}
+
+
+
+
+//COZINHA//
+
+.btnCozinha {
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
+}
+
+.btnCozinha.verde { background:#2ecc71; }
+.btnCozinha.amarelo { background:#f1c40f; color:#000; }
+.btnCozinha.vermelho { background:#e74c3c; }
+.btnCozinha.preto { background:#2c3e50; }
+
+.btnCozinha.ativo {
+  outline: 3px solid #000; /* Borda externa preta para destaque */
+  outline-offset: 2px;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+
+/* AVISO COZINHA */
+.aviso-cozinha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  background: #f5f5f5;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  font-size: 14px;
+}
+
+/* Barra de cor */
+.aviso-cor {
+  width: 10px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+/* Texto */
+.aviso-info strong {
+  display: block;
+  font-size: 15px;
+}
+
+.aviso-info span {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* CORES */
+.aviso-cozinha.verde .aviso-cor {
+  background: #2ecc71;
+}
+
+.aviso-cozinha.amarelo .aviso-cor {
+  background: #f1c40f;
+}
+
+.aviso-cozinha.vermelho .aviso-cor {
+  background: #e74c3c;
+}
+
+.aviso-cozinha.extremo .aviso-cor {
+  background: #8e44ad;
+}
+
+/* Força os cards de pedidos a terem fundo branco e letras pretas sempre */
+.card-pedido, .pedido-item, .lista-pedidos div {
+  background-color: white !important;
+  color: black !important;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 5px;
+}
+
+/* Estilo para as colunas não sumirem no fundo preto */
+.coluna-status h3 {
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.toast-pix {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 999999;
+}
+
+.toast-pix.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-8px);
+}
+
+.toast-pix.sucesso {
+  background: #2e7d32;
+}
+
+.toast-pix.erro {
+  background: #c62828;
+}
+
+
+
+/* BOTÃO PIX MODERNO */
+.btn-pix {
+  background: linear-gradient(135deg, #22c55e, #16a34a); /* verde vibrante */
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35);
+}
+
+.btn-pix:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.45);
+}
+
+.btn-pix:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.35);
+}
+
+
+#submenuRelatorios {
+  flex-shrink: 0;        /* 🔴 impede sumir */
+  position: relative;
+  z-index: 10;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
+
+
+#submenuRelatorios button:hover {
+   background: #3B82F6;
+  
+}
+
+#submenuRelatorios button {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+#sec-relatorios {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+@media (max-width: 900px) {
+  #submenuRelatorios {
+    display: flex !important;
+    flex-direction: row;
+    min-height: 60px;
+    max-height: 80px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  #submenuRelatorios button {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+
+
+
+
+.btn-mesas {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: #2d89ef;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+
+/* Layout Base do Modal */
+/* O FUNDO (Overlay) */
+#modalMesas {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  display: none; /* Será alterado para flex via JS */
+  align-items: center;
+  justify-content: center;
+  z-index: 999999 !important;
+  backdrop-filter: blur(4px);
+}
+
+/* A CAIXA BRANCA (Onde ficam as mesas) */
+#modalMesas .modal-container {
+  background: #f1f5f9 !important;
+  width: 95% !important;
+  max-width: 1100px !important;
+  height: 90vh !important;
+  border-radius: 16px !important;
+  display: flex !important; /* Força o flex para o layout 2/3 e 1/3 */
+  flex-direction: column !important;
+  overflow: hidden !important;
+  position: relative !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Garante que o conteúdo interno apareça */
+.modal-content-wrapper {
+  display: flex !important;
+  flex: 1 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+/* ÁREA DAS MESAS (2/3 do Modal) */
+.mesas-area {
+  flex: 2; /* Ocupa 2 partes do espaço */
+  overflow-y: auto;
+  padding: 25px;
+}
+
+/* Grid configurado para MÁXIMO 4 colunas */
+.mesas-grid {
+  display: grid;
+  /* Cria colunas de no mínimo 120px, mas no máximo 4 por fila */
+  grid-template-columns: repeat(auto-fill, minmax(calc(25% - 20px), 1fr));
+  gap: 20px;
+}
+
+/* ÁREA DE DETALHES (1/3 do Modal) */
+.modal-secundario {
+  flex: 1; /* Ocupa 1 parte do espaço (exatamente 1/3) */
+  background: #ffffff;
+  border-left: 2px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -5px 0 15px rgba(0,0,0,0.05);
+  z-index: 10;
+}
+.header-detalhes {
+  padding: 15px;
+  background: #eee;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn-voltar-mobile { display: none; cursor: pointer; }
+
+/* Cards das Mesas */
+/* Estilo do Card para caber bem em 4 colunas */
+.mesa-card {
+  aspect-ratio: 1 / 1;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-width: 2px !important;
+  border-style: solid !important;
+}
+
+
+/* Status: LIVRE (Borda Cinza Tracejada) */
+.status-livre { 
+  border-color: #cbd5e1 !important; 
+  border-style: dashed !important;
+  color: #64748b;
+}
+
+/* Status: OCUPADA (Borda Amarela Sólida) */
+.status-ocupada { 
+  border-color: #facc15 !important; 
+  background-color: #fffef0 !important; /* Fundo levemente amarelado */
+  color: #854d0e;
+}
+
+/* Status: PAGA/FECHADA (Borda Verde Água) */
+.status-paga { 
+  border-color: #32bcad !important; 
+  background-color: #f0fdfa !important;
+  color: #134e4a;
+}
+
+/* Status: ATRASADA ou ALERTA (Borda Vermelha) */
+.status-atrasada { 
+  border-color: #ef4444 !important; 
+  background-color: #fef2f2 !important;
+  color: #991b1b;
+}
+
+/* Efeito de Hover para destacar a borda ao passar o mouse */
+.mesa-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  filter: brightness(0.98);
+}
+/* --- AJUSTE PARA TELAS MENORES (TABLETS/CELULAR) --- */
+@media (max-width: 1024px) {
+  .mesas-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+}
+
+.mesa-bloqueada {
+  border-color: #dc2626 !important; /* Vermelho forte */
+  border-style: solid !important;
+  background-color: #fff1f2 !important; /* Fundo rosado */
+  cursor: not-allowed !important;
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+@media (max-width: 800px) {
+  .modal-secundario {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    flex: none; /* Desativa o 1/3 no celular para cobrir a tela */
+    display: none; 
+    border-left: none;
+  }
+}
+
+  .btn-voltar-mobile {
+    display: block; /* Aparece no celular para conseguir voltar às mesas */
+    background: #444;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+  }
+
+/* Legenda de cores */
+.mesa-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  margin-left: 10px;
+}
+
+.legenda-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legenda-item span {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: inline-block;
+  border: 1px solid #ccc;
+}
+
+/* Aproveita as cores já definidas para os status */
+.legenda-item .status-livre { background-color: #f0f0f0; }
+.legenda-item .status-ocupada { background-color: #ffeb3b; }
+.legenda-item .status-paga { background-color: #4caf50; }
+.legenda-item .status-atrasada { background-color: #f44336; }
+.status-limpeza {
+  background-color: #fff7ed !important;
+  border-color: #f97316 !important;
+  color: #c2410c !important;
+}
+
+/* Efeito de desfoque no modal enquanto processa */
+.processando {
+  opacity: 0.5;
+  pointer-events: none; /* Impede cliques duplos */
+  cursor: wait;
+}
+
+.loader-mesa {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #6366f1; /* Cor azul igual ao seu botão de lançar */
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 0.8s linear infinite;
+  margin: 20px auto;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Estilo para Computadores (Padrão) */
+.container-cozinha {
+  height: 180px; 
+  overflow-y: auto; 
+  padding: 8px;
+  padding-right: 5px; 
+  margin-bottom: 10px; 
+  border: 1px solid #e2e8f0; 
+  border-radius: 8px; 
+  background: #f8fafc; 
+  box-sizing: border-box;
+}
+
+/* Estilo para Celulares (Telas menores que 600px) */
+@media (max-width: 600px) {
+  .container-cozinha {
+    /* Ajuste para 350px ou 'vh' (porcentagem da altura da tela) */
+    height: 350px; 
+    /* Se quiser que ele ocupe o máximo de espaço disponível, pode usar:
+       height: 50vh; 
+    */
+  }
+}
+
+
+
+
+
+
+
+
+  /* CONFIGURAÇÃO DO CONTAINER PAI */
+  #card-parametros {
+    display: none; 
+    width: 100% !important;
+    height: auto !important; /* Garante que o container cresça com o conteúdo */
+    position: relative !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin-top: 30px !important;
+  }
+
+  /* 📱 AJUSTES EXCLUSIVOS PARA CELULAR */
+  @media (max-width: 899px) {
+    #card-parametros[style*="display: block"] {
+      display: block !important;
+      /* Empurra tudo para baixo para não ficar sob o menu ou header */
+      padding-top: 40px !important; 
+      margin-top: 10px !important;
+    }
+
+    .admin-param-wrapper {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 25px !important; /* Espaço generoso entre os cards */
+    }
+
+    .card-individual-param {
+      width: 100% !important;
+      position: relative !important;
+      /* Impede que o card suba ou se sobreponha */
+      float: none !important;
+      clear: both !important;
+    }
+  }
+
+  /* 💻 AJUSTES PARA COMPUTADOR */
+  @media (min-width: 900px) {
+    #card-parametros[style*="display: block"] {
+      display: block !important;
+    }
+    .admin-param-wrapper {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+  }
+
+  /* ESTILO VISUAL DOS CARDS */
+  .card-individual-param {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+  }
+
+  .card-individual-param h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+  }
+
+  .card-individual-param label {
+    display: block;
+    font-weight: bold;
+    font-size: 0.85rem;
+    margin-top: 12px;
+  }
+
+  .card-individual-param input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    margin-top: 5px;
+    box-sizing: border-box;
+  }
+
+  .btn-azul { background: #3b82f6; color: white; border:none; padding:12px; border-radius:8px; width:100%; cursor:pointer; margin-top:15px; font-weight:bold;}
+  .btn-verde { background: #10b981; color: white; border:none; padding:12px; border-radius:8px; width:100%; cursor:pointer; margin-top:15px; font-weight:bold;}
+  .btn-laranja { background: #f97316; color: white; border:none; padding:12px; border-radius:8px; width:100%; cursor:pointer; margin-top:15px; font-weight:bold;}
+
+
+  /* Container para permitir scroll lateral no celular */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#tabelaRelatorios {
+  min-width: 600px; /* Garante que os dados não fiquem espremidos */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Arredondar cantos da tabela */
+#tabelaRelatorios thead tr:first-child th:first-child { border-top-left-radius: 8px; }
+#tabelaRelatorios thead tr:first-child th:last-child { border-top-right-radius: 8px; }
+
+#tabelaRelatorios tbody tr:hover {
+  background-color: #f1f7ff !important; /* Destaque ao passar o mouse */
+  transition: background-color 0.2s ease;
+}
+
+#tabelaRelatorios td, #tabelaRelatorios th {
+  white-space: nowrap; /* Impede que o texto quebre linha e bagunce a altura */
+  padding: 12px 15px;
+}
+
+#nomeUsuarioLogado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-5px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Garante que o card de produtos se comporte como um bloco vertical */
+#card-produtos {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  
+}
+
+/* Ajuste do formulário para não esmagar a lista */
+.admin-form.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+/* O PONTO CHAVE: Estilização da Lista <ul> */
+.lista-produtos {
+  display: block !important; /* Força sair de qualquer grid/flex anterior */
+  width: 100%;
+  margin: 0;
+  height: 400px;
+  padding: 0;
+  list-style: none;
+  max-height: 500px; /* Altura máxima com scroll para não esticar demais a tela */
+  overflow-y: auto;  /* Ativa o scroll se tiver muitos produtos */
+  border-top: 1px solid #e2e8f0;
+  padding-top: 15px;
+}
+
+/* Estilo de cada <li> para garantir visibilidade */
+.lista-produtos li {
+  background: #f8fafc;
+  margin-bottom: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #1e293b; /* Cor do texto forte */
+  
+}
+
+/* Container do Spinner */
+#spinner-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.7);
+  display: none; /* Escondido por padrão */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100007;
+  backdrop-filter: blur(2px);
+}
+
+/* O círculo giratório */
+.loader-circle {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loader-text {
+  margin-top: 15px;
+  font-family: sans-serif;
+  font-weight: bold;
+  color: #3498db;
+}
+
+
+/* Fundo escurecido do Modal */
+.meu-modal {
+  display: none; 
+  position: fixed; 
+  z-index: 9999; 
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.6);
+}
+
+/* Caixa branca do Modal */
+.modal-conteudo {
+  background-color: #fefefe;
+  margin: 5% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 800px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #4A86E8;
+  padding-bottom: 10px;
+}
+
+.btn-fechar {
+  color: #aaa;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-fechar:hover { color: #000; }
+
+/* Estilos da Tabela no Modal */
+#tabelaCompras { width: 100%; border-collapse: collapse; margin-top: 20px; }
+#tabelaCompras th { background: #4A86E8; color: white; padding: 12px; text-align: left; }
+#tabelaCompras td { padding: 10px; border-bottom: 1px solid #ddd; }
+
+
+/* Estilo do Botão de Fechar */
+.btn-fechar {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 32px;
+  height: 32px;
+  background-color: #f1f5f9; /* Fundo cinza bem claro */
+  color: #64748b; /* Cor do X */
+  border-radius: 50%; /* Faz o botão ficar redondo */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  line-height: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  z-index: 10;
+}
+
+/* Efeito ao passar o mouse */
+.btn-fechar:hover {
+  background-color: #ef4444; /* Fundo vermelho suave */
+  color: white; /* X fica branco */
+  transform: rotate(90deg); /* Pequena rotação para dar um charme */
+}
+
+/* Ajuste necessário no Conteúdo do Modal */
+.modal-conteudo {
+  position: relative; /* Importante para o btn-fechar se posicionar em relação a ele */
+  padding: 30px; /* Espaço extra para o botão não encostar no título */
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+
+.categorias-nav {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto; /* Permite rolar pro lado se tiver muita categoria */
+  padding: 10px 0;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.btn-cat {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+.btn-cat:hover {
+  background: #f0f0f0;
+}
+
+.btn-cat.active {
+  background: #2196F3; /* Cor de destaque */
+  color: white;
+  border-color: #2196F3;
+  font-weight: bold;
+}
+
+/* Ajuste no Grid de produtos */
+#produtosCaixa {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.btn-detalhes-clean {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #ddd;
+  color: #666;
+  padding: 4px 0;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-detalhes-clean:hover {
+  background: #f8f8f8;
+  border-color: #bbb;
+  color: #333;
+}
+
+/* Garante que o nome do produto não quebre o layout se for muito longo */
+.produto-nome {
+  font-weight: bold;
+  font-size: 13px;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.produto-nome {
+  font-weight: bold;
+  font-size: 13px;
+  line-height: 1.2;       /* Altura da linha para não ficar colado */
+  margin-bottom: 8px;
+  color: #333;
+  
+  /* Quebra de linha automática */
+  word-wrap: break-word;  
+  overflow-wrap: break-word;
+  
+  /* Limita a no máximo 2 ou 3 linhas (opcional, para manter padrão) */
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Número máximo de linhas antes de colocar "..." */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  
+  /* Garante uma altura mínima para os cards ficarem alinhados */
+  min-height: 32px; 
+}
+
+#filtroProdutosCaixa:focus {
+  border-color: #2196F3;
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.3);
+  outline: none;
+}
+
+/* Estilo padrão dos botões de filtro */
+.btn-filtro {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 4px;
+}
+
+/* Estilo do botão quando estiver ATIVO */
+.btn-filtro.active {
+  background-color: #2196F3; /* Azul */
+  color: white;
+  border-color: #0b7dda;
+  font-weight: bold;
+}
+
+
+
+.abertura-caixa-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+
+.card-abertura {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.icon-header {
+  font-size: 50px;
+  margin-bottom: 15px;
+}
+
+.subtitulo {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-bottom: 25px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  padding: 5px 15px;
+  transition: border-color 0.3s;
+}
+
+.input-group:focus-within {
+  border-color: #6366f1;
+}
+
+.currency-prefix {
+  font-weight: bold;
+  color: #94a3b8;
+  margin-right: 10px;
+}
+
+.card-abertura input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  padding: 12px 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #1e293b;
+  outline: none;
+}
+
+.btn-abrir-caixa {
+  width: 100%;
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.btn-abrir-caixa:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
+}
+
+.ajuda-texto {
+  display: block;
+  margin-top: 15px;
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+/* Limita a largura da coluna esquerda e evita que ela empurre a direita */
+/* Coluna Esquerda */
+.caixa-coluna {
+  width: 100%;       /* Tenta ocupar o espaço disponível */
+  max-width: 750px;  /* LIMITE FIXO: Não deixa passar disso */
+  min-width: 0;      /* ESSENCIAL: Permite que a coluna encolha e aceite o scroll das categorias */
+  box-sizing: border-box;
+  flex: 1;           /* Se estiver em um layout flex, isso ajuda a dividir o espaço */
+}
+
+/* Configuração da barra de categorias */
+.categorias-nav {
+  display: flex;
+  overflow-x: auto;   /* Scroll horizontal ativado */
+  overflow-y: hidden; /* Garante que não apareça scroll vertical */
+  white-space: nowrap;
+  width: 100%;        /* Ocupa apenas o que a .caixa-coluna permitir */
+  gap: 8px;
+  padding: 10px 0;
+  scrollbar-width: thin;
+  /* Garante que o container de categorias não force a largura do pai */
+  min-width: 0; 
+}
+
+/* Estilização da barra de rolagem para Chrome, Safari e Edge */
+.categorias-nav::-webkit-scrollbar {
+  height: 6px;
+}
+
+.categorias-nav::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.categorias-nav::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.categorias-nav::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
+}
+
+/* Garante que o botão de categoria não encolha para caber no espaço */
+.btn-cat {
+  flex-shrink: 0; 
+  /* Seus outros estilos de botão aqui... */
+}
+
+/* Ajuste no container de produtos para não vazar */
+#produtosCaixa {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  width: 100%;
+}
+
+
+/* Container de cada linha de variação */
+.variacao-item {
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Espaço pequeno e fixo entre os elementos */
+    width: 100%; /* Força a ocupar apenas a largura do pai */
+    box-sizing: border-box; /* Garante que padding/bordas não aumentem a largura */
+    padding: 4px 0; /* Espaçamento vertical entre linhas */
+}
+
+/* Input do Nome (O que deve esticar/encolher) */
+.v-nome {
+    flex: 1;      /* Ocupa todo o espaço que sobrar */
+    min-width: 0; /* PERMITE que ele encolha para caber no container */
+    padding: 8px !important;
+}
+
+/* Input do Preço (Compacto) */
+.v-preco {
+    width: 30%;   /* Largura fixa pequena para o preço */
+    flex-shrink: 0; /* NÃO deixa o campo de preço ser esmagado */
+    text-align: center;
+    padding: 8px 4px !important;
+}
+
+/* Botão de Remover (O seu botão de 24px) */
+.btn-remover-var {
+    width: 20%;   /* Largura fixa */
+    height: 24px;  /* Altura fixa */
+    flex-shrink: 0; /* NÃO deixa o botão sumir ou encolher */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff1f0;
+    color: #e74c3c;
+    border: 1px solid #ffa39e;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+}
+
+.btn-remover-var:hover {
+    background: #fecaca;
+}
+
+
+.modal-overlay-prime {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7); z-index: 9999; backdrop-filter: blur(5px);
+  justify-content: center; align-items: center;
+}
+
+.modal-content-prime {
+  background: #fdfdfd; width: 90%; max-width: 1100px; height: 85vh;
+  border-radius: 15px; display: flex; flex-direction: column; overflow: hidden;
+  animation: modalSurgir 0.3s ease-out;
+}
+
+@keyframes modalSurgir { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.modal-header-prime {
+  padding: 20px 30px; background: #fff; border-bottom: 1px solid #eee;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.modal-header-prime h2 { margin: 0; color: #333; font-size: 1.5em; }
+.modal-header-prime h2 span { color: #0d47a1; }
+.btn-fechar { background: none; border: none; font-size: 30px; cursor: pointer; color: #999; }
+
+/* ABAS */
+.tabs-prime { display: flex; background: #eee; padding: 0 10px; }
+.tab-btn {
+  padding: 15px 25px; border: none; background: none; cursor: pointer;
+  font-weight: bold; color: #666; border-bottom: 3px solid transparent;
+}
+.tab-btn.active { color: #0d47a1; border-bottom-color: #0d47a1; background: #fff; }
+
+.tab-content { display: none; padding: 30px; flex-grow: 1; overflow-y: auto; }
+.tab-content.active { display: block; }
+
+/* FORM E TABELA (ESTILO PRIME) */
+.grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 25px; }
+.grid-form input, .grid-form select { padding: 12px; border: 1px solid #ddd; border-radius: 6px; }
+.btn-confirmar { background: #2e7d32; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+.tabela-prime { width: 100%; border-collapse: collapse; }
+.tabela-prime th { background: #f5f5f5; padding: 12px; text-align: left; }
+.tabela-prime td { padding: 12px; border-bottom: 1px solid #eee; }
+
+.placeholder-cashback { text-align: center; padding: 50px; color: #999; }
+.placeholder-cashback i { font-size: 50px; margin-bottom: 20px; }
+
+
+/* Container que deixa os elementos lado a lado */
+.grupo-linha {
+  display: flex;
+  gap: 15px;          /* Espaço entre o campo Nome e o campo Telefone */
+  margin-bottom: 15px; /* Espaço abaixo de toda essa linha */
+  width: 100%;
+}
+
+/* Cada caixinha individual (Label + Input) */
+.campo-formulario {
+  display: flex;
+  flex-direction: column; /* Faz o label ficar ACIMA do input */
+  flex: 1;                /* Faz os dois campos dividirem o espaço igualmente */
+}
+
+/* Estilização opcional para deixar os Labels mais bonitos */
+.campo-formulario label {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 5px;     /* Espacinho entre o texto e o campo de digitar */
+  color: #333;
+}
+
+/* Estilização opcional para deixar os Inputs elegantes */
+.campo-formulario input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+/* Efeito de clique no input */
+.campo-formulario input:focus {
+  border-color: #3b82f6; /* Azul moderno ao clicar */
+}
+
+/* 📱 RESPONSIVIDADE: No celular, eles voltam a ficar um embaixo do outro */
+@media (max-width: 480px) {
+  .grupo-linha {
+    flex-direction: column; 
+    gap: 10px;
+  }
+}
+
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* Espaço entre a label e o input */
+  text-align: left;
+}
+
+.form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563; /* Cinza escuro elegante */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Esconde a label do botão em telas grandes para manter o alinhamento perfeito */
+.label-invisivel {
+  visibility: hidden;
+}
+@media (max-width: 768px) {
+  .label-invisivel { display: none; }
+}
+
+.badge-expirado {
+  background-color: #6b7280 !important; /* Cinza escuro moderno */
+  color: #ffffff !important;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.btn-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* estado desabilitado mais bonito */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
