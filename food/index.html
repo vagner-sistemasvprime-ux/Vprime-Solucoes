@@ -487,31 +487,61 @@ function entrar() {
   const usuarioInput = document.getElementById("u").value.trim();
   const senhaInput = document.getElementById("s").value.trim();
 
+  if (!usuarioInput || !senhaInput) {
+    return showMsg("Por favor, preencha usuário e senha.", "error", 3000);
+  }
+
   if (loader) loader.style.display = "flex"; 
 
-  const usuarioEncontrado = window.usuariosSistemaGlobal.find(
-    u => u.usuario.toLowerCase() === usuarioInput.toLowerCase() && u.senha === senhaInput
-  );
+  console.log(`📡 [LOGIN] Enviando requisição de hash para o operador: "${usuarioInput}"`);
 
-  // 🎯 CORREÇÃO: Reduzido de 4000 para 400ms para o loader ser apenas uma transição suave real
-  setTimeout(() => {
+  // 🔄 CORREÇÃO CRUCIAL: Envia para o backend processar o hash da senha de forma segura
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "VERIFICAR_LOGIN",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      usuario: usuarioInput,
+      senha: senhaInput
+    })
+  })
+  .then(response => response.json())
+  .then(resultado => {
     if (loader) loader.style.display = "none"; 
 
-    if (!usuarioEncontrado) {
-      return showMsg("Login inválido", "error", 3000);
-    }
+    if (resultado.sucesso) {
+      console.log("✅ [LOGIN] Autenticação aceita pelo servidor!");
 
-    user = usuarioEncontrado; 
-    usuarioLogado = usuarioEncontrado.usuario;
+      // Alimenta o escopo global do seu app com a estrutura esperada
+      user = {
+        usuario: resultado.usuario,
+        perfil: resultado.perfil,
+        senhaPadrao: resultado.senhaPadrao
+      }; 
+      usuarioLogado = resultado.usuario;
 
-    if (usuarioEncontrado.senhaPadrao) {
-      document.getElementById("modalSenha").style.display = "block";
+      // Se no seu painel de mesas tiver o badge do operador, já o atualiza aqui:
+      const txtNome = document.getElementById("txtNomeUsuario");
+      if (txtNome) txtNome.innerText = resultado.usuario.toUpperCase();
+
+      // Verifica se o usuário precisa trocar a senha padrão ("1234")
+      if (resultado.senhaPadrao) {
+        document.getElementById("modalSenha").style.display = "block";
+      } else {
+        render(); // Inicia o seu sistema
+      }
+
     } else {
-      render();
+      console.warn("❌ [LOGIN] Servidor recusou o acesso:", resultado.erro);
+      return showMsg(resultado.erro || "Login inválido", "error", 3000);
     }
-  }, 400); 
+  })
+  .catch(err => {
+    if (loader) loader.style.display = "none";
+    console.error("❌ [LOGIN] Falha crítica de rede:", err);
+    return showMsg("Falha na comunicação com o servidor.", "error", 3000);
+  });
 }
-
 /* =========================
    CHECK SENHA PADRÃO
 ========================= */
