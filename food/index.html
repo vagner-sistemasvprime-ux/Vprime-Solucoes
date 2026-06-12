@@ -149,19 +149,19 @@ let sistemaBloqueado = false;      // Controle de bloqueio financeiro
 // =========================================================================
 function carregarDadosIniciaisDoSistema() {
   if (!URL_API_GOOGLE) {
-    console.error("🚨 Erro: URL da API do Google não definida para este lojista.");
+    console.error("🚨 Erro Crítico: URL da API do Google não definida no ambiente local.");
     return;
   }
 
-  // 1. Abre a tela de login imediatamente com um estado visual de "Carregando dados..."
   login();
   
   const btnEntrar = document.getElementById('btn-entrar');
   if (btnEntrar) {
     btnEntrar.innerText = "⏳ Carregando Sistema...";
+    btnEntrar.disabled = true; // Evita cliques múltiplos enquanto carrega
   }
 
-  console.log(`📡 [API] Iniciando carga para a loja: ${CONFIG.cliente.nomeFixo}`);
+  console.log(`📡 [CARGA INICIAL] Disparando requisição para a loja: "${CONFIG.cliente.nomeFixo}"`);
 
   fetch(URL_API_GOOGLE, {
     method: "POST",
@@ -170,38 +170,50 @@ function carregarDadosIniciaisDoSistema() {
       nomeLoja: CONFIG.cliente.nomeFixo
     })
   })
-  .then(response => response.json())
+  .then(response => {
+    console.log(`📡 [CARGA INICIAL] Status HTTP recebido: ${response.status}`);
+    return response.json();
+  })
   .then(resultado => {
+    // 🔍 INSPEÇÃO DO BANCO DE DADOS
+    console.log("📦 [CARGA INICIAL] Resposta bruta do servidor:", resultado);
+
     if (resultado.sucesso) {
       listaAdicionaisGlobal = resultado.adicionais || [];
       listaCategoriasGlobal = resultado.categorias || [];
       window.produtosData = resultado.produtos || [];
+      
+      // LOG CHAVE: Verifica se a lista de usuários veio preenchida ou vazia
       window.usuariosSistemaGlobal = resultado.usuarios || [];
+      console.log(`👥 [MÓDULO USUÁRIOS] Foram carregados ${window.usuariosSistemaGlobal.length} usuários do servidor.`);
+      if (window.usuariosSistemaGlobal.length === 0) {
+        console.warn("⚠️ ALERTA: Nenhum usuário foi retornado pelo servidor! O login vai falhar.");
+      } else {
+        console.log("👇 Lista de usuários indexados para login (somente nomes):", window.usuariosSistemaGlobal.map(u => u.usuario));
+      }
+
       window.qtdMesasGlobal = resultado.qtdMesas || 0;
       
-      console.log("✅ [API] Dados do sistema carregados com sucesso!");
-      
-      // 2. O financeiro agora roda aqui e HABILITA o botão se estiver tudo OK
+      console.log("✅ [CARGA INICIAL] Variáveis globais populadas com sucesso!");
       processarStatusFinanceiroLocal(resultado.financeiro);
     } else {
-      console.error("❌ [API] Erro retornado pelo Google:", resultado.erro);
+      console.error("❌ [CARGA INICIAL] O servidor recusou o processamento:", resultado.erro);
       if (btnEntrar) {
         btnEntrar.disabled = false;
         btnEntrar.innerText = "Entrar (Modo Offline)";
-        btnEntrar.style.backgroundColor = "#eab308"; // Amarelo de aviso
+        btnEntrar.style.backgroundColor = "#eab308";
       }
     }
   })
   .catch(err => {
-    console.error("❌ [API] Falha de conexão com o servidor do lojista:", err);
+    console.error("❌ [CARGA INICIAL] Falha física de rede/CORS na comunicação:", err);
     if (btnEntrar) {
       btnEntrar.disabled = false;
       btnEntrar.innerText = "Entrar (Erro de Rede)";
-      btnEntrar.style.backgroundColor = "#ef4444"; // Vermelho de erro
+      btnEntrar.style.backgroundColor = "#ef4444";
     }
   });
 }
-
 // =========================================================================
 // 💳 PROCESSADOR DO STATUS FINANCEIRO (SEM GOOGLE.SCRIPT.RUN)
 // =========================================================================
