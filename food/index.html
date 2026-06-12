@@ -286,48 +286,26 @@ let sistemaBloqueado = false;
 let intervalovigilante = null;
 
 function verificarStatusPagamento() {
-  google.script.run.withSuccessHandler(function(res) {
-    const divAviso = document.getElementById('aviso-financeiro');
-    const btnEntrar = document.getElementById('btn-entrar');
-    
-    if (res && res.bloquear) {
-      sistemaBloqueado = true;
-      btnEntrar.disabled = true;
-      btnEntrar.style.backgroundColor = "#ccc";
-      btnEntrar.style.cursor = "not-allowed";
-      btnEntrar.innerText = "Acesso Bloqueado";
-    } else {
-      sistemaBloqueado = false;
-      btnEntrar.disabled = false;
-      btnEntrar.style.backgroundColor = "#4A86E8";
-      btnEntrar.style.cursor = "pointer";
-      btnEntrar.innerText = "Entrar";
-      btnEntrar.onmouseover = function() { this.style.backgroundColor='#357ABD'; };
-      btnEntrar.onmouseout = function() { this.style.backgroundColor='#4A86E8'; };
-    }
+  console.log("💳 Piloto: Ignorando checagem financeira do Google e liberando o botão de entrar...");
+  
+  const divAviso = document.getElementById('aviso-financeiro');
+  const btnEntrar = document.getElementById('btn-entrar');
+  
+  // Garantimos que os elementos existem na tela de login antes de mexer neles
+  if (btnEntrar) {
+    sistemaBloqueado = false;
+    btnEntrar.disabled = false;
+    btnEntrar.style.backgroundColor = "#4A86E8";
+    btnEntrar.style.cursor = "pointer";
+    btnEntrar.innerText = "Entrar";
+    btnEntrar.onmouseover = function() { this.style.backgroundColor='#357ABD'; };
+    btnEntrar.onmouseout = function() { this.style.backgroundColor='#4A86E8'; };
+  }
 
-    if (res && res.exibir && divAviso) {
-      let fraseBloqueio = res.bloquear 
-        ? "ACESSO SUSPENSO: Regularize seu débito para liberar o login." 
-        : `Evite o bloqueio: realize o pagamento até o dia <b>${res.dataLimite}</b>.`;
-
-      const corFundo = res.atrasado ? "#fee2e2" : "#fffbeb";
-      const corTexto = res.atrasado ? "#991b1b" : "#92400e";
-
-      divAviso.innerHTML = `
-        <div class="alerta-caixa" style="background: ${corFundo}; color: ${corTexto}; border: 1px solid; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-          <strong style="font-size: 16px;">⚠️ ${res.bloquear ? "BLOQUEIO DE SEGURANÇA" : "AVISO DE COBRANÇA"}</strong><br>
-          <p style="margin: 8px 0;">Vencimento: <b>${res.vencimento}</b> | Valor: <b>R$ ${res.valor.toFixed(2)}</b></p>
-          <p style="font-weight: bold;">${fraseBloqueio}</p>
-          <button id="btn-pagar" onclick="solicitarPagamento('${res.email}')" style="display: block; width: 100%; margin-top: 10px; padding: 10px; background: ${corTexto}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
-            PAGAR AGORA
-          </button>
-        </div>
-      `;
-    }
-  }).verificarCobrancaNomeFixo(CONFIG.cliente.nomeFixo);
+  if (divAviso) {
+    divAviso.innerHTML = ""; // Limpa qualquer aviso antigo para não sujar o layout
+  }
 }
-
 
 
 function solicitarPagamento(email) {
