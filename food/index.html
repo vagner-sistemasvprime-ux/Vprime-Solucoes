@@ -351,150 +351,212 @@ function alternarVisualizacaoSenha() {
 
 
 //let sistemaBloqueado = false;
+// Garanta que essa variável de controle do intervalo está declarada globalmente
 let intervalovigilante = null;
-
-function verificarStatusPagamento() {
- 
-}
-
 
 function solicitarPagamento(email) {
   const btn = document.getElementById('btn-pagar');
+  if (!btn) return;
   const textoOriginal = btn.innerHTML;
 
   btn.disabled = true;
   btn.style.opacity = "0.7";
   btn.innerHTML = `<span>Redirecionando...</span>`;
 
-  google.script.run.withSuccessHandler(function(url) {
-    if (url) {
-      window.open(url, '_blank');
+  // 🔄 CONVERSÃO PARA FETCH: Pede o link de pagamento para a API
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "GERAR_LINK_PAGAMENTO",
+      emailCliente: email,
+      nomeLoja: CONFIG.cliente.nomeFixo
+    })
+  })
+  .then(response => response.json())
+  .then(resultado => {
+    if (resultado.sucesso && resultado.url) {
+      window.open(resultado.url, '_blank');
       iniciarVigilanciaPagamento(); // Começa a checar se a planilha atualizou
     } else {
-      alert("Erro ao gerar link.");
+      alert("Erro ao gerar link de pagamento.");
       btn.disabled = false;
       btn.innerHTML = textoOriginal;
+      btn.style.opacity = "1";
     }
-  }).gerarLink(email);
+  })
+  .catch(err => {
+    console.error("❌ Erro de conexão ao gerar pagamento:", err);
+    alert("Falha na comunicação com o servidor.");
+    btn.disabled = false;
+    btn.innerHTML = textoOriginal;
+    btn.style.opacity = "1";
+  });
 }
 
 
 function iniciarVigilanciaPagamento() {
   if (intervalovigilante) clearInterval(intervalovigilante);
   
+  console.log("👀 Vigilância ativada: Monitorando baixa do pagamento na planilha...");
+
   intervalovigilante = setInterval(function() {
-    google.script.run.withSuccessHandler(function(res) {
-      // Se não há mais cobrança a exibir, o pagamento foi processado!
-      if (!res || !res.exibir) {
+    
+    // 🔄 CONVERSÃO PARA FETCH: Pergunta ao Google se o status financeiro mudou
+    fetch(URL_API_GOOGLE, {
+      method: "POST",
+      body: JSON.stringify({
+        acao: "REVERIFICAR_FINANCEIRO",
+        nomeLoja: CONFIG.cliente.nomeFixo
+      })
+    })
+    .then(response => response.json())
+    .then(resultado => {
+      // Se a resposta do financeiro disser que não precisa mais exibir cobrança/bloqueio,
+      // significa que o sistema detectou a baixa automática na planilha!
+      if (resultado.sucesso && (!resultado.financeiro || !resultado.financeiro.exibir)) {
         pararVigilanciaEConfirmarSucesso();
       }
-    }).verificarCobrancaNomeFixo(CONFIG.cliente.nomeFixo); // <-- Atualizado para usar o CONFIG
+    })
+    .catch(err => console.warn("⚠️ Falha temporária de rede na vigilância:", err));
     
-  }, CONFIG.tempo.intervaloVigilancia); // <-- Atualizado para usar o tempo centralizado
+  }, CONFIG.tempo.intervaloVigilancia);
 }
 
 function pararVigilanciaEConfirmarSucesso() {
-  clearInterval(intervalovigilante);
+  if (intervalovigilante) clearInterval(intervalovigilante);
   const divAviso = document.getElementById('aviso-financeiro');
   const btnEntrar = document.getElementById('btn-entrar');
 
-  divAviso.innerHTML = `
-    <div class="alerta-caixa" style="background: #dcfce7; color: #166534; border: 1px solid #166534; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-      <strong style="font-size: 16px;">✅ PAGAMENTO CONFIRMADO!</strong><br>
-      <p style="margin: 8px 0;">Seu acesso foi liberado com sucesso. Faça o login normalmente.</p>
-    </div>
-  `;
+  if (divAviso) {
+    divAviso.innerHTML = `
+      <div class="alerta-caixa" style="background: #dcfce7; color: #166534; border: 1px solid #166534; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+        <strong style="font-size: 16px;">✅ PAGAMENTO CONFIRMADO!</strong><br>
+        <p style="margin: 8px 0;">Seu acesso foi liberado com sucesso. Faça o login normalmente.</p>
+      </div>
+    `;
+  }
 
-  sistemaBloqueado = false;
-  btnEntrar.disabled = false;
-  btnEntrar.style.backgroundColor = "#4A86E8";
-  btnEntrar.style.cursor = "pointer";
-  btnEntrar.innerText = "Entrar Agora";
-  btnEntrar.style.boxShadow = "0 0 15px rgba(74, 134, 232, 0.6)";
+  if (btnEntrar) {
+    sistemaBloqueado = false;
+    btnEntrar.disabled = false;
+    btnEntrar.style.backgroundColor = "#4A86E8";
+    btnEntrar.style.cursor = "pointer";
+    btnEntrar.innerText = "Entrar Agora";
+    btnEntrar.style.boxShadow = "0 0 15px rgba(74, 134, 232, 0.6)";
+  }
 }
+
+  
+/* =========================================================================
+   🔑 MÓDULO DE AUTENTICAÇÃO E SESSÃO (OTIMIZADO MULTITENANT)
+   ========================================================================= */
 
 function entrar() {
   // 1. VERIFICAÇÃO DE BLOQUEIO (Trava os 10 dias de atraso)
-  // Essa variável é preenchida pela função verificarStatusPagamento()
   if (typeof sistemaBloqueado !== 'undefined' && sistemaBloqueado) {
-    // Você pode usar o seu showMsg aqui para manter o padrão do seu sistema
     return showMsg("Acesso suspenso por pendência financeira. Regularize para acessar.", "error", 5000);
   }
 
   const loader = document.getElementById("loader");
-  const usuarioInput = document.getElementById("u");
-  const senhaInput = document.getElementById("s");
+  const usuarioInput = document.getElementById("u").value.trim();
+  const senhaInput = document.getElementById("s").value.trim();
 
-  loader.style.display = "flex"; // mostra o spinner
+  if (loader) loader.style.display = "flex"; // Mostra o spinner
 
-  google.script.run.withSuccessHandler(u => {
-    loader.style.display = "none"; // oculta ao terminar
+  // 🔄 LOGIN LOCAL E INSTANTÂNEO: Procura o usuário dentro dos dados carregados no início
+  const usuarioEncontrado = window.usuariosSistemaGlobal.find(
+    u => u.usuario.toLowerCase() === usuarioInput.toLowerCase() && u.senha === senhaInput
+  );
 
-    if (!u) return showMsg("Login inválido", "error", 3000);
+  // Simula o tempo de resposta mínimo para o loader fazer sentido visualmente
+  setTimeout(() => {
+    if (loader) loader.style.display = "none"; // Oculta o spinner
 
-    user = u;
-    usuarioLogado = u.usuario;
+    if (!usuarioEncontrado) {
+      return showMsg("Login inválido", "error", 3000);
+    }
 
-    if (u.senhaPadrao) {
+    // Define as variáveis globais de sessão do usuário logado
+    user = usuarioEncontrado; 
+    usuarioLogado = usuarioEncontrado.usuario;
+
+    // Verifica se exige a troca da senha padrão
+    if (usuarioEncontrado.senhaPadrao) {
       document.getElementById("modalSenha").style.display = "block";
     } else {
       render();
     }
-  }).login(usuarioInput.value, senhaInput.value);
+  }, 4000); // 400ms apenas para uma transição suave de tela
 }
-
-
-
-
-
-
 
 /* =========================
    CHECK SENHA PADRÃO
 ========================= */
-function checkSenhaPadrao(u){
-  if(u.senhaPadrao){ // Se usuário estiver com senha padrão
-    document.getElementById("modalSenha").style.display="block";
+function checkSenhaPadrao(u) {
+  if (u.senhaPadrao) { 
+    document.getElementById("modalSenha").style.display = "block";
   } else {
-    render(); // Se não, abre o painel normalmente
+    render(); 
   }
 }
 
-function alterarSenha(){
+function alterarSenha() {
   const nova = document.getElementById("novaSenha").value.trim();
-  if(!nova) return showMsg("Informe a nova senha","error");
+  if (!nova) return showMsg("Informe a nova senha", "error");
 
-  google.script.run.withSuccessHandler(()=>{
-    document.getElementById("modalSenha").style.display="none"; // Oculta novamente
-    showMsg("Senha alterada com sucesso","success",4000);
-    render();
-  }).alterarSenha(user.usuario,nova);
+  const loading = document.getElementById("loadingGlobal");
+  if (loading) loading.style.display = "flex";
+
+  // 🔄 CONVERSÃO PARA FETCH: Envia a nova senha para o servidor salvar na planilha
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "ALTERAR_SENHA",
+      usuario: user.usuario,
+      novaSenha: nova,
+      nomeLoja: CONFIG.cliente.nomeFixo
+    })
+  })
+  .then(response => response.json())
+  .then(resultado => {
+    if (loading) loading.style.display = "none";
+
+    if (resultado.sucesso) {
+      document.getElementById("modalSenha").style.display = "none"; // Oculta o modal
+      showMsg("Senha alterada com sucesso", "success", 4000);
+      
+      // Atualiza a senha na memória local para evitar descompasso
+      user.senhaPadrao = false;
+      user.senha = nova;
+      
+      render();
+    } else {
+      showMsg("Erro ao alterar senha no servidor: " + resultado.erro, "error");
+    }
+  })
+  .catch(err => {
+    if (loading) loading.style.display = "none";
+    console.error("❌ Erro de rede ao alterar senha:", err);
+    showMsg("Falha na comunicação com o servidor.", "error");
+  });
 }
 
 /* =========================
-   LOGOUT
+   LOGOUT (PURO E LOCAL)
 ========================= */
 function sair() {
   const loading = document.getElementById("loadingGlobal");
   if (loading) loading.style.display = "flex";
 
-  google.script.run
-    .withSuccessHandler(() => {
-      user = null;
-      if (loading) loading.style.display = "none";
-      login();
-    })
-    .withFailureHandler(err => {
-      if (loading) loading.style.display = "none";
-      
-      // SUBSTITUIÇÃO DO ALERT
-      exibirModal({
-        titulo: "Erro ao Sair",
-        mensagem: "Não foi possível encerrar a sessão: " + err.message,
-        tipo: "erro"
-      });
-    })
-    .logout();
+  // Como a sessão roda direto no front do lojista, não precisamos fazer 
+  // o servidor gastar processamento para deslogar. Limpamos os dados locais.
+  setTimeout(() => {
+    user = null;
+    usuarioLogado = null;
+    
+    if (loading) loading.style.display = "none";
+    login(); // Retorna para a tela de login
+  }, 300);
 }
 
 /* =========================
@@ -1322,20 +1384,23 @@ function admin() {
   setInterval(verificarAvisoCaixaAdmin, 300000);
 }
 
-// Quando a página abrir, busca os dados no Google Script
+/* =========================================================================
+   ⚙️ MÓDULO DE CONFIGURAÇÃO E TRANSMISSÃO DE WHATSAPP (MIGRAÇÃO FETCH)
+   ========================================================================= */
+
+// Evento disparado quando a página carrega as estruturas visuais
 window.addEventListener('load', function() {
-  google.script.run
-    .withSuccessHandler(function(config) {
-      const inputMesas = document.getElementById("configQtdMesas");
-      if (inputMesas && config) {
-        inputMesas.value = config.qtdMesas;
-      }
-     // console.log("Configurações carregadas com sucesso!");
-    })
-    .getDadosConfiguracao();
+  const inputMesas = document.getElementById("configQtdMesas");
+  
+  // 🔄 OTIMIZAÇÃO: Em vez de chamar o google.script, usamos o valor que 
+  // nossa carga inicial já salvou na memória do app de forma segura!
+  if (inputMesas && typeof window.qtdMesasGlobal !== 'undefined') {
+    inputMesas.value = window.qtdMesasGlobal;
+    console.log("📊 [Config] Input de mesas sincronizado com os dados iniciais.");
+  }
 });
 
-// Função para exibir o modal na tela
+// Função para exibir o modal na tela e carregar a última campanha salva
 function abrirModalTransmissao() {
   console.log("[Transmissão] 1. Função abrirModalTransmissao disparada.");
   
@@ -1358,49 +1423,65 @@ function abrirModalTransmissao() {
   }
 
   // Abre o modal na tela
-  document.getElementById("modalTransmissao").style.display = "flex";
+  const modal = document.getElementById("modalTransmissao");
+  if (modal) modal.style.display = "flex";
 
-  console.log("[Transmissão] 2. Chamando função nativa obterProgressoLocal no GAS...");
+  console.log("[Transmissão] 2. Buscando progresso via API externa...");
 
-  // 🚀 Chamada local direta dentro do ambiente Google
-  google.script.run
-    .withSuccessHandler((data) => {
-      console.log("[Transmissão] 🟢 Dados recebidos localmente do GAS:", data);
+  // 🔄 CONVERSÃO PARA FETCH: Pede o progresso da campanha ao Back-end do Google
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "OBTER_PROGRESSO_LOCAL",
+      nomeLoja: CONFIG.cliente.nomeFixo
+    })
+  })
+  .then(response => response.json())
+  .then(resultado => {
+    console.log("[Transmissão] 🟢 Dados recebidos da API:", resultado);
+    
+    if (txtArea) {
+      txtArea.disabled = false; // Devolve o controle do campo
       
-      if (txtArea) {
-        txtArea.disabled = false; // Devolve o controle do campo
-        
-        // Se o GAS achou o texto em F1 e ainda existem clientes pendentes na lista antiga
-        if (data && data.templateOriginal && data.pendentes > 0) {
-          console.log("[Transmissão] 🎯 Template antigo recuperado com sucesso!");
-          txtArea.value = data.templateOriginal;
-        } else {
-          console.log("[Transmissão] 📭 Nenhuma campanha pendente. Campo limpo.");
-          txtArea.value = "";
-          txtArea.placeholder = "Olá, {{nome}}! Que tal um lanche hoje?...";
-        }
-      }
-    })
-    .withFailureHandler((err) => {
-      console.error("[Transmissão] ❌ Erro na execução local do GAS:", err);
-      if (txtArea) {
-        txtArea.disabled = false;
+      // Se o servidor retornou sucesso, o template e os clientes pendentes
+      if (resultado.sucesso && resultado.data && resultado.data.templateOriginal && resultado.data.pendentes > 0) {
+        console.log("[Transmissão] 🎯 Template antigo recuperado com sucesso!");
+        txtArea.value = resultado.data.templateOriginal;
+      } else {
+        console.log("[Transmissão] 📭 Nenhuma campanha pendente. Campo limpo.");
         txtArea.value = "";
+        txtArea.placeholder = "Olá, {{nome}}! Que tal um lanche hoje?...";
       }
-    })
-    .obterProgressoLocal(); // 🌟 Chama a função que criamos no Passo 1
+    }
+  })
+  .catch(err => {
+    console.error("[Transmissão] ❌ Erro na execução da API:", err);
+    if (txtArea) {
+      txtArea.disabled = false;
+      txtArea.value = "";
+    }
+  });
 }
 
 // Função para ocultar o modal
 function fecharModalTransmissao() {
-  document.getElementById("modalTransmissao").style.display = "none";
+  const modal = document.getElementById("modalTransmissao");
+  if (modal) modal.style.display = "none";
 }
+
+
+  
+/* =========================================================================
+   🚀 MÓDULO DE DISPARO DE CAMPANHAS EM MASSA (MIGRAÇÃO DEFINITIVA FETCH)
+   ========================================================================= */
 
 // Função auxiliar para injetar a tag {{nome}} no texto
 function inserirTagNome() {
   const campoTexto = document.getElementById("txtMensagemTransmissao");
-  campoTexto.value += " {{nome}} ";
-  campoTexto.focus();
+  if (campoTexto) {
+    campoTexto.value += " {{nome}} ";
+    campoTexto.focus();
+  }
 }
 
 /**
@@ -1414,15 +1495,16 @@ function resetarBotoesEInterface() {
     btn.innerText = "🚀 Iniciar Transmissão Seguro";
   }
 }
+
 async function dispararCampanha(modoDefinido = null) {
   console.log(`[Disparo] 🚀 Função dispararCampanha iniciada. Modo Definido recebido: "${modoDefinido}"`);
   
   const btn = document.getElementById("btnIniciarTransmissao");
   
   // 1. Coleta os dados da tela
-  const telefoneRaw = document.getElementById("configTelefoneWhats").value;
+  const telefoneRaw = document.getElementById("configTelefoneWhats")?.value || "";
   const telefoneBot = telefoneRaw.replace(/[^0-9]/g, ''); 
-  const mensagem = document.getElementById("txtMensagemTransmissao").value;
+  const mensagem = document.getElementById("txtMensagemTransmissao")?.value || "";
   
   const radioSelecionado = document.querySelector('input[name="radioPublico"]:checked');
   const publico = radioSelecionado ? radioSelecionado.value : null;
@@ -1440,7 +1522,7 @@ async function dispararCampanha(modoDefinido = null) {
     return;
   }
 
-  // 🌟 AJUSTE LOGICO: Se o usuário já escolheu "continuar", o campo de texto pode sim ficar em branco (pois usará o de F1)
+  // Se o usuário já escolheu "continuar", o campo de texto pode sim ficar em branco (pois usará o de F1)
   if (!mensagem.trim() && modoDefinido !== "continuar") {
     console.warn("[Disparo] Abortado: Tentativa de envio com mensagem vazia.");
     exibirModal({
@@ -1451,103 +1533,106 @@ async function dispararCampanha(modoDefinido = null) {
     return;
   }
 
-  // Bloco de envio estruturado em uma função interna reutilizável
+  // Bloco de envio estruturado convertido para Fetch
   const executarEnvioComModo = (modo) => {
-    console.log(`[Disparo] 🛰️ executarEnvioComModo acionado! Modo enviado ao GAS: "${modo}"`);
+    console.log(`[Disparo] 🛰️ executarEnvioComModo acionado! Modo enviado via Fetch: "${modo}"`);
     
-    btn.disabled = true;
-    btn.style.background = "#94a3b8";
-    btn.innerText = "⏳ Configurando Fila...";
+    if (btn) {
+      btn.disabled = true;
+      btn.style.background = "#94a3b8";
+      btn.innerText = "⏳ Configurando Fila...";
+    }
 
-    console.log("[Disparo] Chamando 'google.script.run.vpsDispararTransmissao'...");
+    console.log("[Disparo] Disparando Fetch para a API do Google...");
 
-    google.script.run
-      .withSuccessHandler((data) => {
-        console.log("[Disparo] 🟢 Resposta bruta recebida do Apps Script:", data);
-
-        if (!data) {
-          console.error("[Disparo] Erro: O servidor retornou uma resposta totalmente vazia (null/undefined).");
-          resetarBotoesEInterface();
-          return;
-        }
-
-        if (data.erro) {
-          console.error("[Disparo] ❌ Servidor retornou um erro tratado:", data.erro);
-          exibirModal({
-            tipo: 'erro',
-            titulo: 'Erro no Servidor',
-            mensagem: 'Erro do Servidor: ' + data.erro
-          });
-          resetarBotoesEInterface();
-          return;
-        }
-
-        // 🌟 LOG VERIFICAÇÃO DE DECISÃO:
-        console.log(`[Disparo] Verificando flags -> requerDecisao: ${data.requerDecisao} | sucesso: ${data.sucesso}`);
-
-        if (data.requerDecisao) {
-          console.log("[Disparo] 🔀 Servidor solicitou decisão do usuário! Abrindo modal de Continuar/Reiniciar.");
-          resetarBotoesEInterface();
-          
-          exibirModal({
-            tipo: 'pergunta',
-            titulo: 'Transmissão Pendente Encontrada!',
-            mensagem: 'Identificamos que ainda existem mensagens pendentes da última campanha.<br><br>deseja continuar a transmitir?',
-            aoConfirmar: () => {
-              console.log("[Disparo] Usuário clicou em CONTINUAR de onde parou.");
-              dispararCampanha("continuar");
-            },
-            aoCancelar: () => {
-              console.log("[Disparo] Usuário clicou na opção de Reiniciar. Abrindo contra-confirmação...");
-              exibirModal({
-                tipo: 'pergunta',
-                titulo: 'Tem certeza?',
-                mensagem: 'Ao reiniciar, a lista anterior será apagada e uma nova lista será montada baseada no filtro atual. Deseja prosseguir?',
-                aoConfirmar: () => {
-                  console.log("[Disparo] Usuário confirmou REINICIAR (Lista antiga será limpa).");
-                  dispararCampanha("reiniciar");
-                },
-                aoCancelar: () => { 
-                  console.log("[Disparo] Usuário desistiu de reiniciar.");
-                  resetarBotoesEInterface(); 
-                }
-              });
-            }
-          });
-          return;
-        }
-
-        // Sucesso! Fila configurada ou reaproveitada com sucesso
-        console.log("[Disparo] 🎉 Sucesso absoluto recebido da VPS! Atualizando interface...");
-        exibirModal({
-          tipo: 'sucesso',
-          titulo: 'Campanha Iniciada!',
-          mensagem: `${data.mensagem || 'Transmissão agendada com sucesso!'}<br><br>Encontramos <b>${data.totalContatos}</b> clientes no perfil selecionado.<br>O robô já começou os envios na nuvem.`
-        });
-        
-        if (typeof fecharModalTransmissao === "function") fecharModalTransmissao();
-        resetarBotoesEInterface();
-        inicializarMonitorTransmissao(); 
+    // 🔄 CONVERSÃO PARA FETCH: Envia os parâmetros da campanha para o back-end central
+    fetch(URL_API_GOOGLE, {
+      method: "POST",
+      body: JSON.stringify({
+        acao: "DISPARAR_TRANSMISSAO",
+        nomeLoja: CONFIG.cliente.nomeFixo,
+        telefoneBot: telefoneBot,
+        publico: publico,
+        mensagem: mensagem,
+        modoEnvio: modo
       })
-      .withFailureHandler((err) => {
-        console.error("[Disparo] ❌ CRÍTICO: Falha física na comunicação de rede com o Apps Script:", err);
-        
-        // 🌟 Captura detalhes se o Google cuspir um JSON de erro HTTP
-        const msgErro = err.message || JSON.stringify(err);
-        
+    })
+    .then(response => response.json())
+    .then(resultado => {
+      console.log("[Disparo] 🟢 Resposta recebida do Apps Script:", resultado);
+
+      if (!resultado || !resultado.sucesso) {
+        console.error("[Disparo] Erro: Resposta inválida ou erro tratado de back-end.");
         exibirModal({
           tipo: 'erro',
-          titulo: 'Falha na Execução',
-          mensagem: 'Ocorreu uma falha ao tentar processar o comando dentro do Google Apps Script.<br><br>Detalhes: ' + msgErro
+          titulo: 'Erro no Servidor',
+          mensagem: 'Erro do Servidor: ' + (resultado?.erro || 'Resposta em branco do servidor.')
         });
         resetarBotoesEInterface();
-      })
-      .vpsDispararTransmissao(telefoneBot, publico, mensagem, modo); 
+        return;
+      }
+
+      const data = resultado.data; // Captura o objeto interno de dados enviado pelo Google
+
+      // 🔀 Servidor solicitou decisão do usuário (Campanha pendente existente)
+      if (data && data.requerDecisao) {
+        console.log("[Disparo] 🔀 Servidor solicitou decisão do usuário! Abrindo modal de Continuar/Reiniciar.");
+        resetarBotoesEInterface();
+        
+        exibirModal({
+          tipo: 'pergunta',
+          titulo: 'Transmissão Pendente Encontrada!',
+          mensagem: 'Identificamos que ainda existem mensagens pendentes da última campanha.<br><br>Deseja continuar a transmitir?',
+          aoConfirmar: () => {
+            console.log("[Disparo] Usuário clicou em CONTINUAR de onde parou.");
+            dispararCampanha("continuar");
+          },
+          aoCancelar: () => {
+            console.log("[Disparo] Usuário clicou na opção de Reiniciar. Abrindo contra-confirmação...");
+            exibirModal({
+              tipo: 'pergunta',
+              titulo: 'Tem certeza?',
+              mensagem: 'Ao reiniciar, a lista anterior será apagada e uma nova lista será montada baseada no filtro atual. Deseja prosseguir?',
+              aoConfirmar: () => {
+                console.log("[Disparo] Usuário confirmou REINICIAR.");
+                dispararCampanha("reiniciar");
+              },
+              aoCancelar: () => { 
+                console.log("[Disparo] Usuário desistiu de reiniciar.");
+                resetarBotoesEInterface(); 
+              }
+            });
+          }
+        });
+        return;
+      }
+
+      // Sucesso absoluto! Fila criada ou continuada com sucesso
+      console.log("[Disparo] 🎉 Sucesso absoluto recebido! Atualizando interface...");
+      exibirModal({
+        tipo: 'sucesso',
+        titulo: 'Campanha Iniciada!',
+        mensagem: `${data?.mensagem || 'Transmissão agendada com sucesso!'}<br><br>Encontramos <b>${data?.totalContatos || 0}</b> clientes no perfil selecionado.<br>O robô já começou os envios na nuvem.`
+      });
+      
+      if (typeof fecharModalTransmissao === "function") fecharModalTransmissao();
+      resetarBotoesEInterface();
+      if (typeof inicializarMonitorTransmissao === "function") inicializarMonitorTransmissao(); 
+    })
+    .catch(err => {
+      console.error("[Disparo] ❌ CRÍTICO: Falha física na comunicação de rede:", err);
+      exibirModal({
+        tipo: 'erro',
+        titulo: 'Falha na Execução',
+        mensagem: 'Ocorreu uma falha ao tentar processar o comando de transmissão. Detalhes: ' + (err.message || err)
+      });
+      resetarBotoesEInterface();
+    });
   };
 
-  // Se o modo já veio definido pelas decisões dos modais, pula a confirmação inicial
+  // Se o modo já veio definido pelas decisões dos modais anteriores, pula a confirmação inicial
   if (modoDefinido) {
-    console.log(`[Disparo] Pando confirmação inicial pois o modo já está definido como: "${modoDefinido}"`);
+    console.log(`[Disparo] Pulando confirmação inicial pois o modo já está definido como: "${modoDefinido}"`);
     executarEnvioComModo(modoDefinido);
     return;
   }
@@ -1565,6 +1650,8 @@ async function dispararCampanha(modoDefinido = null) {
   });
 }
 
+
+  
 async function cancelarTransmissao() {
   const telefoneRaw = document.getElementById("configTelefoneWhats").value;
   const telefoneBot = telefoneRaw.replace(/[^0-9]/g, '');
