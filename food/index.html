@@ -211,30 +211,37 @@ function processarStatusFinanceiroLocal(res) {
   
   if (!btnEntrar) return; 
 
-  // Se o servidor explicitamente pedir o bloqueio por falta de pagamento
-  if (res && res.bloquear) {
+  // Se NÃO vier dados do financeiro, consideramos LIBERADO por padrão para não travar o lojista
+  if (!res) {
+    sistemaBloqueado = false;
+    btnEntrar.disabled = false;
+    btnEntrar.style.backgroundColor = "#4A86E8";
+    btnEntrar.style.cursor = "pointer";
+    btnEntrar.innerText = "Entrar";
+    return;
+  }
+
+  if (res.bloquear) {
     sistemaBloqueado = true;
     btnEntrar.disabled = true;
     btnEntrar.style.backgroundColor = "#ccc";
     btnEntrar.style.cursor = "not-allowed";
     btnEntrar.innerText = "Acesso Bloqueado";
   } else {
-    // Sistema liberado! Remove o disabled e aplica os estilos visuais corretos
     sistemaBloqueado = false;
     btnEntrar.disabled = false;
     btnEntrar.style.backgroundColor = "#4A86E8";
     btnEntrar.style.cursor = "pointer";
     btnEntrar.innerText = "Entrar";
-    btnEntrar.style.opacity = "1";
     
     btnEntrar.onmouseover = function() { this.style.backgroundColor='#357ABD'; };
     btnEntrar.onmouseout = function() { this.style.backgroundColor='#4A86E8'; };
   }
 
-  if (res && res.exibir && divAviso) {
+  if (res.exibir && divAviso) {
     let fraseBloqueio = res.bloquear 
       ? "ACESSO SUSPENSO: Regularize seu débito para liberar o login." 
-      : `Evite o bloqueio: realize o pagamento até o dia <b>${res.dataLimite}</b>.`;
+      : `Evite o bloqueio: realize o pagamento até o dia <b>${res.dataLimite || ''}</b>.`;
 
     const corFundo = res.atrasado ? "#fee2e2" : "#fffbeb";
     const corTexto = res.atrasado ? "#991b1b" : "#92400e";
@@ -242,16 +249,15 @@ function processarStatusFinanceiroLocal(res) {
     divAviso.innerHTML = `
       <div class="alerta-caixa" style="background: ${corFundo}; color: ${corTexto}; border: 1px solid; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
         <strong style="font-size: 16px;">⚠️ ${res.bloquear ? "BLOQUEIO DE SEGURANÇA" : "AVISO DE COBRANÇA"}</strong><br>
-        <p style="margin: 8px 0;">Vencimento: <b>${res.vencimento}</b> | Valor: <b>R$ ${res.valor.toFixed(2)}</b></p>
+        <p style="margin: 8px 0;">Vencimento: <b>${res.vencimento || ''}</b> | Valor: <b>R$ ${(res.valor || 0).toFixed(2)}</b></p>
         <p style="font-weight: bold;">${fraseBloqueio}</p>
-        <button id="btn-pagar" onclick="solicitarPagamento('${res.email}')" style="display: block; width: 100%; margin-top: 10px; padding: 10px; background: ${corTexto}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+        <button id="btn-pagar" onclick="solicitarPagamento('${res.email || ''}')" style="display: block; width: 100%; margin-top: 10px; padding: 10px; background: ${corTexto}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
           PAGAR AGORA
         </button>
       </div>
     `;
   }
 }
-
   
 // Substitua a sua antiga function verificarStatusPagamento() por esta vazia ou remova a chamada dela de outros lugares
 function verificarStatusPagamento() {
