@@ -1,0 +1,15 @@
+{
+  "name": "Sistema Delivery",
+  "short_name": "Delivery",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "https://vprimesistemas.com.br/food/cardapio/logo-padrao.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
