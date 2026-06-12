@@ -140,40 +140,101 @@ let conexaoEmAndamento = false;
 let estadoWhats = "idle"; 
 
 window.produtosData = [];
+window.qtdMesasGlobal = 0;
+window.usuariosSistemaGlobal = []; // Memória para o login local funcionar
+let sistemaBloqueado = false;      // Controle de bloqueio financeiro
 
 // =========================================================================
-// 🔄 CARREGAMENTO DINÂMICO DE DADOS DA API PILOTO (SUBSTITUINDO GOOGLE.SCRIPT)
+// 🔄 CARREGAMENTO DINÂMICO E COMPLETO DE DADOS (MODO DEFINITIVO)
 // =========================================================================
 function carregarDadosIniciaisDoSistema() {
-  console.log("📡 Buscando Adicionais e Categorias na API do Google...");
+  console.log("📡 [API] Buscando carga completa de dados e status financeiro...");
 
-  // Criamos uma requisição para avisar ao doPost o que precisamos carregar
   fetch(URL_API_GOOGLE, {
     method: "POST",
-    body: JSON.stringify({ acao: "CARREGAR_DADOS_INICIAIS" })
+    body: JSON.stringify({ 
+      acao: "CARREGAR_DADOS_INICIAIS",
+      nomeLoja: CONFIG.cliente.nomeFixo // Passa o nome da loja para checar o financeiro
+    })
   })
   .then(response => response.json())
   .then(resultado => {
     if (resultado.sucesso) {
+      // 1. Distribui os dados estruturais para as variáveis globais
       listaAdicionaisGlobal = resultado.adicionais || [];
       listaCategoriasGlobal = resultado.categorias || [];
-      console.log("✅ Dados iniciais carregados com sucesso!");
+      window.produtosData = resultado.produtos || [];
+      window.usuariosSistemaGlobal = resultado.usuarios || [];
+      window.qtdMesasGlobal = resultado.qtdMesas || 0;
       
-      // Só inicia o login DEPOIS que os dados estiverem na memória do app
+      console.log("✅ [API] Dados estruturais carregados com sucesso!");
+      
+      // 2. Processa o status financeiro real retornado pelo Google antes de abrir o login
+      processarStatusFinanceiroLocal(resultado.financeiro);
+      
+      // 3. Abre a tela de login
       login();
     } else {
-      console.error("❌ Erro da API ao trazer dados iniciais:", resultado.erro);
-      // Fallback de segurança se falhar (para não travar a tela totalmente)
+      console.error("❌ [API] Erro da API ao trazer dados iniciais:", resultado.erro);
       login();
     }
   })
   .catch(err => {
-    console.error("❌ Erro de conexão ao buscar dados iniciais:", err);
-    // Se estiver offline, o Service Worker garante a abertura, e usamos dados vazios
+    console.error("❌ [API] Erro de conexão ao buscar dados iniciais:", err);
     login();
   });
 }
 
+// =========================================================================
+// 💳 PROCESSADOR DO STATUS FINANCEIRO (SEM GOOGLE.SCRIPT.RUN)
+// =========================================================================
+function processarStatusFinanceiroLocal(res) {
+  const divAviso = document.getElementById('aviso-financeiro');
+  const btnEntrar = document.getElementById('btn-entrar');
+  
+  if (!btnEntrar) return; // Segurança caso a função rode fora da tela de login
+
+  if (res && res.bloquear) {
+    sistemaBloqueado = true;
+    btnEntrar.disabled = true;
+    btnEntrar.style.backgroundColor = "#ccc";
+    btnEntrar.style.cursor = "not-allowed";
+    btnEntrar.innerText = "Acesso Bloqueado";
+  } else {
+    sistemaBloqueado = false;
+    btnEntrar.disabled = false;
+    btnEntrar.style.backgroundColor = "#4A86E8";
+    btnEntrar.style.cursor = "pointer";
+    btnEntrar.innerText = "Entrar";
+    btnEntrar.onmouseover = function() { this.style.backgroundColor='#357ABD'; };
+    btnEntrar.onmouseout = function() { this.style.backgroundColor='#4A86E8'; };
+  }
+
+  if (res && res.exibir && divAviso) {
+    let fraseBloqueio = res.bloquear 
+      ? "ACESSO SUSPENSO: Regularize seu débito para liberar o login." 
+      : `Evite o bloqueio: realize o pagamento até o dia <b>${res.dataLimite}</b>.`;
+
+    const corFundo = res.atrasado ? "#fee2e2" : "#fffbeb";
+    const corTexto = res.atrasado ? "#991b1b" : "#92400e";
+
+    divAviso.innerHTML = `
+      <div class="alerta-caixa" style="background: ${corFundo}; color: ${corTexto}; border: 1px solid; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+        <strong style="font-size: 16px;">⚠️ ${res.bloquear ? "BLOQUEIO DE SEGURANÇA" : "AVISO DE COBRANÇA"}</strong><br>
+        <p style="margin: 8px 0;">Vencimento: <b>${res.vencimento}</b> | Valor: <b>R$ ${res.valor.toFixed(2)}</b></p>
+        <p style="font-weight: bold;">${fraseBloqueio}</p>
+        <button id="btn-pagar" onclick="solicitarPagamento('${res.email}')" style="display: block; width: 100%; margin-top: 10px; padding: 10px; background: ${corTexto}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+          PAGAR AGORA
+        </button>
+      </div>
+    `;
+  }
+}
+
+// Substitua a sua antiga function verificarStatusPagamento() por esta vazia ou remova a chamada dela de outros lugares
+function verificarStatusPagamento() {
+  // Deixamos vazia porque a checagem agora acontece automaticamente dentro do carregarDadosIniciaisDoSistema()
+}
 /* =========================
    INIT
 ========================= */
@@ -286,25 +347,7 @@ let sistemaBloqueado = false;
 let intervalovigilante = null;
 
 function verificarStatusPagamento() {
-  console.log("💳 Piloto: Ignorando checagem financeira do Google e liberando o botão de entrar...");
-  
-  const divAviso = document.getElementById('aviso-financeiro');
-  const btnEntrar = document.getElementById('btn-entrar');
-  
-  // Garantimos que os elementos existem na tela de login antes de mexer neles
-  if (btnEntrar) {
-    sistemaBloqueado = false;
-    btnEntrar.disabled = false;
-    btnEntrar.style.backgroundColor = "#4A86E8";
-    btnEntrar.style.cursor = "pointer";
-    btnEntrar.innerText = "Entrar";
-    btnEntrar.onmouseover = function() { this.style.backgroundColor='#357ABD'; };
-    btnEntrar.onmouseout = function() { this.style.backgroundColor='#4A86E8'; };
-  }
-
-  if (divAviso) {
-    divAviso.innerHTML = ""; // Limpa qualquer aviso antigo para não sujar o layout
-  }
+ 
 }
 
 
