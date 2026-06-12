@@ -13584,9 +13584,13 @@ function finalizarLancamentoMesa() {
 }
 
   
-/* ============================================================
-   FUNÇÕES AUXILIARES E LIMPEZA
-   ============================================================ */
+/* =========================================================================
+   🧮 SUBSISTEMA: FUNÇÕES AUXILIARES, GERENCIAMENTO DE CONTEXTO E OPERAÇÕES
+   ========================================================================= */
+
+/**
+ * RESET LOGÍSTICO: Zera os ponteiros e metadados de uma mesa no banco relacional
+ */
 function marcarMesaLivre(num) {
   const sh = ssAtual.getSheetByName("MESAS");
   const dados = sh.getDataRange().getValues();
@@ -13595,44 +13599,59 @@ function marcarMesaLivre(num) {
     if (dados[i][0] == num) {
       const linha = i + 1;
       const agora = new Date();
-      // Reseta TUDO: Status, Valor, Tempo Inicial, Tempo Atual, Obs, Cliente, Itens
+      // Reseta a tupla: Status, Valor, Tempo Inicial, Tempo Atual, Obs, Cliente, Itens, DataModificacao
       sh.getRange(linha, 2, 1, 8).setValues([["Livre", 0, agora, agora, "", "", "", agora]]);
       break;
     }
   }
   return true;
 }
-function fecharComandaMesa() { document.getElementById("modalComandaMesa").style.display = "none"; }
+
+function fecharComandaMesa() { 
+  const comanda = document.getElementById("modalComandaMesa");
+  if (comanda) comanda.style.display = "none"; 
+}
+
+/**
+ * CONCURRÊNCIA CONTROLADA: Libera travas de edição de tabelas (Locks) ao fechar o modal
+ */
 function fecharModalDetalhes() {
-  document.getElementById("modalDetalhesMesa").style.display = "none";
+  const modal = document.getElementById("modalDetalhesMesa");
+  if (modal) modal.style.display = "none";
 
   if (window.mesaAbertaAgora) {
-    //console.log("Liberando mesa: " + window.mesaAbertaAgora);
+    const mesaParaLiberar = window.mesaAbertaAgora;
     
-    google.script.run
-      .withSuccessHandler(res => {
-         if(res.sucesso) console.log("Limpo!");
-         // carregarMesas(); // Opcional: atualizar os cards agora
+    fetch(URL_API_GOOGLE, {
+      method: "POST",
+      body: JSON.stringify({
+        acao: "LIBERAR_BLOQUEIO_MANUAL",
+        nomeLoja: CONFIG.cliente.nomeFixo,
+        mesaNum: mesaParaLiberar
       })
-      .liberarBloqueioManual(window.mesaAbertaAgora);
+    })
+    .then(response => response.json())
+    .then(res => {
+      if (res.sucesso) console.log(`Mutex liberado para mesa: ${mesaParaLiberar}`);
+    })
+    .catch(err => console.error("Falha no transporte do sinal de destravamento:", err));
     
-    // Limpa a variável para a próxima mesa não herdar o número
     window.mesaAbertaAgora = null;
   }
 }
 
-/* ============================================================
-   FUNÇÕES DE INTERFACE DA BARRA DE CARRINHO (MESA)
-   ============================================================ */
+/* =========================================================================
+   📊 UI CONTROLLER: ATUALIZAÇÃO DA VIEW DE BARRA DO CARRINHO (SALAO)
+   ========================================================================= */
 
 function atualizarBarraCarrinhoMesa() {
   const barra = document.getElementById("barraCarrinho");
   const txtItens = document.getElementById("totalItens");
   const txtValor = document.getElementById("totalValor");
 
-  if (!barra) return; // Segurança caso o elemento não exista no HTML
+  if (!barra) return; 
 
-  if (carrinhoMesa.length > 0) {
+  if (carrinhoMesa && carrinhoMesa.length > 0) {
     let qtdTotal = 0;
     let valorTotal = 0;
 
@@ -13644,9 +13663,9 @@ function atualizarBarraCarrinhoMesa() {
     if (txtItens) txtItens.innerText = qtdTotal + (qtdTotal === 1 ? " item" : " itens");
     if (txtValor) txtValor.innerText = "R$ " + valorTotal.toFixed(2);
 
-    barra.classList.remove("hidden"); // Mostra a barra (geralmente roxa/azul)
+    barra.classList.remove("hidden"); 
   } else {
-    barra.classList.add("hidden"); // Esconde se o carrinho esvaziar
+    barra.classList.add("hidden"); 
   }
 }
 
@@ -13659,7 +13678,6 @@ function alterarQtdMesa(idx, delta) {
     carrinhoMesa.splice(idx, 1);
   }
 
-  // Atualiza a barra ao fundo e re-abre o modal para atualizar a lista visual
   atualizarBarraCarrinhoMesa();
   
   if (carrinhoMesa.length === 0) {
@@ -13669,40 +13687,32 @@ function alterarQtdMesa(idx, delta) {
   }
 }
 
-
-
-
-
-/* ============================================================
-   FUNÇÃO DE CONTEXTO: DECIDE QUAL CARRINHO ABRIR
-   ============================================================ */
 function abrirCarrinhoPorContexto() {
-  // Se o modo de mesa estiver ligado, abre a comanda da mesa
   if (modoMesaAtivo) {
     abrirCarrinhoMesa(); 
   } else {
-    // Caso contrário, tenta abrir o carrinho de delivery
     if (typeof abrirCarrinho === "function") {
       abrirCarrinho(); 
     } else {
-      // SUBSTITUIÇÃO: Erro de configuração do sistema
-      exibirModal({
-        titulo: "Erro de Módulo",
-        mensagem: "O módulo de delivery não foi localizado. Verifique se o modo mesa deveria estar ativo.",
-        tipo: "erro"
-      });
+      if (typeof exibirModal === "function") {
+        exibirModal({
+          titulo: "Erro de Módulo",
+          mensagem: "O módulo de delivery não foi localizado. Verifique se o modo mesa deveria estar ativo.",
+          tipo: "erro"
+        });
+      }
     }
   }
 }
 
-/* ============================================================
-   RENDERIZAÇÃO DOS PRODUTOS COM IMAGEM E DESCRIÇÃO
-   ============================================================ */
+/* =========================================================================
+   🛍️ MOTOR DE RENDERIZAÇÃO E FILTRO REATIVO DO CARDÁPIO DE MESAS
+   ========================================================================= */
+
 function renderizarProdutosParaMesa() {
   const container = document.getElementById("containerProdutosCardapioMesa");
   if (!container) return;
 
-  // 1. Criamos o campo de busca se ele ainda não existir
   let campoBuscaHtml = `
     <div style="position: sticky; top: 0; background: white; padding: 10px; z-index: 10; border-bottom: 1px solid #f1f5f9;">
       <input type="text" id="inputBuscaProdutoMesa" placeholder="🔍 Buscar produto..." 
@@ -13711,10 +13721,8 @@ function renderizarProdutosParaMesa() {
     </div>
   `;
 
-  // Limpamos e adicionamos o input de busca
   container.innerHTML = campoBuscaHtml;
   
-  // Criamos uma div interna para os itens (para o scroll não afetar o input fixo)
   const listaItensDiv = document.createElement("div");
   listaItensDiv.id = "listaProdutosFiltradosMesa";
   container.appendChild(listaItensDiv);
@@ -13726,6 +13734,7 @@ function renderizarProdutosParaMesa() {
     return;
   }
 
+  // Agrupamento Matricial por Categorias de Consumo
   const categorias = {};
   window.produtosData.forEach(p => {
     const cat = p.categoria || "DIVERSOS";
@@ -13734,7 +13743,6 @@ function renderizarProdutosParaMesa() {
   });
 
   for (let nomeCat in categorias) {
-    // Container da Categoria (para podermos esconder a categoria inteira se não houver busca nela)
     const sectionCat = document.createElement("div");
     sectionCat.className = "secao-categoria-cardapio";
     sectionCat.setAttribute("data-categoria", nomeCat);
@@ -13759,10 +13767,11 @@ function renderizarProdutosParaMesa() {
 
       const div = document.createElement("div");
       div.className = "produto-item-card";
-      // Guardamos o nome do produto em um atributo para o filtro ler rápido
       div.setAttribute("data-nome", produto.nome.toLowerCase());
       div.style = `display: flex; align-items: center; padding: 12px; background: white; margin-bottom: 8px; border-radius: 12px; border: 1px solid ${emPromoAtiva ? '#fee2e2' : '#f1f5f9'}; cursor: pointer;`;
-      div.onclick = () => abrirModalLancarMesa(produto.id);
+      div.onclick = () => {
+        if (typeof abrirModalLancarMesa === "function") abrirModalLancarMesa(produto.id);
+      };
 
       const urlImagem = produto.imagem || "https://via.placeholder.com/80?text=S/F";
 
@@ -13784,7 +13793,6 @@ function renderizarProdutosParaMesa() {
   }
 }
 
-// 2. FUNÇÃO DE FILTRO EM TEMPO REAL
 function filtrarProdutosCardapioMesa() {
   const termo = document.getElementById("inputBuscaProdutoMesa").value.toLowerCase().trim();
   const cards = document.querySelectorAll(".produto-item-card");
@@ -13792,33 +13800,36 @@ function filtrarProdutosCardapioMesa() {
 
   cards.forEach(card => {
     const nome = card.getAttribute("data-nome");
-    if (nome.includes(termo)) {
-      card.style.display = "flex";
-    } else {
-      card.style.display = "none";
-    }
+    card.style.display = nome.includes(termo) ? "flex" : "none";
   });
 
-  // Esconde o título da categoria se todos os produtos dela estiverem ocultos
   secoes.forEach(secao => {
     const cardsVisiveis = secao.querySelectorAll(".produto-item-card[style*='display: flex']");
     secao.style.display = cardsVisiveis.length > 0 ? "block" : "none";
   });
 }
 
-function cancelarAtendimentoMesa() {
-  // 1. Identifica qual mesa estava sendo editada antes de limpar a variável
-  const numMesaParaLiberar = mesaSelecionadaGlobal ? mesaSelecionadaGlobal.num : null;
+/* =========================================================================
+   🧼 ROBUSTEZ OPERACIONAL: CANCELAMENTOS, TRANSFERÊNCIAS E FECHAMENTOS (REST)
+   ========================================================================= */
 
-  // 2. Notifica o servidor para liberar o cadeado imediatamente
+function cancelarAtendimentoMesa() {
+  const numMesaParaLiberar = mesaSelecionadaGlobal ? (mesaSelecionadaGlobal.num || mesaSelecionadaGlobal) : null;
+
   if (numMesaParaLiberar) {
-    //console.log("Liberando bloqueio da mesa " + numMesaParaLiberar);
-    google.script.run
-      .withSuccessHandler(() => console.log("Mesa " + numMesaParaLiberar + " liberada com sucesso."))
-      .liberarBloqueioManual(numMesaParaLiberar); // Esta função deve estar no seu .gs
+    fetch(URL_API_GOOGLE, {
+      method: "POST",
+      body: JSON.stringify({
+        acao: "LIBERAR_BLOQUEIO_MANUAL",
+        nomeLoja: CONFIG.cliente.nomeFixo,
+        mesaNum: numMesaParaLiberar
+      })
+    })
+    .then(r => r.json())
+    .then(() => console.log(`Rollback: Bloqueio da mesa ${numMesaParaLiberar} limpo.`))
+    .catch(err => console.error("Erro no descarte de locks voláteis:", err));
   }
 
-  // 3. Lógica visual de troca de telas
   const areaMesas = document.getElementById("secaoMesas");
   const areaCardapio = document.getElementById("secaoCardapio");
 
@@ -13827,19 +13838,17 @@ function cancelarAtendimentoMesa() {
     areaCardapio.style.display = "none";
   }
 
-  // 4. Limpeza de variáveis globais
   modoMesaAtivo = false;
   mesaSelecionadaGlobal = null;
   carrinhoMesa = [];
   
-  // Atualiza a interface (esconde barra de carrinho, etc)
-  if (typeof atualizarBarraCarrinhoMesa === "function") {
-    atualizarBarraCarrinhoMesa();
-  }
+  atualizarBarraCarrinhoMesa();
 }
-// Substituta da showMsg: Notificação elegante que some sozinha
+
 function toast(mensagem, tipo = 'info') {
   const container = document.getElementById('toast-container');
+  if (!container) return;
+  
   const div = document.createElement('div');
   div.className = 'toast';
   
@@ -13847,23 +13856,24 @@ function toast(mensagem, tipo = 'info') {
   div.innerHTML = `<span>${icon}</span> <span>${mensagem}</span>`;
   
   container.appendChild(div);
-  setTimeout(() => div.remove(), 3000); // Remove do DOM após a animação
+  setTimeout(() => div.remove(), 3000); 
 }
 
-// Abre o modal de transferência
 function transferirMesaPrompt(mesaOrigem) {
   const modal = document.getElementById('modalTransferir');
   const txtOrigem = document.getElementById('txtOrigem');
   const input = document.getElementById('inputMesaDestino');
   const btn = document.getElementById('btnConfirmarTransferencia');
   
+  if (!modal || !input || !btn) return;
+
   txtOrigem.innerText = `Movendo itens da Mesa ${mesaOrigem}`;
   input.value = "";
   modal.style.display = 'flex';
   input.focus();
 
   btn.onclick = () => {
-    const mesaDestino = input.value;
+    const mesaDestino = input.value.trim();
     
     if (!mesaDestino || mesaDestino == mesaOrigem) {
       toast("Informe uma mesa de destino válida", "error");
@@ -13873,39 +13883,53 @@ function transferirMesaPrompt(mesaOrigem) {
     btn.disabled = true;
     btn.innerText = "TRANSFERINDO...";
 
-    google.script.run
-      .withSuccessHandler(res => {
-        btn.disabled = false;
-        btn.innerText = "CONFIRMAR";
-        
-        if (res.sucesso) {
-          toast(res.msg, "success");
-          fecharModalTransferir();
-          fecharModalDetalhes();
-          sincronizarSistema();
-        } else {
-          toast(res.error, "error");
-        }
+    fetch(URL_API_GOOGLE, {
+      method: "POST",
+      body: JSON.stringify({
+        acao: "EXECUTAR_TRANSFERENCIA",
+        nomeLoja: CONFIG.cliente.nomeFixo,
+        origem: mesaOrigem,
+        destino: mesaDestino
       })
-      .withFailureHandler(err => {
-        btn.disabled = false;
-        btn.innerText = "CONFIRMAR";
-        toast("Erro de conexão com o servidor", "error");
-      })
-      .executarTransferencia(mesaOrigem, mesaDestino);
+    })
+    .then(response => {
+      if (!response.ok) throw new Error();
+      return response.json();
+    })
+    .then(res => {
+      btn.disabled = false;
+      btn.innerText = "CONFIRMAR";
+      
+      if (res.sucesso) {
+        toast(res.msg, "success");
+        fecharModalTransferir();
+        fecharModalDetalhes();
+        sincronizarSistema();
+      } else {
+        toast(res.error, "error");
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.innerText = "CONFIRMAR";
+      toast("Erro de conexão com o servidor", "error");
+    });
   };
 }
 
 function fecharModalTransferir() {
-  document.getElementById('modalTransferir').style.display = 'none';
+  const modal = document.getElementById('modalTransferir');
+  if (modal) modal.style.display = 'none';
 }
 
 function fecharContaMesa(numMesa, valorTotal, itensTexto) {
+  if (typeof exibirModal !== "function") return;
+  
   exibirModal({
     titulo: "Fechar Conta?",
     mensagem: `Deseja fechar a conta da Mesa ${numMesa} e enviá-la para limpeza? O valor total é R$ ${valorTotal.toFixed(2)}.`,
-    tipo: "pergunta", // Alterado para 'pergunta' para mostrar os botões SIM/NÃO
-    aoConfirmar: function() { // Alterado o nome de 'confirmar' para 'aoConfirmar'
+    tipo: "pergunta",
+    aoConfirmar: function() {
       processarFechamento(numMesa, valorTotal, itensTexto);
     }
   });
@@ -13914,75 +13938,93 @@ function fecharContaMesa(numMesa, valorTotal, itensTexto) {
 function processarFechamento(numMesa, valorTotal, itensTexto) {
   const usuarioLogado = (typeof user !== "undefined" && user.usuario) ? user.usuario : "SISTEMA";
 
-  // Substituindo o toast por algo mais discreto ou mantendo se for apenas informativo
-  if (typeof toast === "function") toast("Enviando para o caixa...", "info");
+  toast("Enviando para o caixa...", "info");
 
-  google.script.run
-    .withSuccessHandler(res => {
-      // SUCESSO: Já está usando o seu exibirModal (Perfeito!)
-      if (typeof exibirModal === "function") {
-        exibirModal({
-          titulo: "Mesa Enviada ao Caixa",
-          mensagem: `A Mesa ${numMesa} foi fechada com sucesso. O consumo agora consta como pendente no balcão para pagamento.`,
-          tipo: "sucesso"
-        });
-      }
-      
-      if (typeof fecharModalDetalhes === "function") fecharModalDetalhes();
-      
-      // Atualiza visualmente o salão
-      google.script.run.withSuccessHandler(gerarCardsMesas).getMesas();
-      
-      if (typeof listarPendentesPagamento === "function") listarPendentesPagamento();
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "FECHAR_CONSUMO_MESA_PARA_PAGAMENTO",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      mesaNum: numMesa,
+      operador: usuarioLogado
     })
-    .withFailureHandler(err => {
-      // --- SUBSTITUIÇÃO DO ALERT PELO MODAL UNIVERSAL ---
-      if (typeof exibirModal === "function") {
-        exibirModal({
-          titulo: "Falha no Fechamento",
-          mensagem: `Não foi possível fechar a Mesa ${numMesa}. Por favor, tente novamente ou verifique a conexão. Erro: ${err.message}`,
-          tipo: "erro"
-        });
-      } else {
-        alert("Erro crítico: " + err.message);
-      }
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Falha de resposta no Gateway da API.");
+    return response.json();
+  })
+  .then(res => {
+    if (typeof exibirModal === "function") {
+      exibirModal({
+        titulo: "Mesa Enviada ao Caixa",
+        mensagem: `A Mesa ${numMesa} foi fechada com sucesso. O consumo agora consta como pendente no balcão para pagamento.`,
+        tipo: "sucesso"
+      });
+    }
+    
+    fecharModalDetalhes();
+    
+    // Atualização em background do mapa de salão pós-fechamento
+    fetch(URL_API_GOOGLE, {
+      method: "POST",
+      body: JSON.stringify({ acao: "GET_MESAS", nomeLoja: CONFIG.cliente.nomeFixo })
     })
-    .fecharConsumoMesaParaPagamento(numMesa); 
+    .then(r => r.json())
+    .then(mesas => {
+      if (typeof gerarCardsMesas === "function") gerarCardsMesas(mesas);
+    });
+    
+    if (typeof listarPendentesPagamento === "function") listarPendentesPagamento();
+  })
+  .catch(err => {
+    if (typeof exibirModal === "function") {
+      exibirModal({
+        titulo: "Falha no Fechamento",
+        mensagem: `Não foi possível fechar a Mesa ${numMesa}. Erro: ${err.message}`,
+        tipo: "erro"
+      });
+    } else {
+      alert("Erro crítico: " + err.message);
+    }
+  });
 }
-// Controle de sincronização global
+
 let estaSincronizando = false;
 
 function sincronizarSistema() {
-  if (estaSincronizando) return; // Evita sobrepor chamadas se a internet estiver lenta
+  if (estaSincronizando) return; 
   
   estaSincronizando = true;
-  //console.log("Sincronizando mesas e pagamentos...");
 
-  // Busca mesas atualizadas
-  google.script.run
-    .withSuccessHandler((mesas) => {
-      gerarCardsMesas(mesas);
-      estaSincronizando = false;
-    })
-    .withFailureHandler((err) => {
-      console.error("Falha na sincronização:", err);
-      estaSincronizando = false;
-    })
-    .getMesas();
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({ acao: "GET_MESAS", nomeLoja: CONFIG.cliente.nomeFixo })
+  })
+  .then(response => response.json())
+  .then(mesas => {
+    if (typeof gerarCardsMesas === "function") gerarCardsMesas(mesas);
+    estaSincronizando = false;
+  })
+  .catch(err => {
+    console.error("Falha na sincronização assíncrona ativa:", err);
+    estaSincronizando = false;
+  });
 
-  // Atualiza lista de pagamentos pendentes
   if (typeof listarPendentesPagamento === "function") {
     listarPendentesPagamento();
   }
 }
 
-// Configura o intervalo de 10 segundos
+/* =========================================================================
+   📦 SUBSISTEMA: MODAL UNIVERSAL, INTEGRAÇÃO MERCADO PAGO E CONTROLE DE ITENS
+   ========================================================================= */
+
+// Inicialização do pooling de sincronização nativo (10 segundos)
 setInterval(sincronizarSistema, 10000);
 
 /**
- * Modal Universal para substituir alert e confirm
+ * MODAL UNIVERSAL: Substitui caixas de diálogo nativas do navegador por UI rica
  * @param {Object} config - { titulo, mensagem, tipo, aoConfirmar }
- * tipos: 'alerta' (apenas OK), 'pergunta' (SIM/NAO), 'erro' (X vermelho), 'sucesso' (Check verde)
  */
 function exibirModal(config) {
   const modal = document.getElementById('modalUniversal');
@@ -13990,6 +14032,8 @@ function exibirModal(config) {
   const mensagem = document.getElementById('uni-mensagem');
   const icon = document.getElementById('uni-icon');
   const containerBotoes = document.getElementById('uni-container-botoes');
+
+  if (!modal || !titulo || !mensagem || !icon || !containerBotoes) return;
 
   const estilos = {
     alerta:   { icon: '🔔', cor: '#6366f1' },
@@ -14001,10 +14045,7 @@ function exibirModal(config) {
   const estilo = estilos[config.tipo || 'alerta'];
   
   titulo.innerText = config.titulo || "Aviso";
-  
-  // 🔥 AQUI ESTÁ A CORREÇÃO
   mensagem.innerHTML = config.mensagem || "";
-
   icon.innerText = estilo.icon;
   modal.style.display = 'flex';
 
@@ -14021,7 +14062,6 @@ function exibirModal(config) {
     
     containerBotoes.appendChild(btnNao);
     containerBotoes.appendChild(btnSim);
-
   } else {
     containerBotoes.style.gridTemplateColumns = "1fr";
     
@@ -14049,37 +14089,31 @@ function criarBotaoUni(texto, bg, cor, acao) {
 }
 
 function fecharModalUni() {
-  document.getElementById('modalUniversal').style.display = 'none';
+  const modal = document.getElementById('modalUniversal');
+  if (modal) modal.style.display = 'none';
 }
 
-
-
-
-
-const mp = new MercadoPago('APP_USR-c6a0b928-3617-4768-a3d0-89613e294581'); // Use a Public Key (APP_USR-... ou TEST-...)
-const bricksBuilder = mp.bricks();
-
+/**
+ * MERCADO PAGO GATEWAY: Gerencia o ciclo de vida do SDK Bricks e resolve o pipeline de pagamento
+ */
 async function exibirModalCartao() {
-  // 1. Primeiro, exibe o modal (essencial para o Brick calcular o tamanho)
   const modal = document.getElementById('modalCartao');
   if (modal) modal.style.display = 'flex';
 
-  // 2. Limpa o contêiner HTML e destrói instâncias anteriores
   const container = document.getElementById('cardPaymentBrick_container');
   if (container) container.innerHTML = ''; 
 
-  // 3. Desmontar controlador anterior para evitar erro "already initialized"
   if (window.cardPaymentBrickController) {
     try {
       await window.cardPaymentBrickController.unmount();
     } catch (e) {
-      //console.log("Aviso: Falha ao desmontar brick anterior.");
+      // Falha segura no desmonte preventivo
     }
   }
 
-  const mp = new MercadoPago('APP_USR-c6a0b928-3617-4768-a3d0-89613e294581');
-  const bricksBuilder = mp.bricks();
-  const valorTotal = obterTotalCarrinho();
+  const mpInstance = new MercadoPago('APP_USR-c6a0b928-3617-4768-a3d0-89613e294581');
+  const bricksBuilderInstance = mpInstance.bricks();
+  const valorTotal = typeof obterTotalCarrinho === "function" ? obterTotalCarrinho() : 0;
 
   const settings = {
     initialization: {
@@ -14097,117 +14131,139 @@ async function exibirModalCartao() {
       onReady: () => console.log("✅ Brick Pronto"),
       onSubmit: (formData) => {
         return new Promise((resolve, reject) => {
-          google.script.run
-            .withSuccessHandler((res) => {
-              if (res && res.status === "approved") {
-                fecharModalCartao();
-                
-                // --- MODAL DE SUCESSO ---
-                exibirModal({
-                  titulo: "Pagamento Aprovado!",
-                  mensagem: "Seu pagamento foi confirmado. Estamos preparando seu pedido!",
-                  tipo: "sucesso",
-                  aoConfirmar: () => finalizarVendaCartao() // Finaliza após o clique no botão
-                });
-                
-                resolve();
-              } else {
-                // --- MODAL DE ERRO PERSONALIZADO ---
-                exibirModal({
-                  titulo: "Pagamento Recusado",
-                  mensagem: res.erro || "Não conseguimos autorizar seu cartão. Verifique os dados ou tente outra forma de pagamento.",
-                  tipo: "erro"
-                });
-                
-                reject();
-              }
+          
+          // Transição do Gateway de pagamento legado para a arquitetura REST Fetch
+          fetch(URL_API_GOOGLE, {
+            method: "POST",
+            body: JSON.stringify({
+              acao: "PROCESSAR_PAGAMENTO_CARTAO",
+              nomeLoja: CONFIG.cliente.nomeFixo,
+              dadosCartao: formData
             })
-            .processarPagamentoCartao(formData);
+          })
+          .then(response => {
+            if (!response.ok) throw new Error("Erro de infraestrutura na comunicação com o Gateway.");
+            return response.json();
+          })
+          .then(res => {
+            if (res && res.status === "approved") {
+              fecharModalCartao();
+              
+              exibirModal({
+                titulo: "Pagamento Aprovado!",
+                mensagem: "Seu pagamento foi confirmado. Estamos preparando seu pedido!",
+                tipo: "sucesso",
+                aoConfirmar: () => {
+                  if (typeof finalizarVendaCartao === "function") finalizarVendaCartao();
+                }
+              });
+              resolve();
+            } else {
+              exibirModal({
+                titulo: "Pagamento Recusado",
+                mensagem: res.erro || "Não conseguimos autorizar seu cartão. Verifique os dados ou tente outra forma de pagamento.",
+                tipo: "erro"
+              });
+              reject();
+            }
+          })
+          .catch(err => {
+            console.error("Erro crítico no Gateway de Pagamento:", err);
+            exibirModal({
+              titulo: "Erro de Conectividade",
+              mensagem: "Não foi possível estabelecer contato com a administradora do cartão.",
+              tipo: "erro"
+            });
+            reject();
+          });
+
         });
       },
       onError: (error) => console.error("❌ Erro no Brick:", error),
     },
   };
 
-  window.cardPaymentBrickController = await bricksBuilder.create(
+  window.cardPaymentBrickController = await bricksBuilderInstance.create(
     "cardPayment",
     "cardPaymentBrick_container",
     settings
   );
 }
 
-
 function fecharModalCartao() {
-  document.getElementById('modalCartao').style.display = 'none';
+  const modal = document.getElementById('modalCartao');
+  if (modal) modal.style.display = 'none';
   if (window.cardPaymentBrickController) window.cardPaymentBrickController.unmount();
 }
 
+/**
+ * ENGINE LANÇAMENTO: Processa matrizes de variação de cardápio e calcula mutações de preços
+ */
 function m_confirmarSelecao() {
-  if (!itemMesaAtual) return;
+  if (!window.itemMesaAtual) return;
 
-  const qtd = parseInt(document.getElementById("m_qtd").innerText);
+  const qtd = parseInt(document.getElementById("m_qtd").innerText) || 1;
   const selectVar = document.getElementById("m_select_var");
   
-  let precoFinal = itemMesaAtual.preco;
-  let nomeFinal = itemMesaAtual.nome;
+  let precoFinal = window.itemMesaAtual.preco;
+  let nomeFinal = window.itemMesaAtual.nome;
 
-  // Se tem variação, atualiza preço e nome
-  if (itemMesaAtual.variacoes && itemMesaAtual.variacoes.length > 0) {
+  if (window.itemMesaAtual.variacoes && window.itemMesaAtual.variacoes.length > 0 && selectVar) {
     const opcaoSelecionada = selectVar.options[selectVar.selectedIndex].text.split(" - R$")[0];
     precoFinal = Number(selectVar.value);
-    nomeFinal = `${itemMesaAtual.nome} (${opcaoSelecionada})`;
+    nomeFinal = `${window.itemMesaAtual.nome} (${opcaoSelecionada})`;
   } else {
-    // Lógica de promoção para itens sem variação
+    // Escalonamento e cálculo da janela ativa de promoção relâmpago
     const agora = new Date().getTime();
-    const emPromo = itemMesaAtual.emPromocao && agora >= new Date(itemMesaAtual.dataInicio).getTime() && agora <= new Date(itemMesaAtual.dataFim).getTime();
-    precoFinal = emPromo ? itemMesaAtual.precoPromocional : itemMesaAtual.preco;
+    const emPromo = window.itemMesaAtual.emPromocao && 
+                    agora >= new Date(window.itemMesaAtual.dataInicio).getTime() && 
+                    agora <= new Date(window.itemMesaAtual.dataFim).getTime();
+    precoFinal = emPromo ? window.itemMesaAtual.precoPromocional : window.itemMesaAtual.preco;
   }
 
-  // Adiciona ao carrinho da mesa
   const itemCarrinho = {
-    id: itemMesaAtual.id,
+    id: window.itemMesaAtual.id,
     nome: nomeFinal,
     preco: precoFinal,
-    precoOriginal: itemMesaAtual.preco, // Para o visual de "Promo" na comanda
+    precoOriginal: window.itemMesaAtual.preco, 
     qtd: qtd,
-    categoria: itemMesaAtual.categoria,
+    categoria: window.itemMesaAtual.categoria,
     adicionais: [],
     obs: ""
   };
 
+  if (!window.carrinhoMesa) window.carrinhoMesa = [];
   carrinhoMesa.push(itemCarrinho);
   
-  toast(`${qtd}x ${itemMesaAtual.nome} adicionado!`, "success");
+  if (typeof toast === "function") toast(`${qtd}x ${window.itemMesaAtual.nome} adicionado!`, "success");
   
   fecharNovoModal();
-  atualizarBarraCarrinhoMesa();
+  if (typeof atualizarBarraCarrinhoMesa === "function") atualizarBarraCarrinhoMesa();
 }
 
 function abrirModalLancarMesa(id) {
-  //console.log("Abrindo modal para o produto ID:", id);
-  
-  // 1. Busca os dados do produto no banco global
   if (!window.produtosData) {
-    toast("Erro: Dados dos produtos não carregados", "error");
+    if (typeof toast === "function") toast("Erro: Dados dos produtos não carregados", "error");
     return;
   }
   
   const produto = window.produtosData.find(p => p.id == id);
   if (!produto) return;
 
-  // 2. Armazena o item que está sendo editado no momento
   window.itemMesaAtual = produto;
 
-  // 3. Preenche os campos do Modal (IDs que começam com m_)
-  document.getElementById("m_titulo").innerText = produto.nome;
-  document.getElementById("m_descricao").innerText = produto.descricao || "";
-  document.getElementById("m_qtd").innerText = "1";
+  const tituloEl = document.getElementById("m_titulo");
+  const descEl = document.getElementById("m_descricao");
+  const qtdEl = document.getElementById("m_qtd");
+  
+  if (tituloEl) tituloEl.innerText = produto.nome;
+  if (descEl) descEl.innerText = produto.descricao || "";
+  if (qtdEl) qtdEl.innerText = "1";
 
   const selectVar = document.getElementById("m_select_var");
   const areaVar = document.getElementById("m_area_variacoes");
 
-  // 4. Lógica de Variações (Tamanhos/Opções)
-  if (produto.variacoes && produto.variacoes.length > 0) {
+  if (produto.variacoes && produto.variacoes.length > 0 && selectVar && areaVar) {
     areaVar.style.display = "block";
     selectVar.innerHTML = "";
     produto.variacoes.forEach(v => {
@@ -14216,54 +14272,60 @@ function abrirModalLancarMesa(id) {
       opt.innerText = `${v.nome} - R$ ${Number(v.preco).toFixed(2)}`;
       selectVar.appendChild(opt);
     });
-  } else {
+  } else if (areaVar) {
     areaVar.style.display = "none";
   }
 
-  // 5. Exibe o Modal e joga para a frente de tudo
   const modal = document.getElementById("modalMesaLancar");
-  modal.style.display = "flex";
-  modal.style.zIndex = "1000010"; // Força ficar na frente da gestão de mesas
+  if (modal) {
+    modal.style.display = "flex";
+    modal.style.zIndex = "1000010"; 
+  }
   
   recalcularPrecoMesa();
 }
 
-// Funções auxiliares necessárias para o modal funcionar:
 function m_alterarQtd(valor) {
   const el = document.getElementById("m_qtd");
+  if (!el) return;
+  
   let qtd = parseInt(el.innerText) + valor;
   if (qtd < 1) qtd = 1;
   el.innerText = qtd;
+  
   recalcularPrecoMesa();
 }
 
 function recalcularPrecoMesa() {
   if (!window.itemMesaAtual) return;
   
-  const qtd = parseInt(document.getElementById("m_qtd").innerText);
+  const qtdEl = document.getElementById("m_qtd");
+  const precoEl = document.getElementById("m_preco");
+  const selectVar = document.getElementById("m_select_var");
+  
+  if (!qtdEl || !precoEl) return;
+  const qtd = parseInt(qtdEl.innerText) || 1;
   let precoUnitario = 0;
 
-  const selectVar = document.getElementById("m_select_var");
-  if (window.itemMesaAtual.variacoes && window.itemMesaAtual.variacoes.length > 0) {
+  if (window.itemMesaAtual.variacoes && window.itemMesaAtual.variacoes.length > 0 && selectVar) {
     precoUnitario = Number(selectVar.value);
   } else {
-    // Verifica promoção
     const agora = new Date().getTime();
     const p = window.itemMesaAtual;
-    const emPromo = p.emPromocao && agora >= new Date(p.dataInicio).getTime() && agora <= new Date(p.dataFim).getTime();
+    const emPromo = p.emPromocao && 
+                    agora >= new Date(p.dataInicio).getTime() && 
+                    agora <= new Date(p.dataFim).getTime();
     precoUnitario = emPromo ? p.precoPromocional : p.preco;
   }
 
-  document.getElementById("m_preco").innerText = `R$ ${(precoUnitario * qtd).toFixed(2)}`;
+  precoEl.innerText = `R$ ${(precoUnitario * qtd).toFixed(2)}`;
 }
 
 function fecharNovoModal() {
-  document.getElementById("modalMesaLancar").style.display = "none";
+  const modal = document.getElementById("modalMesaLancar");
+  if (modal) modal.style.display = "none";
 }
-
-
 </script>
-
 
 <div id="modalTransferir" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000003; align-items:center; justify-content:center; padding:20px;">
   <div style="background:white; width:100%; max-width:350px; border-radius:20px; padding:25px; text-align:center; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);">
@@ -14289,137 +14351,76 @@ function fecharNovoModal() {
     <h3 id="uni-titulo" style="margin:0; color:#1e293b; font-size:1.4rem; font-weight:800;">Aviso</h3>
     <p id="uni-mensagem" style="color:#64748b; font-size:1rem; margin:15px 0 25px; line-height:1.5;"></p>
     
-    <div id="uni-container-botoes" style="display:grid; gap:10px;">
-      </div>
+    <div id="uni-container-botoes" style="display:grid; gap:10px;"></div>
   </div>
 </div>
-
-
-
-
-
 
 <div id="modalMesas">
   <div class="modal-container">
     
-  <div class="modal-header-gestao" style="background: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; border-radius: 12px 12px 0 0;">
-  
-  <div style="display: flex; align-items: center; gap: 10px;">
-    <span style="font-weight: 800; color: #1e293b; font-size: 1.1rem; letter-spacing: -0.5px;">
-      🍽️ Gestão de Mesas
-    </span>
-    
-    <div id="nomeUsuarioLogado" class="user-badge" style="display: flex; align-items: center; gap: 5px; background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; border: 1px solid #dcfce7; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-      <span style="font-size: 8px;">🟢</span>
-      <span id="txtNomeUsuario">CARREGANDO...</span>
+    <div class="modal-header-gestao" style="background: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; border-radius: 12px 12px 0 0;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-weight: 800; color: #1e293b; font-size: 1.1rem; letter-spacing: -0.5px;">
+          🍽️ Gestão de Mesas
+        </span>
+        
+        <div id="nomeUsuarioLogado" class="user-badge" style="display: flex; align-items: center; gap: 5px; background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; border: 1px solid #dcfce7; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <span style="font-size: 8px;">🟢</span>
+          <span id="txtNomeUsuario">CARREGANDO...</span>
+        </div>
+      </div>
+
+      <button onclick="fecharModalMesas()" style="cursor: pointer; background: #f1f5f9; border: none; font-size: 16px; color: #64748b; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
+        ✖
+      </button>
     </div>
-  </div>
 
-  <button onclick="fecharModalMesas()" style="cursor: pointer; background: #f1f5f9; border: none; font-size: 16px; color: #64748b; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
-    ✖
-  </button>
-</div>
+    <div class="mesa-legenda" style="display: flex; flex-wrap: wrap; gap: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+      <div class="legenda-item" style="display: flex; align-items: center; gap: 5px;">
+        <span style="width: 12px; height: 12px; border-radius: 3px; border: 2px dashed #cbd5e1; background: white;"></span> 
+        Livre: <b id="count-livre">0</b>
+      </div>
+      
+      <div class="legenda-item" style="display: flex; align-items: center; gap: 5px;">
+        <span style="width: 12px; height: 12px; border-radius: 3px; background: #fffef0; border: 2px solid #facc15;"></span> 
+        Ocupada: <b id="count-ocupada">0</b>
+      </div>
+      
+      <div class="legenda-item" style="display: flex; align-items: center; gap: 5px;">
+        <span style="width: 12px; height: 12px; border-radius: 3px; background: #f97316;"></span> 
+        Limpeza: <b id="count-limpeza">0</b>
+      </div>
+      
+      <div class="legenda-item" style="display: flex; align-items: center; gap: 5px;">
+        <span style="width: 12px; height: 12px; border-radius: 3px; background: #fef2f2; border: 2px solid #ef4444;"></span> 
+        +60 min: <b id="count-atrasada">0</b>
+      </div>
 
-   <div class="mesa-legenda" style="display: flex; flex-wrap: wrap; gap: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
-  <div class="legenda-item" style="display: flex; align-items: center; gap: 5px;">
-    <span style="width: 12px; height: 12px; border-radius: 3px; border: 2px dashed #cbd5e1; background: white;"></span> 
-    Livre: <b id="count-livre">0</b>
-  </div>
-  
-  <div class="legenda-item" style="display: flex; align-items: center; gap: 5px;">
-    <span style="width: 12px; height: 12px; border-radius: 3px; background: #fffef0; border: 2px solid #facc15;"></span> 
-    Ocupada: <b id="count-ocupada">0</b>
-  </div>
-  
-  <div class="legenda-item" style="display: flex; align-items: center; gap: 5px;">
-    <span style="width: 12px; height: 12px; border-radius: 3px; background: #f97316;"></span> 
-    Limpeza: <b id="count-limpeza">0</b>
-  </div>
-  
-  <div class="legenda-item" style="display: flex; align-items: center; gap: 5px;">
-    <span style="width: 12px; height: 12px; border-radius: 3px; background: #fef2f2; border: 2px solid #ef4444;"></span> 
-    +60 min: <b id="count-atrasada">0</b>
-  </div>
-
-  <div class="legenda-item" style="display: flex; align-items: center; gap: 5px;">
-    <span class="pulse-mini" style="width: 12px; height: 12px; border-radius: 3px; background: #ffebeb; border: 2px solid #ff0000;"></span> 
-    🔒 Em Edição
-  </div>
-</div>
-
-<style>
-/* Pequena animação para a legenda de bloqueio */
-.pulse-mini {
-  animation: pulse-mini-red 2s infinite;
-}
-@keyframes pulse-mini-red {
-  0% { opacity: 1; }
-  50% { opacity: 0.4; }
-  100% { opacity: 1; }
-}
-</style>
+      <div class="legenda-item" style="display: flex; align-items: center; gap: 5px;">
+        <span class="pulse-mini" style="width: 12px; height: 12px; border-radius: 3px; background: #ffebeb; border: 2px solid #ff0000;"></span> 
+        🔒 Em Edição
+      </div>
+    </div>
 
     <div class="modal-content-wrapper" id="secaoMesas" style="display: flex;">
-      
       <div class="mesas-area" style="flex: 2; overflow-y: auto; padding: 20px;">
         <div id="spinnerMesas" style="display:none; text-align:center; padding: 20px; width: 100%;">
           <div class="loader"></div> <p>Carregando mesas...</p>
         </div>
-        <div id="listaMesas" class="mesas-grid">
-           </div>
+        <div id="listaMesas" class="mesas-grid"></div>
       </div>
 
-     <div id="modalDetalhesMesa" class="modal-secundario" style="
-    display: none; 
-    flex-direction: column; 
-    background: #fff; 
-    width: 95%; 
-    max-width: 450px; 
-    height: auto;
-    max-height: 85vh; /* Limita a altura a 85% da tela */
-    border-radius: 12px; 
-    overflow: hidden; 
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    position: fixed; /* Fixa para sobrepor o grid de mesas */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10001;
-">
-    <div class="header-detalhes" style="
-        padding: 15px; 
-        background: #f8fafc; 
-        border-bottom: 1px solid #e2e8f0;
-        font-weight: bold; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center;
-        flex-shrink: 0;
-    ">
-       <span id="nomeMesaDestaque" style="color: #1e293b; font-size: 1.1rem;">Detalhes</span>
-       <button onclick="fecharModalDetalhes()" style="
-            background: #f1f5f9; 
-            border: 1px solid #cbd5e1; 
-            padding: 6px 15px; 
-            border-radius: 8px; 
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: #64748b;
-       ">Fechar</button>
-    </div>
+      <div id="modalDetalhesMesa" class="modal-secundario" style="display: none; flex-direction: column; background: #fff; width: 95%; max-width: 450px; height: auto; max-height: 85vh; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10001;">
+        <div class="header-detalhes" style="padding: 15px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-weight: bold; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+           <span id="nomeMesaDestaque" style="color: #1e293b; font-size: 1.1rem;">Detalhes</span>
+           <button onclick="fecharModalDetalhes()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 15px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: bold; color: #64748b;">Fechar</button>
+        </div>
 
-    <div id="detalhesMesa" style="
-        padding: 15px; 
-        overflow-y: auto; 
-        flex: 1; 
-        background: #fff;
-        -webkit-overflow-scrolling: touch;
-        display: block; /* Garante comportamento de bloco para o scroll */
-    ">
-       <p style="color: #666; text-align: center; padding: 20px;">Selecione uma mesa para ver detalhes.</p>
+        <div id="detalhesMesa" style="padding: 15px; overflow-y: auto; flex: 1; background: #fff; -webkit-overflow-scrolling: touch; display: block;">
+           <p style="color: #666; text-align: center; padding: 20px;">Selecione uma mesa para ver detalhes.</p>
+        </div>
+      </div>
     </div>
-</div>
 
     <div id="secaoCardapio" style="display: none; flex-direction: column; height: 100%; overflow: hidden;">
       <div style="background: #f8f9fa; padding: 10px; border-bottom: 1px solid #ddd; display: flex; align-items: center; gap: 10px;">
@@ -14429,32 +14430,23 @@ function fecharNovoModal() {
          <span id="avisoMesaAtiva" style="font-weight: bold; color: #6366f1;"></span>
       </div>
       
-      <div id="containerProdutosCardapioMesa" style="flex: 1; overflow-y: auto; padding: 15px;">
-          </div>
+      <div id="containerProdutosCardapioMesa" style="flex: 1; overflow-y: auto; padding: 15px;"></div>
     </div>
 
   </div>
 </div>
 
 <div id="barraCarrinho" class="hidden" onclick="abrirCarrinhoPorContexto()" 
-     style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
-            background: #6366f1; color: white; padding: 15px 25px; border-radius: 50px; 
-            display: flex; gap: 20px; align-items: center; cursor: pointer; z-index: 1000001; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-weight: bold;">
+     style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #6366f1; color: white; padding: 15px 25px; border-radius: 50px; display: flex; gap: 20px; align-items: center; cursor: pointer; z-index: 1000001; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-weight: bold;">
   <span id="totalItens">0 itens</span>
   <span style="opacity: 0.5;">|</span>
   <span id="totalValor">R$ 0,00</span>
   <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px;">🛒 VER COMANDA</span>
 </div>
 
-<style>
-  .hidden { display: none !important; }
-</style>
-
 <div id="modalComandaMesa" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000002; align-items:center; justify-content:center; backdrop-filter: blur(2px);">
   <div style="background:white; width:95%; max-width:400px; border-radius:15px; overflow:hidden; box-shadow:0 15px 50px rgba(0,0,0,0.6); animation: subir 0.3s ease-out;">
-    <div id="corpoComandaMesa">
-      </div>
+    <div id="corpoComandaMesa"></div>
   </div>
 </div>
 
@@ -14497,12 +14489,23 @@ function fecharNovoModal() {
 </div>
 
 <style>
+  .hidden { display: none !important; }
+  
+  .pulse-mini {
+    animation: pulse-mini-red 2s infinite;
+  }
+  
+  @keyframes pulse-mini-red {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+  }
+
   @keyframes subir {
     from { transform: translateY(50px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
 </style>
-
 
 
 
