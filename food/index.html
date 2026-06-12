@@ -148,10 +148,17 @@ let sistemaBloqueado = false;      // Controle de bloqueio financeiro
 // 🔄 CARREGAMENTO DINÂMICO E COMPLETO DE DADOS (MODO DEFINITIVO)
 // =========================================================================
 function carregarDadosIniciaisDoSistema() {
-  // 📢 Segurança: Usa a URL da API que foi definida no roteador do topo
   if (!URL_API_GOOGLE) {
     console.error("🚨 Erro: URL da API do Google não definida para este lojista.");
     return;
+  }
+
+  // 1. Abre a tela de login imediatamente com um estado visual de "Carregando dados..."
+  login();
+  
+  const btnEntrar = document.getElementById('btn-entrar');
+  if (btnEntrar) {
+    btnEntrar.innerText = "⏳ Carregando Sistema...";
   }
 
   console.log(`📡 [API] Iniciando carga para a loja: ${CONFIG.cliente.nomeFixo}`);
@@ -160,34 +167,38 @@ function carregarDadosIniciaisDoSistema() {
     method: "POST",
     body: JSON.stringify({ 
       acao: "CARREGAR_DADOS_INICIAIS",
-      nomeLoja: CONFIG.cliente.nomeFixo // 👈 Pega direto do CONFIG do lojista
+      nomeLoja: CONFIG.cliente.nomeFixo
     })
   })
   .then(response => response.json())
   .then(resultado => {
     if (resultado.sucesso) {
-      // 1. Alimenta as variáveis globais do sistema com os dados reais do Google
       listaAdicionaisGlobal = resultado.adicionais || [];
       listaCategoriasGlobal = resultado.categorias || [];
       window.produtosData = resultado.produtos || [];
       window.usuariosSistemaGlobal = resultado.usuarios || [];
       window.qtdMesasGlobal = resultado.qtdMesas || 0;
       
-      console.log("✅ [API] Adicionais, Categorias, Produtos e Usuários carregados!");
+      console.log("✅ [API] Dados do sistema carregados com sucesso!");
       
-      // 2. Roda a função do Financeiro passando o resultado real do Google
+      // 2. O financeiro agora roda aqui e HABILITA o botão se estiver tudo OK
       processarStatusFinanceiroLocal(resultado.financeiro);
-      
-      // 3. Abre a tela de login
-      login();
     } else {
       console.error("❌ [API] Erro retornado pelo Google:", resultado.erro);
-      login();
+      if (btnEntrar) {
+        btnEntrar.disabled = false;
+        btnEntrar.innerText = "Entrar (Modo Offline)";
+        btnEntrar.style.backgroundColor = "#eab308"; // Amarelo de aviso
+      }
     }
   })
   .catch(err => {
     console.error("❌ [API] Falha de conexão com o servidor do lojista:", err);
-    login();
+    if (btnEntrar) {
+      btnEntrar.disabled = false;
+      btnEntrar.innerText = "Entrar (Erro de Rede)";
+      btnEntrar.style.backgroundColor = "#ef4444"; // Vermelho de erro
+    }
   });
 }
 
@@ -200,6 +211,7 @@ function processarStatusFinanceiroLocal(res) {
   
   if (!btnEntrar) return; 
 
+  // Se o servidor explicitamente pedir o bloqueio por falta de pagamento
   if (res && res.bloquear) {
     sistemaBloqueado = true;
     btnEntrar.disabled = true;
@@ -207,11 +219,14 @@ function processarStatusFinanceiroLocal(res) {
     btnEntrar.style.cursor = "not-allowed";
     btnEntrar.innerText = "Acesso Bloqueado";
   } else {
+    // Sistema liberado! Remove o disabled e aplica os estilos visuais corretos
     sistemaBloqueado = false;
     btnEntrar.disabled = false;
     btnEntrar.style.backgroundColor = "#4A86E8";
     btnEntrar.style.cursor = "pointer";
     btnEntrar.innerText = "Entrar";
+    btnEntrar.style.opacity = "1";
+    
     btnEntrar.onmouseover = function() { this.style.backgroundColor='#357ABD'; };
     btnEntrar.onmouseout = function() { this.style.backgroundColor='#4A86E8'; };
   }
@@ -311,29 +326,23 @@ function login() {
     </style>
   `;
 
-  // ✅ Adiciona os escutadores de evento logo após injetar o HTML
-  setTimeout(() => {
-    const btnSenha = document.getElementById('toggleSenha');
-    if (btnSenha) btnSenha.addEventListener('click', alternarVisualizacaoSenha);
+  // Vincula os escutadores imediatamente
+  const btnSenha = document.getElementById('toggleSenha');
+  if (btnSenha) btnSenha.addEventListener('click', alternarVisualizacaoSenha);
 
-    // 🎯 Captura o envio do formulário (Funciona no clique OU no ENTER)
-    const formLogin = document.getElementById('form-login');
-    if (formLogin) {
-      formLogin.addEventListener('submit', function(e) {
-        e.preventDefault(); // Impede a página de recarregar
-        
-        // Verifica se o botão não está desativado antes de chamar a função
-        const btnEntrar = document.getElementById('btn-entrar');
-        if (btnEntrar && !btnEntrar.disabled) {
-          entrar(); 
-        }
-      });
-    }
-  }, 0);
-
-  verificarStatusPagamento();
+  const formLogin = document.getElementById('form-login');
+  if (formLogin) {
+    formLogin.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btnEntrar = document.getElementById('btn-entrar');
+      if (btnEntrar && !btnEntrar.disabled) {
+        entrar(); 
+      }
+    });
+  }
 }
 
+  
 function alternarVisualizacaoSenha() {
   const inputSenha = document.getElementById('s');
   const icone = document.getElementById('toggleSenha');
@@ -452,7 +461,6 @@ function pararVigilanciaEConfirmarSucesso() {
    ========================================================================= */
 
 function entrar() {
-  // 1. VERIFICAÇÃO DE BLOQUEIO (Trava os 10 dias de atraso)
   if (typeof sistemaBloqueado !== 'undefined' && sistemaBloqueado) {
     return showMsg("Acesso suspenso por pendência financeira. Regularize para acessar.", "error", 5000);
   }
@@ -461,32 +469,29 @@ function entrar() {
   const usuarioInput = document.getElementById("u").value.trim();
   const senhaInput = document.getElementById("s").value.trim();
 
-  if (loader) loader.style.display = "flex"; // Mostra o spinner
+  if (loader) loader.style.display = "flex"; 
 
-  // 🔄 LOGIN LOCAL E INSTANTÂNEO: Procura o usuário dentro dos dados carregados no início
   const usuarioEncontrado = window.usuariosSistemaGlobal.find(
     u => u.usuario.toLowerCase() === usuarioInput.toLowerCase() && u.senha === senhaInput
   );
 
-  // Simula o tempo de resposta mínimo para o loader fazer sentido visualmente
+  // 🎯 CORREÇÃO: Reduzido de 4000 para 400ms para o loader ser apenas uma transição suave real
   setTimeout(() => {
-    if (loader) loader.style.display = "none"; // Oculta o spinner
+    if (loader) loader.style.display = "none"; 
 
     if (!usuarioEncontrado) {
       return showMsg("Login inválido", "error", 3000);
     }
 
-    // Define as variáveis globais de sessão do usuário logado
     user = usuarioEncontrado; 
     usuarioLogado = usuarioEncontrado.usuario;
 
-    // Verifica se exige a troca da senha padrão
     if (usuarioEncontrado.senhaPadrao) {
       document.getElementById("modalSenha").style.display = "block";
     } else {
       render();
     }
-  }, 4000); // 400ms apenas para uma transição suave de tela
+  }, 400); 
 }
 
 /* =========================
