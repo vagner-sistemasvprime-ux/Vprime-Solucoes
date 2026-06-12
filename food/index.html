@@ -1652,8 +1652,15 @@ async function dispararCampanha(modoDefinido = null) {
 
 
   
+/* =========================================================================
+   📊 MÓDULO DE MONITORAMENTO E CANCELAMENTO DA TRANSMISSÃO (FETCH)
+   ========================================================================= */
+
+let timerProgressoTransmissao = null;
+
 async function cancelarTransmissao() {
-  const telefoneRaw = document.getElementById("configTelefoneWhats").value;
+  const inputTelefone = document.getElementById("configTelefoneWhats");
+  const telefoneRaw = inputTelefone ? inputTelefone.value : "";
   const telefoneBot = telefoneRaw.replace(/[^0-9]/g, '');
 
   if (!telefoneBot) {
@@ -1681,423 +1688,459 @@ async function cancelarTransmissao() {
       const txtStatus = document.getElementById("txtStatusProgresso");
       const pontoPulsa = document.getElementById("pontoPulsa");
       const btnCancelar = document.getElementById("btnCancelarTransmissao");
-      const monitor = document.getElementById("monitorProgressoTransmissao");
 
       if (txtStatus) {
         txtStatus.innerText = "Interrompendo motor...";
         txtStatus.style.color = "#ef4444";
       }
-      if (pontoPulsa) {
-        pontoPulsa.style.backgroundColor = "#ef4444";
-      }
-      if (btnCancelar) {
-        btnCancelar.style.display = "none";
-      }
+      if (pontoPulsa) pontoPulsa.style.backgroundColor = "#ef4444";
+      if (btnCancelar) btnCancelar.style.display = "none";
 
-      // Executa o cancelamento chamando a ponte criada no seu GAS
-      google.script.run
-        .withSuccessHandler((data) => {
-          if (data.erro) {
-            exibirModal({
-              tipo: 'erro',
-              titulo: 'Falha no Cancelamento',
-              mensagem: 'Erro ao cancelar: ' + data.erro
-            });
-            
-            // Se o servidor rejeitou o cancelamento por algum motivo, reativa o monitoramento
-            inicializarMonitorTransmissao();
-          }  else {
-            exibirModal({
-              tipo: 'sucesso',
-              titulo: 'Envios Pausados!',
-              mensagem: '🛑 Transmissão interrompida com sucesso! O restante dos envios foi mantido como pendente para quando você quiser retomar.'
-            });
-            
-            // 🌟 AJUSTE CRUCIAL: Não escondemos mais o monitor e nem zeramos os números para 0%!
-            // Apenas atualizamos o texto do status para refletir a pausa em tempo real.
-            if (txtStatus) {
-              txtStatus.innerText = "Transmissão pausada!";
-              txtStatus.style.color = "#ef4444";
-            }
-            if (pontoPulsa) {
-              pontoPulsa.style.display = "none"; // Desliga a pulsação verde
-            }
-            if (btnCancelar) {
-              btnCancelar.style.display = "none"; // Garante que o botão suma
-            }
-          }
+      // 🔄 CONVERSÃO PARA FETCH: Envia ordem de parada para o Back-end
+      fetch(URL_API_GOOGLE, {
+        method: "POST",
+        body: JSON.stringify({
+          acao: "CANCELAR_TRANSMISSAO",
+          nomeLoja: CONFIG.cliente.nomeFixo,
+          telefoneBot: telefoneBot
         })
-        .withFailureHandler((err) => {
-          console.error("Erro no Apps Script ao cancelar:", err);
+      })
+      .then(response => response.json())
+      .then(resultado => {
+        if (!resultado || !resultado.sucesso || resultado.erro) {
           exibirModal({
             tipo: 'erro',
-            titulo: 'Erro de Comunicação',
-            mensagem: 'O Apps Script não conseguiu processar o cancelamento.'
+            titulo: 'Falha no Cancelamento',
+            mensagem: 'Erro ao cancelar: ' + (resultado?.erro || 'Sem resposta do servidor.')
+          });
+          // Se o servidor rejeitou o cancelamento, reativa o monitoramento
+          inicializarMonitorTransmissao();
+        } else {
+          exibirModal({
+            tipo: 'sucesso',
+            titulo: 'Envios Pausados!',
+            mensagem: '🛑 Transmissão interrompida com sucesso! O restante dos envios foi mantido como pendente para quando você quiser retomar.'
           });
           
-          // Em caso de falha de rede/comunicação, reativa o monitor para não deixar o painel quebrado
-          inicializarMonitorTransmissao();
-        })
-        .vpsCancelarTransmissao(telefoneBot); // Nome da função no seu GAS
+          if (txtStatus) {
+            txtStatus.innerText = "Transmissão pausada!";
+            txtStatus.style.color = "#ef4444";
+          }
+          if (pontoPulsa) pontoPulsa.style.display = "none";
+          if (btnCancelar) btnCancelar.style.display = "none";
+        }
+      })
+      .catch(err => {
+        console.error("Erro ao cancelar via API:", err);
+        exibirModal({
+          tipo: 'erro',
+          titulo: 'Erro de Comunicação',
+          mensagem: 'O servidor central não respondeu ao comando de cancelamento.'
+        });
+        inicializarMonitorTransmissao();
+      });
     }
   });
 }
 
-let timerProgressoTransmissao = null;
-
 function inicializarMonitorTransmissao() {
-  // Evita duplicar múltiplos intervalos rodando ao mesmo tempo
   if (timerProgressoTransmissao) {
     clearInterval(timerProgressoTransmissao);
   }
   
-  // Executa a primeira vez de forma segura
   checarProgressoAtual();
-  
   timerProgressoTransmissao = setInterval(checarProgressoAtual, 5000);
 }
 
 async function checarProgressoAtual() {
-  // 1️⃣ CAPTURA O ELEMENTO PRIMEIRO (Sem ler o .value direto)
   const inputTelefone = document.getElementById("configTelefoneWhats");
 
-  // 2️⃣ TRAVA DE SEGURANÇA: Se o input não existir na tela atual, aborta sem quebrar o sistema
-  if (!inputTelefone) {
-    // console.log("Aguardando o campo de telefone ser carregado na tela...");
-    return;
-  }
+  if (!inputTelefone) return;
 
-  // 3️⃣ AGORA SIM, LÊ O VALOR COM SEGURANÇA
   const telefoneRaw = inputTelefone.value || "";
   const telefoneBot = telefoneRaw.replace(/[^0-9]/g, '');
 
   if (!telefoneBot) return;
 
-  // Chama a checagem de progresso através da ponte criada no seu GAS
-  google.script.run
-    .withSuccessHandler((data) => {
-      const monitor = document.getElementById("monitorProgressoTransmissao");
-
-      // Se der erro ou a fila estiver inativa, esconde o monitor e desliga o temporizador
-      if (!data || data.erro || data.status === "Inativo" || data.total === 0) {
-        if (monitor) monitor.style.display = "none";
-        if (timerProgressoTransmissao) {
-          clearInterval(timerProgressoTransmissao);
-          timerProgressoTransmissao = null;
-        }
-        return;
-      }
-
-      if (monitor) monitor.style.display = "block";
-
-      // Validações extras para evitar erros parecidos nos elementos internos do monitor
-      const elPorcentagem = document.getElementById("txtPorcentagemProgresso");
-      const elBarra = document.getElementById("barraProgressoDinamica");
-      const elEnviados = document.getElementById("qtdEnviadosProgresso");
-      const elFalhas = document.getElementById("qtdFalhasProgresso");
-      const elTotal = document.getElementById("qtdTotalProgresso");
-
-      if (elPorcentagem) elPorcentagem.innerText = (data.progresso || 0) + "%";
-      if (elBarra) elBarra.style.width = (data.progresso || 0) + "%";
-      if (elEnviados) elEnviados.innerText = data.enviados || 0;
-      if (elFalhas) elFalhas.innerText = data.falhou || 0;
-      if (elTotal) elTotal.innerText = data.total || 0;
-
-      // =================================================================
-      // 🔄 AJUSTE DE RESTRUTURAÇÃO DE STATUS VISUAL (COLE AQUI)
-      // =================================================================
-      const txtStatus = document.getElementById("txtStatusProgresso");
-      const pontoPulsa = document.getElementById("pontoPulsa");
-      const btnCancelar = document.getElementById("btnCancelarTransmissao");
-
-      // 1. Se o motor da VPS estiver ativamente disparando mensagens
-      if (data.status === "Enviando") {
-        if (txtStatus) {
-          txtStatus.innerText = "Enviando mensagens...";
-          txtStatus.style.color = "#22c55e";
-        }
-        if (pontoPulsa) {
-          pontoPulsa.style.backgroundColor = "#22c55e";
-          pontoPulsa.style.display = "inline-block";
-        }
-        if (btnCancelar) btnCancelar.style.display = "block";
-      } 
-      
-      // 2. 🌟 NOVO TRATAMENTO: Se o usuário clicou em parar (Mas ainda restam pendentes)
-      else if (data.status === "Pausado" || data.status === "Cancelado") {
-        if (txtStatus) {
-          txtStatus.innerText = "Transmissão pausada!";
-          txtStatus.style.color = "#ef4444"; // Vermelho de atenção
-        }
-        if (pontoPulsa) {
-          pontoPulsa.style.display = "none"; // Desliga o ponto piscante
-        }
-        if (btnCancelar) btnCancelar.style.display = "none"; // Some com o botão de parar
-
-        // Desliga o timer de atualização visual para poupar memória do navegador
-        if (timerProgressoTransmissao) {
-          clearInterval(timerProgressoTransmissao);
-          timerProgressoTransmissao = null;
-        }
-      }
-
-      // 3. Se a campanha chegou ao fim de todas as linhas com sucesso
-      else if (data.status === "Concluído" || data.pendentes === 0) {
-        if (txtStatus) {
-          txtStatus.innerText = "Envios concluídos!";
-          txtStatus.style.color = "#2563eb"; // Azul de sucesso/concluído
-        }
-        if (pontoPulsa) {
-          pontoPulsa.style.display = "none";
-        }
-        if (btnCancelar) btnCancelar.style.display = "none";
-
-        // Desliga o timer de requisições já que o processo chegou ao fim
-        if (timerProgressoTransmissao) {
-          clearInterval(timerProgressoTransmissao);
-          timerProgressoTransmissao = null;
-        }
-      }
+  // 🔄 CONVERSÃO PARA FETCH: Consulta o andamento dos disparos na nuvem
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "CHECAR_PROGRESSO",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      telefoneBot: telefoneBot
     })
-    .withFailureHandler((err) => {
-      console.error("Erro silencioso na ponte GAS ao monitorar:", err);
-    })
-    .vpsChecarProgresso(telefoneBot); // Nome da função no seu GAS
+  })
+  .then(response => response.json())
+  .then(resultado => {
+    const monitor = document.getElementById("monitorProgressoTransmissao");
+
+    if (!resultado || !resultado.sucesso || !resultado.data || resultado.data.status === "Inativo" || resultado.data.total === 0) {
+      if (monitor) monitor.style.display = "none";
+      if (timerProgressoTransmissao) {
+        clearInterval(timerProgressoTransmissao);
+        timerProgressoTransmissao = null;
+      }
+      return;
+    }
+
+    const data = resultado.data;
+    if (monitor) monitor.style.display = "block";
+
+    // Atualização dos componentes visuais do progresso
+    const elPorcentagem = document.getElementById("txtPorcentagemProgresso");
+    const elBarra = document.getElementById("barraProgressoDinamica");
+    const elEnviados = document.getElementById("qtdEnviadosProgresso");
+    const elFalhas = document.getElementById("qtdFalhasProgresso");
+    const elTotal = document.getElementById("qtdTotalProgresso");
+
+    if (elPorcentagem) elPorcentagem.innerText = (data.progresso || 0) + "%";
+    if (elBarra) elBarra.style.width = (data.progresso || 0) + "%";
+    if (elEnviados) elEnviados.innerText = data.enviados || 0;
+    if (elFalhas) elFalhas.innerText = data.falhou || 0;
+    if (elTotal) elTotal.innerText = data.total || 0;
+
+    const txtStatus = document.getElementById("txtStatusProgresso");
+    const pontoPulsa = document.getElementById("pontoPulsa");
+    const btnCancelar = document.getElementById("btnCancelarTransmissao");
+
+    // 1. Motor enviando ativamente
+    if (data.status === "Enviando") {
+      if (txtStatus) {
+        txtStatus.innerText = "Enviando mensagens...";
+        txtStatus.style.color = "#22c55e";
+      }
+      if (pontoPulsa) {
+        pontoPulsa.style.backgroundColor = "#22c55e";
+        pontoPulsa.style.display = "inline-block";
+      }
+      if (btnCancelar) btnCancelar.style.display = "block";
+    } 
+    
+    // 2. Motor pausado pelo usuário
+    else if (data.status === "Pausado" || data.status === "Cancelado") {
+      if (txtStatus) {
+        txtStatus.innerText = "Transmissão pausada!";
+        txtStatus.style.color = "#ef4444";
+      }
+      if (pontoPulsa) pontoPulsa.style.display = "none";
+      if (btnCancelar) btnCancelar.style.display = "none";
+
+      if (timerProgressoTransmissao) {
+        clearInterval(timerProgressoTransmissao);
+        timerProgressoTransmissao = null;
+      }
+    }
+
+    // 3. Campanha finalizada
+    else if (data.status === "Concluído" || data.pendentes === 0) {
+      if (txtStatus) {
+        txtStatus.innerText = "Envios concluídos!";
+        txtStatus.style.color = "#2563eb";
+      }
+      if (pontoPulsa) pontoPulsa.style.display = "none";
+      if (btnCancelar) btnCancelar.style.display = "none";
+
+      if (timerProgressoTransmissao) {
+        clearInterval(timerProgressoTransmissao);
+        timerProgressoTransmissao = null;
+      }
+    }
+  })
+  .catch(err => console.error("Erro silencioso na requisição de monitoramento:", err));
 }
 
-// Ativa o loop de monitoramento automático na inicialização da página
+// Inicializa a escuta automática
 inicializarMonitorTransmissao();
 
 
+
+
+/* =========================================================================
+   🎟️ MÓDULO DE GESTÃO DE CUPONS DE DESCONTO (MIGRAÇÃO DEFINITIVA FETCH)
+   ========================================================================= */
+
+// Vincula a carga automática ao carregar a página
 window.onload = carregarCuponsAdmin;
 
 function carregarCuponsAdmin() {
   const tbody = document.getElementById("corpoTabelaCupons");
-  // 🎯 Atualizado o colspan para 7 por conta da nova coluna de valor mínimo
+  
+  // 🛡️ TRAVA DE SEGURANÇA: Se o elemento não existir na tela atual (ex: tela de login), aborta silenciosamente
+  if (!tbody) return;
+
+  // Atualizado o colspan para 7 por conta da nova coluna de valor mínimo
   tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Carregando...</td></tr>";
 
-  google.script.run
-    .withSuccessHandler(function(lista) {
-      tbody.innerHTML = "";
-      if(lista.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Nenhum cupom cadastrado.</td></tr>";
-        return;
+  // 🔄 CONVERSÃO PARA FETCH: Busca os cupons cadastrados na planilha
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "LISTAR_CUPONS",
+      nomeLoja: CONFIG.cliente.nomeFixo
+    })
+  })
+  .then(response => response.json())
+  .then(resultado => {
+    tbody.innerHTML = "";
+    
+    if (!resultado.sucesso || !resultado.lista || resultado.lista.length === 0) {
+      tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Nenhum cupom cadastrado.</td></tr>";
+      return;
+    }
+
+    const lista = resultado.lista;
+
+    lista.forEach(c => {
+      // Define a classe da badge dinamicamente baseada no status
+      let statusBadge = "badge-pausado";
+      if (c.status === "Ativo") {
+        statusBadge = "badge-ativo";
+      } else if (c.status === "Expirado") {
+        statusBadge = "badge-expirado";
       }
 
-      lista.forEach(c => {
-        // 🎯 [NOVO] Define a classe da badge dinamicamente baseada no status (incluindo Expirado)
-        let statusBadge = "badge-pausado";
-        if (c.status === "Ativo") {
-          statusBadge = "badge-ativo";
-        } else if (c.status === "Expirado") {
-          statusBadge = "badge-expirado"; // Classe CSS que você pode pintar de cinza ou vermelho
-        }
-
-        const regra = c.tipo === "Porcentagem" ? c.valor + "%" : "R$ " + parseFloat(c.valor).toFixed(2).replace(".", ",");
-        
-        // 🎯 Formata o valor mínimo vindo do servidor
-        const vMinNum = parseFloat(c.minimoCompra) || 0;
-        const textoMinimo = vMinNum > 0 ? "R$ " + vMinNum.toFixed(2).replace(".", ",") : "Livre";
-        
-        // 🎯 [NOVO] Controle do botão de ação (Pausar/Play) para não mexer em cupom vencido
-        let botaoStatusHTML = "";
-        if (c.status === "Expirado") {
-          // Se está expirado, bloqueia o botão visualmente com um ícone neutro
-          botaoStatusHTML = `
-            <button disabled title="Cupons expirados não podem ser editados" style="cursor:not-allowed; border:1px solid #ddd; background:#f5f5f5; border-radius:4px; padding: 2px 5px; opacity: 0.6;">
-              🛑
-            </button>
-          `;
-        } else {
-          // Mantém o comportamento normal de alternar entre Ativo e Inativo
-          botaoStatusHTML = `
-            <button onclick="gerenciarStatusAdmin(${c.linha}, '${c.status === 'Ativo' ? 'Inativo' : 'Ativo'}')" style="cursor:pointer; border:1px solid #ccc; background:#fff; border-radius:4px; padding: 2px 5px;" title="${c.status === 'Ativo' ? 'Pausar Cupom' : 'Ativar Cupom'}">
-              ${c.status === 'Ativo' ? '⏸️' : '▶️'}
-            </button>
-          `;
-        }
-
-        tbody.innerHTML += `
-          <tr>
-            <td><b>${c.codigo}</b></td>
-            <td>${regra}</td>
-            <td>${textoMinimo}</td>
-            <td>${c.validade}</td>
-            <td>${c.qtdUsado} / ${c.usoMaximo}</td>
-            <td><span class="badge ${statusBadge}">${c.status}</span></td>
-            <td>
-              ${botaoStatusHTML}
-              <button onclick="gerenciarStatusAdmin(${c.linha}, 'EXCLUIR')" style="cursor:pointer; border:none; background:var(--danger-color); color:#fff; border-radius:4px; margin-left:5px; padding: 2px 5px;" title="Excluir Cupom">
-                🗑️
-              </button>
-            </td>
-          </tr>
+      const regra = c.tipo === "Porcentagem" ? c.valor + "%" : "R$ " + parseFloat(c.valor).toFixed(2).replace(".", ",");
+      
+      // Formata o valor mínimo vindo do servidor
+      const vMinNum = parseFloat(c.minimoCompra) || 0;
+      const textoMinimo = vMinNum > 0 ? "R$ " + vMinNum.toFixed(2).replace(".", ",") : "Livre";
+      
+      // Controle do botão de ação (Pausar/Play) para não mexer em cupom vencido
+      let botaoStatusHTML = "";
+      if (c.status === "Expirado") {
+        botaoStatusHTML = `
+          <button disabled title="Cupons expirados não podem ser editados" style="cursor:not-allowed; border:1px solid #ddd; background:#f5f5f5; border-radius:4px; padding: 2px 5px; opacity: 0.6;">
+            🛑
+          </button>
         `;
-      });
-    })
-    .pnl_listarCupons();
+      } else {
+        const novoStatus = c.status === 'Ativo' ? 'Inativo' : 'Ativo';
+        botaoStatusHTML = `
+          <button onclick="gerenciarStatusAdmin(${c.linha}, '${novoStatus}')" style="cursor:pointer; border:1px solid #ccc; background:#fff; border-radius:4px; padding: 2px 5px;" title="${c.status === 'Ativo' ? 'Pausar Cupom' : 'Ativar Cupom'}">
+            ${c.status === 'Ativo' ? '⏸️' : '▶️'}
+          </button>
+        `;
+      }
+
+      tbody.innerHTML += `
+        <tr>
+          <td><b>${c.codigo}</b></td>
+          <td>${regra}</td>
+          <td>${textoMinimo}</td>
+          <td>${c.validade}</td>
+          <td>${c.qtdUsado} / ${c.usoMaximo}</td>
+          <td><span class="badge ${statusBadge}">${c.status}</span></td>
+          <td>
+            ${botaoStatusHTML}
+            <button onclick="gerenciarStatusAdmin(${c.linha}, 'EXCLUIR')" style="cursor:pointer; border:none; background:var(--danger-color); color:#fff; border-radius:4px; margin-left:5px; padding: 2px 5px;" title="Excluir Cupom">
+              🗑️
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+  })
+  .catch(err => {
+    console.error("❌ Erro de rede ao listar cupons:", err);
+    tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:red;'>Falha ao conectar com o servidor.</td></tr>";
+  });
 }
 
 function salvarCupomAdmin(e) {
   if (e && e.preventDefault) e.preventDefault();
   
   const btn = document.getElementById("btnSalvarAdmin");
-  btn.disabled = true;
-  btn.innerText = "⏳ GRAVANDO...";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "⏳ GRAVANDO...";
+  }
 
   // Inverte data de AAAA-MM-DD para DD/MM/AAAA
-  const dataRaw = document.getElementById("cpValidade").value;
+  const dataRaw = document.getElementById("cpValidade")?.value || "";
   const dataFormatada = dataRaw ? dataRaw.split('-').reverse().join('/') : "";
 
-  // 🎯 Captura o valor do novo input de Compra Mínima
+  // Captura o valor do novo input de Compra Mínima
   const valorMinimoInput = document.getElementById("cpMinimo") ? document.getElementById("cpMinimo").value : 0;
 
   const obj = {
-    codigo: document.getElementById("cpCodigo").value,
-    tipo: document.getElementById("cpTipo").value,
-    valor: document.getElementById("cpValor").value,
+    codigo: document.getElementById("cpCodigo")?.value || "",
+    tipo: document.getElementById("cpTipo")?.value || "",
+    valor: document.getElementById("cpValor")?.value || "",
     validade: dataFormatada,
-    usoMaximo: document.getElementById("cpLimite").value,
-    minimoCompra: valorMinimoInput // 🎯 [NOVO] Propriedade adicionada ao objeto enviado ao servidor
+    usoMaximo: document.getElementById("cpLimite")?.value || "",
+    minimoCompra: valorMinimoInput
   };
 
-  google.script.run
-    .withSuccessHandler(function(res) {
-      btn.disabled = false;
-      btn.innerText = "💾 SALVAR";
-      
-      if (res.sucesso) {
-        exibirModal({
-          tipo: 'sucesso',
-          titulo: 'Cupom Criado!',
-          mensagem: 'O novo cupom foi registrado e já está ativo.'
-        });
-
-        document.getElementById("formCupomAdmin").reset();
-        
-        // 🎯 Garante que o input de mínimo volte a exibir "0" por padrão após o reset do formulário
-        if (document.getElementById("cpMinimo")) {
-          document.getElementById("cpMinimo").value = "0";
-        }
-        
-        carregarCuponsAdmin();
-      } else {
-        exibirModal({
-          tipo: 'erro',
-          titulo: 'Erro ao Salvar!',
-          mensagem: res.erro
-        });
-      }
+  // 🔄 CONVERSÃO PARA FETCH: Envia o objeto estruturado com os dados do cupom
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "SALVAR_CUPOM",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      dadosCupom: obj
     })
-    .withFailureHandler(function(err) {
+  })
+  .then(response => response.json())
+  .then(res => {
+    if (btn) {
       btn.disabled = false;
       btn.innerText = "💾 SALVAR";
+    }
+    
+    if (res.sucesso) {
+      exibirModal({
+        tipo: 'sucesso',
+        titulo: 'Cupom Criado!',
+        mensagem: 'O novo cupom foi registrado e já está ativo.'
+      });
+
+      const form = document.getElementById("formCupomAdmin");
+      if (form) form.reset();
       
+      if (document.getElementById("cpMinimo")) {
+        document.getElementById("cpMinimo").value = "0";
+      }
+      
+      carregarCuponsAdmin();
+    } else {
       exibirModal({
         tipo: 'erro',
-        titulo: 'Erro de Conexão!',
-        mensagem: 'Não foi possível salvar o cupom: ' + err.message
+        titulo: 'Erro ao Salvar!',
+        mensagem: res.erro || 'Não foi possível gravar o cupom.'
       });
-    })
-    .pnl_salvarCupom(obj);
+    }
+  })
+  .catch(err => {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = "💾 SALVAR";
+    }
+    exibirModal({
+      tipo: 'erro',
+      titulo: 'Erro de Conexão!',
+      mensagem: 'Não foi possível salvar o cupom: ' + (err.message || err)
+    });
+  });
 }
 
-  function gerenciarStatusAdmin(linha, acao) {
-  // Mantemos o confirm nativo temporariamente para segurança, mas com um texto mais profissional
+function gerenciarStatusAdmin(linha, acao) {
   if (acao === "EXCLUIR" && !confirm("⚠️ Tem certeza que deseja deletar este cupom permanentemente?")) {
     return;
   }
   
-  // Define mensagens personalizadas para o modal de sucesso baseado na ação
   let tituloSucesso = "Ação Concluída!";
   let mensagemSucesso = `O cupom foi processado com sucesso (Ação: ${acao}).`;
   
   if (acao === "EXCLUIR") {
     tituloSucesso = "Cupom Excluído!";
     mensagemSucesso = "O cupom foi removido permanentemente do sistema.";
-  } else if (acao === "PAUSAR" || acao === "DESATIVAR") {
+  } else if (acao === "PAUSAR" || acao === "DESATIVAR" || acao === "Inativo") {
     tituloSucesso = "Cupom Pausado!";
-    mensagemSucesso = "O cupom foi pausado e não aceitará novas compras.";
-  } else if (acao === "ATIVAR") {
+    mensagemSucesso = "O cupom foi alterado para inativo e não aceitará novas compras.";
+  } else if (acao === "ATIVAR" || acao === "Ativo") {
     tituloSucesso = "Cupom Ativado!";
     mensagemSucesso = "O cupom está ativo e pronto para uso novamente.";
   }
 
-  google.script.run
-    .withSuccessHandler(function(res) {
-      // Se o seu backend retornar um objeto de sucesso {sucesso: true}
-      // Caso o seu backend não retorne nada (void), pode remover a checagem 'if (res && res.sucesso === false)'
-      if (res && res.sucesso === false) {
-        exibirModal({
-          tipo: 'erro',
-          titulo: 'Erro na Operação!',
-          mensagem: res.erro || 'Não foi possível atualizar o status do cupom.'
-        });
-        return;
-      }
-
-      // ✨ Feedback de sucesso profissional
-      exibirModal({
-        tipo: 'sucesso',
-        titulo: tituloSucesso,
-        mensagem: mensagemSucesso
-      });
-
-      // Atualiza a tabela na tela
-      carregarCuponsAdmin();
+  // 🔄 CONVERSÃO PARA FETCH: Envia as alterações de linha e status para a planilha
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "GERENCIAR_STATUS_CUPOM",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      linha: linha,
+      statusAcao: acao
     })
-    .withFailureHandler(function(err) {
-      // 🔒 Proteção contra erros de rede ou falhas no Google Script
+  })
+  .then(response => response.json())
+  .then(res => {
+    if (res && res.sucesso === false) {
       exibirModal({
         tipo: 'erro',
-        titulo: 'Erro de Conexão!',
-        mensagem: 'Falha ao processar a requisição no servidor: ' + err.message
+        titulo: 'Erro na Operação!',
+        mensagem: res.erro || 'Não foi possível atualizar o status do cupom.'
       });
-    })
-    .pnl_gerenciarCupom(linha, acao);
+      return;
+    }
+
+    exibirModal({
+      tipo: 'sucesso',
+      titulo: tituloSucesso,
+      mensagem: mensagemSucesso
+    });
+
+    carregarCuponsAdmin();
+  })
+  .catch(err => {
+    exibirModal({
+      tipo: 'erro',
+      titulo: 'Erro de Conexão!',
+      mensagem: 'Falha ao processar a requisição no servidor: ' + (err.message || err)
+    });
+  });
 }
 
-// Modifique sua função de abertura do modal para puxar também os dados de cashback
 function abrirModalCampanhas() {
-  document.getElementById("modalCampanhas").style.setProperty("display", "flex", "important");
+  const modal = document.getElementById("modalCampanhas");
+  if (modal) modal.style.setProperty("display", "flex", "important");
+  
   carregarCuponsAdmin(); 
-  carregarConfigCashbackAdmin(); // 🔥 Nova chamada adicionada
+  if (typeof carregarConfigCashbackAdmin === "function") carregarConfigCashbackAdmin(); 
 }
 
+  
 
+/* =========================================================================
+   💰 MÓDULO DE PARAMETRIZAÇÃO DE CASHBACK (MIGRAÇÃO DEFINITIVA FETCH)
+   ========================================================================= */
 
 // 1. CARREGAMENTO REFINADO: Puxa os dados em caixa alta e joga na tela
 function carregarConfigCashbackAdmin() {
-  google.script.run
-    .withSuccessHandler(function(config) {
-      if (config) {
-        const selectStatus = document.getElementById("cbStatus");
-        
-        // 🔥 REFINADO: Garante que o status fique em CAIXA ALTA pura para casar com as options do HTML
-        let statusTratado = config.status ? config.status.toString().trim().toUpperCase() : "DESATIVADO";
+  const selectStatus = document.getElementById("cbStatus");
+  const inputPorcentagem = document.getElementById("cbPorcentagem");
+  const inputValidade = document.getElementById("cbValidade");
+  const inputMinimo = document.getElementById("cbMinimo");
+  const txtAlteracao = document.getElementById("txtUltimaAlteracao");
 
-        if (selectStatus) {
-          selectStatus.value = statusTratado;
-        }
-        
-        // Preenche o restante dos inputs normalmente
-        document.getElementById("cbPorcentagem").value = config.porcentagem || 0;
-        document.getElementById("cbValidade").value = config.validadeDias || 30;
-        document.getElementById("cbMinimo").value = config.compraMinima || 0;
-        document.getElementById("txtUltimaAlteracao").innerText = config.dataAlteracao || "Não informada";
-      }
+  // 🛡️ TRAVA DE SEGURANÇA: Se a interface de cashback não estiver renderizada, aborta
+  if (!selectStatus && !inputPorcentagem) return;
+
+  // 🔄 CONVERSÃO PARA FETCH: Puxa as definições vigentes na planilha
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "OBTER_CONFIG_CASHBACK",
+      nomeLoja: CONFIG.cliente.nomeFixo
     })
-    .withFailureHandler(function(err) {
-      console.error("Erro ao obter configurações de Cashback:", err);
+  })
+  .then(response => response.json())
+  .then(resultado => {
+    if (resultado.sucesso && resultado.config) {
+      const config = resultado.config;
       
-      // ✨ NOVO: Exibe o erro no modal do seu padrão em vez de só deixar o erro escondido no console
-      exibirModal({
-        tipo: 'erro',
-        titulo: 'Erro de Carregamento!',
-        mensagem: 'Não foi possível buscar as configurações de Cashback: ' + err.message
-      });
-    })
-    .pnl_obterConfigCashback();
+      if (selectStatus) {
+        // Garante que o status fique em CAIXA ALTA pura para casar com as options do HTML
+        let statusTratado = config.status ? config.status.toString().trim().toUpperCase() : "DESATIVADO";
+        selectStatus.value = statusTratado;
+      }
+      
+      if (inputPorcentagem) inputPorcentagem.value = config.porcentagem || 0;
+      if (inputValidade) inputValidade.value = config.validadeDias || 30;
+      if (inputMinimo) inputMinimo.value = config.compraMinima || 0;
+      if (txtAlteracao) txtAlteracao.innerText = config.dataAlteracao || "Não informada";
+    } else {
+      showMsg("Não foi possível carregar as configurações de Cashback.", "error");
+    }
+  })
+  .catch(err => {
+    console.error("Erro ao obter configurações de Cashback:", err);
+    exibirModal({
+      tipo: 'erro',
+      titulo: 'Erro de Carregamento!',
+      mensagem: 'Não foi possível buscar as configurações de Cashback: ' + (err.message || err)
+    });
+  });
 }
 
 // 2. SALVAMENTO: Envia as alterações e atualiza apenas o texto da data
@@ -2105,90 +2148,99 @@ function salvarConfigCashbackAdmin(e) {
   if (e && e.preventDefault) e.preventDefault();
   
   const btn = document.getElementById("btnSalvarCashback");
-  btn.disabled = true;
-  btn.innerText = "⏳ Salvando Parâmetros...";
+  const selectStatus = document.getElementById("cbStatus");
 
-  // Captura o valor bruto selecionado (Já em CAIXA ALTA do HTML)
-  const statusSelecionado = document.getElementById("cbStatus").value;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "⏳ Salvando Parâmetros...";
+  }
 
   const obj = {
-    status: statusSelecionado, 
-    porcentagem: document.getElementById("cbPorcentagem").value,
-    validadeDias: document.getElementById("cbValidade").value,
-    compraMinima: document.getElementById("cbMinimo").value
+    status: selectStatus ? selectStatus.value : "DESATIVADO", 
+    porcentagem: document.getElementById("cbPorcentagem")?.value || 0,
+    validadeDias: document.getElementById("cbValidade")?.value || 30,
+    compraMinima: document.getElementById("cbMinimo")?.value || 0
   };
 
-  google.script.run
-    .withSuccessHandler(function(res) {
-      btn.disabled = false;
-      btn.innerText = "💾 Salvar Parâmetros do Cashback";
-      
-      if (res.sucesso) {
-        // ✨ Refinado: Padrão exato do seu modal de sucesso
-        exibirModal({
-          tipo: 'sucesso',
-          titulo: 'Salvo com sucesso!',
-          mensagem: 'Configurações de Cashback atualizadas.'
-        });
-        
-        // Injeta a nova data de alteração que o servidor nos devolveu
-        if (res.dataAlteracao) {
-          document.getElementById("txtUltimaAlteracao").innerText = res.dataAlteracao;
-        }
-      } else {
-        // ✨ Refinado: Padrão exato do seu modal para erro do servidor
-        exibirModal({
-          tipo: 'erro',
-          titulo: 'Erro no Servidor!',
-          mensagem: res.erro
-        });
-      }
+  // 🔄 CONVERSÃO PARA FETCH: Registra as novas regras de cashback na planilha
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "SALVAR_CONFIG_CASHBACK",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      dadosCashback: obj
     })
-    .withFailureHandler(function(err) {
+  })
+  .then(response => response.json())
+  .then(res => {
+    if (btn) {
       btn.disabled = false;
       btn.innerText = "💾 Salvar Parâmetros do Cashback";
+    }
+    
+    if (res.sucesso) {
+      exibirModal({
+        tipo: 'sucesso',
+        titulo: 'Salvo com sucesso!',
+        mensagem: 'Configurações de Cashback atualizadas.'
+      });
       
-      // ✨ Refinado: Padrão exato do seu modal para erro crítico de rede/Google
+      // Injeta a nova data de alteração que o servidor nos devolveu
+      const txtAlteracao = document.getElementById("txtUltimaAlteracao");
+      if (res.dataAlteracao && txtAlteracao) {
+        txtAlteracao.innerText = res.dataAlteracao;
+      }
+    } else {
       exibirModal({
         tipo: 'erro',
-        titulo: 'Erro Crítico!',
-        mensagem: 'Não foi possível conectar ao servidor: ' + err.message
+        titulo: 'Erro no Servidor!',
+        mensagem: res.erro || 'Falha ao processar requisição.'
       });
-    })
-    .pnl_salvarConfigCashback(obj); 
+    }
+  })
+  .catch(err => {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = "💾 Salvar Parâmetros do Cashback";
+    }
+    exibirModal({
+      tipo: 'erro',
+      titulo: 'Erro Crítico!',
+      mensagem: 'Não foi possível conectar ao servidor: ' + (err.message || err)
+    });
+  });
 }
 
 function fecharModalCampanhas() {
-  document.getElementById("modalCampanhas").style.display = "none";
+  const modal = document.getElementById("modalCampanhas");
+  if (modal) modal.style.display = "none";
 }
 
 function alternarAba(evt, abaId) {
-  // Esconde todos os conteúdos
   const contents = document.getElementsByClassName("tab-content");
   for (let i = 0; i < contents.length; i++) {
     contents[i].classList.remove("active");
   }
 
-  // Remove classe active de todos os botões
   const btns = document.getElementsByClassName("tab-btn");
   for (let i = 0; i < btns.length; i++) {
     btns[i].classList.remove("active");
   }
 
-  // Mostra a aba atual e marca o botão
-  document.getElementById(abaId).classList.add("active");
-  evt.currentTarget.classList.add("active");
+  const abaAlvo = document.getElementById(abaId);
+  if (abaAlvo) abaAlvo.classList.add("active");
+  
+  if (evt && evt.currentTarget) evt.currentTarget.classList.add("active");
 
-  // 🔥 MELHORIA: Se o usuário clicou na aba de cashback, carrega os dados da linha 2 na hora!
+  // Se o usuário clicou na aba de cashback, carrega os dados atualizados
   if (abaId === "aba-cashback") {
     carregarConfigCashbackAdmin();
   }
 }
-// Fecha o modal de forma segura sem interferir nos cliques do select do formulário
+
+// Fecha o modal de forma segura sem interferir nos cliques internos
 window.addEventListener("click", function(event) {
   const modal = document.getElementById("modalCampanhas");
-  
-  // Só executa o fechamento se o clique foi EXATAMENTE na área escura de fora do modal
   if (event.target === modal) {
     fecharModalCampanhas();
   }
@@ -2201,26 +2253,31 @@ window.addEventListener("click", function(event) {
 
 
 
+/* =========================================================================
+   🖨️ MÓDULO DE IMPRESSÃO DE QR CODES E CONFIGURAÇÃO DE MESAS (OTIMIZADO)
+   ========================================================================= */
 
 function imprimirQRCodes() {
   const qtdInput = document.getElementById("configQtdMesas");
-  const qtd = qtdInput ? qtdInput.value : 0;
+  const qtd = qtdInput ? parseInt(qtdInput.value, 10) : 0;
   
-  // 🎯 LINK CONFIGURÁVEL: Puxa dinamicamente da sua central de configuração
-  // Caso não encontre na CONFIG, usei a sua URL atual como plano de fuga (fallback)
-  const linkGitHubCliente = CONFIG.cliente.linkCardapio || "https://vprimesistemas.com.br/projetolanchonete/cardapioteste.html";
+  // 🎯 LINK CONFIGURÁVEL: Puxa dinamicamente da sua central de configuração local
+  const linkGitHubCliente = CONFIG?.cliente?.linkCardapio || "https://vprimesistemas.com.br/projetolanchonete/cardapioteste.html";
 
   if (!qtd || qtd <= 0) {
-    alert("Por favor, defina a quantidade de mesas.");
-    return;
+    return showMsg("Por favor, defina a quantidade de mesas nas configurações.", "error", 4000);
   }
 
   const janelaImpressao = window.open('', '', 'width=900,height=700');
+  if (!janelaImpressao) {
+    return showMsg("O bloqueador de pop-ups impediu a abertura da janela de impressão.", "error", 5000);
+  }
   
   const conteudo = `
     <!DOCTYPE html>
     <html>
     <head>
+      <meta charset="UTF-8">
       <title>Impressão de QR Codes</title>
       <style>
         body { font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
@@ -2262,7 +2319,7 @@ function imprimirQRCodes() {
       </div>
       <script>
         window.onload = function() { 
-          setTimeout(function() { window.print(); }, 500); 
+          setTimeout(function() { window.print(); }, 600); 
         };
       <\/script>
     </body>
@@ -2273,63 +2330,84 @@ function imprimirQRCodes() {
   janelaImpressao.document.close();
 }
 
-// Função que o erro diz estar faltando
+/**
+ * 📊 CARREGAR QUANTIDADE DE MESAS (LOCAL E INSTANTÂNEO)
+ * Sincroniza o input com o valor pré-carregado globalmente sem bater no Google central
+ */
 function carregarQtdMesas() {
-  google.script.run
-    .withSuccessHandler(function(config) {
-      const input = document.getElementById("configQtdMesas");
-      if (input && config.qtdMesas) {
-        input.value = config.qtdMesas;
-      }
-    })
-    .getDadosConfiguracao(); // Esta função precisa existir no Código.gs
+  const input = document.getElementById("configQtdMesas");
+  
+  if (input && typeof window.qtdMesasGlobal !== 'undefined') {
+    input.value = window.qtdMesasGlobal;
+    console.log("📊 [Mesas] Input preenchido localmente com a contagem global.");
+  } else {
+    console.warn("⚠️ [Mesas] Variável global de contagem de mesas não encontrada ou input ausente.");
+  }
 }
 
 
 
 
-
-// Função para carregar os dados do WhatsApp assim que abrir o painel
-
+/* =========================================================================
+   📱 MÓDULO DE SINCRONIZAÇÃO E STATUS DO WHATSAPP (MIGRAÇÃO FETCH)
+   ========================================================================= */
 
 function carregarDadosWhatsApp() {
   var campoId = document.getElementById('id_da_planilha_loja');
   var idLojaAtual = campoId ? campoId.value : null;
 
+  // Se não encontrar o identificador da loja, interrompe o monitoramento
   if (!idLojaAtual) return;
 
-  google.script.run.withSuccessHandler(function(dados) {
-    if (!dados || dados.erro) return;
+  // 🔄 CONVERSÃO PARA FETCH: Consulta o status atual do dispositivo de envio na nuvem
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "BUSCAR_DADOS_WHATSAPP",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      idLoja: idLojaAtual
+    })
+  })
+  .then(response => response.json())
+  .then(resultado => {
+    // Valida se a API respondeu corretamente e contém dados válidos
+    if (!resultado || !resultado.sucesso || !resultado.dados) {
+      // Caso dê falha na resposta, reagenda a tentativa para não derrubar o monitoramento continuo
+      setTimeout(carregarDadosWhatsApp, 10000);
+      return;
+    }
+
+    var dados = resultado.dados;
 
     if (dados.telefone) {
-        telefoneLojistaGlobal = String(dados.telefone).replace(/[^0-9]/g, "");
+      telefoneLojistaGlobal = String(dados.telefone).replace(/[^0-9]/g, "");
     }
 
     // 1. Atualiza Status Visual
     var elStatus = document.getElementById('txtStatus');
     if (elStatus) {
-        var statusServidor = (dados.status || "desconectado").toLowerCase();
-        elStatus.innerText = statusServidor.toUpperCase();
-        elStatus.style.color = (statusServidor === "conectado") ? "#10b981" : "#f59e0b";
+      var statusServidor = (dados.status || "desconectado").toLowerCase();
+      elStatus.innerText = statusServidor.toUpperCase();
+      elStatus.style.color = (statusServidor === "conectado") ? "#10b981" : "#f59e0b";
     }
 
-    // 2. Atualiza Mensagem
+    // 2. Atualiza Mensagem Padronizada
     var campoMsg = document.getElementById('configMensagem');
     if (campoMsg && dados.mensagem !== undefined && dados.mensagem !== null) {
-        campoMsg.value = dados.mensagem;
+      campoMsg.value = dados.mensagem;
     }
 
     // 3. Atualiza Telefone na Tela
     var campoTel = document.getElementById('configTelefoneWhats');
-    if (campoTel && telefoneLojistaGlobal) { 
-        if (telefoneLojistaGlobal.includes("E") || telefoneLojistaGlobal === "") {
-             campoTel.value = "";
-        } else {
-             campoTel.value = telefoneLojistaGlobal;
-        }
+    if (campoTel && typeof telefoneLojistaGlobal !== 'undefined') { 
+      if (telefoneLojistaGlobal.includes("E") || telefoneLojistaGlobal === "") {
+        campoTel.value = "";
+      } else {
+        campoTel.value = telefoneLojistaGlobal;
+      }
     }
 
-    // 4. LÓGICA DE EXIBIÇÃO PASSIVA (Apenas mostra o que já existe no servidor)
+    // 4. LÓGICA DE EXIBIÇÃO PASSIVA (Gerenciamento de contêineres visuais)
     var areaQR = document.getElementById('areaQRCode');
     var areaPairing = document.getElementById('areaCodigoPairing'); 
     var displayQR = document.getElementById('displayQR');
@@ -2337,79 +2415,83 @@ function carregarDadosWhatsApp() {
 
     var statusServidorAtual = elStatus ? elStatus.innerText.toLowerCase() : "desconectado";
 
+    // Verificação de travamento preventivo por comando do usuário
+    if (typeof estadoWhats !== 'undefined' && estadoWhats === "desconectando") {
+      if (areaQR) areaQR.style.display = "none";
+      if (areaPairing) areaPairing.style.display = "none";
 
-if (estadoWhats === "desconectando") {
-    const areaQR = document.getElementById('areaQRCode');
-    const areaPairing = document.getElementById('areaCodigoPairing');
-
-    if (areaQR) areaQR.style.display = "none";
-    if (areaPairing) areaPairing.style.display = "none";
-
-    setTimeout(carregarDadosWhatsApp, 5000);
-    return;
-}
-
-  else  if (statusServidorAtual === "conectado") {
-        if (areaQR) areaQR.style.display = "none";
-        if (areaPairing) areaPairing.style.display = "none"; 
-        botIniciando = false;
+      setTimeout(carregarDadosWhatsApp, 5000);
+      return;
+    }
+    else if (statusServidorAtual === "conectado") {
+      if (areaQR) areaQR.style.display = "none";
+      if (areaPairing) areaPairing.style.display = "none"; 
+      if (typeof botIniciando !== 'undefined') botIniciando = false;
     } 
     else if (dados.qrcode && dados.qrcode.length > 10) {
-        // Se o servidor já tiver um QR Code pronto, mostra ele
-        if (areaPairing) areaPairing.style.display = "none";
-        if (areaQR) areaQR.style.display = "block";
-        if (displayQR) {
-            var currentQR = displayQR.getAttribute('data-last-qr');
-            if (currentQR !== dados.qrcode) {
-                displayQR.innerHTML = ""; 
-                gerarQRVisual(dados.qrcode);
-                displayQR.setAttribute('data-last-qr', dados.qrcode);
-            }
+      // Se o servidor tiver um QR Code pronto, limpa o cache e renderiza
+      if (areaPairing) areaPairing.style.display = "none";
+      if (areaQR) areaQR.style.display = "block";
+      if (displayQR) {
+        var currentQR = displayQR.getAttribute('data-last-qr');
+        if (currentQR !== dados.qrcode) {
+          displayQR.innerHTML = ""; 
+          if (typeof gerarQRVisual === "function") gerarQRVisual(dados.qrcode);
+          displayQR.setAttribute('data-last-qr', dados.qrcode);
         }
-        botIniciando = false;
-        setTimeout(carregarDadosWhatsApp, 5000); // Continua monitorando se vai conectar
+      }
+      if (typeof botIniciando !== 'undefined') botIniciando = false;
+      setTimeout(carregarDadosWhatsApp, 5000); // Mantém checagem curta para validar o pareamento
     }
     else if (dados.pairingCode && dados.pairingCode.length > 5) {
-        // Se o servidor já tiver um Pairing Code pronto, mostra ele
-        if (areaQR) areaQR.style.display = "none";
-        if (areaPairing) areaPairing.style.display = "block";
-        if (displayCodigo) displayCodigo.innerText = dados.pairingCode;
-        
-        botIniciando = false;
-        setTimeout(carregarDadosWhatsApp, 5000); // Continua monitorando se vai conectar
+      // Se o servidor retornou código de emparelhamento por texto, exibe-o
+      if (areaQR) areaQR.style.display = "none";
+      if (areaPairing) areaPairing.style.display = "block";
+      if (displayCodigo) displayCodigo.innerText = dados.pairingCode;
+      
+      if (typeof botIniciando !== 'undefined') botIniciando = false;
+      setTimeout(carregarDadosWhatsApp, 5000);
     }
-   else {
-
-    // 🔥 SÓ LIMPA SE NÃO ESTIVER AGUARDANDO CÓDIGO
-    if (!aguardandoPairingCode) {
+    else {
+      // Só limpa as caixas se a flag de monitoramento manual não estiver ativa
+      if (typeof aguardandoPairingCode !== 'undefined' && !aguardandoPairingCode) {
         if (areaQR) areaQR.style.display = "none";
         if (areaPairing) areaPairing.style.display = "none";
-    }
+      }
 
+      setTimeout(carregarDadosWhatsApp, 10000); // Fila vazia, aumenta o espaçamento de requisição
+    }
+  })
+  .catch(err => {
+    console.error("❌ Erro de conexão ao monitorar WhatsApp:", err);
+    // Em caso de falha física na rede, tenta novamente em 10 segundos
     setTimeout(carregarDadosWhatsApp, 10000);
+  });
 }
 
-  }).buscarDadosIniciaisWhats(idLojaAtual);
-}
-
-
+/**
+ * 🛠️ ALTERAÇÃO VISUAL DO BOTÃO DE DISPARO (LOADING CONTROL)
+ */
 function setLoadingButton(btn, loading) {
-    if (!btn) return;
+  if (!btn) return;
 
-    const text = btn.querySelector(".btn-text");
-    const spinner = btn.querySelector(".btn-spinner");
+  const text = btn.querySelector(".btn-text");
+  const spinner = btn.querySelector(".btn-spinner");
 
-    if (loading) {
-        btn.disabled = true;
-        if (text) text.style.opacity = "0.7";
-        if (spinner) spinner.style.display = "inline-block";
-    } else {
-        btn.disabled = false;
-        if (text) text.style.opacity = "1";
-        if (spinner) spinner.style.display = "none";
-    }
+  if (loading) {
+    btn.disabled = true;
+    if (text) text.style.opacity = "0.7";
+    if (spinner) spinner.style.display = "inline-block";
+  } else {
+    btn.disabled = false;
+    if (text) text.style.opacity = "1";
+    if (spinner) spinner.style.display = "none";
+  }
 }
 
+/**
+ * 🎨 GERADOR DE SPINNER EM TEMPO REAL PARA MODAIS OU CONTEÚDOS
+ */
 function getSpinnerHTML(texto) {
   texto = texto || "Carregando...";
 
@@ -2419,8 +2501,15 @@ function getSpinnerHTML(texto) {
          "</div>";
 }
 
-function dispararConexaoWhats(usarCodigo) {
 
+  
+/* =========================================================================
+   🔌 MÓDULO DE GERENCIAMENTO DE CONEXÃO E SESSÃO WHATSAPP (FETCH)
+   ========================================================================= */
+
+let conexaoEmAndamento = false; // Controle de trava preventiva local
+
+function dispararConexaoWhats(usarCodigo) {
   if (conexaoEmAndamento) return;
   conexaoEmAndamento = true;
 
@@ -2429,7 +2518,6 @@ function dispararConexaoWhats(usarCodigo) {
 
   if (!idLojaAtual) {
     conexaoEmAndamento = false;
-
     exibirModal({
       tipo: "erro",
       titulo: "Erro",
@@ -2449,117 +2537,138 @@ function dispararConexaoWhats(usarCodigo) {
   const displayQR = document.getElementById('displayQR');
   const displayCodigo = document.getElementById('displayCodigo');
 
-  // 🔥 UI imediata (SEM modal)
+  // 🔥 Interface visual imediata baseada na escolha do método
   if (usarCodigo) {
-
-    aguardandoPairingCode = true; // 🔥 IMPORTANTE
+    aguardandoPairingCode = true; 
 
     if (areaPairing) areaPairing.style.display = "block";
     if (areaQR) areaQR.style.display = "none";
-
     if (displayCodigo) {
-        displayCodigo.innerHTML = getSpinnerHTML("Gerando código de pareamento...");
+      displayCodigo.innerHTML = getSpinnerHTML("Gerando código de pareamento...");
     }
-} else {
-
+  } else {
     if (areaQR) areaQR.style.display = "block";
     if (areaPairing) areaPairing.style.display = "none";
-
     if (displayQR) {
       displayQR.innerHTML = getSpinnerHTML("Gerando QR Code...");
     }
   }
 
-  google.script.run
-    .withSuccessHandler(function (resultado) {
-
-      console.log("Conexão enviada:", resultado);
-
-      setTimeout(carregarDadosWhatsApp, 1200);
-
-      setTimeout(() => {
-        conexaoEmAndamento = false;
-        if (botaoAtivo) botaoAtivo.disabled = false;
-      }, 6000);
-
+  // 🔄 CONVERSÃO PARA FETCH: Solicita inicialização de instância ao servidor central
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "SOLICITAR_CONEXAO",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      idLoja: idLojaAtual,
+      usarCodigo: usarCodigo
     })
-    .withFailureHandler(function (err) {
+  })
+  .then(response => response.json())
+  .then(resultado => {
+    console.log("Conexão enviada com sucesso:", resultado);
 
-      console.error(err);
+    // Dispara a checagem rápida após o tempo de inicialização do motor
+    setTimeout(carregarDadosWhatsApp, 1200);
 
+    // Remove os bloqueios do botão após o tempo de segurança estabelecido
+    setTimeout(() => {
       conexaoEmAndamento = false;
-
       if (botaoAtivo) botaoAtivo.disabled = false;
-
-      exibirModal({
-        tipo: "erro",
-        titulo: "Erro",
-        mensagem: "Falha ao iniciar conexão WhatsApp."
-      });
-
-    })
-    .solicitarConexaoServidor(idLojaAtual, usarCodigo);
-}
-
-// Função isolada apenas para desconexão
-function desconectarWhatsCompleto() {
-
-    var campoId = document.getElementById('id_da_planilha_loja');
-    var idLojaAtual = campoId ? campoId.value : null;
-
-    if (!idLojaAtual) {
-        exibirModal({
-            tipo: "erro",
-            titulo: "Erro",
-            mensagem: "ID da loja não encontrado."
-        });
-        return;
-    }
+    }, 6000);
+  })
+  .catch(err => {
+    console.error("Erro na requisição HTTP de conexão:", err);
+    conexaoEmAndamento = false;
+    if (botaoAtivo) botaoAtivo.disabled = false;
 
     exibirModal({
-        tipo: "pergunta",
-        titulo: "Desconectar WhatsApp",
-        mensagem: "Tem certeza que deseja desconectar o WhatsApp?",
-        aoConfirmar: () => {
-
-            // 🔥 estado global
-            estadoWhats = "desconectando";
-
-            // 🔥 LIMPA UI IMEDIATAMENTE (isso resolve seu problema)
-            const areaQR = document.getElementById('areaQRCode');
-            const areaPairing = document.getElementById('areaCodigoPairing');
-            const displayQR = document.getElementById('displayQR');
-            const displayCodigo = document.getElementById('displayCodigo');
-
-            if (areaQR) areaQR.style.display = "none";
-            if (areaPairing) areaPairing.style.display = "none";
-            if (displayQR) displayQR.innerHTML = "";
-            if (displayCodigo) displayCodigo.innerHTML = "";
-
-            exibirModal({
-                tipo: "alerta",
-                titulo: "Desconectando...",
-                mensagem: "Processando solicitação..."
-            });
-
-            google.script.run.withSuccessHandler(function(res) {
-
-                console.log("Desconexão solicitada:", res);
-
-                estadoWhats = "idle";
-
-                setTimeout(carregarDadosWhatsApp, 1500);
-
-                exibirModal({
-                    tipo: "sucesso",
-                    titulo: "Concluído",
-                    mensagem: "WhatsApp desconectado com sucesso!"
-                });
-
-            }).solicitarDesconexaoServidor(idLojaAtual);
-        }
+      tipo: "erro",
+      titulo: "Erro",
+      mensagem: "Falha de rede ao iniciar conexão com o WhatsApp."
     });
+  });
 }
+
+function desconectarWhatsCompleto() {
+  const campoId = document.getElementById('id_da_planilha_loja');
+  const idLojaAtual = campoId ? campoId.value : null;
+
+  if (!idLojaAtual) {
+    exibirModal({
+      tipo: "erro",
+      titulo: "Erro",
+      mensagem: "ID da loja não encontrado."
+    });
+    return;
+  }
+
+  exibirModal({
+    tipo: "pergunta",
+    titulo: "Desconectar WhatsApp",
+    mensagem: "Tem certeza que deseja desconectar o WhatsApp?",
+    aoConfirmar: () => {
+      // Altera o estado para ignorar o polling padrão temporariamente
+      estadoWhats = "desconectando";
+
+      // 🔥 Limpeza imediata da área de pareamento na interface
+      const areaQR = document.getElementById('areaQRCode');
+      const areaPairing = document.getElementById('areaCodigoPairing');
+      const displayQR = document.getElementById('displayQR');
+      const displayCodigo = document.getElementById('displayCodigo');
+
+      if (areaQR) areaQR.style.display = "none";
+      if (areaPairing) areaPairing.style.display = "none";
+      if (displayQR) displayQR.innerHTML = "";
+      if (displayCodigo) displayCodigo.innerHTML = "";
+
+      exibirModal({
+        tipo: "alerta",
+        titulo: "Desconectando...",
+        mensagem: "Processando solicitação no servidor central..."
+      });
+
+      // 🔄 CONVERSÃO PARA FETCH: Envia ordem de quebra de sessão para a planilha
+      fetch(URL_API_GOOGLE, {
+        method: "POST",
+        body: JSON.stringify({
+          acao: "SOLICITAR_DESCONEXAO",
+          nomeLoja: CONFIG.cliente.nomeFixo,
+          idLoja: idLojaAtual
+        })
+      })
+      .then(response => response.json())
+      .then(res => {
+        console.log("Desconexão efetuada:", res);
+        estadoWhats = "idle";
+
+        // Força recarga rápida dos campos de monitoramento
+        setTimeout(carregarDadosWhatsApp, 1500);
+
+        exibirModal({
+          tipo: "sucesso",
+          titulo: "Concluído",
+          mensagem: "WhatsApp desconectado com sucesso!"
+        });
+      })
+      .catch(err => {
+        console.error("Erro ao solicitar desconexão física:", err);
+        estadoWhats = "idle";
+        
+        exibirModal({
+          tipo: "erro",
+          titulo: "Erro na Operação",
+          mensagem: "O servidor central não respondeu ao comando de desconexão."
+        });
+      });
+    }
+  });
+}
+
+  
+/* =========================================================================
+   ⚙️ MÓDULO EXTRA: PARAMETRIZAÇÃO E CÓDIGO DE PAREAMENTO (FETCH)
+   ========================================================================= */
 
 // Função para gerar a imagem do QR Code
 function gerarQRVisual(textoQR) {
@@ -2571,89 +2680,111 @@ function gerarQRVisual(textoQR) {
   display.innerHTML = '<img src="' + url + '" alt="WhatsApp QR Code" style="display:block; margin:0 auto;" />';
 }
 
+function salvarConfigWhats(e) {
+  // Captura o evento ou herda o event global se executado inline
+  const eventoAtual = e || window.event;
+  const btn = eventoAtual ? eventoAtual.target : document.getElementById("btnSalvarConfigWhats");
 
-function salvarConfigWhats() {
-  const btn = event.target;
-  const idPlanilhaLoja = document.getElementById('id_da_planilha_loja').value; 
-  const msgSaudacao = document.getElementById('configMensagem').value;
+  const idPlanilhaLoja = document.getElementById('id_da_planilha_loja')?.value || ""; 
+  const msgSaudacao = document.getElementById('configMensagem')?.value || "";
 
-  btn.disabled = true;
-  btn.innerText = "Salvando...";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "Salvando...";
+  }
 
-  google.script.run
-    .withSuccessHandler(function(resposta) {
-      btn.disabled = false;
-      btn.innerText = "💾 Salvar Configurações";
-
-      if (resposta.sucesso) {
-        exibirModal({
-          tipo: 'sucesso',
-          titulo: 'Sucesso!',
-          mensagem: 'As configurações do WhatsApp foram updated.',
-          aoConfirmar: () => {
-            console.log("Usuário confirmou o salvamento.");
-          }
-        });
-      } else {
-        exibirModal({
-          tipo: 'erro',
-          titulo: 'Erro ao Salvar',
-          mensagem: resposta.erro || 'Não foi possível salvar as configurações.'
-        });
-      }
+  // 🔄 CONVERSÃO PARA FETCH: Salva o texto base de saudação do robô na planilha
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "SALVAR_CONFIG_WHATSAPP",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      idLoja: idPlanilhaLoja,
+      mensagem: msgSaudacao
     })
-    .withFailureHandler(function(err) {
+  })
+  .then(response => response.json())
+  .then(resposta => {
+    if (btn) {
       btn.disabled = false;
       btn.innerText = "💾 Salvar Configurações";
+    }
+
+    if (resposta.sucesso) {
+      exibirModal({
+        tipo: 'sucesso',
+        titulo: 'Sucesso!',
+        mensagem: 'As configurações do WhatsApp foram atualizadas com sucesso.',
+        aoConfirmar: () => {
+          console.log("Usuário confirmou o salvamento.");
+        }
+      });
+    } else {
       exibirModal({
         tipo: 'erro',
-        titulo: 'Erro Crítico',
-        mensagem: 'Falha na comunicação com o servidor: ' + err.message
+        titulo: 'Erro ao Salvar',
+        mensagem: resposta.erro || 'Não foi possível salvar as configurações.'
       });
-    })
-    .salvarConfiguracaoWhatsNoGoogle(idPlanilhaLoja, msgSaudacao);
+    }
+  })
+  .catch(err => {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = "💾 Salvar Configurações";
+    }
+    exibirModal({
+      tipo: 'erro',
+      titulo: 'Erro Crítico',
+      mensagem: 'Falha na comunicação com o servidor: ' + (err.message || err)
+    });
+  });
 }
 
-// Função placeholder para o futuro Pairing Code (logar só com número)
 function solicitarCodigoPareamento() {
   const telefoneInput = document.getElementById('configTelefoneWhats');
-  const idPlanilha = document.getElementById('id_da_planilha_loja').value;
+  const idPlanilha = document.getElementById('id_da_planilha_loja')?.value || "";
   const displayQR = document.getElementById('displayQR');
 
-  const telefone = telefoneInput.value.replace(/\D/g, "");
+  const telefone = telefoneInput ? telefoneInput.value.replace(/\D/g, "") : "";
 
   if (!telefone || telefone.length < 10) {
-    displayQR.innerHTML = "<p style='color:#ef4444;'>❌ Informe um telefone válido</p>";
+    if (displayQR) displayQR.innerHTML = "<p style='color:#ef4444;'>❌ Informe um telefone válido</p>";
     return;
   }
 
-  // 🔥 1. LIMPA QR PRIMEIRO
-  google.script.run
-    .withSuccessHandler(function() {
+  // 🔥 Efeito visual imediato local
+  if (displayQR) {
+    displayQR.innerHTML = `
+      <div style="padding:10px; color:#b45309;">
+        ⏳ Gerando código de pareamento...
+      </div>
+    `;
+  }
 
-      // 🔥 2. feedback visual
-      displayQR.innerHTML = `
-        <div style="padding:10px; color:#b45309;">
-          ⏳ Gerando código de pareamento...
-        </div>
-      `;
-
-      // 🔥 3. agora solicita o pairing code
-      google.script.run
-        .withSuccessHandler(function(res) {
-          botIniciando = false;
-          displayQR.innerHTML = "<p style='color:#16a34a;'>✅ Código solicitado! Aguarde...</p>";
-          setTimeout(carregarDadosWhatsApp, 3000);
-        })
-        .withFailureHandler(function() {
-          displayQR.innerHTML = "<p style='color:#ef4444;'>❌ Erro ao solicitar código</p>";
-        })
-        .solicitarPairingCode(telefone, idPlanilha);
-
+  // 🔄 OTIMIZAÇÃO E CONVERSÃO FETCH: Centraliza a limpeza de cache e requisição de código em um único evento HTTP
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "SOLICITAR_PAIRING_CODE",
+      nomeLoja: CONFIG.cliente.nomeFixo,
+      idLoja: idPlanilha,
+      telefone: telefone
     })
-    .limparQRLoja(idPlanilha);
+  })
+  .then(response => response.json())
+  .then(res => {
+    if (typeof botIniciando !== 'undefined') botIniciando = false;
+    
+    if (displayQR) displayQR.innerHTML = "<p style='color:#16a34a;'>✅ Código solicitado! Aguarde...</p>";
+    
+    // Dispara a recarga passiva para trazer o Pairing Code na tela em instantes
+    setTimeout(carregarDadosWhatsApp, 3000);
+  })
+  .catch(err => {
+    console.error("Erro ao processar pairing code assíncrono:", err);
+    if (displayQR) displayQR.innerHTML = "<p style='color:#ef4444;'>❌ Erro ao solicitar código</p>";
+  });
 }
-
 
 
 
