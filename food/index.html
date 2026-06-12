@@ -5836,7 +5836,7 @@ function pdv_confirmarDescontoModal() {
   aviso.style.color = "#ea580c";
   aviso.innerText = "⏳ Validando...";
 
-  // 🔄 FETCH: Validação de credenciais administrativas
+  // 🔄 FETCH: Comunicação direta com a API corrigida no Google Apps Script
   fetch(URL_API_GOOGLE, {
     method: "POST",
     body: JSON.stringify({
@@ -5854,7 +5854,7 @@ function pdv_confirmarDescontoModal() {
 
     if (resultado.sucesso) {
       window.pdvDescontoValidated = valorNum; 
-      window.pdvDescontoValidado = valorNum; // Preservado fallback sintático do escopo global
+      window.pdvDescontoValidado = valorNum; // Mantém fallback global
       
       const modal = document.getElementById("pdvModalDesconto");
       if (modal) modal.style.display = "none";
@@ -5865,7 +5865,10 @@ function pdv_confirmarDescontoModal() {
     } else {
       window.pdvDescontoValidado = 0; 
       aviso.style.color = "#ef4444";
-      aviso.innerText = `❌ ${resultado.mensagem || "Senha incorreta."}`;
+      
+      // 💡 AJUSTE AQUI: Prioriza 'resultado.erro' que vem do backend estruturado
+      aviso.innerText = `❌ ${resultado.erro || resultado.mensagem || "Senha incorreta."}`;
+      
       campoSenha.value = "";
       campoSenha.focus();
       
@@ -5873,13 +5876,14 @@ function pdv_confirmarDescontoModal() {
     }
   })
   .catch(erro => {
+    console.error("Erro na requisição de validação de desconto:", erro);
     if (btnConfirmar) {
       btnConfirmar.disabled = false;
       btnConfirmar.innerText = "Confirmar";
     }
     window.pdvDescontoValidado = 0;
     aviso.style.color = "#ef4444";
-    aviso.innerText = `❌ Erro de conexão com o servidor.`;
+    aviso.innerText = `❌ Erro de conexão física com o servidor.`;
     if (typeof atualizarTotalVendaVisual === "function") atualizarTotalVendaVisual();
   });
 }
