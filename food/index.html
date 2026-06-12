@@ -133,7 +133,6 @@ let pixExpiracao = null;
 let pixJaAprovado = false; // Nova trava de segurança
 
 let listaAdicionaisGlobal = [];
-// --- ADICIONE ESTA LINHA ---
 let listaCategoriasGlobal = []; 
 
 let aguardandoPairingCode = false;
@@ -142,20 +141,44 @@ let estadoWhats = "idle";
 
 window.produtosData = [];
 
-// Busca os adicionais (já existente)
-google.script.run.withSuccessHandler(data => {
-  listaAdicionaisGlobal = data;
-}).buscarAdicionais();
+// =========================================================================
+// 🔄 CARREGAMENTO DINÂMICO DE DADOS DA API PILOTO (SUBSTITUINDO GOOGLE.SCRIPT)
+// =========================================================================
+function carregarDadosIniciaisDoSistema() {
+  console.log("📡 Buscando Adicionais e Categorias na API do Google...");
 
-// --- ADICIONE ESTA CHAMADA ---
-google.script.run.withSuccessHandler(data => {
-  listaCategoriasGlobal = data;
-  //console.log("Categorias carregadas com limites:", listaCategoriasGlobal);
-}).listarCategorias();
+  // Criamos uma requisição para avisar ao doPost o que precisamos carregar
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({ acao: "CARREGAR_DADOS_INICIAIS" })
+  })
+  .then(response => response.json())
+  .then(resultado => {
+    if (resultado.sucesso) {
+      listaAdicionaisGlobal = resultado.adicionais || [];
+      listaCategoriasGlobal = resultado.categorias || [];
+      console.log("✅ Dados iniciais carregados com sucesso!");
+      
+      // Só inicia o login DEPOIS que os dados estiverem na memória do app
+      login();
+    } else {
+      console.error("❌ Erro da API ao trazer dados iniciais:", resultado.erro);
+      // Fallback de segurança se falhar (para não travar a tela totalmente)
+      login();
+    }
+  })
+  .catch(err => {
+    console.error("❌ Erro de conexão ao buscar dados iniciais:", err);
+    // Se estiver offline, o Service Worker garante a abertura, e usamos dados vazios
+    login();
+  });
+}
+
 /* =========================
    INIT
 ========================= */
-login();
+// Em vez de chamar login() direto, chamamos nossa nova função de carga
+carregarDadosIniciaisDoSistema();
 
 /* =========================
    RENDER
