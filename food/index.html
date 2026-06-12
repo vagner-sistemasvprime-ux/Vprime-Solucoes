@@ -284,6 +284,7 @@ carregarDadosIniciaisDoSistema();
 /* =========================
    RENDER
 ========================= */
+
 function render() {
   if (!user) return login();
 
@@ -295,8 +296,24 @@ function render() {
     ATENDENTE: atendente
   };
 
+  console.log(`🎬 [RENDER] Tentando carregar a tela para o perfil: ${user.perfil}`);
+
   const tela = telas[user.perfil];
-  if (tela) tela();
+  if (tela) {
+    try {
+      tela();
+    } catch (erroInterno) {
+      console.error("🚨 [ERRO CRÍTICO DENTRO DA TELA]");
+      console.error("Mensagem do erro:", erroInterno.message);
+      console.error("Onde quebrou (Pilha):", erroInterno.stack);
+      
+      // Verificação rápida: Se o erro for no 'user'
+      console.log("[Estado Atual] Objeto 'user' na memória:", user);
+      console.log("[Estado Atual] CONFIG do lojista:", typeof CONFIG !== 'undefined' ? CONFIG : 'Não definido');
+    }
+  } else {
+    console.warn(`⚠️ Perfil '${user.perfil}' não possui uma tela mapeada no render.`);
+  }
 }
 
 
