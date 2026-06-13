@@ -5683,24 +5683,27 @@ function pdv_obterDescontoManualNumerico() {
  */
 function atualizarTotalVendaVisual() {
   console.log("=== 🔍 INÍCIO DA RASTREABILIDADE DO TOTAL ===");
-
-  // 🎯 ADICIONE ESSA LINHA AQUI NO TOPO:
   console.trace("Rastro de quem chamou o cálculo do total:");
   
-  if (typeof carrinhoData === "undefined") {
-    console.error("❌ Erro: A variável 'carrinhoData' não existe no escopo global.");
+  // 🎯 CORREÇÃO: Mudamos de 'carrinhoData' para 'window.carrinhoData'
+  if (typeof window.carrinhoData === "undefined") {
+    console.error("❌ Erro: A variável 'window.carrinhoData' não existe no escopo global.");
     return 0;
   }
   
-  if (!Array.isArray(carrinhoData)) {
-    console.error("❌ Erro: 'carrinhoData' existe, mas não é um Array. Tipo atual:", typeof carrinhoData);
+  if (!Array.isArray(window.carrinhoData)) {
+    console.error("❌ Erro: 'window.carrinhoData' existe, mas não é um Array. Tipo atual:", typeof window.carrinhoData);
     return 0;
   }
 
-  console.log("📦 Itens dentro do carrinhoData atual:", JSON.stringify(carrinhoData));
+  // Criamos uma constante local apontando diretamente para o array correto
+  const dadosCarrinhoAtual = window.carrinhoData;
+
+  console.log("📦 Itens dentro do window.carrinhoData atual:", JSON.stringify(dadosCarrinhoAtual));
 
   // 1️⃣ NÍVEL 1: Totalização Bruta (Itens + Opcionais)
-  let totalBruto = carrinhoData.reduce((s, item, index) => {
+  // 🎯 IMPORTANTE: Mudamos aqui de 'carrinhoData.reduce' para 'dadosCarrinhoAtual.reduce'
+  let totalBruto = dadosCarrinhoAtual.reduce((s, item, index) => {
     console.log(`\n🔹 Analisando Item [${index}]:`, item.nome || "Sem Nome");
 
     // Rastreando Opcionais
@@ -9171,7 +9174,9 @@ function renderCarrinho() {
   const tbody = document.querySelector("#carrinho tbody");
   if (!tbody) return;
   
-  const dadosCarrinho = window.carrinhoData || [];
+  // 🎯 FORÇA ler exatamente o mesmo escopo que o addAoCarrinho usou!
+  if (!window.carrinhoData) window.carrinhoData = [];
+  const dadosCarrinho = window.carrinhoData;
 
   tbody.innerHTML = dadosCarrinho.map((item, index) => {
     const totalAdicionaisItem = (item.adicionais || []).reduce((s, a) => s + (a.qtd * a.preco), 0);
