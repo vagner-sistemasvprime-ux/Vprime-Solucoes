@@ -9066,30 +9066,38 @@ function loadProdutosCaixa() {
  * Avalia precificação baseada em vigência de promoções ou variações e anexa ao carrinho
  */
 function addAoCarrinho(id, variacao = null) {
-  // 🎯 Busca o produto de forma dinâmica em qualquer repositório que ele esteja populado
+  console.log(`\n📥 [addAoCarrinho] Disparado para o ID: ${id}`);
+
+  // 1️⃣ Rastreando a busca do produto
   const listaProdutos = window.produtosData || (typeof CONFIG !== 'undefined' && CONFIG.produtos) || window.produtos || [];
+  console.log(`🔍 [addAoCarrinho] Total de produtos na base para busca: ${listaProdutos.length}`);
+  
   const produto = listaProdutos.find(p => p.id == id || p.ID == id);
   
   if (!produto) {
-    console.error(`🚨 Erro: Produto com ID ${id} não foi encontrado na base de dados.`);
+    console.error(`❌ [addAoCarrinho] Bloqueio 1: Produto com ID ${id} NÃO encontrado.`);
     return;
   }
+  console.log(`✅ [addAoCarrinho] Produto encontrado: ${produto.nome || produto.NOME}`);
 
+  // 2️⃣ Rastreando o bloqueio de Pedido Pendente (Modo Mesa)
   if (!modoMesaAtivo) {
+    console.log("ℹ [addAoCarrinho] Modo Mesa desativado. Verificando pendências...");
     const temPendente = (window.carrinhoData || []).some(item => item.vindoDoPedido === true);
     if (temPendente) {
+      console.warn("❌ [addAoCarrinho] Bloqueio 2: Carrinho bloqueado por pedido pendente.");
       return exibirModal({
         titulo: "Carrinho Bloqueado",
-        mensagem: "Este é um pedido pendente. Finalize o pagamento ou limpe o carrinho para fazer uma nova venda.",
+        mensagem: "Este é um pedido pendente...",
         tipo: "alerta"
       });
     }
   }
 
+  // 3️⃣ Tratamento de Preços
   let precoVenda;
   let nomeExibicao = produto.nome || produto.NOME;
 
-  // Função auxiliar rápida para limpar preços vindos da planilha
   const tratarPreco = (val) => {
     if (!val) return 0;
     if (typeof val === "string") val = val.replace(",", ".");
@@ -9107,7 +9115,9 @@ function addAoCarrinho(id, variacao = null) {
     
     precoVenda = emPromoAtiva ? tratarPreco(produto.precoPromocional) : tratarPreco(produto.preco || produto.PRECO);
   }
+  console.log(`💰 [addAoCarrinho] Preço definido para venda: R$ ${precoVenda}`);
 
+  // 4️⃣ Montando o objeto final
   const itemParaAdicionar = { 
     ...produto, 
     nome: nomeExibicao, 
@@ -9123,22 +9133,33 @@ function addAoCarrinho(id, variacao = null) {
     variacaoInfo: variacao 
   };
 
-  if (modoMesaAtivo) {
+  // 5️⃣ Rastreando a inserção real na memória
+  if (typeof modoMesaAtivo !== 'undefined' && modoMesaAtivo) {
+    console.log("📌 [addAoCarrinho] Inserindo no carrinhoMesa...");
     if (typeof carrinhoMesa !== 'undefined') {
       carrinhoMesa.push(itemParaAdicionar);
+      console.log("✅ [addAoCarrinho] Adicionado ao carrinhoMesa com sucesso.");
       if (typeof atualizarBarraCarrinhoMesa === "function") atualizarBarraCarrinhoMesa();
-      toast(`${nomeExibicao} (Mesa) adicionado`, "success");
+    } else {
+      console.error("❌ [addAoCarrinho] Erro: 'carrinhoMesa' não está definido!");
     }
   } else {
+    console.log("📌 [addAoCarrinho] Inserindo no window.carrinhoData tradicional...");
     if (!window.carrinhoData) window.carrinhoData = [];
+    
     window.carrinhoData.push(itemParaAdicionar);
-    toast(`${nomeExibicao} adicionado`, "success");
+    console.log(`✅ [addAoCarrinho] Adicionado! Itens no carrinhoData agora: ${window.carrinhoData.length}`);
   }
 
-  // 🎯 Atualiza as telas e recalcula o total visual com o carrinho cheio!
+  // 6️⃣ Executando as atualizações visuais
+  console.log("🔄 [addAoCarrinho] Disparando atualizações visuais de tela...");
   if (typeof renderCarrinho === "function") renderCarrinho();
   if (typeof atualizarBarraCarrinho === "function") atualizarBarraCarrinho();
-  if (typeof atualizarTotalVendaVisual === "function") atualizarTotalVendaVisual();
+  if (typeof atualizarTotalVendaVisual === "function") {
+    atualizarTotalVendaVisual();
+  } else {
+    console.error("❌ [addAoCarrinho] Erro: 'atualizarTotalVendaVisual' não é uma função acessível!");
+  }
 }
 /**
  * Varre o array em memória, calcula modificadores e gera as linhas correspondentes na tabela DOM
