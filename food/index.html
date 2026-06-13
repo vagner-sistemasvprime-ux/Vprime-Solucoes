@@ -37,29 +37,15 @@
       alert("🚨 Erro: Esta loja não foi localizada em nosso sistema de rotas.");
     }
 
-    // 3. Injeta dinamicamente as particularidades no CONFIG global do sistema
-    var CONFIG = {
-      cliente: {
-        nomeFixo: dadosLoja.nome,
-        linkCardapio: dadosLoja.linkCardapio, 
-        urlLogo: dadosLoja.urlLogo,
-      },
-      tempo: {
-        intervaloVigilancia: 5000
-      },
-      plano: "PRIME", 
-      pix: {
-        tipo: "automatico" 
-      },
-      gerenciamentoMesa: "ATIVADO", 
-      pedidos: {
-        tempoMaxCancelamento: 30 
-      },
-      impressao: {
-        larguraPadrao: "58" 
-      }
-    };
-
+  // 3. Solução Multitenant Nativa (Blindada): Absorve as configurações dinâmicas da planilha
+Object.assign(CONFIG, dadosLoja, {
+  cliente: {
+    ...CONFIG.cliente, 
+    nomeFixo: dadosLoja.nome,
+    linkCardapio: dadosLoja.linkCardapio, 
+    urlLogo: dadosLoja.urlLogo
+  }
+});
     // 4. Guarda a URL da API global que o fetch usará para enviar os pedidos
     var URL_API_GOOGLE = dadosLoja.urlGoogleAPI;
 
