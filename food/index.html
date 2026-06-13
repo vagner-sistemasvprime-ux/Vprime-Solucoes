@@ -198,72 +198,40 @@ function carregarDadosIniciaisDoSistema() {
       nomeLoja: CONFIG.cliente.nomeFixo
     })
   })
-  .then(response => {
-    console.log(`📡 [CARGA INICIAL] Status HTTP recebido: ${response.status}`);
-    return response.json();
-  })
+  .then(response => response.json())
   .then(resultado => {
     console.log("📦 [CARGA INICIAL] Resposta bruta do servidor:", resultado);
 
     if (resultado.sucesso) {
+      // 🌟 O PULO DO GATO MULTILOJA MANUAL:
+      // Mantemos o CONFIG exatamente como ele foi criado no topo do arquivo (Piloto ou VG).
+      // Não deixamos o servidor sobrescrever as propriedades de plano, pix ou mesas.
       
-      // =========================================================================
-      // 🎯 INJEÇÃO DINÂMICA: ATUALIZA AS CONFIGURAÇÕES COM OS DADOS DO APPSCRIPT
-      // =========================================================================
-      if (resultado.configuracoes) {
-        console.log("📥 [APPSCRIPT] Atualizando CONFIG local com as regras do servidor...");
-        
-        Object.assign(CONFIG, {
-          plano: resultado.configuracoes.plano || CONFIG.plano,
-          gerenciamentoMesa: resultado.configuracoes.gerenciamentoMesa || CONFIG.gerenciamentoMesa,
-        });
+      console.log("⚙️ [CONFIG ATIVO EM MEMÓRIA]:");
+      console.log("   👉 Lojista Atual     :", CONFIG.cliente.nomeFixo);
+      console.log("   👉 Plano Configurado :", CONFIG.plano);
+      console.log("   👉 Modo do PIX       :", CONFIG.pix.tipo.toUpperCase());
+      console.log("   👉 Controle de Mesas :", CONFIG.gerenciamentoMesa);
 
-        // Atualiza a esteira do PIX baseada no que veio do Apps Script
-        CONFIG.pix = {
-          tipo: (CONFIG.plano === "PADRAO") ? "manual" : (resultado.configuracoes.tipoPix || CONFIG.pix.tipo)
-        };
-
-        console.log("⚙️ [CONFIG ATUALIZADO VIA SERVIDOR]:");
-        console.log("   👉 Plano Real do Lojista:", CONFIG.plano);
-        console.log("   👉 Modo do PIX Ativo    :", CONFIG.pix.tipo.toUpperCase());
-        console.log("   👉 Controle de Mesas    :", CONFIG.gerenciamentoMesa);
-      } else {
-        console.warn("⚠️ [AVISO] O Apps Script não enviou o nó 'configuracoes'. Mantendo o padrão do arquivo piloto.");
-      }
-      // =========================================================================
-
+      // Apenas populamos as listas de dados daquela planilha
       listaAdicionaisGlobal = resultado.adicionais || [];
       listaCategoriasGlobal = resultado.categorias || [];
       window.produtosData = resultado.produtos || [];
-      
       window.usuariosSistemaGlobal = resultado.usuarios || [];
-      console.log(`👥 [MÓDULO USUÁRIOS] Foram carregados ${window.usuariosSistemaGlobal.length} usuários do servidor.`);
-      if (window.usuariosSistemaGlobal.length === 0) {
-        console.warn("⚠️ ALERTA: Nenhum usuário foi retornado pelo servidor! O login vai falhar.");
-      } else {
-        console.log("👇 Lista de usuários indexados para login (somente nomes):", window.usuariosSistemaGlobal.map(u => u.usuario));
-      }
-
       window.qtdMesasGlobal = resultado.qtdMesas || 0;
       
-      console.log("✅ [CARGA INICIAL] Variáveis globais populadas com sucesso!");
       processarStatusFinanceiroLocal(resultado.financeiro);
+      console.log("✅ [CARGA INICIAL] Sistema liberado com as configurações fixas do código do lojista!");
     } else {
       console.error("❌ [CARGA INICIAL] O servidor recusou o processamento:", resultado.erro);
       if (btnEntrar) {
         btnEntrar.disabled = false;
         btnEntrar.innerText = "Entrar (Modo Offline)";
-        btnEntrar.style.backgroundColor = "#eab308";
       }
     }
   })
   .catch(err => {
-    console.error("❌ [CARGA INICIAL] Falha física de rede/CORS na comunicação:", err);
-    if (btnEntrar) {
-      btnEntrar.disabled = false;
-      btnEntrar.innerText = "Entrar (Erro de Rede)";
-      btnEntrar.style.backgroundColor = "#ef4444";
-    }
+    console.error("❌ [CARGA INICIAL] Erro de rede:", err);
   });
 }
 // =========================================================================
