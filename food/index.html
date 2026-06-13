@@ -11375,13 +11375,17 @@ function confirmarSalvamento() {
 function entregarClienteModal(botaoClicado) {
   console.log("🖱️ [FRONT] Botão 'Cliente' foi clicado de fato!");
   
-  if (typeof pedidoSelecionado === "undefined" || !pedidoSelecionado) {
-    console.error("❌ [FRONT] Erro: A variável 'pedidoSelecionado' está vazia ou undefined!");
+  // 🎯 CORREÇÃO CRUCIAL: Força a leitura direto do escopo global (window)
+  const pedidoAtivo = window.pedidoSelecionado;
+
+  if (!pedidoAtivo) {
+    console.error("❌ [FRONT] Erro: A variável 'window.pedidoSelecionado' está vazia ou undefined!");
+    alert("⚠️ Erro interno: Nenhum pedido foi carregado na memória do modal.");
     return;
   }
 
   const msgDiv = document.getElementById("msgMotoboy"); 
-  const idPedido = pedidoSelecionado.pedido || window.pedidoSelecionado?.pedido;
+  const idPedido = pedidoAtivo.pedido; // 🎯 Pega o ID com segurança
   console.log(`📦 [FRONT] Identificado Pedido ID: ${idPedido}`);
 
   if (msgDiv) {
@@ -11453,16 +11457,22 @@ function entregarClienteModal(botaoClicado) {
 }
 
 function entregarMotoboyModal() {
-  console.log(" Lambreta! [FRONT] Botão 'Chamar Motoboy' foi clicado de fato!");
+  console.log("🛵 Lambreta! [FRONT] Botão 'Chamar Motoboy' foi clicado de fato!");
 
-  if (typeof pedidoSelecionado === "undefined" || !pedidoSelecionado) {
-    console.error("❌ [FRONT] Erro: A variável 'pedidoSelecionado' está vazia ou undefined!");
+  // 🎯 CORREÇÃO CRUCIAL: Força a leitura do escopo global aqui também
+  const pedidoAtivo = window.pedidoSelecionado;
+
+  if (!pedidoAtivo) {
+    console.error("❌ [FRONT] Erro: A variável 'window.pedidoSelecionado' está vazia ou undefined!");
+    alert("⚠️ Erro interno: Nenhum pedido foi carregado na memória do modal.");
     return;
   }
 
   const motoboy = document.getElementById("selectMotoboy")?.value;
   const msgDiv = document.getElementById("msgMotoboy");
-  const idPedido = pedidoSelecionado.pedido || window.pedidoSelecionado?.pedido;
+  const idPedido = pedidoAtivo.pedido; // 🎯 Pega o ID com segurança
+
+  // ... (o restante do fetch do motoboy continua igual)
 
   console.log(`📦 [FRONT] Pedido: ${idPedido} | Motoboy Selecionado no Select: "${motoboy}"`);
 
