@@ -72,6 +72,13 @@
         favicon.href = CONFIG.cliente.urlLogo;
         console.log("🖼️ [FAVICON] Ícone da aba atualizado para a logo do lojista!");
       }
+
+      // 🎯 A MÁGICA VISUAL: Aplica a cor do lojista dinamicamente no CSS!
+      if (dadosLoja.corTema) {
+        // Altera o valor da variável --primary em tempo de execução
+        document.documentElement.style.setProperty('--primary', dadosLoja.corTema);
+        console.log(`🎨 [TEMA] A cor primária do sistema foi alterada para: ${dadosLoja.corTema}`);
+      }
       
       // =========================================================================
       // 📊 RELATÓRIO DO LOJISTA ATIVO (SISTEMA MULTITENANT)
