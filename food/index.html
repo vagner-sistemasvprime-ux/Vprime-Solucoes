@@ -5683,6 +5683,9 @@ function pdv_obterDescontoManualNumerico() {
  */
 function atualizarTotalVendaVisual() {
   console.log("=== 🔍 INÍCIO DA RASTREABILIDADE DO TOTAL ===");
+
+  // 🎯 ADICIONE ESSA LINHA AQUI NO TOPO:
+  console.trace("Rastro de quem chamou o cálculo do total:");
   
   if (typeof carrinhoData === "undefined") {
     console.error("❌ Erro: A variável 'carrinhoData' não existe no escopo global.");
