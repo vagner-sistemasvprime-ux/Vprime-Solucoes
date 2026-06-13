@@ -11112,33 +11112,30 @@ function carregarPedidoNoCarrinho(pedido) {
   }
 }
 
-/**
- * DOM CALCULATOR: Varre as linhas da tabela renderizada para manter o sincronismo de totais
- */
+// Recalcula total do carrinho (Versão Multitenant Segura)
 function atualizarTotalCarrinho() {
   const tbody = document.querySelector("#carrinho tbody");
   const totalVendaEl = document.getElementById("totalVenda");
   if (!tbody || !totalVendaEl) return;
-  
+
   let total = 0;
 
   tbody.querySelectorAll("tr").forEach(tr => {
-    // Verifica se a linha possui as colunas necessárias de quantidade e valor
     if (tr.children[1] && tr.children[2]) {
-      // 1. Captura a quantidade com segurança
-      const qtd = parseInt(tr.children[1].textContent) || 0;
-      
-      // 2. Limpa e captura o valor unitário com segurança contra falhas de texto
+      // Limpa absolutamente todo tipo de espaço invisível, "R$" e acerta os pontos/vírgulas
       let textoValor = tr.children[2].textContent || "0";
       textoValor = textoValor.replace("R$", "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
-      const valorUnitario = parseFloat(textoValor) || 0;
       
-      // 🎯 CORREÇÃO: Multiplica a quantidade pelo valor unitário antes de somar ao total!
-      total += (valorUnitario * qtd);
+      const valor = Number(textoValor);
+      
+      // Só soma se for um número válido para não quebrar o acumulador
+      if (!isNaN(valor)) {
+        total += valor; // Mantém sua lógica original (já multiplicado na linha)
+      }
     }
   });
 
-  // 🎯 Formata o resultado final de volta para o padrão brasileiro (com vírgula)
+  // Atualiza a tela formatando bonitinho de volta para o padrão BR
   totalVendaEl.textContent = `R$ ${total.toFixed(2).replace(".", ",")}`;
 }
 
