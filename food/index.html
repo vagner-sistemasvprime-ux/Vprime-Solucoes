@@ -79,6 +79,32 @@
         document.documentElement.style.setProperty('--primary', dadosLoja.corTema);
         console.log(`🎨 [TEMA] A cor primária do sistema foi alterada para: ${dadosLoja.corTema}`);
       }
+
+
+
+      // 🎯 PWA MULTILOJA: Atualiza a URL de inicialização do aplicativo com a loja atual do cliente
+const linkManifest = document.querySelector('link[rel="manifest"]');
+if (linkManifest) {
+  // Cria um manifesto dinâmico em formato de texto (Data URI)
+  const novoManifesto = {
+    "name": `Painel - ${CONFIG.cliente.nomeFixo}`,
+    "short_name": CONFIG.cliente.nomeFixo,
+    "start_url": `./index.html?loja=${idLojaAtual}`, // 👈 AQUI ESTÁ O SEGREDO!
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": dadosLoja.corTema || "#6366f1",
+    "icons": [
+      { "src": "./img/icone-192.png", "sizes": "192x192", "type": "image/png" },
+      { "src": "./img/icone-512.png", "sizes": "512x512", "type": "image/png" }
+    ]
+  };
+
+  // Transforma o objeto em um link que o navegador consegue ler em tempo real
+  const stringManifesto = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(novoManifesto));
+  linkManifest.setAttribute('href', stringManifesto);
+  console.log(`📱 [PWA] Manifesto customizado aplicado para a loja: ${idLojaAtual}`);
+}
+
       
       // =========================================================================
       // 📊 RELATÓRIO DO LOJISTA ATIVO (SISTEMA MULTITENANT)
