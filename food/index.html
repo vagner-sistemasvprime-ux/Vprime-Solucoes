@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+  <link id="favicon-loja" rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ" />
+
   <script src="./rotas.js"></script>
 
   <script>
@@ -61,8 +63,15 @@
       // 4. Guarda a URL da API global que o fetch usará para enviar as requisições
       var URL_API_GOOGLE = dadosLoja.urlGoogleAPI;
 
-      // 5. Altera o título da página dinamicamente com o nome do lojista
+      // 1. Altera o título da página dinamicamente com o nome do lojista
       document.title = CONFIG.cliente.nomeFixo;
+
+      // 🎯 2. ALTERA O ÍCONE DA ABA DO NAVEGADOR (FAVICON) COM A URL DA LOGO
+      const favicon = document.getElementById("favicon-loja");
+      if (favicon && CONFIG.cliente.urlLogo) {
+        favicon.href = CONFIG.cliente.urlLogo;
+        console.log("🖼️ [FAVICON] Ícone da aba atualizado para a logo do lojista!");
+      }
       
       // =========================================================================
       // 📊 RELATÓRIO DO LOJISTA ATIVO (SISTEMA MULTITENANT)
