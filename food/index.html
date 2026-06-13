@@ -10,21 +10,9 @@
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+  <script src="./rotas.js"></script>
+
   <script>
-    // =========================================================================
-    // 📡 CENTRAL DE ROTEAMENTO DE LOJISTAS (ESCALABILIDADE MULTITENANT)
-    // =========================================================================
-    const ROTAS_LOJISTAS = {
-      "piloto": {
-        nome: "Sistema Piloto VPrime",
-        urlGoogleAPI: "https://script.google.com/macros/s/AKfycbwqeYadURxN7WPkf5SsyOxpUmoeDsUbTQsLNq7Hb3Pltk6E-EcHr5SnD1XWm-EVZDPH/exec",
-        linkCardapio: "https://vprimesistemas.com.br/food/?loja=piloto",
-        urlLogo: "https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ",
-        idPlanilha: "1sjKEirWF6wiCvtma2iVv30iNqzOZJaK3WIKSP-kMlQg",
-        plano: "PRIME",       
-        tipoPix: "automatico" 
-      }
-    };
 
     // 1. Captura o ID da loja na URL (ex: ?loja=piloto)
     const parametrosUrl = new URLSearchParams(window.location.search);
