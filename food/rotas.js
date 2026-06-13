@@ -19,7 +19,7 @@ const ROTAS_LOJISTAS = {
     
     plano: "PADRAO",               // Opções: "PRIME" ou "PADRAO"
     
-    tipoPix: "automatico",        // Opções: "automatico" ou "manual"
+    tipoPix: "manual",        // Opções: "automatico" ou "manual"
     
     gerenciamentoMesa: "ATIVADO", // Opções: "ATIVADO" ou "DESATIVADO"
     
@@ -48,7 +48,7 @@ const ROTAS_LOJISTAS = {
     
     plano: "PRIME",               // Opções: "PRIME" ou "PADRAO"
     
-    tipoPix: "manual",        // Opções: "automatico" ou "manual"
+    tipoPix: "automatico",        // Opções: "automatico" ou "manual"
     
     gerenciamentoMesa: "DESATIVADO", // Opções: "ATIVADO" ou "DESATIVADO"
     
