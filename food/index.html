@@ -11918,6 +11918,7 @@ function abrirModalPedido(pedido) {
       btnMotoboy.textContent = "🏪 Retirada no Local";
       btnMotoboy.style.opacity = "0.5";
       btnMotoboy.style.cursor = "not-allowed";
+      btnMotoboy.onclick = null; // Limpa o clique no balcão
     }
     if (badge) {
       badge.textContent = "🏪 BALCÃO";
@@ -11930,6 +11931,11 @@ function abrirModalPedido(pedido) {
       btnMotoboy.textContent = "🛵 Chamar Motoboy";
       btnMotoboy.style.opacity = "1";
       btnMotoboy.style.cursor = "pointer";
+      
+      // 🎯 VÍNCULO ÚNICO E DEFINITIVO: Chama a nova função com logs
+      btnMotoboy.onclick = function() {
+        entregarMotoboyModal(btnMotoboy);
+      };
     }
     if (badge) {
       badge.textContent = "🚚 DELIVERY";
@@ -11939,32 +11945,19 @@ function abrirModalPedido(pedido) {
     if (typeof carregarMotoboys === "function") carregarMotoboys();
   }
 
-  // 🎯 Atribuição do clique direto na abertura do modal para os botões funcionarem
-  const btnAceitar = document.getElementById("btnAceitarPedido"); // ajuste para o ID do seu botão
+  // Atribuição do botão Aceitar (Pode manter se usar em outra tela)
+  const btnAceitar = document.getElementById("btnAceitarPedido");
   if (btnAceitar) {
     btnAceitar.onclick = function() {
-      // Exemplo de função que você deve ter para aceitar
       if (typeof aceitarPedido === "function") aceitarPedido(window.pedidoSelecionado.pedido);
     };
   }
 
-  if (btnMotoboy) {
-    btnMotoboy.onclick = function() {
-      const motoboySelecionado = selectMotoboy ? selectMotoboy.value : "";
-      if (ehDelivery && !motoboySelecionado) {
-        alert("⚠️ Por favor, selecione um motoboy!");
-        return;
-      }
-      if (typeof despacharPedido === "function") {
-        despacharPedido(window.pedidoSelecionado.pedido, motoboySelecionado);
-      }
-    };
-  }
+  // 🗑️ O bloco duplicado do btnMotoboy que estava aqui foi REMOVIDO!
 
   const modalPronto = document.getElementById("modalPedidoPronto");
   if (modalPronto) modalPronto.style.display = "flex";
 }
-
 /* =========================================================================
    🔍 SUBSISTEMA DE BUSCA AVANÇADA INDEXADA (FETCH)
    ========================================================================= */
