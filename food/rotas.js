@@ -39,7 +39,7 @@ const ROTAS_LOJISTAS = {
   
   "sistemamodelo": {
    // 🏢 DADOS DE IDENTIFICAÇÃO E CONEXÃO
-    nome: "Sistema Piloto VPrime",
+    nome: "Sistema Modelo",
     urlGoogleAPI: "https://script.google.com/macros/s/AKfycbyiD33PF8zAGzRl0qmH4lkur7uZD6wmg4IxVXpuzPRCrvEY2jb3WZRZnq-XiDWFLNI3/exec",
     linkCardapio: "https://vprimesistemas.com.br/food/?loja=sistemamodelo",
     urlLogo: "https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ",
