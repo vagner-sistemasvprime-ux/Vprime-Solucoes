@@ -20,11 +20,9 @@
         urlGoogleAPI: "https://script.google.com/macros/s/AKfycbwqeYadURxN7WPkf5SsyOxpUmoeDsUbTQsLNq7Hb3Pltk6E-EcHr5SnD1XWm-EVZDPH/exec",
         linkCardapio: "https://vprimesistemas.com.br/food/cardapio/?loja=piloto",
         urlLogo: "https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ",
-        // 🎯 ADICIONADO AQUI: O ID da planilha fica centralizado no cadastro da loja!
         idPlanilha: "1sjKEirWF6wiCvtma2iVv30iNqzOZJaK3WIKSP-kMlQg"
       }
       // Quando for adicionar novos lojistas, basta criar as linhas aqui embaixo de forma limpa:
-      // "sil_dog": { nome: "Sil Dog", urlGoogleAPI: "...", linkCardapio: "...", urlLogo: "...", idPlanilha: "ID_DE_SIL_DOG" },
     };
 
     // 1. Captura o ID da loja na URL (ex: ?loja=piloto)
@@ -40,15 +38,31 @@
     if (!dadosLoja) {
       alert("🚨 Erro: Esta loja não foi localizada em nosso sistema de rotas.");
     } else {
-      // 3. Solução Multitenant Nativa (Garante a herança e absorve 100% dos dados dinâmicos)
+      // 3. Solução Multitenant Nativa + Fallbacks de Segurança Embutidos
       Object.assign(CONFIG, dadosLoja, {
         planilha: {
-          id: dadosLoja.idPlanilha || "" // Aplica dinamicamente o ID cadastrado na rota acima
+          id: dadosLoja.idPlanilha || "" 
         },
         cliente: {
           nomeFixo: dadosLoja.nome,
           linkCardapio: dadosLoja.linkCardapio, 
           urlLogo: dadosLoja.urlLogo
+        },
+        
+        // 🛡️ INJEÇÃO ESTRUTURAL: Impede erros de 'Cannot read properties of undefined' nas telas visuais
+        tempo: {
+          intervaloVigilancia: dadosLoja.intervaloVigilancia || 5000
+        },
+        plano: dadosLoja.plano || "PADRAO",
+        pix: {
+          tipo: dadosLoja.tipoPix || "manual" // ✅ Cura o erro de leitura do 'tipo' na linha 631 do admin
+        },
+        gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
+        pedidos: {
+          tempoMaxCancelamento: dadosLoja.tempoMaxCancelamento || 30
+        },
+        impressao: {
+          larguraPadrao: dadosLoja.larguraImpressao || "58"
         }
       });
 
@@ -58,7 +72,7 @@
       // 5. Altera o título da página dinamicamente com o nome do lojista
       document.title = CONFIG.cliente.nomeFixo;
     }
-  </script> 
+</script>
   
   <script>
     // =========================================================================
