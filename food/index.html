@@ -10102,12 +10102,14 @@ function toggleCard(card) {
   const alvo = document.getElementById(`card-${card}`);
   if (!alvo) return;
 
+  // 🎯 Declarado com 'v':
   const estavaAberto = alvo.style.display !== "none" && alvo.style.display !== "";
 
   document.querySelectorAll(".admin-card, .admin-card-container").forEach(c => {
     c.style.display = "none";
   });
 
+  // 🎯 Corrigido aqui também para usar 'v' (estavaAberto):
   if (!estavaAberto) {
     if (card === "parametros") {
       alvo.style.display = window.innerWidth > 900 ? "flex" : "block";
