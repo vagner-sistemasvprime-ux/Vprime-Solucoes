@@ -11643,7 +11643,11 @@ function renderizarPedidosProntos() {
       const div = document.createElement("div");
       div.className = "pedido-pronto";
 
-      if (pedido.paraEntrega) {
+      // 🛡️ Regex aplicada no Card
+      const textoEntregaCard = String(pedido.paraEntrega || "");
+      const ehDeliveryCard = pedido.paraEntrega === true || /SIM/i.test(textoEntregaCard);
+
+      if (ehDeliveryCard) {
         div.classList.add("pedido-delivery");
       } else {
         div.classList.add("pedido-balcao");
@@ -11651,12 +11655,12 @@ function renderizarPedidosProntos() {
 
       const titleBalcao = "Clique para finalizar e entregar ao cliente";
       const titleDelivery = "Clique para selecionar o motoboy e despachar";
-      div.title = pedido.paraEntrega ? titleDelivery : titleBalcao;
+      div.title = ehDeliveryCard ? titleDelivery : titleBalcao;
 
       div.innerHTML = `
         <strong>Pedido #${pedido.pedido}</strong><br>
         <small>
-          ${pedido.paraEntrega ? "🚚 Delivery" : "🧍 Balcão"} • 
+          ${ehDeliveryCard ? "🚚 Delivery" : "🧍 Balcão"} • 
           ⏱ ${typeof tempoDecorrido === "function" ? tempoDecorrido(pedido.dataPronto) : "--"}
         </small>
       `;
@@ -11850,7 +11854,9 @@ function abrirModalPedido(pedido) {
   const btnMotoboy = document.getElementById("btnMotoboy");
   const badge = document.getElementById("badgeTipoPedido");
 
-  const ehDelivery = pedido.paraEntrega === true;
+  // 🛡️ Regex aplicada no Modal
+  const textoEntregaModal = String(pedido.paraEntrega || "");
+  const ehDelivery = pedido.paraEntrega === true || /SIM/i.test(textoEntregaModal);
 
   if (!ehDelivery) {
     if (grupoMotoboy) grupoMotoboy.style.display = "none";
@@ -11879,6 +11885,28 @@ function abrirModalPedido(pedido) {
     }
 
     if (typeof carregarMotoboys === "function") carregarMotoboys();
+  }
+
+  // 🎯 Atribuição do clique direto na abertura do modal para os botões funcionarem
+  const btnAceitar = document.getElementById("btnAceitarPedido"); // ajuste para o ID do seu botão
+  if (btnAceitar) {
+    btnAceitar.onclick = function() {
+      // Exemplo de função que você deve ter para aceitar
+      if (typeof aceitarPedido === "function") aceitarPedido(window.pedidoSelecionado.pedido);
+    };
+  }
+
+  if (btnMotoboy) {
+    btnMotoboy.onclick = function() {
+      const motoboySelecionado = selectMotoboy ? selectMotoboy.value : "";
+      if (ehDelivery && !motoboySelecionado) {
+        alert("⚠️ Por favor, selecione um motoboy!");
+        return;
+      }
+      if (typeof despacharPedido === "function") {
+        despacharPedido(window.pedidoSelecionado.pedido, motoboySelecionado);
+      }
+    };
   }
 
   const modalPronto = document.getElementById("modalPedidoPronto");
