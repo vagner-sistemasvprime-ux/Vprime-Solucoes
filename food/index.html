@@ -4882,23 +4882,34 @@ function caixa() {
   })
   .then(response => response.json())
   .then(res => {
-    if (res.sucesso) {
+    // 💡 LOG ADICIONAL: Mostra exatamente o que o servidor respondeu para o Caixa
+    console.log("📥 [CAIXA] Resposta recebida do servidor:", res);
+
+    if (res && res.sucesso) {
       if (res.aberto) {
         if (typeof telaPedidosCaixa === "function") {
           telaPedidosCaixa(); // Redireciona direto para o painel de vendas/operações
         }
       } else {
-        telaAberturaCaixa(); // Exige a rotina de inserção de fundo de troco
+        if (typeof telaAberturaCaixa === "function") {
+          telaAberturaCaixa(); // Exige a rotina de inserção de fundo de troco
+        }
       }
     } else {
-      console.error("❌ Falha na resposta do servidor:", res.erro);
+      // 🛡️ CORREÇÃO DO UNDEFINED: Se 'res.erro' não existir, mostra uma mensagem amigável ou o objeto bruto
+      const mensagemErro = (res && res.erro) || res.mensagem || "Erro desconhecido ou formato inválido.";
+      console.error("❌ Falha na resposta do servidor:", mensagemErro);
+      
+      // Fallback de segurança: Se o servidor falhar, joga para a tela de abertura por garantia
+      if (typeof telaAberturaCaixa === "function") telaAberturaCaixa();
     }
   })
   .catch(err => {
     console.error("❌ Erro de rede ao verificar estado do caixa:", err);
+    // Fallback em caso de queda de internet
+    if (typeof telaAberturaCaixa === "function") telaAberturaCaixa();
   });
 }
-
 // RENDERIZADOR: Constrói a interface para abertura de nova jornada financeira
 function telaAberturaCaixa() {
   const appEl = document.getElementById("app");
