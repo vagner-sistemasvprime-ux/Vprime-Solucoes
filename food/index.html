@@ -7181,7 +7181,6 @@ function exibirModalPix() {
   const inputCopiaCola = document.getElementById('inputPixCopiaCola');
   const valorTextoModal = document.getElementById('valorPixModal');
 
-  // Reset de UI padrão para ambos os fluxos
   if (modal) modal.style.display = 'flex';
   if (img) { img.style.display = 'none'; img.style.opacity = "1"; }
   if (btnCopiar) btnCopiar.disabled = false;
@@ -7193,19 +7192,21 @@ function exibirModalPix() {
   }
 
   const usuarioLogado = (typeof user !== 'undefined') ? user.usuario : "Balcao";
+  
+  // 🎯 IDENTIFICADOR MULTILOJA SEGURO (Usa o ID da URL como 'piloto')
+  const identificadorLoja = typeof idLojaAtual !== 'undefined' ? idLojaAtual : (CONFIG.cliente.nomeFixo || "piloto");
 
   // =======================================================================
-  // FLUXO AUTOMÁTICO (PRIME - API EM TEMPO REAL MERCADO PAGO)
+  // FLUXO AUTOMÁTICO (PRIME - API EM TEMPO REAL MERCADO PAGO - SEGURO)
   // =======================================================================
   if (CONFIG.pix.tipo === "automatico") {
     const nomePedido = "Pedido " + (document.getElementById('idPedidoAtual')?.innerText || "PDV");
 
-    // 🔄 FETCH: Substitui o motor de pagamento dinâmico legado
     fetch(URL_API_GOOGLE, {
       method: "POST",
       body: JSON.stringify({
         acao: "PROCESSAR_PAGAMENTO_UNIVERSAL",
-        nomeLoja: CONFIG.cliente.nomeFixo,
+        nomeLoja: identificadorLoja, // 🎯 Corrigido para enviar o escopo correto da rota
         metodo: 'pix',
         valor: valorTotal,
         descricao: nomePedido
@@ -7236,10 +7237,9 @@ function exibirModalPix() {
           iniciarContadorPix(5); 
           verificarStatusPagamentoAutomatico(res.id_pagamento);
 
-          // Registra a intenção de cobrança gerada em background
           fetch(URL_API_GOOGLE, {
             method: "POST",
-            body: JSON.stringify({ acao: "REGISTRAR_PIX", nomeLoja: CONFIG.cliente.nomeFixo, id: res.id_pagamento, valor: valorTotal, operador: usuarioLogado })
+            body: JSON.stringify({ acao: "REGISTRAR_PIX", nomeLoja: identificadorLoja, id: res.id_pagamento, valor: valorTotal, operador: usuarioLogado })
           }).catch(e => console.error("Erro ao persistir log pix:", e));
         };
       }
@@ -7256,17 +7256,16 @@ function exibirModalPix() {
     });
 
   // =======================================================================
-  // FLUXO MANUAL (PADRÃO - GERADOR DE EMV PAYLOAD LOCAL ESTÁTICO)
+  // FLUXO MANUAL (PADRÃO - GERADOR DE EMV PAYLOAD LOCAL ESTÁTICO DINÂMICO)
   // =======================================================================
   } else {
     txidAtualPix = gerarTxidAleatorio();
 
-    // 🔄 FETCH: Coleta metadados de credenciamento interno
     fetch(URL_API_GOOGLE, {
       method: "POST",
       body: JSON.stringify({
         acao: "OBTER_CONFIGURACAO_PIX",
-        nomeLoja: CONFIG.cliente.nomeFixo
+        nomeLoja: identificadorLoja // 🎯 Busca a chave PIX específica desta rota na planilha
       })
     })
     .then(response => response.json())
@@ -7276,7 +7275,7 @@ function exibirModalPix() {
         if (typeof exibirModal === "function") {
           exibirModal({
             titulo: "Configuração Ausente",
-            mensagem: "A chave PIX não foi encontrada nas configurações do sistema.",
+            mensagem: "A chave PIX não foi encontrada nas configurações do lojista ativo.",
             tipo: "erro"
           });
         }
@@ -7288,15 +7287,18 @@ function exibirModalPix() {
         chaveFinal = "+" + chaveFinal;
       }
       
-      const payload = gerarPayloadPix(valorTotal, chaveFinal, cfg.nomeLoja, cfg.cidade, txidAtualPix);
+      // Usa os dados que o Apps Script retornou de dentro da planilha individual do lojista
+      const nomeBeneficiario = cfg.nomeLoja || CONFIG.cliente.nomeFixo || "Recebedor";
+      const cidadeBeneficiario = cfg.cidade || "Sao Paulo";
+
+      const payload = gerarPayloadPix(valorTotal, chaveFinal, nomeBeneficiario, cidadeBeneficiario, txidAtualPix);
       
       if (inputCopiaCola) inputCopiaCola.value = payload;
       if (valorTextoModal) valorTextoModal.innerText = "R$ " + valorTotal.toFixed(2).replace('.', ',');
 
-      // Gravação histórica no log da planilha de vendas
       fetch(URL_API_GOOGLE, {
         method: "POST",
-        body: JSON.stringify({ acao: "REGISTRAR_PIX", nomeLoja: CONFIG.cliente.nomeFixo, id: txidAtualPix, valor: valorTotal, operador: usuarioLogado })
+        body: JSON.stringify({ acao: "REGISTRAR_PIX", nomeLoja: identificadorLoja, id: txidAtualPix, valor: valorTotal, operador: usuarioLogado })
       }).catch(e => console.error("Erro ao persistir log pix manual:", e));
 
       const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(payload);
@@ -7316,7 +7318,6 @@ function exibirModalPix() {
     });
   }
 }
-
 /**
  * DAEMON POLLING INTERVÁLICO: Rastreia aprovação do gateway em background (Exclusivo PIX Automático)
  */
@@ -7325,13 +7326,14 @@ function verificarStatusPagamentoAutomatico(idPagamento) {
   
   if (intervaloVerificacao) clearInterval(intervaloVerificacao);
 
+  const identificadorLoja = typeof idLojaAtual !== 'undefined' ? idLojaAtual : (CONFIG.cliente.nomeFixo || "piloto");
+
   intervaloVerificacao = setInterval(() => {
-    // 🔄 FETCH: Substitui polling do google.script.run
     fetch(URL_API_GOOGLE, {
       method: "POST",
       body: JSON.stringify({
         acao: "VERIFICAR_STATUS_PAGAMENTO",
-        nomeLoja: CONFIG.cliente.nomeFixo,
+        nomeLoja: identificadorLoja, // 🎯 Rastreamento no escopo correto
         id: idPagamento
       })
     })
@@ -7359,7 +7361,6 @@ function verificarStatusPagamentoAutomatico(idPagamento) {
     .catch(err => console.error("Erro de varredura no gateway de pagamento:", err));
   }, 5000);
 }
-
 /**
  * 5. CONSTRUTOR DE COMPLEXO BR CODE COM CALCULO EM ALGORITMO CRC16 (Fluxo Estático)
  */
@@ -7509,10 +7510,7 @@ function carregarDadosConfigPix() {
   // 🔄 FETCH: Substitui a chamada estática legado do google.script.run
   fetch(URL_API_GOOGLE, {
     method: "POST",
-    body: JSON.stringify({
-      acao: "OBTER_CONFIGURACAO_PIX",
-      nomeLoja: CONFIG.cliente.nomeFixo
-    })
+   body: JSON.stringify({ acao: "OBTER_CONFIGURACAO_PIX", nomeLoja: (typeof idLojaAtual !== 'undefined' ? idLojaAtual : CONFIG.cliente.nomeFixo) })
   })
   .then(response => response.json())
   .then(config => {
@@ -7623,12 +7621,7 @@ function confirmarSalvarPix() {
   // 🔄 FETCH: Despacha payload estruturado com envelope de segurança para o back-end
   fetch(URL_API_GOOGLE, {
     method: "POST",
-    body: JSON.stringify({
-      acao: "VALIDAR_E_SALVAR_PIX",
-      nomeLoja: CONFIG.cliente.nomeFixo,
-      configPix: configTemporariaPix,
-      senhaAdmin: senha
-    })
+    body: JSON.stringify({ acao: "VALIDAR_E_SALVAR_PIX", nomeLoja: (typeof idLojaAtual !== 'undefined' ? idLojaAtual : CONFIG.cliente.nomeFixo), configPix: configTemporariaPix, senhaAdmin: senha })
   })
   .then(response => response.json())
   .then(res => {
