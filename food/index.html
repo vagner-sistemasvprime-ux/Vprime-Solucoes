@@ -11456,34 +11456,43 @@ function entregarClienteModal(botaoClicado) {
   });
 }
 
-function entregarMotoboyModal() {
-  console.log("🛵 Lambreta! [FRONT] Botão 'Chamar Motoboy' foi clicado de fato!");
+function entregarMotoboyModal(botaoExplicit) {
+  console.log("🛵 [FRONT] Função entregarMotoboyModal INICIADA!");
 
-  // 🎯 CORREÇÃO CRUCIAL: Força a leitura do escopo global aqui também
   const pedidoAtivo = window.pedidoSelecionado;
-
   if (!pedidoAtivo) {
-    console.error("❌ [FRONT] Erro: A variável 'window.pedidoSelecionado' está vazia ou undefined!");
-    alert("⚠️ Erro interno: Nenhum pedido foi carregado na memória do modal.");
+    console.error("❌ [FRONT] Erro: window.pedidoSelecionado está vazio!");
+    alert("⚠️ Erro: Nenhum pedido carregado no modal.");
     return;
   }
 
-  const motoboy = document.getElementById("selectMotoboy")?.value;
+  // 🎯 CAPTURA SEGURA DO MOTOBOY
+  const selectMotoboy = document.getElementById("selectMotoboy");
+  const motoboy = selectMotoboy ? selectMotoboy.value.trim() : "";
   const msgDiv = document.getElementById("msgMotoboy");
-  const idPedido = pedidoAtivo.pedido; // 🎯 Pega o ID com segurança
+  const idPedido = pedidoAtivo.pedido;
 
-  // ... (o restante do fetch do motoboy continua igual)
+  console.log(`📊 [FRONT] Validando -> Pedido: ${idPedido} | Motoboy Lido: "${motoboy}"`);
 
-  console.log(`📦 [FRONT] Pedido: ${idPedido} | Motoboy Selecionado no Select: "${motoboy}"`);
-
-  if (!motoboy) {
-    console.warn("⚠️ [FRONT] Bloqueado: Operador não selecionou nenhum motoboy no select.");
+  // Validação se o motoboy realmente foi escolhido
+  if (!motoboy || motoboy === "") {
+    console.warn("⚠️ [FRONT] Bloqueado: Nenhuma opção válida selecionada no select.");
     if (msgDiv) {
       msgDiv.textContent = "⚠️ Selecione o motoboy para a entrega.";
       msgDiv.style.display = "block";
       msgDiv.style.color = "orange";
     }
     return;
+  }
+
+  // 🎯 CAPTURA SEGURA DO BOTÃO (Se o parâmetro falhar, ele busca pelo ID)
+  const btn = botaoExplicit || document.getElementById("btnMotoboy");
+  if (btn) {
+    console.log("🔒 [FRONT] Desativando botão para evitar duplo clique.");
+    btn.disabled = true;
+    btn.textContent = "Aguardando...";
+  } else {
+    console.warn("⚠️ [FRONT] Aviso: Elemento do botão não foi encontrado para feedback visual.");
   }
 
   if (msgDiv) {
@@ -11515,7 +11524,7 @@ function entregarMotoboyModal() {
     console.log("📥 [FRONT] JSON convertido recebido do servidor (Motoboy):", resultado);
 
     if (resultado && resultado.sucesso) {
-      console.log("✅ [FRONT] Sucesso confirmado para Motoboy! Atualizando telas...");
+      console.log("✅ [FRONT] Sucesso verificado para Motoboy!");
       if (msgDiv) {
         msgDiv.textContent = "✅ Motoboy atribuído! Saindo para entrega...";
         msgDiv.style.color = "green";
@@ -11526,12 +11535,15 @@ function entregarMotoboyModal() {
           msgDiv.style.display = "none";
           msgDiv.textContent = "";
         }
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "🛵 Chamar Motoboy";
+        }
         if (typeof fecharModalPedido === "function") fecharModalPedido();
         if (typeof renderizarPedidosProntos === "function") renderizarPedidosProntos();
       }, 1500);
     } else {
-      console.warn("⚠️ [FRONT] O servidor respondeu Motoboy, mas com erro:", resultado);
-      throw new Error(resultado?.erro || "Erro interno no servidor.");
+      throw new Error(resultado?.erro || "Erro interno devolvido pelo servidor.");
     }
   })
   .catch(err => {
@@ -11539,6 +11551,10 @@ function entregarMotoboyModal() {
     if (msgDiv) {
       msgDiv.textContent = "❌ Erro ao vincular: " + err.message;
       msgDiv.style.color = "red";
+    }
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "🛵 Chamar Motoboy";
     }
   });
 }
