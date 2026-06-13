@@ -11537,6 +11537,8 @@ function entregarMotoboyModal(botaoClicado) {
 }
   
 function carregarMotoboys() {
+  console.log("📡 [MOTOBOYS] Buscando lista de entregadores no Google...");
+
   fetch(URL_API_GOOGLE, {
     method: "POST",
     body: JSON.stringify({
@@ -11549,19 +11551,37 @@ function carregarMotoboys() {
     return response.json();
   })
   .then(motoboys => {
-    const select = document.getElementById("selectMotoboy");
-    if (!select) return;
+    console.log("📥 [MOTOBOYS] Dados brutos recebidos do servidor:", motoboys);
 
+    const select = document.getElementById("selectMotoboy");
+    if (!select) {
+      console.error("❌ [MOTOBOYS] Elemento 'selectMotoboy' não existe na tela!");
+      return;
+    }
+
+    // Limpa e coloca a opção padrão
     select.innerHTML = `<option value="">Selecione o motoboy</option>`;
 
-    (motoboys || []).forEach(m => {
-      const opt = document.createElement("option");
-      opt.value = m.usuario;
-      opt.textContent = m.usuario;
-      select.appendChild(opt);
+    // Varre a lista vinda do Google com proteção
+    const listaValida = motoboys || [];
+    if (listaValida.length === 0) {
+      console.warn("⚠️ [MOTOBOYS] O Google retornou uma lista vazia de motoboys!");
+    }
+
+    listaValida.forEach(m => {
+      // 🛡️ PROTEÇÃO: Se 'usuario' não existir, tenta usar 'nome', se não tiver nada usa uma string stringificada
+      const nomeIdentificador = String(m.usuario || m.nome || m || "").trim();
+
+      if (nomeIdentificador !== "") {
+        const opt = document.createElement("option");
+        opt.value = nomeIdentificador;
+        opt.textContent = nomeIdentificador;
+        select.appendChild(opt);
+        console.log(`✅ [MOTOBOYS] Injetado no select: "${nomeIdentificador}"`);
+      }
     });
   })
-  .catch(err => console.error("Falha ao injetar lista de motoboys:", err));
+  .catch(err => console.error("❌ Falha ao injetar lista de motoboys:", err));
 }
 
 /* =========================================================================
