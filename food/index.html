@@ -9066,8 +9066,14 @@ function loadProdutosCaixa() {
  * Avalia precificação baseada em vigência de promoções ou variações e anexa ao carrinho
  */
 function addAoCarrinho(id, variacao = null) {
-  const produto = (window.produtosData || []).find(p => p.id == id);
-  if (!produto) return;
+  // 🎯 Busca o produto de forma dinâmica em qualquer repositório que ele esteja populado
+  const listaProdutos = window.produtosData || (typeof CONFIG !== 'undefined' && CONFIG.produtos) || window.produtos || [];
+  const produto = listaProdutos.find(p => p.id == id || p.ID == id);
+  
+  if (!produto) {
+    console.error(`🚨 Erro: Produto com ID ${id} não foi encontrado na base de dados.`);
+    return;
+  }
 
   if (!modoMesaAtivo) {
     const temPendente = (window.carrinhoData || []).some(item => item.vindoDoPedido === true);
@@ -9081,28 +9087,35 @@ function addAoCarrinho(id, variacao = null) {
   }
 
   let precoVenda;
-  let nomeExibicao = produto.nome;
+  let nomeExibicao = produto.nome || produto.NOME;
+
+  // Função auxiliar rápida para limpar preços vindos da planilha
+  const tratarPreco = (val) => {
+    if (!val) return 0;
+    if (typeof val === "string") val = val.replace(",", ".");
+    return Number(val) || 0;
+  };
 
   if (variacao) {
-    precoVenda = Number(variacao.preco);
-    nomeExibicao = `${produto.nome} - ${variacao.nome}`;
+    precoVenda = tratarPreco(variacao.preco);
+    nomeExibicao = `${produto.nome || produto.NOME} - ${variacao.nome}`;
   } else {
     const agora = new Date().getTime();
     const dataIni = produto.dataInicio ? new Date(produto.dataInicio).getTime() : 0;
     const dataFim = produto.dataFim ? new Date(produto.dataFim).getTime() : 0;
     const emPromoAtiva = produto.emPromocao === true && agora >= dataIni && agora <= dataFim;
     
-    precoVenda = emPromoAtiva ? Number(produto.precoPromocional) : Number(produto.preco);
+    precoVenda = emPromoAtiva ? tratarPreco(produto.precoPromocional) : tratarPreco(produto.preco || produto.PRECO);
   }
 
   const itemParaAdicionar = { 
     ...produto, 
     nome: nomeExibicao, 
     preco: precoVenda,
-    precoOriginal: variacao ? variacao.preco : produto.preco,
+    precoOriginal: variacao ? tratarPreco(variacao.preco) : tratarPreco(produto.preco || produto.PRECO),
     qtd: 1, 
     obs: "", 
-    categoria: produto.categoria || "GERAL",
+    categoria: produto.categoria || produto.CATEGORIA || "GERAL",
     adicionais: [], 
     idUnico: "NOVO-" + Date.now() + Math.random().toString(36).substring(2, 7),
     numeroPedido: null,   
@@ -9122,10 +9135,11 @@ function addAoCarrinho(id, variacao = null) {
     toast(`${nomeExibicao} adicionado`, "success");
   }
 
+  // 🎯 Atualiza as telas e recalcula o total visual com o carrinho cheio!
   if (typeof renderCarrinho === "function") renderCarrinho();
   if (typeof atualizarBarraCarrinho === "function") atualizarBarraCarrinho();
+  if (typeof atualizarTotalVendaVisual === "function") atualizarTotalVendaVisual();
 }
-
 /**
  * Varre o array em memória, calcula modificadores e gera as linhas correspondentes na tabela DOM
  */
