@@ -80,6 +80,13 @@
       // 5. Altera o título da página dinamicamente com o nome do lojista
       document.title = CONFIG.cliente.nomeFixo;
     }
+
+    document.title = CONFIG.cliente.nomeFixo;
+      
+      // 🎯 ADICIONE ESTES DOIS LOGS AQUI:
+      console.log("📌 [PILOTO HTML] CONFIG montado com sucesso para a loja:", CONFIG.cliente.nomeFixo);
+      window.CONFIG_PILOTO_OK = true; 
+    }
 </script>
   
   <script>
