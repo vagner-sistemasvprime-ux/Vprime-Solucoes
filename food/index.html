@@ -54,9 +54,17 @@
           intervaloVigilancia: dadosLoja.intervaloVigilancia || 5000
         },
         plano: dadosLoja.plano || "PADRAO",
+        // ... cliente, tempo, etc ...
+        plano: dadosLoja.plano || "PADRAO",
+        
+        // 🎯 AJUSTE DE REGRA DE NEGÓCIO DO PIX MULTILOJA
         pix: {
-          tipo: dadosLoja.tipoPix || "manual" // ✅ Cura o erro de leitura do 'tipo' na linha 631 do admin
+          // Se o plano for PADRAO, ignora e força 'manual'. Se for PRIME, aceita o que estiver na rota (ou assume manual por padrão)
+          tipo: (dadosLoja.plano === "PADRAO") ? "manual" : (dadosLoja.tipoPix || "manual")
         },
+        
+        gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
+        // ... pedidos, impressao ...
         gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
         pedidos: {
           tempoMaxCancelamento: dadosLoja.tempoMaxCancelamento || 30
