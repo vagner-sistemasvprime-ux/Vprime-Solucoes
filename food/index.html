@@ -5358,7 +5358,7 @@ function telaPedidosCaixa() {
 
         <div class="modal-buttons">
           <button class="btn-success" onclick="entregarClienteModal(this)">🧍 Cliente</button>
-          <button class="btn-info" id="btnMotoboy" onclick="entregarMotoboyModal(this)">🛵 Chamar Motoboy</button>
+         <button class="btn-info" id="btnMotoboy" onclick="entregarMotoboyModal(this)">🛵 Chamar Motoboy</button>
           <button class="btn-danger" onclick="if(typeof fecharModalPedido === 'function') fecharModalPedido()">Fechar</button>
         </div>
       </div>
@@ -11456,105 +11456,82 @@ function entregarClienteModal(botaoClicado) {
   });
 }
 
-function entregarMotoboyModal(botaoExplicit) {
-  console.log("🛵 [FRONT] Função entregarMotoboyModal INICIADA!");
+function entregarMotoboyModal(botaoClicado) {
+  // 🎯 LOG 1: Esse vai aparecer independente de qualquer coisa se o clique acontecer
+  console.log("🖱️ [MOTOBOY] Clique detectado no botão!");
 
-  const pedidoAtivo = window.pedidoSelecionado;
-  if (!pedidoAtivo) {
-    console.error("❌ [FRONT] Erro: window.pedidoSelecionado está vazio!");
-    alert("⚠️ Erro: Nenhum pedido carregado no modal.");
+  // Captura o select de forma isolada
+  const campoSelect = document.getElementById("selectMotoboy");
+  if (!campoSelect) {
+    console.error("❌ [MOTOBOY] Erro: Elemento 'selectMotoboy' não existe no HTML!");
     return;
   }
 
-  // 🎯 CAPTURA SEGURA DO MOTOBOY
-  const selectMotoboy = document.getElementById("selectMotoboy");
-  const motoboy = selectMotoboy ? selectMotoboy.value.trim() : "";
-  const msgDiv = document.getElementById("msgMotoboy");
-  const idPedido = pedidoAtivo.pedido;
+  const nomeMotoboy = campoSelect.value;
+  console.log("👤 [MOTOBOY] Valor selecionado no select:", nomeMotoboy);
 
-  console.log(`📊 [FRONT] Validando -> Pedido: ${idPedido} | Motoboy Lido: "${motoboy}"`);
-
-  // Validação se o motoboy realmente foi escolhido
-  if (!motoboy || motoboy === "") {
-    console.warn("⚠️ [FRONT] Bloqueado: Nenhuma opção válida selecionada no select.");
-    if (msgDiv) {
-      msgDiv.textContent = "⚠️ Selecione o motoboy para a entrega.";
-      msgDiv.style.display = "block";
-      msgDiv.style.color = "orange";
-    }
+  // Validação simples
+  if (!nomeMotoboy || nomeMotoboy.trim() === "") {
+    console.warn("⚠️ [MOTOBOY] Validação: Motoboy vazio.");
+    alert("Por favor, selecione um motoboy!");
     return;
   }
 
-  // 🎯 CAPTURA SEGURA DO BOTÃO (Se o parâmetro falhar, ele busca pelo ID)
-  const btn = botaoExplicit || document.getElementById("btnMotoboy");
+  // 🎯 LOG 2: Se o código passar daqui, a captura do motoboy está certa
+  console.log("🚀 [MOTOBOY] Passou da validação! Preparando envio...");
+
+  // Captura o ID do pedido direto da janela de forma ultra-segura
+  const idPedido = window.pedidoSelecionado ? window.pedidoSelecionado.pedido : null;
+  if (!idPedido) {
+    console.error("❌ [MOTOBOY] Erro: window.pedidoSelecionado.pedido não foi encontrado!");
+    return;
+  }
+
+  // Desativa o botão usando o parâmetro ou o ID
+  const btn = botaoClicado || document.getElementById("btnMotoboy");
   if (btn) {
-    console.log("🔒 [FRONT] Desativando botão para evitar duplo clique.");
     btn.disabled = true;
-    btn.textContent = "Aguardando...";
-  } else {
-    console.warn("⚠️ [FRONT] Aviso: Elemento do botão não foi encontrado para feedback visual.");
+    btn.textContent = "Enviando...";
   }
 
-  if (msgDiv) {
-    msgDiv.textContent = "⏳ Atribuindo motoboy e finalizando...";
-    msgDiv.style.display = "block";
-    msgDiv.style.color = "blue";
-  }
-
-  const payload = {
+  const dadosEnvio = {
     acao: "MARCAR_ENTREGA",
     nomeLoja: CONFIG.cliente.nomeFixo,
     pedido: idPedido,
     tipo: "MOTOBOY",
-    motoboy: motoboy
+    motoboy: String(nomeMotoboy).trim()
   };
 
-  console.log("📡 [FRONT] Disparando FETCH para o Google Sheets (Motoboy) com o payload:", payload);
+  console.log("📡 [MOTOBOY] Enviando FETCH com o payload:", dadosEnvio);
 
   fetch(URL_API_GOOGLE, {
     method: "POST",
-    body: JSON.stringify(payload)
+    body: JSON.stringify(dadosEnvio)
   })
-  .then(response => {
-    console.log(`🌐 [FRONT] Resposta HTTP recebida (Motoboy) Status: ${response.status}`);
-    if (!response.ok) throw new Error("Erro ao vincular entregador.");
-    return response.json();
+  .then(res => {
+    console.log("🌐 [MOTOBOY] Resposta do servidor recebida. Status:", res.status);
+    return res.json();
   })
-  .then(resultado => {
-    console.log("📥 [FRONT] JSON convertido recebido do servidor (Motoboy):", resultado);
-
-    if (resultado && resultado.sucesso) {
-      console.log("✅ [FRONT] Sucesso verificado para Motoboy!");
-      if (msgDiv) {
-        msgDiv.textContent = "✅ Motoboy atribuído! Saindo para entrega...";
-        msgDiv.style.color = "green";
-      }
-      
-      setTimeout(() => {
-        if (msgDiv) {
-          msgDiv.style.display = "none";
-          msgDiv.textContent = "";
-        }
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "🛵 Chamar Motoboy";
-        }
-        if (typeof fecharModalPedido === "function") fecharModalPedido();
-        if (typeof renderizarPedidosProntos === "function") renderizarPedidosProntos();
-      }, 1500);
+  .then(resposta => {
+    console.log("📥 [MOTOBOY] Dados retornados pelo Google:", resposta);
+    if (resposta && resposta.sucesso) {
+      alert("✅ Pedido enviado com o motoboy!");
+      if (typeof fecharModalPedido === "function") fecharModalPedido();
+      if (typeof renderizarPedidosProntos === "function") renderizarPedidosProntos();
     } else {
-      throw new Error(resultado?.erro || "Erro interno devolvido pelo servidor.");
+      alert("❌ O Google recusou: " + (resposta.erro || "Erro desconhecido"));
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Confirmar Motoboy";
+      }
     }
   })
   .catch(err => {
-    console.error("❌ [FRONT] Erro capturado no CATCH do FETCH (Motoboy):", err);
-    if (msgDiv) {
-      msgDiv.textContent = "❌ Erro ao vincular: " + err.message;
-      msgDiv.style.color = "red";
-    }
+    console.error("❌ [MOTOBOY] Erro na requisição de rede:", err);
+    alert("Erro ao conectar com o servidor.");
     if (btn) {
       btn.disabled = false;
-      btn.textContent = "🛵 Chamar Motoboy";
+      btn.textContent = "Confirmar Motoboy";
     }
   });
 }
