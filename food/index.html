@@ -186,7 +186,7 @@ function carregarDadosIniciaisDoSistema() {
   const btnEntrar = document.getElementById('btn-entrar');
   if (btnEntrar) {
     btnEntrar.innerText = "⏳ Carregando Sistema...";
-    btnEntrar.disabled = true; // Evita cliques múltiplos enquanto carrega
+    btnEntrar.disabled = true; 
   }
 
   console.log(`📡 [CARGA INICIAL] Disparando requisição para a loja: "${CONFIG.cliente.nomeFixo}"`);
@@ -203,15 +203,39 @@ function carregarDadosIniciaisDoSistema() {
     return response.json();
   })
   .then(resultado => {
-    // 🔍 INSPEÇÃO DO BANCO DE DADOS
     console.log("📦 [CARGA INICIAL] Resposta bruta do servidor:", resultado);
 
     if (resultado.sucesso) {
+      
+      // =========================================================================
+      // 🎯 INJEÇÃO DINÂMICA: ATUALIZA AS CONFIGURAÇÕES COM OS DADOS DO APPSCRIPT
+      // =========================================================================
+      if (resultado.configuracoes) {
+        console.log("📥 [APPSCRIPT] Atualizando CONFIG local com as regras do servidor...");
+        
+        Object.assign(CONFIG, {
+          plano: resultado.configuracoes.plano || CONFIG.plano,
+          gerenciamentoMesa: resultado.configuracoes.gerenciamentoMesa || CONFIG.gerenciamentoMesa,
+        });
+
+        // Atualiza a esteira do PIX baseada no que veio do Apps Script
+        CONFIG.pix = {
+          tipo: (CONFIG.plano === "PADRAO") ? "manual" : (resultado.configuracoes.tipoPix || CONFIG.pix.tipo)
+        };
+
+        console.log("⚙️ [CONFIG ATUALIZADO VIA SERVIDOR]:");
+        console.log("   👉 Plano Real do Lojista:", CONFIG.plano);
+        console.log("   👉 Modo do PIX Ativo    :", CONFIG.pix.tipo.toUpperCase());
+        console.log("   👉 Controle de Mesas    :", CONFIG.gerenciamentoMesa);
+      } else {
+        console.warn("⚠️ [AVISO] O Apps Script não enviou o nó 'configuracoes'. Mantendo o padrão do arquivo piloto.");
+      }
+      // =========================================================================
+
       listaAdicionaisGlobal = resultado.adicionais || [];
       listaCategoriasGlobal = resultado.categorias || [];
       window.produtosData = resultado.produtos || [];
       
-      // LOG CHAVE: Verifica se a lista de usuários veio preenchida ou vazia
       window.usuariosSistemaGlobal = resultado.usuarios || [];
       console.log(`👥 [MÓDULO USUÁRIOS] Foram carregados ${window.usuariosSistemaGlobal.length} usuários do servidor.`);
       if (window.usuariosSistemaGlobal.length === 0) {
