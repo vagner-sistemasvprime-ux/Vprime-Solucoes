@@ -5682,28 +5682,54 @@ function pdv_obterDescontoManualNumerico() {
  * CALCULO DO LÍQUIDO: Consolida as camadas de preço (Bruto -> Cupom -> Cashback -> Gerencial)
  */
 function atualizarTotalVendaVisual() {
-  if (typeof carrinhoData === "undefined" || !Array.isArray(carrinhoData)) return 0;
+  console.log("=== 🔍 INÍCIO DA RASTREABILIDADE DO TOTAL ===");
+  
+  if (typeof carrinhoData === "undefined") {
+    console.error("❌ Erro: A variável 'carrinhoData' não existe no escopo global.");
+    return 0;
+  }
+  
+  if (!Array.isArray(carrinhoData)) {
+    console.error("❌ Erro: 'carrinhoData' existe, mas não é um Array. Tipo atual:", typeof carrinhoData);
+    return 0;
+  }
 
- // 1️⃣ NÍVEL 1: Totalização Bruta (Itens + Opcionais) - Versão Multitenant Segura
-  let totalBruto = carrinhoData.reduce((s, item) => {
-    // 🛡️ Blindagem dos Opcionais/Adicionais
+  console.log("📦 Itens dentro do carrinhoData atual:", JSON.stringify(carrinhoData));
+
+  // 1️⃣ NÍVEL 1: Totalização Bruta (Itens + Opcionais)
+  let totalBruto = carrinhoData.reduce((s, item, index) => {
+    console.log(`\n🔹 Analisando Item [${index}]:`, item.nome || "Sem Nome");
+
+    // Rastreando Opcionais
     const valorAdicionais = (item.adicionais || []).reduce((sub, ad) => {
       let precoAdicionalRaw = ad.preco || ad.valor || 0;
       if (typeof precoAdicionalRaw === "string") precoAdicionalRaw = precoAdicionalRaw.replace(",", ".");
-      return sub + (Number(ad.qtd) * (parseFloat(precoAdicionalRaw) || 0));
+      let precoAdicionalNum = parseFloat(precoAdicionalRaw) || 0;
+      
+      console.log(`  └─ Opcional: Qtd: ${ad.qtd} | Preço Lido: ${precoAdicionalRaw} -> Convertido: ${precoAdicionalNum}`);
+      return sub + (Number(ad.qtd) * precoAdicionalNum);
     }, 0);
 
-    // 🛡️ Blindagem do Item Principal (Verifica se é 'preco' ou 'valor' e limpa a vírgula)
+    // Rastreando Item Principal
     let precoItemRaw = item.preco || item.valor || 0;
+    console.log(`  └─ Propriedades disponíveis no item:`, Object.keys(item));
+    console.log(`  └─ Preço bruto identificado:`, precoItemRaw);
+
     if (typeof precoItemRaw === "string") {
       precoItemRaw = precoItemRaw.replace(",", ".");
     }
     const precoItemTratado = parseFloat(precoItemRaw) || 0;
     const qtdItem = parseInt(item.qtd) || parseInt(item.quantidade) || 0;
 
-    // Faz a soma acumulada com segurança
-    return s + (qtdItem * (precoItemTratado + valorAdicionais));
+    console.log(`  └─ Tratamento Final: Qtd: ${qtdItem} | Preço: ${precoItemTratado} | Adicionais: ${valorAdicionais}`);
+    
+    let subtotalItem = qtdItem * (precoItemTratado + valorAdicionais);
+    console.log(`  └─ Subtotal deste item: R$ ${subtotalItem.toFixed(2)}`);
+
+    return s + subtotalItem;
   }, 0);
+
+  console.log(`\n💰 ─── TOTAL BRUTO CALCULADO: R$ ${totalBruto.toFixed(2)} ───`);
 
   let totalComDescontos = totalBruto;
 
@@ -5713,15 +5739,10 @@ function atualizarTotalVendaVisual() {
 
   if (pdvBeneficiosAtivos.cupom.ativo && cupomPreenchido) {
     const minExigidoCupom = Number(pdvBeneficiosAtivos.cupom.minimoExigido) || 0;
-
-    // Derruba o cupom se modificações no carrinho jogarem o bruto abaixo do exigido
     if (minExigidoCupom > 0 && totalBruto < minExigidoCupom) {
       pdvBeneficiosAtivos.cupom = { ativo: false, tipo: "", valor: 0, codigo: "", minimoExigido: 0 };
       const avisoCupom = document.getElementById("pdvCupomAviso");
-      if (avisoCupom) {
-        avisoCupom.style.color = "#ef4444";
-        avisoCupom.innerText = `⚠ Cupom removido: o total bruto (R$ ${totalBruto.toFixed(2).replace(".", ",")}) ficou abaixo do mínimo de R$ ${minExigidoCupom.toFixed(2).replace(".", ",")}.`;
-      }
+      if (avisoCupom) avisoCupom.innerText = `⚠ Cupom removido...`;
       if (inputCupom) inputCupom.value = "";
     } else {
       if (pdvBeneficiosAtivos.cupom.tipo === "PORCENTAGEM") {
@@ -5736,16 +5757,7 @@ function atualizarTotalVendaVisual() {
   const checkboxCashback = document.getElementById("pdvUsarCashback");
   if (checkboxCashback && checkboxCashback.checked) {
     const compraMinimaCashback = Number(pdvBeneficiosAtivos.cashback?.compraMinima || 0);
-
-    // Valida se o valor líquido pós-cupom atinge a exigência do cashback
     if (totalComDescontos < compraMinimaCashback) {
-      if (typeof exibirModal === "function") {
-        exibirModal({
-          titulo: "Compra Mínima Não Atingida",
-          mensagem: `O cupom aplicado reduziu o valor para <b>R$ ${totalComDescontos.toFixed(2).replace(".", ",")}</b>.<br>O uso do cashback exige valor mínimo líquido de <b>R$ ${compraMinimaCashback.toFixed(2).replace(".", ",")}</b>.`,
-          tipo: "alerta"
-        });
-      }
       checkboxCashback.checked = false;
       pdvBeneficiosAtivos.cashback.saldoSendoUsado = 0;
     } else {
@@ -5754,10 +5766,10 @@ function atualizarTotalVendaVisual() {
       totalComDescontos -= saldoUtilizado;
     }
   } else {
-    pdvBeneficiosAtivos.cashback.saldoSendoUsado = 0;
+    if (pdvBeneficiosAtivos.cashback) pdvBeneficiosAtivos.cashback.saldoSendoUsado = 0;
   }
 
-  // 4️⃣ NÍVEL 4: Ajustes Gerenciais (Desconto Manual) com limite de teto
+  // 4️⃣ NÍVEL 4: Ajustes Gerenciais (Desconto Manual)
   let descontoManualEfetivo = 0;
   if (typeof pdv_obterDescontoManualNumerico === "function") {
     let descontoDigitado = pdv_obterDescontoManualNumerico();
@@ -5765,24 +5777,20 @@ function atualizarTotalVendaVisual() {
     totalComDescontos -= descontoManualEfetivo;
   }
 
-  // Atualiza informativos visuais do desconto gerencial na tela
-  const elementoAvisoDesconto = document.getElementById("pdvDescontoManualAviso");
-  if (elementoAvisoDesconto) {
-    elementoAvisoDesconto.innerText = descontoManualEfetivo > 0 
-      ? `✅ Desconto gerencial de R$ ${descontoManualEfetivo.toFixed(2).replace(".", ",")} aplicado.` 
-      : "";
-  }
-
-  // Bloqueador de segurança contra saldo negativo
   if (totalComDescontos < 0) totalComDescontos = 0;
+
+  console.log(`🛑 VALOR FINAL SINALIZADO PARA A INTERFACE: R$ ${totalComDescontos.toFixed(2)}`);
 
   // Injeta o resultado final no display da UI
   const elementoTotal = document.getElementById("totalVenda");
   if (elementoTotal) {
+    console.log("🎯 Elemento '#totalVenda' localizado no HTML. Atualizando texto...");
     elementoTotal.innerText = `R$ ${totalComDescontos.toFixed(2).replace(".", ",")}`;
+  } else {
+    console.error("🚨 ERRO VISUAL: O elemento HTML com ID 'totalVenda' não foi encontrado na página!");
   }
 
-  // Exporta o cálculo exato para submissão do formulário
+  console.log("=== 🔚 FIM DA RASTREABILIDADE ===");
   window.pdvDescontoManualCalculado = descontoManualEfetivo;
   return totalComDescontos;
 }
