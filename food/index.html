@@ -11373,13 +11373,17 @@ function confirmarSalvamento() {
    ========================================================================= */
 
 function entregarClienteModal(botaoClicado) {
-  // Mudamos para receber o 'this' (botão) por parâmetro para evitar falhas de escopo
-  if (typeof pedidoSelecionado === "undefined" || !pedidoSelecionado) return;
+  console.log("🖱️ [FRONT] Botão 'Cliente' foi clicado de fato!");
+  
+  if (typeof pedidoSelecionado === "undefined" || !pedidoSelecionado) {
+    console.error("❌ [FRONT] Erro: A variável 'pedidoSelecionado' está vazia ou undefined!");
+    return;
+  }
 
   const msgDiv = document.getElementById("msgMotoboy"); 
   const idPedido = pedidoSelecionado.pedido || window.pedidoSelecionado?.pedido;
+  console.log(`📦 [FRONT] Identificado Pedido ID: ${idPedido}`);
 
-  // Feedback visual de carregamento
   if (msgDiv) {
     msgDiv.textContent = "⏳ Registrando entrega para o cliente...";
     msgDiv.style.display = "block";
@@ -11391,23 +11395,30 @@ function entregarClienteModal(botaoClicado) {
     botaoClicado.textContent = "Aguardando...";
   }
 
-  // 🎯 CONVERTIDO PARA FETCH (Fim do google.script.run)
+  const payload = {
+    acao: "MARCAR_ENTREGA",
+    nomeLoja: CONFIG.cliente.nomeFixo,
+    pedido: idPedido,
+    tipo: "CLIENTE",
+    motoboy: "CLIENTE"
+  };
+
+  console.log("📡 [FRONT] Disparando FETCH para o Google Sheets com o payload:", payload);
+
   fetch(URL_API_GOOGLE, {
     method: "POST",
-    body: JSON.stringify({
-      acao: "MARCAR_ENTREGA",
-      nomeLoja: CONFIG.cliente.nomeFixo,
-      pedido: idPedido,
-      tipo: "CLIENTE",
-      motoboy: "CLIENTE"
-    })
+    body: JSON.stringify(payload)
   })
   .then(response => {
+    console.log(`🌐 [FRONT] Resposta HTTP recebida do Google Status: ${response.status}`);
     if (!response.ok) throw new Error("Erro na rede ao registrar entrega.");
     return response.json();
   })
   .then(resultado => {
-    if (resultado.sucesso) {
+    console.log("📥 [FRONT] JSON convertido recebido do servidor:", resultado);
+
+    if (resultado && resultado.sucesso) {
+      console.log("✅ [FRONT] Sucesso confirmado pelo servidor! Atualizando telas...");
       if (msgDiv) {
         msgDiv.textContent = "Pedido entregue com sucesso! ✅";
         msgDiv.style.color = "green";
@@ -11421,18 +11432,15 @@ function entregarClienteModal(botaoClicado) {
         }
 
         if (typeof fecharModalPedido === "function") fecharModalPedido(); 
-        
-        // Atualiza as listas na tela
         if (typeof renderizarPedidosProntos === "function") renderizarPedidosProntos();
-        if (typeof carregarPedidosCozinha === "function") carregarPedidosCozinha();
-        if (typeof renderizarPedidosPendentes === "function") renderizarPedidosPendentes();
       }, 1500);
     } else {
-      throw new Error(resultado.erro || "Erro interno do servidor.");
+      console.warn("⚠️ [FRONT] O servidor respondeu, mas retornou sucesso = false ou formato inválido:", resultado);
+      throw new Error(resultado?.erro || "Erro interno mapeado no servidor.");
     }
   })
   .catch(err => {
-    console.error("Erro ao registrar entrega balcão:", err);
+    console.error("❌ [FRONT] Erro capturado no CATCH do FETCH:", err);
     if (msgDiv) {
       msgDiv.textContent = "❌ Erro ao registrar: " + err.message;
       msgDiv.style.color = "red";
@@ -11445,13 +11453,21 @@ function entregarClienteModal(botaoClicado) {
 }
 
 function entregarMotoboyModal() {
-  if (typeof pedidoSelecionado === "undefined" || !pedidoSelecionado) return;
+  console.log(" Lambreta! [FRONT] Botão 'Chamar Motoboy' foi clicado de fato!");
+
+  if (typeof pedidoSelecionado === "undefined" || !pedidoSelecionado) {
+    console.error("❌ [FRONT] Erro: A variável 'pedidoSelecionado' está vazia ou undefined!");
+    return;
+  }
 
   const motoboy = document.getElementById("selectMotoboy")?.value;
   const msgDiv = document.getElementById("msgMotoboy");
   const idPedido = pedidoSelecionado.pedido || window.pedidoSelecionado?.pedido;
 
+  console.log(`📦 [FRONT] Pedido: ${idPedido} | Motoboy Selecionado no Select: "${motoboy}"`);
+
   if (!motoboy) {
+    console.warn("⚠️ [FRONT] Bloqueado: Operador não selecionou nenhum motoboy no select.");
     if (msgDiv) {
       msgDiv.textContent = "⚠️ Selecione o motoboy para a entrega.";
       msgDiv.style.display = "block";
@@ -11466,45 +11482,50 @@ function entregarMotoboyModal() {
     msgDiv.style.color = "blue";
   }
 
+  const payload = {
+    acao: "MARCAR_ENTREGA",
+    nomeLoja: CONFIG.cliente.nomeFixo,
+    pedido: idPedido,
+    tipo: "MOTOBOY",
+    motoboy: motoboy
+  };
+
+  console.log("📡 [FRONT] Disparando FETCH para o Google Sheets (Motoboy) com o payload:", payload);
+
   fetch(URL_API_GOOGLE, {
     method: "POST",
-    body: JSON.stringify({
-      acao: "MARCAR_ENTREGA",
-      nomeLoja: CONFIG.cliente.nomeFixo,
-      pedido: idPedido,
-      tipo: "MOTOBOY",
-      motoboy: motoboy
-    })
+    body: JSON.stringify(payload)
   })
   .then(response => {
+    console.log(`🌐 [FRONT] Resposta HTTP recebida (Motoboy) Status: ${response.status}`);
     if (!response.ok) throw new Error("Erro ao vincular entregador.");
     return response.json();
   })
   .then(resultado => {
-    if (resultado.sucesso) {
+    console.log("📥 [FRONT] JSON convertido recebido do servidor (Motoboy):", resultado);
+
+    if (resultado && resultado.sucesso) {
+      console.log("✅ [FRONT] Sucesso confirmado para Motoboy! Atualizando telas...");
       if (msgDiv) {
         msgDiv.textContent = "✅ Motoboy atribuído! Saindo para entrega...";
         msgDiv.style.color = "green";
       }
       
-      // 🎯 FECHAMENTO CORRETO DOS BLOCOS QUE ESTAVAM CORTADOS:
       setTimeout(() => {
         if (msgDiv) {
           msgDiv.style.display = "none";
           msgDiv.textContent = "";
         }
         if (typeof fecharModalPedido === "function") fecharModalPedido();
-        
-        // Atualiza as listas na tela
         if (typeof renderizarPedidosProntos === "function") renderizarPedidosProntos();
-        if (typeof carregarPedidosCozinha === "function") carregarPedidosCozinha();
       }, 1500);
     } else {
-      throw new Error(resultado.erro || "Erro interno do servidor.");
+      console.warn("⚠️ [FRONT] O servidor respondeu Motoboy, mas com erro:", resultado);
+      throw new Error(resultado?.erro || "Erro interno no servidor.");
     }
   })
   .catch(err => {
-    console.error("Erro ao despachar motoboy:", err);
+    console.error("❌ [FRONT] Erro capturado no CATCH do FETCH (Motoboy):", err);
     if (msgDiv) {
       msgDiv.textContent = "❌ Erro ao vincular: " + err.message;
       msgDiv.style.color = "red";
