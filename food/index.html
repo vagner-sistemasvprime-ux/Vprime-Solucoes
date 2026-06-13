@@ -5684,10 +5684,25 @@ function pdv_obterDescontoManualNumerico() {
 function atualizarTotalVendaVisual() {
   if (typeof carrinhoData === "undefined" || !Array.isArray(carrinhoData)) return 0;
 
-  // 1️⃣ NÍVEL 1: Totalização Bruta (Itens + Opcionais)
+ // 1️⃣ NÍVEL 1: Totalização Bruta (Itens + Opcionais) - Versão Multitenant Segura
   let totalBruto = carrinhoData.reduce((s, item) => {
-    const valorAdicionais = (item.adicionais || []).reduce((sub, ad) => sub + (Number(ad.qtd) * Number(ad.preco)), 0);
-    return s + (item.qtd * (Number(item.preco) + valorAdicionais));
+    // 🛡️ Blindagem dos Opcionais/Adicionais
+    const valorAdicionais = (item.adicionais || []).reduce((sub, ad) => {
+      let precoAdicionalRaw = ad.preco || ad.valor || 0;
+      if (typeof precoAdicionalRaw === "string") precoAdicionalRaw = precoAdicionalRaw.replace(",", ".");
+      return sub + (Number(ad.qtd) * (parseFloat(precoAdicionalRaw) || 0));
+    }, 0);
+
+    // 🛡️ Blindagem do Item Principal (Verifica se é 'preco' ou 'valor' e limpa a vírgula)
+    let precoItemRaw = item.preco || item.valor || 0;
+    if (typeof precoItemRaw === "string") {
+      precoItemRaw = precoItemRaw.replace(",", ".");
+    }
+    const precoItemTratado = parseFloat(precoItemRaw) || 0;
+    const qtdItem = parseInt(item.qtd) || parseInt(item.quantidade) || 0;
+
+    // Faz a soma acumulada com segurança
+    return s + (qtdItem * (precoItemTratado + valorAdicionais));
   }, 0);
 
   let totalComDescontos = totalBruto;
