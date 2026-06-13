@@ -636,20 +636,32 @@ function alterarSenha() {
 }
 
 /* =========================
-   LOGOUT (PURO E LOCAL)
+   LOGOUT CORRIGIDO
 ========================= */
 function sair() {
   const loading = document.getElementById("loadingGlobal");
   if (loading) loading.style.display = "flex";
 
-  // Como a sessão roda direto no front do lojista, não precisamos fazer 
-  // o servidor gastar processamento para deslogar. Limpamos os dados locais.
+  // Limpa as variáveis de sessão locais imediatamente
+  user = null;
+  usuarioLogado = null;
+  
+  // Cancela qualquer intervalo ativo (ex: vigilância de pedidos ou PIX) para não vazar memória
+  if (typeof intervalovigilante !== 'undefined' && intervalovigilante) {
+    clearInterval(intervalovigilante);
+    intervalovigilante = null;
+  }
+  if (typeof pixTimeout !== 'undefined' && pixTimeout) {
+    clearTimeout(pixTimeout);
+    pixTimeout = null;
+  }
+
   setTimeout(() => {
-    user = null;
-    usuarioLogado = null;
-    
     if (loading) loading.style.display = "none";
-    login(); // Retorna para a tela de login
+    
+    // 🎯 O PULO DO GATO: Em vez de chamar apenas login(), chamamos a carga de dados!
+    // Ela vai montar a tela de login E reativar o botão de entrar perfeitamente.
+    carregarDadosIniciaisDoSistema(); 
   }, 300);
 }
 
