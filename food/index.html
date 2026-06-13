@@ -1210,7 +1210,7 @@ function admin() {
 </div>
 
 
-<div class="card-individual-param" style="${ePrime ? '' : 'display: none;'}">
+<div class="card-individual-param" style="${CONFIG.gerenciamentoMesa === 'ATIVADO' ? '' : 'display: none;'}">
   <h3>🍽️ Mesas</h3>
   <label>Quantidade de Mesas</label>
   <input id="configQtdMesas" type="number" min="1">
