@@ -11,7 +11,7 @@ const ROTAS_LOJISTAS = {
   "piloto": {
     // 🏢 DADOS DE IDENTIFICAÇÃO E CONEXÃO
     nome: "Sistema Piloto VPrime",
-    urlGoogleAPI: "https://script.google.com/macros/s/AKfycbwqeYadUR.../exec",
+    urlGoogleAPI: "https://script.google.com/macros/s/AKfycbwqeYadURxN7WPkf5SsyOxpUmoeDsUbTQsLNq7Hb3Pltk6E-EcHr5SnD1XWm-EVZDPH/exec",
     linkCardapio: "https://vprimesistemas.com.br/food/?loja=piloto",
     urlLogo: "https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ",
     idPlanilha: "1UawKIZ86m-MP9LhvfTS9pmtv2MERQ-LEk8MXc1TATIQ",
@@ -40,7 +40,7 @@ const ROTAS_LOJISTAS = {
    // 🏢 DADOS DE IDENTIFICAÇÃO E CONEXÃO
     nome: "Sistema Piloto VPrime",
     urlGoogleAPI: "https://script.google.com/macros/s/AKfycbyiD33PF8zAGzRl0qmH4lkur7uZD6wmg4IxVXpuzPRCrvEY2jb3WZRZnq-XiDWFLNI3/exec",
-    linkCardapio: "https://vprimesistemas.com.br/food/sistemamodelo",
+    linkCardapio: "https://vprimesistemas.com.br/food/?loja=sistemamodelo",
     urlLogo: "https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ",
     idPlanilha: "1sjKEirWF6wiCvtma2iVv30iNqzOZJaK3WIKSP-kMlQg",
     
