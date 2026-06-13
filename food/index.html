@@ -20,9 +20,11 @@
         urlGoogleAPI: "https://script.google.com/macros/s/AKfycbwqeYadURxN7WPkf5SsyOxpUmoeDsUbTQsLNq7Hb3Pltk6E-EcHr5SnD1XWm-EVZDPH/exec",
         linkCardapio: "https://vprimesistemas.com.br/food/?loja=piloto",
         urlLogo: "https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ",
-        idPlanilha: "1sjKEirWF6wiCvtma2iVv30iNqzOZJaK3WIKSP-kMlQg"
+        idPlanilha: "1sjKEirWF6wiCvtma2iVv30iNqzOZJaK3WIKSP-kMlQg",
+        plano: "PRIME",       // 👈 Adicionado o plano direto na rota para controle
+        tipoPix: "automatico" // 👈 Adicionado o tipo de PIX padrão desta rota
       }
-      // Quando for adicionar novos lojistas, basta criar as linhas aqui embaixo de forma limpa:
+      // Quando for adicionar novos lojistas, basta criar as linhas aqui embaixo de forma limpa
     };
 
     // 1. Captura o ID da loja na URL (ex: ?loja=piloto)
@@ -54,17 +56,14 @@
           intervaloVigilancia: dadosLoja.intervaloVigilancia || 5000
         },
     
-        // ... cliente, tempo, etc ...
         plano: dadosLoja.plano || "PADRAO",
         
         // 🎯 AJUSTE DE REGRA DE NEGÓCIO DO PIX MULTILOJA
         pix: {
-          // Se o plano for PADRAO, ignora e força 'manual'. Se for PRIME, aceita o que estiver na rota (ou assume manual por padrão)
+          // Se o plano for PADRAO, ignora e força 'manual'. Se for PRIME, aceita o que estiver na rota (ou assume manual)
           tipo: (dadosLoja.plano === "PADRAO") ? "manual" : (dadosLoja.tipoPix || "manual")
         },
         
-        gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
-        // ... pedidos, impressao ...
         gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
         pedidos: {
           tempoMaxCancelamento: dadosLoja.tempoMaxCancelamento || 30
@@ -79,15 +78,12 @@
 
       // 5. Altera o título da página dinamicamente com o nome do lojista
       document.title = CONFIG.cliente.nomeFixo;
-    }
-
-    document.title = CONFIG.cliente.nomeFixo;
       
-      // 🎯 ADICIONE ESTES DOIS LOGS AQUI:
+      // 🎯 RASTREABILIDADE LOGÍSTICA ATIVADA
       console.log("📌 [PILOTO HTML] CONFIG montado com sucesso para a loja:", CONFIG.cliente.nomeFixo);
       window.CONFIG_PILOTO_OK = true; 
     }
-</script>
+  </script>
   
   <script>
     // =========================================================================
