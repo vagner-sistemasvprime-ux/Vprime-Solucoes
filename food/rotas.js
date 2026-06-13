@@ -15,6 +15,7 @@ const ROTAS_LOJISTAS = {
     linkCardapio: "https://vprimesistemas.com.br/food/?loja=piloto",
     urlLogo: "https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ",
     idPlanilha: "1UawKIZ86m-MP9LhvfTS9pmtv2MERQ-LEk8MXc1TATIQ",
+    corTema: "#2563eb",
     
     plano: "PADRAO",               // Opções: "PRIME" ou "PADRAO"
     
@@ -43,6 +44,7 @@ const ROTAS_LOJISTAS = {
     linkCardapio: "https://vprimesistemas.com.br/food/?loja=sistemamodelo",
     urlLogo: "https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ",
     idPlanilha: "1sjKEirWF6wiCvtma2iVv30iNqzOZJaK3WIKSP-kMlQg",
+    corTema: "#e65100",
     
     plano: "PRIME",               // Opções: "PRIME" ou "PADRAO"
     
