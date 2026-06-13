@@ -36,7 +36,7 @@ const ROTAS_LOJISTAS = {
   //===========================
 
   
-  "loja2": {
+  "sistemamodelo": {
    // 🏢 DADOS DE IDENTIFICAÇÃO E CONEXÃO
     nome: "Sistema Piloto VPrime",
     urlGoogleAPI: "https://script.google.com/macros/s/AKfycbyiD33PF8zAGzRl0qmH4lkur7uZD6wmg4IxVXpuzPRCrvEY2jb3WZRZnq-XiDWFLNI3/exec",
