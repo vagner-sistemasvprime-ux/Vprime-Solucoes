@@ -11123,17 +11123,24 @@ function atualizarTotalCarrinho() {
   let total = 0;
 
   tbody.querySelectorAll("tr").forEach(tr => {
+    // Verifica se a linha possui as colunas necessárias de quantidade e valor
     if (tr.children[1] && tr.children[2]) {
-      const qtd = Number(tr.children[1].textContent || 0);
-      const valor = Number(tr.children[2].textContent.replace("R$ ", "").replace(/\./g, "").replace(",", "."));
-      total += valor;
+      // 1. Captura a quantidade com segurança
+      const qtd = parseInt(tr.children[1].textContent) || 0;
+      
+      // 2. Limpa e captura o valor unitário com segurança contra falhas de texto
+      let textoValor = tr.children[2].textContent || "0";
+      textoValor = textoValor.replace("R$", "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+      const valorUnitario = parseFloat(textoValor) || 0;
+      
+      // 🎯 CORREÇÃO: Multiplica a quantidade pelo valor unitário antes de somar ao total!
+      total += (valorUnitario * qtd);
     }
   });
 
-  totalVendaEl.textContent = `R$ ${total.toFixed(2)}`;
+  // 🎯 Formata o resultado final de volta para o padrão brasileiro (com vírgula)
+  totalVendaEl.textContent = `R$ ${total.toFixed(2).replace(".", ",")}`;
 }
-
-
 
 /* =========================================================================
    💰 COMPONENTE: CONFIRMAÇÃO DE BAIXA FINANCEIRA E PAGAMENTOS (FETCH)
