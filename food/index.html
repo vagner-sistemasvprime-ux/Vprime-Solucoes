@@ -5740,7 +5740,6 @@ function atualizarTotalVendaVisual() {
   console.log("=== 🔍 INÍCIO DA RASTREABILIDADE DO TOTAL ===");
   console.trace("Rastro de quem chamou o cálculo do total:");
   
-  // 🎯 CORREÇÃO: Mudamos de 'carrinhoData' para 'window.carrinhoData'
   if (typeof window.carrinhoData === "undefined") {
     console.error("❌ Erro: A variável 'window.carrinhoData' não existe no escopo global.");
     return 0;
@@ -5751,13 +5750,10 @@ function atualizarTotalVendaVisual() {
     return 0;
   }
 
-  // Criamos uma constante local apontando diretamente para o array correto
   const dadosCarrinhoAtual = window.carrinhoData;
-
   console.log("📦 Itens dentro do window.carrinhoData atual:", JSON.stringify(dadosCarrinhoAtual));
 
   // 1️⃣ NÍVEL 1: Totalização Bruta (Itens + Opcionais)
-  // 🎯 IMPORTANTE: Mudamos aqui de 'carrinhoData.reduce' para 'dadosCarrinhoAtual.reduce'
   let totalBruto = dadosCarrinhoAtual.reduce((s, item, index) => {
     console.log(`\n🔹 Analisando Item [${index}]:`, item.nome || "Sem Nome");
 
@@ -5840,20 +5836,30 @@ function atualizarTotalVendaVisual() {
 
   if (totalComDescontos < 0) totalComDescontos = 0;
 
-  console.log(`🛑 VALOR FINAL SINALIZADO PARA A INTERFACE: R$ ${totalComDescontos.toFixed(2)}`);
+  // 🎯 5️⃣ NÍVEL 5: Inclusão da Taxa de Entrega Dinâmica
+  // Puxa com segurança a taxa global que você guardou ao selecionar o bairro
+  const taxaEntregaEfetiva = parseFloat(window.taxaEntregaAtual) || 0;
+  
+  // O valor final passa a ser o subtotal com descontos + a taxa de entrega
+  let valorFinalComFrete = totalComDescontos + taxaEntregaEfetiva;
+
+  console.log(`🚚 [FRETE SOMA] Subtotal C/ Descontos: R$ ${totalComDescontos.toFixed(2)} | Taxa Injetada: R$ ${taxaEntregaEfetiva.toFixed(2)}`);
+  console.log(`🛑 VALOR FINAL SINALIZADO PARA A INTERFACE: R$ ${valorFinalComFrete.toFixed(2)}`);
 
   // Injeta o resultado final no display da UI
   const elementoTotal = document.getElementById("totalVenda");
   if (elementoTotal) {
     console.log("🎯 Elemento '#totalVenda' localizado no HTML. Atualizando texto...");
-    elementoTotal.innerText = `R$ ${totalComDescontos.toFixed(2).replace(".", ",")}`;
+    elementoTotal.innerText = `R$ ${valorFinalComFrete.toFixed(2).replace(".", ",")}`;
   } else {
     console.error("🚨 ERRO VISUAL: O elemento HTML com ID 'totalVenda' não foi encontrado na página!");
   }
 
   console.log("=== 🔚 FIM DA RASTREABILIDADE ===");
   window.pdvDescontoManualCalculado = descontoManualEfetivo;
-  return totalComDescontos;
+  
+  // Retorna o valor completo contendo a taxa
+  return valorFinalComFrete;
 }
 
 /**
@@ -12925,91 +12931,33 @@ function atualizarAvisoCozinha() {
  */
 /* ===== 📊 FUNÇÃO ATUALIZAR FRETE ATUALIZADA (INSTANTÂNEA) ===== */
 function atualizarFrete() {
-  console.log("--------------------------------------------------");
-  console.log("🎯 [FRETE] Função atualizarFrete() foi disparada!");
+  console.log("🎯 [FRETE] Iniciando leitura do bairro...");
 
   const chkEntrega = document.getElementById("paraEntrega");
-  const divBairro = document.getElementById("campoBairro");
   const selectBairro = document.getElementById("selectBairro");
   
-  // Verificação de existência dos elementos HTML
-  if (!chkEntrega) console.error("❌ [FRETE] Elemento '#paraEntrega' não existe no HTML!");
-  if (!divBairro) console.error("❌ [FRETE] Elemento '#campoBairro' não existe no HTML!");
-  if (!selectBairro) console.error("❌ [FRETE] Elemento '#selectBairro' não existe no HTML!");
+  if (!chkEntrega || !selectBairro) return;
 
-  if (!chkEntrega || !divBairro || !selectBairro) return;
-
-  // Mostra o estado do checkbox de entrega
-  console.log(`📋 [FRETE] Checkbox 'paraEntrega' está marcado?`, chkEntrega.checked);
-
-  // Busca o índice do frete no carrinhoData
-  const existeFreteIndex = carrinhoData.findIndex(i => i.id === "FRETE");
-  console.log(`🔍 [FRETE] Posição atual do FRETE no carrinhoData (Index):`, existeFreteIndex);
-
-  // Se não for entrega, remove o frete e encerra
+  // Se não for entrega, zera a taxa global e atualiza
   if (!chkEntrega.checked) {
-    console.log("🏪 [FRETE] Pedido é Balcão/Retirada. Limpando possíveis taxas...");
-    divBairro.style.display = "none";
-    if (existeFreteIndex !== -1) {
-      carrinhoData.splice(existeFreteIndex, 1);
-      console.log("🗑️ [FRETE] Frete removido do carrinhoData.");
-      if (typeof renderCarrinho === "function") renderCarrinho();
-    }
+    window.taxaEntregaAtual = 0;
+    console.log("🏪 [FRETE] Pedido Balcão. Taxa zerada.");
+    if (typeof atualizarTotalVendaVisual === "function") atualizarTotalVendaVisual();
     return;
   }
 
-  // Se o checkbox está marcado, exibe o campo do bairro
-  divBairro.style.display = "block";
+  // Captura o valor selecionado
+  const valorFrete = parseFloat(selectBairro.value) || 0;
+  
+  // Salva na memória global do PWA
+  window.taxaEntregaAtual = valorFrete;
+  console.log(`💰 [FRETE] Valor da taxa definido globalmente: R$ ${window.taxaEntregaAtual}`);
 
-  // Captura dos valores selecionados no Select
-  const valorBrutoSelect = selectBairro.value;
-  const valorFrete = parseFloat(valorBrutoSelect) || 0;
-  const nomeBairro = selectBairro.selectedIndex > 0 ? selectBairro.options[selectBairro.selectedIndex].text : "";
-
-  console.log(`📥 [FRETE] Dados capturados do HTML:`);
-  console.log(`   👉 String bruta do Value: "${valorBrutoSelect}"`);
-  console.log(`   👉 Valor convertido (Float): R$ ${valorFrete}`);
-  console.log(`   👉 Nome do Bairro visível: "${nomeBairro}"`);
-
-  // Validação da taxa encontrada
-  if (valorFrete > 0) {
-    const itemFrete = {
-      id: "FRETE",
-      nome: "TAXA DE ENTREGA (" + nomeBairro + ")",
-      preco: valorFrete,
-      qtd: 1,
-      imagem: ""
-    };
-
-    if (existeFreteIndex !== -1) {
-      console.log("🔄 [FRETE] Substituindo taxa antiga no carrinhoData...");
-      carrinhoData[existeFreteIndex] = itemFrete;
-    } else {
-      console.log("➕ [FRETE] Adicionando nova taxa ao carrinhoData...");
-      carrinhoData.push(itemFrete);
-    }
-    console.log("📦 [FRETE] Estado atual do objeto FRETE inserido:", itemFrete);
-  } else {
-    console.warn("⚠️ [FRETE] Valor da taxa é 0 ou nenhuma opção válida foi selecionada.");
-    if (existeFreteIndex !== -1) {
-      carrinhoData.splice(existeFreteIndex, 1);
-      console.log("🗑️ [FRETE] Taxa antiga removida pois a seleção atual é zerada/inválida.");
-    }
+  // Força a atualização do total na tela imediatamente
+  if (typeof atualizarTotalVendaVisual === "function") {
+    atualizarTotalVendaVisual();
   }
-
-  // Log do array completo antes de renderizar para ver se o frete está lá dentro
-  console.log("📊 [FRETE] Conteúdo completo do carrinhoData antes do render:", carrinhoData);
-
-  // Chama a renderização da tela
-  if (typeof renderCarrinho === "function") {
-    console.log("🎨 [FRETE] Chamando a função renderCarrinho()...");
-    renderCarrinho();
-  } else {
-    console.error("❌ [FRETE] Erro Crítico: A função renderCarrinho() não foi encontrada no escopo!");
-  }
-  console.log("--------------------------------------------------");
 }
-
 
 
 
