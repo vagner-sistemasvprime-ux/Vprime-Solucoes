@@ -9672,9 +9672,10 @@ function finalizarVenda() {
         qtd: 1,
         nome: item.nome.toUpperCase(),
         preco: Number(item.preco || 0),
-        obs: "SISTEMA",
+        obs: "", // ✨ CORREÇÃO: Deixamos vazio para NÃO aparecer "SISTEMA" no comprovante impresso
         numeroPedido: null,
-        vindoDoPedido: false
+        vindoDoPedido: false,
+        isTaxa: true // 🎯 Injeta uma marcação oculta para o GAS saber que isso é uma taxa!
       };
     }
 
@@ -9685,7 +9686,8 @@ function finalizarVenda() {
       preco: Number(item.preco || 0) + vAdic,
       obs: item.obs ? item.obs.toUpperCase() : "",
       numeroPedido: item.numeroPedido || null, 
-      vindoDoPedido: !!item.numeroPedido 
+      vindoDoPedido: !!item.numeroPedido,
+      isTaxa: false
     };
   });
 
