@@ -5738,72 +5738,53 @@ function pdv_obterDescontoManualNumerico() {
  */
 function atualizarTotalVendaVisual() {
   console.log("=== 🔍 INÍCIO DA RASTREABILIDADE DO TOTAL ===");
-  console.trace("Rastro de quem chamou o cálculo do total:");
   
-  if (typeof window.carrinhoData === "undefined") {
-    console.error("❌ Erro: A variável 'window.carrinhoData' não existe no escopo global.");
-    return 0;
-  }
-  
-  if (!Array.isArray(window.carrinhoData)) {
-    console.error("❌ Erro: 'window.carrinhoData' existe, mas não é um Array. Tipo atual:", typeof window.carrinhoData);
+  if (typeof window.carrinhoData === "undefined" || !Array.isArray(window.carrinhoData)) {
     return 0;
   }
 
   const dadosCarrinhoAtual = window.carrinhoData;
-  console.log("📦 Itens dentro do window.carrinhoData atual:", JSON.stringify(dadosCarrinhoAtual));
+  let taxaEntregaDetectada = 0;
 
-  // 1️⃣ NÍVEL 1: Totalização Bruta (Itens + Opcionais)
-  let totalBruto = dadosCarrinhoAtual.reduce((s, item, index) => {
-    console.log(`\n🔹 Analisando Item [${index}]:`, item.nome || "Sem Nome");
+  // 1️⃣ NÍVEL 1: Totalização Bruta apenas dos PRODUTOS (Ignorando o item FRETE para não dar desconto nele)
+  let totalBrutoProdutos = dadosCarrinhoAtual.reduce((s, item) => {
+    // Se for o item de frete, capturamos o valor dele e pulamos a soma do lanche
+    if (item.id === "FRETE") {
+      taxaEntregaDetectada = parseFloat(item.preco) || 0;
+      return s; 
+    }
 
-    // Rastreando Opcionais
+    // Soma normal dos opcionais do produto
     const valorAdicionais = (item.adicionais || []).reduce((sub, ad) => {
-      let precoAdicionalRaw = ad.preco || ad.valor || 0;
-      if (typeof precoAdicionalRaw === "string") precoAdicionalRaw = precoAdicionalRaw.replace(",", ".");
-      let precoAdicionalNum = parseFloat(precoAdicionalRaw) || 0;
-      
-      console.log(`  └─ Opcional: Qtd: ${ad.qtd} | Preço Lido: ${precoAdicionalRaw} -> Convertido: ${precoAdicionalNum}`);
-      return sub + (Number(ad.qtd) * precoAdicionalNum);
+      let precoAdic = parseFloat(String(ad.preco || ad.valor || 0).replace(",", ".")) || 0;
+      return sub + (Number(ad.qtd) * precoAdic);
     }, 0);
 
-    // Rastreando Item Principal
-    let precoItemRaw = item.preco || item.valor || 0;
-    console.log(`  └─ Propriedades disponíveis no item:`, Object.keys(item));
-    console.log(`  └─ Preço bruto identificado:`, precoItemRaw);
-
-    if (typeof precoItemRaw === "string") {
-      precoItemRaw = precoItemRaw.replace(",", ".");
-    }
-    const precoItemTratado = parseFloat(precoItemRaw) || 0;
+    // Preço do item principal
+    let precoItem = parseFloat(String(item.preco || item.valor || 0).replace(",", ".")) || 0;
     const qtdItem = parseInt(item.qtd) || parseInt(item.quantidade) || 0;
-
-    console.log(`  └─ Tratamento Final: Qtd: ${qtdItem} | Preço: ${precoItemTratado} | Adicionais: ${valorAdicionais}`);
     
-    let subtotalItem = qtdItem * (precoItemTratado + valorAdicionais);
-    console.log(`  └─ Subtotal deste item: R$ ${subtotalItem.toFixed(2)}`);
-
-    return s + subtotalItem;
+    return s + (qtdItem * (precoItem + valorAdicionais));
   }, 0);
 
-  console.log(`\n💰 ─── TOTAL BRUTO CALCULADO: R$ ${totalBruto.toFixed(2)} ───`);
+  console.log(`💰 Total Bruto de Produtos: R$ ${totalBrutoProdutos.toFixed(2)}`);
 
-  let totalComDescontos = totalBruto;
+  let totalComDescontos = totalBrutoProdutos;
 
-  // 2️⃣ NÍVEL 2: Regras do Cupom de Desconto
+  // 2️⃣ NÍVEL 2: Regras do Cupom de Desconto (Aplica apenas sobre o valor dos produtos)
   const inputCupom = document.getElementById("pdvCupomTexto");
   const cupomPreenchido = inputCupom ? inputCupom.value.trim().length > 0 : false;
 
   if (pdvBeneficiosAtivos.cupom.ativo && cupomPreenchido) {
     const minExigidoCupom = Number(pdvBeneficiosAtivos.cupom.minimoExigido) || 0;
-    if (minExigidoCupom > 0 && totalBruto < minExigidoCupom) {
+    if (minExigidoCupom > 0 && totalBrutoProdutos < minExigidoCupom) {
       pdvBeneficiosAtivos.cupom = { ativo: false, tipo: "", valor: 0, codigo: "", minimoExigido: 0 };
       const avisoCupom = document.getElementById("pdvCupomAviso");
       if (avisoCupom) avisoCupom.innerText = `⚠ Cupom removido...`;
       if (inputCupom) inputCupom.value = "";
     } else {
       if (pdvBeneficiosAtivos.cupom.tipo === "PORCENTAGEM") {
-        totalComDescontos -= (totalBruto * (pdvBeneficiosAtivos.cupom.valor / 100));
+        totalComDescontos -= (totalBrutoProdutos * (pdvBeneficiosAtivos.cupom.valor / 100));
       } else if (pdvBeneficiosAtivos.cupom.tipo === "VALOR_FIXO") {
         totalComDescontos -= pdvBeneficiosAtivos.cupom.valor;
       }
@@ -5836,32 +5817,22 @@ function atualizarTotalVendaVisual() {
 
   if (totalComDescontos < 0) totalComDescontos = 0;
 
-  // 🎯 5️⃣ NÍVEL 5: Inclusão da Taxa de Entrega Dinâmica
-  // Puxa com segurança a taxa global que você guardou ao selecionar o bairro
-  const taxaEntregaEfetiva = parseFloat(window.taxaEntregaAtual) || 0;
-  
-  // O valor final passa a ser o subtotal com descontos + a taxa de entrega
-  let valorFinalComFrete = totalComDescontos + taxaEntregaEfetiva;
+  // 🎯 5️⃣ NÍVEL 5: Soma Final com o Frete listado no carrinho
+  let valorFinalComFrete = totalComDescontos + taxaEntregaDetectada;
 
-  console.log(`🚚 [FRETE SOMA] Subtotal C/ Descontos: R$ ${totalComDescontos.toFixed(2)} | Taxa Injetada: R$ ${taxaEntregaEfetiva.toFixed(2)}`);
-  console.log(`🛑 VALOR FINAL SINALIZADO PARA A INTERFACE: R$ ${valorFinalComFrete.toFixed(2)}`);
+  console.log(`🚚 Subtotal C/ Descontos: R$ ${totalComDescontos.toFixed(2)} | Frete do Carrinho: R$ ${taxaEntregaDetectada.toFixed(2)}`);
+  console.log(`🛑 VALOR FINAL DA INTERFACE: R$ ${valorFinalComFrete.toFixed(2)}`);
 
   // Injeta o resultado final no display da UI
   const elementoTotal = document.getElementById("totalVenda");
   if (elementoTotal) {
-    console.log("🎯 Elemento '#totalVenda' localizado no HTML. Atualizando texto...");
     elementoTotal.innerText = `R$ ${valorFinalComFrete.toFixed(2).replace(".", ",")}`;
-  } else {
-    console.error("🚨 ERRO VISUAL: O elemento HTML com ID 'totalVenda' não foi encontrado na página!");
   }
 
   console.log("=== 🔚 FIM DA RASTREABILIDADE ===");
   window.pdvDescontoManualCalculado = descontoManualEfetivo;
-  
-  // Retorna o valor completo contendo a taxa
   return valorFinalComFrete;
 }
-
 /**
  * Escuta ativa disparada ao marcar/desmarcar a opção de Cashback
  */
@@ -9665,7 +9636,6 @@ function finalizarVenda() {
   const paraEntrega = document.getElementById("paraEntrega")?.checked || false;
   const isVendaRapida = document.getElementById("vendaRapida")?.checked || false; 
   let enderecoFinal = "Balcão";
-  let palavraChaveDelivery = ""; 
 
   if (paraEntrega) {
     const ruaNum = (document.getElementById("ruaNumero")?.value || "").trim();
@@ -9679,8 +9649,6 @@ function finalizarVenda() {
       return exibirModal({ titulo: "Dados Incompletos", mensagem: "Preencha Rua/Número e Bairro.", tipo: "alerta" });
     }
     enderecoFinal = `${ruaNum} - ${bairroNome}, ${cidadeNome}${ref ? ' (Ref: ' + ref + ')' : ''}`;
-    const lista = ["SOL", "LUA", "MAR", "FLOR", "VENTO", "SUL", "NORTE"];
-    palavraChaveDelivery = lista[Math.floor(Math.random() * lista.length)] + Math.floor(100 + Math.random() * 900);
   }
 
   if (btnFinalizar) {
@@ -9691,14 +9659,25 @@ function finalizarVenda() {
   const itemComPedido = dadosCarrinho.find(item => item.numeroPedido);
   const idPedidoOriginal = itemComPedido ? itemComPedido.numeroPedido : null;
 
-  const cupomCod = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cupom && pdvBeneficiosAtivos.cupom.codigo) ? String(pdvBeneficiosAtivos.cupom.codigo).trim().toUpperCase() : "";
+  const cupomCod = (typeof pdvBeneficiosAt !== "undefined" && pdvBeneficiosAtivos.cupom && pdvBeneficiosAtivos.cupom.codigo) ? String(pdvBeneficiosAtivos.cupom.codigo).trim().toUpperCase() : "";
   const cupomPreenchidoEDigitado = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cupom?.ativo) || cupomCod !== "";
   
   const cbAbatidoVal = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cashback && pdvBeneficiosAtivos.cashback.saldoSendoUsado) ? Number(pdvBeneficiosAtivos.cashback.saldoSendoUsado) : 0;
   const cbPreenchidoEAtivo = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cashback?.ativo) || cbAbatidoVal > 0;
 
-  // 🚚 1. Mapeia e estrutura os itens normais do carrinho
+  // 🚚 Mapeia os itens mantendo o item FRETE se ele já estiver inserido no carrinho visual
   let itensFormatados = dadosCarrinho.map(item => {
+    if (item.id === "FRETE") {
+      return {
+        qtd: 1,
+        nome: item.nome.toUpperCase(),
+        preco: Number(item.preco || 0),
+        obs: "SISTEMA",
+        numeroPedido: null,
+        vindoDoPedido: false
+      };
+    }
+
     const vAdic = (item.adicionais || []).reduce((sub, ad) => sub + (Number(ad.qtd) * Number(ad.preco)), 0);
     return {
       qtd: item.qtd,
@@ -9709,24 +9688,6 @@ function finalizarVenda() {
       vindoDoPedido: !!item.numeroPedido 
     };
   });
-
-  // 🚚 2. Captura a taxa global e injeta como "item camuflado" se for entrega
-  const taxaEntregaFinal = paraEntrega ? (parseFloat(window.taxaEntregaAtual) || 0) : 0;
-  
-  if (taxaEntregaFinal > 0) {
-    const campoBairro = document.getElementById("selectBairro");
-    const bairroNome = (campoBairro && campoBairro.selectedIndex >= 0) ? campoBairro.options[campoBairro.selectedIndex].text : "DELIVERY";
-    
-    itensFormatados.push({
-      qtd: 1,
-      nome: `🚚 TAXA DE ENTREGA (${bairroNome.toUpperCase()})`,
-      preco: taxaEntregaFinal,
-      obs: "SISTEMA",
-      numeroPedido: null,
-      vindoDoPedido: false
-    });
-    console.log("➕ [CHECKOUT] Taxa embutida com sucesso na lista de itens para a planilha.");
-  }
 
   const dadosVenda = {
     usuario: (typeof user !== "undefined") ? user.usuario : "Balcão",
@@ -9740,19 +9701,20 @@ function finalizarVenda() {
     isVendaRapida: isVendaRapida,
     statusFinanceiro: (formaPagamento === "PENDENTE") ? "PENDENTE" : "PAGO",
     endereco: enderecoFinal,
-    palavraChave: palavraChaveDelivery, 
+    
+    // 🎯 Deixamos em branco para o GAS preencher com o sorteio da aba PARAMETROS
+    palavraChave: "", 
+    
     observacoes: (document.getElementById("observacoes")?.value || "").trim(),
     total: totalLiquidoVenda,
     cupomUtilizado: cupomPreenchidoEDigitado ? cupomCod : "",
     cashbackAbatido: cbPreenchidoEAtivo ? cbAbatidoVal : 0,
     descontoManual: valorDescontoManual,
     senhaAdminUtilizada: senhaAdmin,
-    
-    // 🚚 3. Envia a lista unificada contendo produtos + taxa embutida
     itens: itensFormatados
   };
 
-  // 🔄 FETCH TRANSACTION: Persiste os dados estruturados de fechamento de caixa na nuvem
+  // 🔄 FETCH TRANSACTION: Envia tudo para o terminal central
   fetch(URL_API_GOOGLE, {
     method: "POST",
     body: JSON.stringify({
@@ -9765,7 +9727,16 @@ function finalizarVenda() {
     if (!response.ok) throw new Error("Erro de conexão com o terminal central.");
     return response.json();
   })
-  .then(numeroPedido => {
+  .then(respostaServidor => {
+    // 🎯 Captura o número do pedido e a palavra-chave que o GAS sorteou
+    let numeroPedido = respostaServidor;
+    if (respostaServidor && typeof respostaServidor === "object") {
+      numeroPedido = respostaServidor.numeroPedido;
+      if (respostaServidor.palavraChave) {
+        dadosVenda.palavraChave = respostaServidor.palavraChave; // Alimenta para o comprovante de impressão
+      }
+    }
+
     if (btnFinalizar) {
       btnFinalizar.disabled = false;
       btnFinalizar.innerHTML = "✅ Finalizar Venda";
@@ -9778,7 +9749,7 @@ function finalizarVenda() {
       dadosVenda.numeroPedido = idPedidoOriginal;
       exibirModal({
         titulo: "Pagamento Concluído!",
-        mensagem: `Venda do pedido <b>${idPedidoOriginal}</b> updated com sucesso.<br>Deseja imprimir o comprovante?`,
+        mensagem: `Venda do pedido <b>${idPedidoOriginal}</b> atualizada com sucesso.<br>Deseja imprimir o comprovante?`,
         tipo: "pergunta",
         aoConfirmar: () => { if (typeof imprimirComprovante === "function") imprimirComprovante(dadosVenda); }
       });
@@ -9791,7 +9762,7 @@ function finalizarVenda() {
       }
       exibirModal({ 
         titulo: "Sucesso!", 
-        mensagem: `Venda registrada com sucesso!<br><b>Pedido Número: ${nPedidoExibicao}</b>`, 
+        mensagem: `Venda registrada com sucesso!<br><b>Pedido Número: ${nPedidoExibicao}</b><br>Palavra-Chave: ${dadosVenda.palavraChave}`, 
         tipo: "sucesso" 
       });
     }
@@ -9805,7 +9776,6 @@ function finalizarVenda() {
       pdvBeneficiosAtivos.cashback.saldoSendoUsado = 0;
     }
     
-    // 🚚 4. Reseta a memória da taxa global para as próximas vendas começarem limpas
     window.taxaEntregaAtual = 0;
     window.carrinhoData = []; 
     
@@ -9865,7 +9835,7 @@ function finalizarVenda() {
       btnFinalizar.innerHTML = "✅ Finalizar Venda";
     }
     if (avisoSenha) {
-      avisoSenha.style.color = "#ef4444";
+      with (avisoSenha.style) { color = "#ef4444"; }
       avisoSenha.innerText = `❌ ${err.message || err}`;
     }
     exibirModal({ titulo: "Erro no Servidor", mensagem: err.message || err, tipo: "erro" });
@@ -12954,35 +12924,71 @@ function atualizarAvisoCozinha() {
  */
 /* ===== 📊 FUNÇÃO ATUALIZAR FRETE ATUALIZADA (INSTANTÂNEA) ===== */
 function atualizarFrete() {
-  console.log("🎯 [FRETE] Iniciando leitura do bairro...");
+  console.log("--------------------------------------------------");
+  console.log("🎯 [FRETE] Função atualizarFrete() disparada!");
 
   const chkEntrega = document.getElementById("paraEntrega");
+  const divBairro = document.getElementById("campoBairro");
   const selectBairro = document.getElementById("selectBairro");
   
-  if (!chkEntrega || !selectBairro) return;
+  if (!chkEntrega || !divBairro || !selectBairro) return;
 
-  // Se não for entrega, zera a taxa global e atualiza
+  // Busca se já existe um item FRETE no carrinho global
+  const existeFreteIndex = window.carrinhoData.findIndex(i => i.id === "FRETE");
+
+  // Se não for entrega, remove o frete do carrinho e fecha o campo
   if (!chkEntrega.checked) {
+    divBairro.style.display = "none";
+    if (existeFreteIndex !== -1) {
+      window.carrinhoData.splice(existeFreteIndex, 1);
+      console.log("🗑️ [FRETE] Pedido Balcão: Frete removido do carrinhoData.");
+    }
     window.taxaEntregaAtual = 0;
-    console.log("🏪 [FRETE] Pedido Balcão. Taxa zerada.");
-    if (typeof atualizarTotalVendaVisual === "function") atualizarTotalVendaVisual();
+    if (typeof renderCarrinho === "function") renderCarrinho();
     return;
   }
 
-  // Captura o valor selecionado
+  // Se for entrega, exibe o campo do bairro
+  divBairro.style.display = "block";
+
+  // Captura os dados do Select
   const valorFrete = parseFloat(selectBairro.value) || 0;
-  
-  // Salva na memória global do PWA
-  window.taxaEntregaAtual = valorFrete;
-  console.log(`💰 [FRETE] Valor da taxa definido globalmente: R$ ${window.taxaEntregaAtual}`);
+  const nomeBairro = selectBairro.selectedIndex > 0 ? selectBairro.options[selectBairro.selectedIndex].text : "";
 
-  // Força a atualização do total na tela imediatamente
-  if (typeof atualizarTotalVendaVisual === "function") {
-    atualizarTotalVendaVisual();
+  if (valorFrete > 0 && selectBairro.selectedIndex > 0) {
+    // Cria o objeto do frete estruturado como um item do carrinho
+    const itemFrete = {
+      id: "FRETE", // ID fixo para sabermos que é o frete
+      nome: "TAXA DE ENTREGA (" + nomeBairro.toUpperCase() + ")",
+      preco: valorFrete,
+      qtd: 1,
+      categoria: "SERVIÇO",
+      adicionais: []
+    };
+
+    if (existeFreteIndex !== -1) {
+      console.log("🔄 [FRETE] Atualizando valor do frete existente no carrinho.");
+      window.carrinhoData[existeFreteIndex] = itemFrete;
+    } else {
+      console.log("➕ [FRETE] Inserindo novo frete no carrinho.");
+      window.carrinhoData.push(itemFrete);
+    }
+    
+    window.taxaEntregaAtual = valorFrete; // Mantém a salvaguarda global
+  } else {
+    // Se selecionou a opção padrão ou valor 0, remove o frete
+    if (existeFreteIndex !== -1) {
+      window.carrinhoData.splice(existeFreteIndex, 1);
+    }
+    window.taxaEntregaAtual = 0;
   }
+
+  // Renderiza o carrinho na tela (isso vai fazer ele aparecer listado e chamará o cálculo)
+  if (typeof renderCarrinho === "function") {
+    renderCarrinho();
+  }
+  console.log("--------------------------------------------------");
 }
-
-
 
 /* =========================================================================
    🍽️ SUBSISTEMA: MAPA DE MESAS, GESTÃO DE SALÃO E CONCORRÊNCIA (FETCH)
