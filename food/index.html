@@ -9697,6 +9697,37 @@ function finalizarVenda() {
   const cbAbatidoVal = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cashback && pdvBeneficiosAtivos.cashback.saldoSendoUsado) ? Number(pdvBeneficiosAtivos.cashback.saldoSendoUsado) : 0;
   const cbPreenchidoEAtivo = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cashback?.ativo) || cbAbatidoVal > 0;
 
+  // 🚚 1. Mapeia e estrutura os itens normais do carrinho
+  let itensFormatados = dadosCarrinho.map(item => {
+    const vAdic = (item.adicionais || []).reduce((sub, ad) => sub + (Number(ad.qtd) * Number(ad.preco)), 0);
+    return {
+      qtd: item.qtd,
+      nome: ((item.nome || "ITEM") + (item.obs ? ` (OBS: ${item.obs})` : "")).toUpperCase(),
+      preco: Number(item.preco || 0) + vAdic,
+      obs: item.obs ? item.obs.toUpperCase() : "",
+      numeroPedido: item.numeroPedido || null, 
+      vindoDoPedido: !!item.numeroPedido 
+    };
+  });
+
+  // 🚚 2. Captura a taxa global e injeta como "item camuflado" se for entrega
+  const taxaEntregaFinal = paraEntrega ? (parseFloat(window.taxaEntregaAtual) || 0) : 0;
+  
+  if (taxaEntregaFinal > 0) {
+    const campoBairro = document.getElementById("selectBairro");
+    const bairroNome = (campoBairro && campoBairro.selectedIndex >= 0) ? campoBairro.options[campoBairro.selectedIndex].text : "DELIVERY";
+    
+    itensFormatados.push({
+      qtd: 1,
+      nome: `🚚 TAXA DE ENTREGA (${bairroNome.toUpperCase()})`,
+      preco: taxaEntregaFinal,
+      obs: "SISTEMA",
+      numeroPedido: null,
+      vindoDoPedido: false
+    });
+    console.log("➕ [CHECKOUT] Taxa embutida com sucesso na lista de itens para a planilha.");
+  }
+
   const dadosVenda = {
     usuario: (typeof user !== "undefined") ? user.usuario : "Balcão",
     nomeCliente: (document.getElementById("nomeCliente")?.value || "Consumidor").trim(),
@@ -9717,17 +9748,8 @@ function finalizarVenda() {
     descontoManual: valorDescontoManual,
     senhaAdminUtilizada: senhaAdmin,
     
-    itens: dadosCarrinho.map(item => {
-      const vAdic = (item.adicionais || []).reduce((sub, ad) => sub + (Number(ad.qtd) * Number(ad.preco)), 0);
-      return {
-        qtd: item.qtd,
-        nome: ((item.nome || "ITEM") + (item.obs ? ` (OBS: ${item.obs})` : "")).toUpperCase(),
-        preco: Number(item.preco || 0) + vAdic,
-        obs: item.obs ? item.obs.toUpperCase() : "",
-        numeroPedido: item.numeroPedido || null, 
-        vindoDoPedido: !!item.numeroPedido 
-      };
-    })
+    // 🚚 3. Envia a lista unificada contendo produtos + taxa embutida
+    itens: itensFormatados
   };
 
   // 🔄 FETCH TRANSACTION: Persiste os dados estruturados de fechamento de caixa na nuvem
@@ -9756,7 +9778,7 @@ function finalizarVenda() {
       dadosVenda.numeroPedido = idPedidoOriginal;
       exibirModal({
         titulo: "Pagamento Concluído!",
-        mensagem: `Venda do pedido <b>${idPedidoOriginal}</b> atualizada com sucesso.<br>Deseja imprimir o comprovante?`,
+        mensagem: `Venda do pedido <b>${idPedidoOriginal}</b> updated com sucesso.<br>Deseja imprimir o comprovante?`,
         tipo: "pergunta",
         aoConfirmar: () => { if (typeof imprimirComprovante === "function") imprimirComprovante(dadosVenda); }
       });
@@ -9783,6 +9805,8 @@ function finalizarVenda() {
       pdvBeneficiosAtivos.cashback.saldoSendoUsado = 0;
     }
     
+    // 🚚 4. Reseta a memória da taxa global para as próximas vendas começarem limpas
+    window.taxaEntregaAtual = 0;
     window.carrinhoData = []; 
     
     if (typeof renderCarrinho === "function") {
@@ -9847,7 +9871,6 @@ function finalizarVenda() {
     exibirModal({ titulo: "Erro no Servidor", mensagem: err.message || err, tipo: "erro" });
   });
 }
-
 /**
  * Força parâmetros de quitação de fluxo para transações via PIX aprovadas por Gateway/Webhook
  */
