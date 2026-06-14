@@ -6376,17 +6376,61 @@ function setupEventListeners() {
     });
   });
 
-  /* ===== 🚚 CONTROLE DE LOGÍSTICA (DELIVERY) ===== */
-  const chkEntrega = document.getElementById("paraEntrega");
-  const blocoEntrega = document.getElementById("blocoEntrega");
+/* ===== 🚚 CONTROLE DE LOGÍSTICA (DELIVERY) ===== */
+const chkEntrega = document.getElementById("paraEntrega");
+const blocoEntrega = document.getElementById("blocoEntrega");
 
-  if (chkEntrega && blocoEntrega) {
-    chkEntrega.addEventListener("change", () => {
-      blocoEntrega.style.display = chkEntrega.checked ? "block" : "none";
+if (chkEntrega && blocoEntrega) {
+  chkEntrega.addEventListener("change", () => {
+    blocoEntrega.style.display = chkEntrega.checked ? "block" : "none";
+    
+    if (chkEntrega.checked) {
+      // 🎯 Busca os bairros no Google uma única vez quando ativa o Delivery
+      carregarListaBairrosEfetiva();
+    } else {
+      // Se desmarcar, remove o frete imediatamente
       if (typeof atualizarFrete === "function") atualizarFrete();
-    });
+    }
+  });
+}
+
+// 🎯 NOVA FUNÇÃO: Carrega o select em segundo plano apenas 1 vez
+function carregarListaBairrosEfetiva() {
+  const selectBairro = document.getElementById("selectBairro");
+  const divBairro = document.getElementById("campoBairro");
+  if (!selectBairro) return;
+
+  // Se já estiver populado, apenas exibe a div e não faz fetch de novo
+  if (selectBairro.options.length > 1) {
+    if (divBairro) divBairro.style.display = "block";
+    return;
   }
 
+  console.log("📡 [FRETE] Carregando matriz de bairros cadastrados...");
+  
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({
+      acao: "GET_CONFIGURACAO",
+      nomeLoja: CONFIG.cliente.nomeFixo
+    })
+  })
+  .then(response => response.json())
+  .then(cfg => {
+    if (cfg && cfg.taxasPorBairro) {
+      selectBairro.innerHTML = `<option value="">Selecione o Bairro...</option>`;
+      cfg.taxasPorBairro.forEach(b => {
+        let opt = document.createElement("option");
+        opt.value = b.taxa; 
+        opt.text = b.bairro;
+        selectBairro.add(opt);
+      });
+      if (divBairro) divBairro.style.display = "block";
+      console.log("✅ [FRETE] Lista de bairros injetada!");
+    }
+  })
+  .catch(err => console.error("Erro ao carregar lista de bairros:", err));
+}
   /* ===== 📊 INICIALIZADORES DO PAINEL ADMIN ===== */
   if (typeof inicializarDashboardAdmin === "function") inicializarDashboardAdmin();
   if (typeof iniciarAlertaFechamento === "function") iniciarAlertaFechamento();
@@ -12879,6 +12923,7 @@ function atualizarAvisoCozinha() {
 /**
  * CALCULATOR: Avalia o raio de entrega, monta select de bairros e altera carrinhoData
  */
+/* ===== 📊 FUNÇÃO ATUALIZAR FRETE ATUALIZADA (INSTANTÂNEA) ===== */
 function atualizarFrete() {
   const chkEntrega = document.getElementById("paraEntrega");
   const divBairro = document.getElementById("campoBairro");
@@ -12886,12 +12931,11 @@ function atualizarFrete() {
   
   if (!chkEntrega || !divBairro || !selectBairro) return;
 
-  // Busca index do frete utilizando escopo global de controle do ERP
   const existeFreteIndex = carrinhoData.findIndex(i => i.id === "FRETE");
-
-  divBairro.style.display = chkEntrega.checked ? "block" : "none";
-
+  
+  // Se não for entrega, limpa o frete e encerra
   if (!chkEntrega.checked) {
+    divBairro.style.display = "none";
     if (existeFreteIndex !== -1) {
       carrinhoData.splice(existeFreteIndex, 1);
       if (typeof renderCarrinho === "function") renderCarrinho();
@@ -12899,58 +12943,42 @@ function atualizarFrete() {
     return;
   }
 
-  fetch(URL_API_GOOGLE, {
-    method: "POST",
-    body: JSON.stringify({
-      acao: "GET_CONFIGURACAO",
-      nomeLoja: CONFIG.cliente.nomeFixo
-    })
-  })
-  .then(response => {
-    if (!response.ok) throw new Error("Erro ao obter matriz de fretes cadastrados.");
-    return response.json();
-  })
-  .then(cfg => {
-    if (!cfg) return;
+  divBairro.style.display = "block";
 
-    // Popula o elemento select dinamicamente na primeira requisição
-    if (selectBairro.options.length <= 1 && cfg.taxasPorBairro) {
-      cfg.taxasPorBairro.forEach(b => {
-        let opt = document.createElement("option");
-        opt.value = b.taxa; 
-        opt.text = b.bairro;
-        selectBairro.add(opt);
-      });
-    }
+  // Captura o valor selecionado na hora (sem lag de internet)
+  const valorFrete = parseFloat(selectBairro.value) || 0;
+  const nomeBairro = selectBairro.selectedIndex > 0 ? selectBairro.options[selectBairro.selectedIndex].text : "";
 
-    const valorFrete = parseFloat(selectBairro.value) || 0;
-    const nomeBairro = selectBairro.options[selectBairro.selectedIndex].text;
+  console.log(`📊 [FRETE] Processando bairro: "${nomeBairro}" | Taxa: R$ ${valorFrete}`);
 
-    if (valorFrete > 0) {
-      const itemFrete = {
-        id: "FRETE",
-        nome: "TAXA DE ENTREGA (" + nomeBairro + ")",
-        preco: valorFrete,
-        qtd: 1,
-        imagem: ""
-      };
+  if (valorFrete > 0) {
+    const itemFrete = {
+      id: "FRETE",
+      nome: "TAXA DE ENTREGA (" + nomeBairro + ")",
+      preco: valorFrete,
+      qtd: 1,
+      imagem: ""
+    };
 
-      if (existeFreteIndex !== -1) {
-        carrinhoData[existeFreteIndex] = itemFrete;
-      } else {
-        carrinhoData.push(itemFrete);
-      }
+    if (existeFreteIndex !== -1) {
+      carrinhoData[existeFreteIndex] = itemFrete;
     } else {
-      if (existeFreteIndex !== -1) {
-        carrinhoData.splice(existeFreteIndex, 1);
-      }
+      carrinhoData.push(itemFrete);
     }
+    console.log("✅ [FRETE] Taxa adicionada ao carrinhoData!");
+  } else {
+    // Se selecionou a opção padrão "Selecione...", remove a taxa anterior
+    if (existeFreteIndex !== -1) {
+      carrinhoData.splice(existeFreteIndex, 1);
+      console.log("⚠️ [FRETE] Taxa removida por seleção vazia.");
+    }
+  }
 
-    if (typeof renderCarrinho === "function") renderCarrinho();
-  })
-  .catch(err => console.error("Falha crítica no cálculo de taxas dinâmicas:", err));
+  // Atualiza os totais e redesenha o carrinho na tela na hora!
+  if (typeof renderCarrinho === "function") {
+    renderCarrinho();
+  }
 }
-
 
 
 
