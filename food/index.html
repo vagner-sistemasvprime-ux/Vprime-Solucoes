@@ -5791,11 +5791,13 @@ function atualizarTotalVendaVisual() {
     }
   }
 
-  // 3️⃣ NÍVEL 3: Deduções por Cashback
+ // 3️⃣ NÍVEL 3: Deduções por Cashback
   const checkboxCashback = document.getElementById("pdvUsarCashback");
   if (checkboxCashback && checkboxCashback.checked) {
     const compraMinimaCashback = Number(pdvBeneficiosAtivos.cashback?.compraMinima || 0);
+    
     if (totalComDescontos < compraMinimaCashback) {
+      // Desmarca silenciosamente durante o recálculo bruto
       checkboxCashback.checked = false;
       pdvBeneficiosAtivos.cashback.saldoSendoUsado = 0;
     } else {
@@ -5806,7 +5808,7 @@ function atualizarTotalVendaVisual() {
   } else {
     if (pdvBeneficiosAtivos.cashback) pdvBeneficiosAtivos.cashback.saldoSendoUsado = 0;
   }
-
+  
   // 4️⃣ NÍVEL 4: Ajustes Gerenciais (Desconto Manual)
   let descontoManualEfetivo = 0;
   if (typeof pdv_obterDescontoManualNumerico === "function") {
@@ -5836,7 +5838,62 @@ function atualizarTotalVendaVisual() {
 /**
  * Escuta ativa disparada ao marcar/desmarcar a opção de Cashback
  */
+/**
+ * Escuta ativa disparada ao marcar/desmarcar a opção de Cashback
+ */
 function pdv_acaoAlternarCashback() {
+  const checkboxCashback = document.getElementById("pdvUsarCashback");
+  
+  if (checkboxCashback && checkboxCashback.checked) {
+    // 1. Calcula o total disponível temporário antes de aplicar o cashback
+    // Fazemos um cálculo rápido simulando o valor com desconto do cupom atual
+    const dadosCarrinhoAtual = window.carrinhoData || [];
+    let totalBrutoProdutos = dadosCarrinhoAtual.reduce((s, item) => {
+      if (item.id === "FRETE") return s; 
+      const valorAdicionais = (item.adicionais || []).reduce((sub, ad) => {
+        let precoAdic = parseFloat(String(ad.preco || ad.valor || 0).replace(",", ".")) || 0;
+        return sub + (Number(ad.qtd) * precoAdic);
+      }, 0);
+      let precoItem = parseFloat(String(item.preco || item.valor || 0).replace(",", ".")) || 0;
+      return s + ((parseInt(item.qtd) || 0) * (precoItem + valorAdicionais));
+    }, 0);
+
+    let totalParaCashback = totalBrutoProdutos;
+    const inputCupom = document.getElementById("pdvCupomTexto");
+    const cupomPreenchido = inputCupom ? inputCupom.value.trim().length > 0 : false;
+
+    if (pdvBeneficiosAtivos.cupom?.ativo && cupomPreenchido) {
+      if (pdvBeneficiosAtivos.cupom.tipo === "PORCENTAGEM") {
+        totalParaCashback -= (totalBrutoProdutos * (pdvBeneficiosAtivos.cupom.valor / 100));
+      } else if (pdvBeneficiosAtivos.cupom.tipo === "VALOR_FIXO") {
+        totalParaCashback -= pdvBeneficiosAtivos.cupom.valor;
+      }
+    }
+
+    // 2. Valida se esse subtotal atinge a compra mínima configurada
+    const compraMinimaCashback = Number(pdvBeneficiosAtivos.cashback?.compraMinima || 0);
+
+    if (totalParaCashback < compraMinimaCashback) {
+      // Força o desmarcar do elemento visual
+      checkboxCashback.checked = false;
+      
+      // 🎯 DISPARA O ALERTA EXATAMENTE QUANDO HOUVE A TENTATIVA DE ATIVAÇÃO
+      if (typeof exibirModal === "function") {
+        exibirModal({
+          titulo: "Compra Mínima Não Atingida",
+          mensagem: `O uso do cashback exige um valor mínimo líquido em produtos de <b>R$ ${compraMinimaCashback.toFixed(2).replace(".", ",")}</b>.<br>Seu subtotal atual é de <b>R$ ${totalParaCashback.toFixed(2).replace(".", ",")}</b>.`,
+          tipo: "alerta"
+        });
+      } else if (typeof showMsg === "function") {
+        showMsg("Compra mínima para cashback não atingida.", "error");
+      } else {
+        alert("Compra mínima para cashback não atingida.");
+      }
+      return; // Aborta a execução para não atualizar o total à toa
+    }
+  }
+
+  // Se passou na validação ou se o operador está apenas desmarcando a caixa, recalcula a interface normalmente
   atualizarTotalVendaVisual();
 }
 
