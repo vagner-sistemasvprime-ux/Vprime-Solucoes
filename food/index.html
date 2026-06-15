@@ -9853,10 +9853,11 @@ function finalizarVendaPix() {
     : dadosCarrinho.reduce((s, i) => s + (Number(i.preco) * Number(i.qtd)), 0);
 
   if (totalLiquidoVenda <= 0) {
-    showMsg("Total inválido para PIX", "error");
+    if (typeof showMsg === "function") showMsg("Total inválido para PIX", "error");
     return;
   }
 
+  // Preenche os campos do checkout na tela para simular o pagamento em dinheiro/pix exato
   const fp = document.getElementById("formaPagamento");
   if (fp) fp.value = "PIX";
 
@@ -9866,19 +9867,33 @@ function finalizarVendaPix() {
   const tr = document.getElementById("troco");
   if (tr) tr.value = "0,00";
 
+  // ⚠️ ATENÇÃO: Se for entrega com pagamento em PIX feito na hora do balcão, 
+  // sua função antiga forçava "paraEntrega" para false. Mantido aqui!
   const pe = document.getElementById("paraEntrega");
   if (pe) pe.checked = false;
 
+  // 🔥 SOLUÇÃO DA TRAVA: Definimos nos dois escopos possíveis para que a 
+  // função finalizarVenda() leia a aprovação sem falhar.
   window.pixJaAprovado = true;
+  pixJaAprovado = true; 
 
+  // Limpa os cronômetros de checagem do QR Code antigo
   if (typeof intervaloVerificacao !== "undefined" && intervaloVerificacao) clearInterval(intervaloVerificacao);
   if (typeof pixIntervalo !== "undefined" && pixIntervalo) clearInterval(pixIntervalo);
 
-  if (typeof fecharModalPix === "function") fecharModalPix();
+  // Fecha o modal visualmente
+  if (typeof fecharModalPix === "function") {
+    fecharModalPix();
+  } else {
+    const modalPix = document.getElementById('modalPix');
+    if (modalPix) modalPix.style.display = 'none';
+  }
 
-  finalizarVenda();
+  // 🎯 Executa o fechamento e envio para a planilha
+  if (typeof finalizarVenda === "function") {
+    finalizarVenda();
+  }
 }
-
 /* =========================================================================
    👁️ SUBSISTEMA DE EVENTOS DE INTERFACE (ENDEREÇO E CÁLCULO DE TROCO)
    ========================================================================= */
