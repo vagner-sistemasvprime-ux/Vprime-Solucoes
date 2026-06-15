@@ -244,8 +244,8 @@ function carregarDadosIniciaisDoSistema() {
       console.log("   👉 Controle de Mesas :", CONFIG.gerenciamentoMesa);
 
       // Apenas populamos as listas de dados daquela planilha
-      listaAdicionaisGlobal = resultado.adicionais || [];
-      listaCategoriasGlobal = resultado.categorias || [];
+      window.listaAdicionaisGlobal = resultado.adicionais || [];
+      window.listaCategoriasGlobal = resultado.categorias || [];
       window.produtosData = resultado.produtos || [];
       window.usuariosSistemaGlobal = resultado.usuarios || [];
       window.qtdMesasGlobal = resultado.qtdMesas || 0;
