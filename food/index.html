@@ -16,83 +16,81 @@
 
   <script>
 
-    // 1. Captura o ID da loja na URL (ex: ?loja=piloto)
+   console.log("🚀 [LOG ROTAS] Começando a execução do script de rotas...");
+
+// 1. Captura o ID da loja na URL
 const parametrosUrl = new URLSearchParams(window.location.search);
 const idLojaAtual = parametrosUrl.get("loja") || "piloto"; 
+console.log(`🔍 [LOG ROTAS] ID da loja pego na URL: "${idLojaAtual}"`);
 
-// Tenta buscar no arquivo de rotas (Mecanismo Online Padrão)
+// Tenta verificar se o objeto global ROTAS_LOJISTAS existe
+console.log("📦 [LOG ROTAS] ROTAS_LOJISTAS existe na memória?", typeof ROTAS_LOJISTAS !== "undefined" ? "SIM" : "NÃO");
+
 let dadosLoja = typeof ROTAS_LOJISTAS !== "undefined" ? ROTAS_LOJISTAS[idLojaAtual] : null;
+console.log("📋 [LOG ROTAS] dadosLoja encontrados no arquivo de rotas?", dadosLoja ? "SIM" : "NÃO");
 
 // 💾 MECANISMO DE CONTINGÊNCIA PARA ROTAS OFFLINE
-if (!dadosLoja && !navigator.onLine) {
-  console.log("🧩 [ROTAS OFFLINE] Tentando recuperar configurações da loja no cache local...");
+if (!dadosLoja) {
+  console.log("📡 [LOG ROTAS] dadosLoja está vazio. Navegador está online?", navigator.onLine ? "SIM" : "NÃO");
+  
   const cacheLojaSalva = localStorage.getItem("cache_dados_da_loja_ativa");
+  console.log("💾 [LOG ROTAS] O que tem salvo no localStorage('cache_dados_da_loja_ativa')?:", cacheLojaSalva);
+
   if (cacheLojaSalva) {
-    dadosLoja = JSON.parse(cacheLojaSalva);
-    console.warn(`🏠 [ROTAS OFFLINE] Sucesso! Carregado dados salvos da loja: "${dadosLoja.nome}"`);
+    try {
+      dadosLoja = JSON.parse(cacheLojaSalva);
+      console.warn(`🏠 [LOG ROTAS] Sucesso ao ler o cache! Loja recuperada localmente: "${dadosLoja.nome}"`);
+    } catch (e) {
+      console.error("🚨 [LOG ROTAS] Erro ao dar JSON.parse no cache da loja:", e);
+    }
   }
 }
 
-// Criação do objeto global CONFIG de forma segura e preventiva se ele não existir
+// Criação do objeto global CONFIG de forma segura
 var CONFIG = CONFIG || {};
 
 if (!dadosLoja) {
-  console.error(`🚨 ERRO CRÍTICO: O ID de loja '${idLojaAtual}' não foi encontrado.`);
+  console.error(`🚨 [LOG ROTAS] ERRO CRÍTICO ENTRANDO NO IF: O ID '${idLojaAtual}' não foi resolvido de nenhuma forma.`);
   alert("🚨 Erro: Esta loja não foi localizada em nosso sistema de rotas.");
 } else {
-  // 💾 Se estiver online e encontrou a loja, salva no cache para a próxima vez que ficar offline
+  console.log("⚙️ [LOG ROTAS] Iniciando montagem do objeto CONFIG...");
+  
   if (navigator.onLine) {
     try {
       localStorage.setItem("cache_dados_da_loja_ativa", JSON.stringify(dadosLoja));
+      console.log("💾 [LOG ROTAS] Configurações da loja salvas no localStorage para os próximos acessos offline.");
     } catch(e) {
-      console.warn("Falha ao salvar cache de rotas da loja", e);
+      console.warn("⚠️ [LOG ROTAS] Falha ao salvar cache de rotas da loja no dispositivo:", e);
     }
   }
 
-  // 3. Solução Multitenant Nativa + Fallbacks de Segurança Embutidos
+  // 3. Montagem do Config
   Object.assign(CONFIG, dadosLoja, {
-    planilha: {
-      id: dadosLoja.idPlanilha || "" 
-    },
+    planilha: { id: dadosLoja.idPlanilha || "" },
     cliente: {
       nomeFixo: dadosLoja.nome,
       linkCardapio: dadosLoja.linkCardapio, 
       urlLogo: dadosLoja.urlLogo
     },
-    tempo: {
-      intervaloVigilancia: dadosLoja.intervaloVigilancia || 5000
-    },
+    tempo: { intervaloVigilancia: dadosLoja.intervaloVigilancia || 5000 },
     plano: dadosLoja.plano || "PADRAO",
-    pix: {
-      tipo: (dadosLoja.plano === "PADRAO") ? "manual" : (dadosLoja.tipoPix || "manual")
-    },
+    pix: { tipo: (dadosLoja.plano === "PADRAO") ? "manual" : (dadosLoja.tipoPix || "manual") },
     gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
-    pedidos: {
-      tempoMaxCancelamento: dadosLoja.tempoMaxCancelamento || 30
-    },
-    impressao: {
-      larguraPadrao: dadosLoja.larguraImpressao || "58"
-    }
+    pedidos: { tempoMaxCancelamento: dadosLoja.tempoMaxCancelamento || 30 },
+    impressao: { larguraPadrao: dadosLoja.larguraImpressao || "58" }
   });
 
-  // 4. Guarda a URL da API global que o fetch usará para enviar as requisições
   var URL_API_GOOGLE = dadosLoja.urlGoogleAPI;
-
-  // Altera o título da página dinamicamente com o nome do lojista
   document.title = CONFIG.cliente.nomeFixo;
 
-  // Altera o ícone da aba do navegador (Favicon)
   const favicon = document.getElementById("favicon-loja");
-  if (favicon && CONFIG.cliente.urlLogo) {
-    favicon.href = CONFIG.cliente.urlLogo;
-  }
+  if (favicon && CONFIG.cliente.urlLogo) favicon.href = CONFIG.cliente.urlLogo;
 
-  // Aplica a cor do lojista dinamicamente no CSS
   if (dadosLoja.corTema) {
     document.documentElement.style.setProperty('--primary', dadosLoja.corTema);
   }
 
-  // PWA MULTILOJA: Atualiza a URL de inicialização do manifesto dinâmico
+  // Manifesto Dinâmico PWA
   const linkManifest = document.querySelector('link[rel="manifest"]');
   if (linkManifest) {
     const novoManifesto = {
@@ -112,6 +110,7 @@ if (!dadosLoja) {
   }
   
   window.CONFIG_PILOTO_OK = true; 
+  console.log("✅ [LOG ROTAS] Fim do script de rotas executado com sucesso.");
 }
 </script>
   
