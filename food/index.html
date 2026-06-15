@@ -10,121 +10,130 @@
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-  <link id="favicon-loja" rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ" />
+  <link id="favicon-loja" rel="icon" type="image/png" href="data:image/x-icon;," />
 
-  <script src="./rotas.js"></script>
+  <script src="./rotas.js" onerror="console.warn('⚠️ Arquivo rotas.js não pôde ser carregado via rede.')"></script>
 
   <script>
+    (function() {
+      console.log("🚀 [LOG ROTAS] Iniciando varredura de ambiente...");
 
-   console.log("🚀 [LOG ROTAS] Começando a execução do script de rotas...");
+      // 1. Captura o ID da loja na URL
+      const parametrosUrl = new URLSearchParams(window.location.search);
+      const idLojaAtual = parametrosUrl.get("loja") || "piloto"; 
 
-// 1. Captura o ID da loja na URL
-const parametrosUrl = new URLSearchParams(window.location.search);
-const idLojaAtual = parametrosUrl.get("loja") || "piloto"; 
+      // 2. Tenta capturar dados do arquivo de rotas de forma segura
+      let dadosLoja = null;
+      try {
+        if (typeof ROTAS_LOJISTAS !== "undefined" && ROTAS_LOJISTAS[idLojaAtual]) {
+          dadosLoja = ROTAS_LOJISTAS[idLojaAtual];
+          console.log("🌐 [LOG ROTAS] Dados carregados via memória/rede do rotas.js");
+        }
+      } catch (err) {
+        console.warn("Mecanismo de rotas online indisponível.");
+      }
 
-// Tenta buscar no arquivo de rotas (Modo Online)
-let dadosLoja = typeof ROTAS_LOJISTAS !== "undefined" ? ROTAS_LOJISTAS[idLojaAtual] : null;
+      // 💾 3. CONTINGÊNCIA LOCAL: Se falhar, busca no cache local
+      if (!dadosLoja) {
+        try {
+          const cacheLojaSalva = localStorage.getItem("cache_dados_da_loja_ativa");
+          if (cacheLojaSalva) {
+            dadosLoja = JSON.parse(cacheLojaSalva);
+            console.log("💾 [LOG ROTAS] Configurações recuperadas com sucesso do cache local.");
+          }
+        } catch (e) {
+          console.error("Falha ao ler localStorage", e);
+        }
+      }
 
-// 💾 1ª CAMADA DE SEGURANÇA: Busca no Cache Local
-if (!dadosLoja) {
-  try {
-    const cacheLojaSalva = localStorage.getItem("cache_dados_da_loja_ativa");
-    if (cacheLojaSalva) {
-      dadosLoja = JSON.parse(cacheLojaSalva);
-    }
-  } catch (e) {
-    console.warn("Falha ao ler localStorage", e);
-  }
-}
+      // 🛡️ 4. BLINDAGEM MÁXIMA (FALLBACK): Impede o erro da linha 43 de acontecer se tudo falhar offline
+      if (!dadosLoja) {
+        console.warn("⚠️ [LOG ROTAS] Sem sinal de rede ou cache. Criando objeto de emergência.");
+        dadosLoja = {
+          nome: idLojaAtual.toUpperCase(),
+          idPlanilha: "",
+          linkCardapio: "",
+          urlLogo: "",
+          urlGoogleAPI: "OFFLINE",
+          corTema: "#6366f1",
+          plano: "PADRAO"
+        };
+      }
 
-// 🛡️ 2ª CAMADA DE SEGURANÇA (HARDCODED FALLBACK): 
-// Se o arquivo rotas.js falhar offline E o localStorage estiver vazio, montamos um objeto básico para o sistema NÃO quebrar a linha 43
-if (!dadosLoja) {
-  console.warn("⚠️ [ROTAS] Online e Cache falharam. Aplicando objeto de contingência fixo.");
-  dadosLoja = {
-    nome: idLojaAtual.toUpperCase(), // Evita o erro de ler 'nome' de undefined
-    idPlanilha: "",
-    linkCardapio: "",
-    urlLogo: "./cardapio/logo-padrao.png", // Ajuste para a logo local
-    urlGoogleAPI: "OFFLINE",
-    corTema: "#6366f1",
-    plano: "PADRAO"
-  };
-}
+      // Inicializa e monta o objeto global CONFIG de forma segura contra undefined
+      window.CONFIG = window.CONFIG || {};
 
-// Criação do objeto global CONFIG de forma segura
-var CONFIG = CONFIG || {};
+      Object.assign(window.CONFIG, dadosLoja, {
+        planilha: { id: dadosLoja.idPlanilha || "" },
+        cliente: {
+          nomeFixo: dadosLoja.nome || "Sistema",
+          linkCardapio: dadosLoja.linkCardapio || "", 
+          urlLogo: dadosLoja.urlLogo || ""
+        },
+        tempo: { intervaloVigilancia: dadosLoja.intervaloVigilancia || 5000 },
+        plano: dadosLoja.plano || "PADRAO",
+        pix: { tipo: (dadosLoja.plano === "PADRAO") ? "manual" : (dadosLoja.tipoPix || "manual") },
+        gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
+        pedidos: { tempoMaxCancelamento: dadosLoja.tempoMaxCancelamento || 30 },
+        impressao: { larguraPadrao: dadosLoja.larguraImpressao || "58" }
+      });
 
-// ⚙️ Montagem do Config Garantida (dadosLoja nunca mais será undefined aqui)
-Object.assign(CONFIG, dadosLoja, {
-  planilha: { id: dadosLoja.idPlanilha || "" },
-  cliente: {
-    nomeFixo: dadosLoja.nome || "Sistema",
-    linkCardapio: dadosLoja.linkCardapio || "", 
-    urlLogo: dadosLoja.urlLogo || ""
-  },
-  tempo: { intervaloVigilancia: dadosLoja.intervaloVigilancia || 5000 },
-  plano: dadosLoja.plano || "PADRAO",
-  pix: { tipo: (dadosLoja.plano === "PADRAO") ? "manual" : (dadosLoja.tipoPix || "manual") },
-  gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
-  pedidos: { tempoMaxCancelamento: dadosLoja.tempoMaxCancelamento || 30 },
-  impressao: { larguraPadrao: dadosLoja.larguraImpressao || "58" }
-});
+      window.URL_API_GOOGLE = dadosLoja.urlGoogleAPI || "OFFLINE";
+      document.title = window.CONFIG.cliente.nomeFixo;
 
-var URL_API_GOOGLE = dadosLoja.urlGoogleAPI;
-document.title = CONFIG.cliente.nomeFixo;
+      // Altera o Favicon se houver logo ativa
+      const favicon = document.getElementById("favicon-loja");
+      if (favicon && window.CONFIG.cliente.urlLogo) {
+        favicon.href = window.CONFIG.cliente.urlLogo;
+      }
 
-const favicon = document.getElementById("favicon-loja");
-if (favicon && CONFIG.cliente.urlLogo) favicon.href = CONFIG.cliente.urlLogo;
+      // Altera a cor do tema
+      if (dadosLoja.corTema) {
+        document.documentElement.style.setProperty('--primary', dadosLoja.corTema);
+      }
 
-if (dadosLoja.corTema) {
-  document.documentElement.style.setProperty('--primary', dadosLoja.corTema);
-}
+      // Guarda os dados reais se estiver online para o próximo F5 offline funcionar limpo
+      if (navigator.onLine && typeof ROTAS_LOJISTAS !== "undefined" && ROTAS_LOJISTAS[idLojaAtual]) {
+        try {
+          localStorage.setItem("cache_dados_da_loja_ativa", JSON.stringify(ROTAS_LOJISTAS[idLojaAtual]));
+        } catch(e) {}
+      }
 
-// 💾 Se estiver de fato ONLINE, salva o objeto real no localStorage para atualizar o cache
-if (navigator.onLine && typeof ROTAS_LOJISTAS !== "undefined" && ROTAS_LOJISTAS[idLojaAtual]) {
-  try {
-    localStorage.setItem("cache_dados_da_loja_ativa", JSON.stringify(ROTAS_LOJISTAS[idLojaAtual]));
-  } catch(e) {}
-}
+      // Manifesto Dinâmico PWA
+      const linkManifest = document.querySelector('link[rel="manifest"]');
+      if (linkManifest) {
+        const novoManifesto = {
+          "name": `Painel - ${window.CONFIG.cliente.nomeFixo}`,
+          "short_name": window.CONFIG.cliente.nomeFixo,
+          "start_url": `./index.html?loja=${idLojaAtual}`,
+          "display": "standalone",
+          "background_color": "#ffffff",
+          "theme_color": dadosLoja.corTema || "#6366f1",
+          "icons": [
+            { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
+            { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" }
+          ]
+        };
+        const stringManifesto = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(novoManifesto));
+        linkManifest.setAttribute('href', stringManifesto);
+      }
 
-// Manifesto PWA
-const linkManifest = document.querySelector('link[rel="manifest"]');
-if (linkManifest) {
-  const novoManifesto = {
-    "name": `Painel - ${CONFIG.cliente.nomeFixo}`,
-    "short_name": CONFIG.cliente.nomeFixo,
-    "start_url": `./index.html?loja=${idLojaAtual}`,
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": dadosLoja.corTema || "#6366f1",
-    "icons": [
-      { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
-      { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" }
-    ]
-  };
-  const stringManifesto = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(novoManifesto));
-  linkManifest.setAttribute('href', stringManifesto);
-}
+      window.CONFIG_PILOTO_OK = true;
+      console.log("✅ [LOG ROTAS] Estrutura inicial do sistema configurada com sucesso.");
+    })();
+  </script>
 
-window.CONFIG_PILOTO_OK = true;
-</script>
-  
   <script>
-    // =========================================================================
-    // 🚀 INICIALIZADOR DO SERVICE WORKER (PWA)
-    // =========================================================================
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('✅ PWA: Service Worker registrado no domínio!', reg.scope))
-          .catch(err => console.error('❌ PWA: Falha ao registrar Service Worker:', err));
+          .then(reg => console.log('✅ PWA: Service Worker ativo!', reg.scope))
+          .catch(err => console.error('❌ PWA: Erro no Service Worker:', err));
       });
     }
   </script>
 </head>
 <body>
-
 
 <audio id="somPedido">
   <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg">
@@ -132,17 +141,14 @@ window.CONFIG_PILOTO_OK = true;
 <script src="https://sdk.mercadopago.com/js/v2"></script>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-
 <div id="app"></div>
 <div id="msg" class="msg info"></div>
 
-<!-- Modal de alteração de senha -->
 <div id="modalSenha" class="modal">
   <div class="modal-content">
     <h3>Alterar Senha</h3>
@@ -150,20 +156,9 @@ window.CONFIG_PILOTO_OK = true;
     <input type="password" id="novaSenha" placeholder="Nova senha">
     <button onclick="alterarSenha()">Salvar</button>
   </div>
-
-  
-
-
 </div>
 
 <script>
-
-
-
-
-
-
-
 let user = null;
 
 let filtroTimeout;
@@ -195,7 +190,8 @@ function carregarDadosIniciaisDoSistema() {
     return;
   }
 
-  login();
+  // 🔄 Roda a montagem visual da tela de login primeiro
+  if (typeof login === "function") login();
   
   const btnEntrar = document.getElementById('btn-entrar');
   if (btnEntrar) {
@@ -270,7 +266,6 @@ function tentarCarregarModoOfflineFailsafe(btnEntrar) {
       window.qtdMesasGlobal = parseInt(localStorage.getItem("cache_qtdMesas")) || 0;
 
       // 🛰️ FIX DE ROTAS/LOJA OFFLINE:
-      // Garante que o objeto do cliente permaneça ativo na memória para as funções de login locais
       if (typeof CONFIG !== "undefined" && CONFIG.cliente) {
         console.log(`🏠 [OFFLINE] Mantendo rota fixa da loja ativa: "${CONFIG.cliente.nomeFixo}"`);
       }
@@ -388,20 +383,18 @@ function processarStatusFinanceiroLocal(res) {
       </div>
     `;
   } else if (!res.exibir && divAviso) {
-    divAviso.innerHTML = ""; // Limpa se o servidor disser que não precisa exibir nada
+    divAviso.innerHTML = ""; 
   }
 }
   
-// Substitua a sua antiga function verificarStatusPagamento() por esta vazia ou remova a chamada dela de outros lugares
-function verificarStatusPagamento() {
-  // Deixamos vazia porque a checagem agora acontece automaticamente dentro do carregarDadosIniciaisDoSistema()
-}
+function verificarStatusPagamento() {}
+
 /* =========================
-   INIT
+    INIT
 ========================= */
-// Em vez de chamar login() direto, chamamos nossa nova função de carga
 carregarDadosIniciaisDoSistema();
 
+  
 /* =========================
    RENDER
 ========================= */
