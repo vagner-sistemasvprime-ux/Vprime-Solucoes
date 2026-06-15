@@ -9578,30 +9578,28 @@ function acaoEsvaziarCarrinho() {
 function finalizarVenda() {
   const btnFinalizar = document.querySelector(".caixa-finalizar");
   const dadosCarrinho = window.carrinhoData || [];
-  
+
   if (dadosCarrinho.length === 0) {
     return exibirModal({ titulo: "Carrinho Vazio", mensagem: "Adicione itens antes de finalizar.", tipo: "alerta" });
   }
 
   const campoForma = document.getElementById("formaPagamento");
   const formaPagamento = (campoForma?.value || "").trim().toUpperCase();
-
   if (!formaPagamento) {
     return exibirModal({ titulo: "Pagamento", mensagem: "Selecione uma forma de pagamento.", tipo: "alerta" });
   }
 
   const modalPix = document.getElementById('modalPix');
   const pixStatusAprovado = typeof pixJaAprovado !== "undefined" ? pixJaAprovado : false;
-
   if (formaPagamento === "PIX" && !pixStatusAprovado && (!modalPix || modalPix.style.display !== 'flex')) {
     if (typeof exibirModalPix === "function") {
       exibirModalPix();
-      return; 
+      return;
     }
   }
 
-  const totalLiquidoVenda = typeof atualizarTotalVendaVisual === "function" 
-    ? atualizarTotalVendaVisual() 
+  const totalLiquidoVenda = typeof atualizarTotalVendaVisual === "function"
+    ? atualizarTotalVendaVisual()
     : dadosCarrinho.reduce((s, item) => {
         const valorAdicionais = (item.adicionais || []).reduce((sub, ad) => sub + (Number(ad.qtd) * Number(ad.preco)), 0);
         return s + (item.qtd * (Number(item.preco) + valorAdicionais));
@@ -9628,22 +9626,21 @@ function finalizarVenda() {
   const limparMoeda = (txt) => Number((txt || "0").replace(/[R$\s.]/g, "").replace(",", "."));
   const valorPago = limparMoeda(document.getElementById("valorPago")?.value);
 
-  if (formaPagamento !== "PENDENTE" && valorPago < (totalLiquidoVenda - 0.01)) { 
-    if (avisoSenha) avisoSenha.innerText = ""; 
+  if (formaPagamento !== "PENDENTE" && valorPago < (totalLiquidoVenda - 0.01)) {
+    if (avisoSenha) avisoSenha.innerText = "";
     return exibirModal({ titulo: "Valor Insuficiente", mensagem: "O valor pago é menor que o total líquido da venda.", tipo: "erro" });
   }
 
   const paraEntrega = document.getElementById("paraEntrega")?.checked || false;
-  const isVendaRapida = document.getElementById("vendaRapida")?.checked || false; 
-  let enderecoFinal = "Balcão";
+  const isVendaRapida = document.getElementById("vendaRapida")?.checked || false;
 
+  let enderecoFinal = "Balcão";
   if (paraEntrega) {
     const ruaNum = (document.getElementById("ruaNumero")?.value || "").trim();
     const campoBairro = document.getElementById("selectBairro");
     const bairroNome = (campoBairro && campoBairro.selectedIndex >= 0) ? campoBairro.options[campoBairro.selectedIndex].text : "";
     const cidadeNome = (campoBairro && campoBairro.selectedIndex >= 0) ? campoBairro.options[campoBairro.selectedIndex].getAttribute("data-cidade") || "" : "";
     const ref = (document.getElementById("referencia")?.value || "").trim();
-
     if (!ruaNum || !bairroNome || bairroNome === "Selecione...") {
       if (avisoSenha) avisoSenha.innerText = "";
       return exibirModal({ titulo: "Dados Incompletos", mensagem: "Preencha Rua/Número e Bairro.", tipo: "alerta" });
@@ -9653,39 +9650,42 @@ function finalizarVenda() {
 
   if (btnFinalizar) {
     btnFinalizar.disabled = true;
-    btnFinalizar.innerHTML = "⏳ REGISTRANDO..."; 
+    btnFinalizar.innerHTML = "⏳ REGISTRANDO...";
   }
 
   const itemComPedido = dadosCarrinho.find(item => item.numeroPedido);
   const idPedidoOriginal = itemComPedido ? itemComPedido.numeroPedido : null;
 
-  const cupomCod = (typeof pdvBeneficiosAt !== "undefined" && pdvBeneficiosAtivos.cupom && pdvBeneficiosAtivos.cupom.codigo) ? String(pdvBeneficiosAtivos.cupom.codigo).trim().toUpperCase() : "";
+  // ✅ CORREÇÃO CRÍTICA: Typo corrigido de "pdvBeneficiosAt" para "pdvBeneficiosAtivos"
+  const cupomCod = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cupom && pdvBeneficiosAtivos.cupom.codigo)
+    ? String(pdvBeneficiosAtivos.cupom.codigo).trim().toUpperCase()
+    : "";
   const cupomPreenchidoEDigitado = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cupom?.ativo) || cupomCod !== "";
-  
-  const cbAbatidoVal = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cashback && pdvBeneficiosAtivos.cashback.saldoSendoUsado) ? Number(pdvBeneficiosAtivos.cashback.saldoSendoUsado) : 0;
+
+  const cbAbatidoVal = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cashback && pdvBeneficiosAtivos.cashback.saldoSendoUsado)
+    ? Number(pdvBeneficiosAtivos.cashback.saldoSendoUsado)
+    : 0;
   const cbPreenchidoEAtivo = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cashback?.ativo) || cbAbatidoVal > 0;
 
-  // 🚚 Mapeia os itens mantendo o item FRETE se ele já estiver inserido no carrinho visual
   let itensFormatados = dadosCarrinho.map(item => {
     if (item.id === "FRETE") {
       return {
         qtd: 1,
         nome: item.nome.toUpperCase(),
         preco: Number(item.preco || 0),
-        obs: "", // ✨ CORREÇÃO: Deixamos vazio para NÃO aparecer "SISTEMA" no comprovante impresso
+        obs: "",
         numeroPedido: null,
         vindoDoPedido: false,
-        isTaxa: true // 🎯 Injeta uma marcação oculta para o GAS saber que isso é uma taxa!
+        isTaxa: true
       };
     }
-
     const vAdic = (item.adicionais || []).reduce((sub, ad) => sub + (Number(ad.qtd) * Number(ad.preco)), 0);
     return {
       qtd: item.qtd,
       nome: ((item.nome || "ITEM") + (item.obs ? ` (OBS: ${item.obs})` : "")).toUpperCase(),
       preco: Number(item.preco || 0) + vAdic,
       obs: item.obs ? item.obs.toUpperCase() : "",
-      numeroPedido: item.numeroPedido || null, 
+      numeroPedido: item.numeroPedido || null,
       vindoDoPedido: !!item.numeroPedido,
       isTaxa: false
     };
@@ -9695,7 +9695,7 @@ function finalizarVenda() {
     usuario: (typeof user !== "undefined") ? user.usuario : "Balcão",
     nomeCliente: (document.getElementById("nomeCliente")?.value || "Consumidor").trim(),
     telefoneCliente: (document.getElementById("telefoneCliente")?.value || "").trim(),
-    formaPagamento: formaPagamento, 
+    formaPagamento: formaPagamento,
     valorPago: formaPagamento === "PENDENTE" ? 0 : valorPago,
     trocoPara: document.getElementById("valorPago")?.value || "0.00",
     troco: formaPagamento === "PENDENTE" ? 0 : limparMoeda(document.getElementById("troco")?.value),
@@ -9703,10 +9703,7 @@ function finalizarVenda() {
     isVendaRapida: isVendaRapida,
     statusFinanceiro: (formaPagamento === "PENDENTE") ? "PENDENTE" : "PAGO",
     endereco: enderecoFinal,
-    
-    // 🎯 Deixamos em branco para o GAS preencher com o sorteio da aba PARAMETROS
-    palavraChave: "", 
-    
+    palavraChave: "", // GAS preenche via listarPalavras() e retorna no response
     observacoes: (document.getElementById("observacoes")?.value || "").trim(),
     total: totalLiquidoVenda,
     cupomUtilizado: cupomPreenchidoEDigitado ? cupomCod : "",
@@ -9716,7 +9713,6 @@ function finalizarVenda() {
     itens: itensFormatados
   };
 
-  // 🔄 FETCH TRANSACTION: Envia tudo para o terminal central
   fetch(URL_API_GOOGLE, {
     method: "POST",
     body: JSON.stringify({
@@ -9730,12 +9726,11 @@ function finalizarVenda() {
     return response.json();
   })
   .then(respostaServidor => {
-    // 🎯 Captura o número do pedido e a palavra-chave que o GAS sorteou
     let numeroPedido = respostaServidor;
     if (respostaServidor && typeof respostaServidor === "object") {
       numeroPedido = respostaServidor.numeroPedido;
       if (respostaServidor.palavraChave) {
-        dadosVenda.palavraChave = respostaServidor.palavraChave; // Alimenta para o comprovante de impressão
+        dadosVenda.palavraChave = respostaServidor.palavraChave;
       }
     }
 
@@ -9743,7 +9738,7 @@ function finalizarVenda() {
       btnFinalizar.disabled = false;
       btnFinalizar.innerHTML = "✅ Finalizar Venda";
     }
-    if (avisoSenha) avisoSenha.innerText = ""; 
+    if (avisoSenha) avisoSenha.innerText = "";
 
     const nPedidoExibicao = numeroPedido || idPedidoOriginal || "REGISTRADO";
 
@@ -9762,25 +9757,25 @@ function finalizarVenda() {
       } catch (e) {
         console.warn("Falha ao invocar a impressão automática:", e);
       }
-      exibirModal({ 
-        titulo: "Sucesso!", 
-        mensagem: `Venda registrada com sucesso!<br><b>Pedido Número: ${nPedidoExibicao}</b><br>Palavra-Chave: ${dadosVenda.palavraChave}`, 
-        tipo: "sucesso" 
+      exibirModal({
+        titulo: "Sucesso!",
+        mensagem: `Venda registrada com sucesso!<br><b>Pedido Número: ${nPedidoExibicao}</b>${dadosVenda.palavraChave ? '<br>Palavra-Chave: ' + dadosVenda.palavraChave : ''}`,
+        tipo: "sucesso"
       });
     }
 
-    if (typeof pixJaAprovado !== "undefined") window.pixJaAprovado = false; 
+    // --- LIMPEZA COMPLETA (igual à primeira função) ---
+    if (typeof pixJaAprovado !== "undefined") window.pixJaAprovado = false;
 
     const checkCB = document.getElementById("pdvUsarCashback");
     if (checkCB) checkCB.checked = false;
-
     if (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cashback) {
       pdvBeneficiosAtivos.cashback.saldoSendoUsado = 0;
     }
-    
+
     window.taxaEntregaAtual = 0;
-    window.carrinhoData = []; 
-    
+    window.carrinhoData = [];
+
     if (typeof renderCarrinho === "function") {
       try { renderCarrinho(); } catch(e) { console.error("Erro ao renderizar carrinho vazio:", e); }
     }
@@ -9788,43 +9783,39 @@ function finalizarVenda() {
     document.querySelectorAll(".pagamento-formas button").forEach(btn => btn.classList.remove("ativo"));
 
     const inputsParaLimpar = ["formaPagamento", "valorPago", "troco", "ruaNumero", "referencia", "selectBairro", "observacoes", "nomeCliente", "telefoneCliente"];
-    inputsParaLimpar.forEach(id => { 
+    inputsParaLimpar.forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.value = ""; 
+      if (el) el.value = "";
     });
-    
-    const peEl = document.getElementById("paraEntrega");
-    const vrEl = document.getElementById("vendaRapida");
-    const beEl = document.getElementById("blocoEntrega");
-    
-    if (peEl) peEl.checked = false;
-    if (vrEl) vrEl.checked = false;
-    if (beEl) beEl.style.display = "none";
+
+    if (document.getElementById("paraEntrega")) document.getElementById("paraEntrega").checked = false;
+    if (document.getElementById("vendaRapida")) document.getElementById("vendaRapida").checked = false;
+    if (document.getElementById("blocoEntrega")) document.getElementById("blocoEntrega").style.display = "none";
 
     if (typeof pdvBeneficiosAtivos !== "undefined") {
       pdvBeneficiosAtivos.cupom = { ativo: false, tipo: "", valor: 0, codigo: "" };
       pdvBeneficiosAtivos.cashback = { ativo: false, saldoDisponivel: 0, saldoSendoUsado: 0, compraMinima: 0 };
     }
-    
+
     const avisoCupom = document.getElementById("pdvCupomAviso");
     if (avisoCupom) avisoCupom.innerText = "";
     const txtCupom = document.getElementById("pdvCupomTexto");
     if (txtCupom) txtCupom.value = "";
-    
+
     const areaInfoCB = document.getElementById("pdvAreaCashbackInfo");
     if (areaInfoCB) areaInfoCB.innerHTML = "💡 Insira o telefone do cliente na área de entrega para consultar o saldo disponível.";
     const containerCB = document.getElementById("pdvContainerCheckCashback");
     if (containerCB) containerCB.style.display = "none";
 
     const avisoDescontoPrincipal = document.getElementById("pdvDescontoManualAviso");
-    if (avisoDescontoPrincipal) avisoDescontoPrincipal.innerText = ""; 
+    if (avisoDescontoPrincipal) avisoDescontoPrincipal.innerText = "";
     const txtDescontoManual = document.getElementById("pdvDescontoManual");
-    if (txtDescontoManual) txtDescontoManual.value = ""; 
+    if (txtDescontoManual) txtDescontoManual.value = "";
     const txtSenhaAdmin = document.getElementById("pdvSenhaAdmin");
-    if (txtSenhaAdmin) txtSenhaAdmin.value = ""; 
+    if (txtSenhaAdmin) txtSenhaAdmin.value = "";
     const avisoInternoModal = document.getElementById("pdvAvisoSenhaAdmin");
-    if (avisoInternoModal) avisoInternoModal.innerText = ""; 
-    
+    if (avisoInternoModal) avisoInternoModal.innerText = "";
+
     window.pdvDescontoValidado = 0;
     window.pdvDescontoValidated = 0;
     window.pdvDescontoManualCalculado = 0;
@@ -9837,12 +9828,13 @@ function finalizarVenda() {
       btnFinalizar.innerHTML = "✅ Finalizar Venda";
     }
     if (avisoSenha) {
-      with (avisoSenha.style) { color = "#ef4444"; }
+      avisoSenha.style.color = "#ef4444";
       avisoSenha.innerText = `❌ ${err.message || err}`;
     }
     exibirModal({ titulo: "Erro no Servidor", mensagem: err.message || err, tipo: "erro" });
   });
 }
+
 /**
  * Força parâmetros de quitação de fluxo para transações via PIX aprovadas por Gateway/Webhook
  */
