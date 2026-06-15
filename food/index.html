@@ -9371,14 +9371,21 @@ function renderCarrinho() {
  */
 function abrirModalAdicionaisDelivery(idxItem) {
   const item = window.carrinhoData[idxItem];
-  if (!item) return;
+  if (!item) {
+    console.error("❌ Erro: Item não encontrado no carrinhoData com o índice:", idxItem);
+    return;
+  }
   
   const modal = document.getElementById("modalAdicionais");
   const listaDiv = document.getElementById("listaAdicionaisModal");
   const titulo = document.getElementById("tituloAdicionalModal");
   const subtitulo = document.getElementById("subtituloAdicionalModal");
 
-  // ✨ FUNÇÃO AUXILIAR: Remove acentos, pontuações e espaços extras (AÇAÍ vira ACAI)
+  console.log("=== 🔍 INÍCIO DO RASTREAMENTO DE ADICIONAIS ===");
+  console.log("📦 Produto clicado:", item.nome);
+  console.log("🏷️ Categoria do Produto (Original):", `"${item.categoria}"`);
+
+  // Função auxiliar de normalização
   const normalizarTexto = (txt) => {
     return String(txt || "")
       .trim()
@@ -9387,19 +9394,41 @@ function abrirModalAdicionaisDelivery(idxItem) {
       .replace(/[\u0300-\u036f]/g, "");
   };
 
-  const categoriaItemLimpa = normalizarTexto(item.categoria);
+  const categoryItemLimpa = normalizarTexto(item.categoria);
+  console.log("🧹 Categoria do Produto (Normalizada):", `"${categoryItemLimpa}"`);
+
   const listaGlobal = window.listaAdicionaisGlobal || [];
+  console.log("📋 Total de adicionais na lista global:", listaGlobal.length);
   
-  // 🎯 FILTRAGEM BLINDADA (Ignora diferenças de acento e caixa)
-  const filtrados = listaGlobal.filter(ad => {
-    const categoriaAdLimpa = normalizarTexto(ad.categoria);
+  if (listaGlobal.length === 0) {
+    console.error("🚨 Alerta: 'window.listaAdicionaisGlobal' está completamente vazia! Verifique se a carga do Sheets funcionou.");
+  }
+
+  // 🎯 FILTRAGEM COM LOG PASSO A PASSO
+  const filtrados = listaGlobal.filter((ad, index) => {
+    const categoryAdLimpa = normalizarTexto(ad.categoria);
     
     const isAtivo = ad.ativo === true || 
                     String(ad.ativo).trim().toUpperCase() === "TRUE" || 
                     Number(ad.ativo) === 1;
 
-    return categoriaAdLimpa === categoriaItemLimpa && isAtivo;
+    // Log detalhado para os primeiros itens ou para o que se parece com AÇAI
+    if (index < 5 || categoryAdLimpa.includes("ACA") || categoryItemLimpa.includes("ACA")) {
+      console.log(`   👉 Item [${index}] da Planilha:`, {
+        nomeAdicional: ad.nome,
+        categoriaPlanilhaOriginal: `"${ad.categoria}"`,
+        categoriaPlanilhaNormalizada: `"${categoryAdLimpa}"`,
+        statusAtivoOriginal: ad.ativo,
+        statusAtivoValidado: isAtivo,
+        deuMatchNaCategoria: (categoryAdLimpa === categoryItemLimpa)
+      });
+    }
+
+    return categoryAdLimpa === categoryItemLimpa && isAtivo;
   });
+
+  console.log("🎯 Total de adicionais que passaram no filtro:", filtrados.length);
+  console.log("=== 🔚 FIM DO RASTREAMENTO ===");
 
   if (filtrados.length === 0) {
     exibirModal({
@@ -9417,11 +9446,7 @@ function abrirModalAdicionaisDelivery(idxItem) {
     listaDiv.innerHTML = filtrados.map(ad => {
       const adExistente = (item.adicionais || []).find(a => a.nome === ad.nome);
       const qtd = adExistente ? adExistente.qtd : 0;
-      
-      // Remove espaços e caracteres especiais para gerar o ID do span sem quebrar o HTML
       const idChaveLimpa = ad.nome.replace(/[^a-zA-Z0-9]/g, '');
-      
-      // Escape de aspas simples caso o nome do adicional tenha aspas (ex: "d'alho")
       const nomeAdicionalEscapado = ad.nome.replace(/'/g, "\\'");
       
       return `
