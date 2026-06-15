@@ -555,11 +555,17 @@ function solicitarPagamento(email) {
 function iniciarVigilanciaPagamento() {
   if (intervalovigilante) clearInterval(intervalovigilante);
   
+  // 🛡️ TRAVA OFFLINE: Se não há rede, não inicia o monitoramento na planilha
+  if (!navigator.onLine) {
+    console.log("⏳ [VIGILÂNCIA] Monitoramento de pagamento ignorado: Dispositivo Offline.");
+    return;
+  }
+  
   console.log("👀 Vigilância ativada: Monitorando baixa do pagamento na planilha...");
 
   intervalovigilante = setInterval(function() {
+    if (!navigator.onLine) return; // Pausa as tentativas se a internet cair no meio do caminho
     
-    // 🔄 CONVERSÃO PARA FETCH: Pergunta ao Google se o status financeiro mudou
     fetch(URL_API_GOOGLE, {
       method: "POST",
       body: JSON.stringify({
@@ -569,8 +575,6 @@ function iniciarVigilanciaPagamento() {
     })
     .then(response => response.json())
     .then(resultado => {
-      // Se a resposta do financeiro disser que não precisa mais exibir cobrança/bloqueio,
-      // significa que o sistema detectou a baixa automática na planilha!
       if (resultado.sucesso && (!resultado.financeiro || !resultado.financeiro.exibir)) {
         pararVigilanciaEConfirmarSucesso();
       }
@@ -604,9 +608,8 @@ function pararVigilanciaEConfirmarSucesso() {
   }
 }
 
-  
 /* =========================================================================
-   🔑 MÓDULO DE AUTENTICAÇÃO E SESSÃO (OTIMIZADO MULTITENANT)
+   🔑 MÓDULO DE AUTENTICAÇÃO E SESSÃO (PROTETO ONLINE & OFFLINE)
    ========================================================================= */
 
 function entrar() {
@@ -622,11 +625,51 @@ function entrar() {
     return showMsg("Por favor, preencha usuário e senha.", "error", 3000);
   }
 
+  // 🛡️ CONTINGÊNCIA: SE ESTIVER OFFLINE, VALIDA DIRETO NO CACHE LOCAL
+  if (!navigator.onLine) {
+    console.log(`🔐 [LOGIN OFFLINE] Autenticando operador localmente: "${usuarioInput}"`);
+    
+    if (window.usuariosSistemaGlobal && window.usuariosSistemaGlobal.length > 0) {
+      // Varre a lista baixada anteriormente procurando usuário e senha idênticos
+      const usuarioEncontrado = window.usuariosSistemaGlobal.find(u => 
+        u.usuario.toLowerCase() === usuarioInput.toLowerCase() && u.senha === senhaInput
+      );
+
+      if (usuarioEncontrado) {
+        console.log("✅ [LOGIN OFFLINE] Credenciais locais validadas com sucesso!");
+        
+        user = {
+          usuario: usuarioEncontrado.usuario,
+          perfil: usuarioEncontrado.perfil,
+          senhaPadrao: usuarioEncontrado.senhaPadrao || false
+        };
+        usuarioLogado = usuarioEncontrado.usuario;
+
+        const txtNome = document.getElementById("txtNomeUsuario");
+        if (txtNome) txtNome.innerText = usuarioEncontrado.usuario.toUpperCase();
+
+        // No modo offline, pula a obrigatoriedade de trocar a senha para não travar o operador
+        if (typeof render === "function") {
+          render(); 
+        } else {
+          showMsg("Erro interno: Função render não localizada.", "error", 3000);
+        }
+      } else {
+        console.warn("❌ [LOGIN OFFLINE] Usuário ou senha incorretos na base local.");
+        return showMsg("Usuário ou senha incorretos (Modo Offline).", "error", 3000);
+      }
+    } else {
+      console.error("🚨 [LOGIN OFFLINE] Falha técnica: Cache de usuários vazio neste navegador.");
+      return showMsg("Sem dados armazenados para login offline. O primeiro acesso deve ser online.", "error", 5000);
+    }
+    return; // Encerra a execução para não disparar o fetch abaixo
+  }
+
+  // 🌐 FLUXO NORMAL ONLINE (Se houver internet)
   if (loader) loader.style.display = "flex"; 
 
   console.log(`📡 [LOGIN] Enviando requisição de hash para o operador: "${usuarioInput}"`);
 
-  // 🔄 CORREÇÃO CRUCIAL: Envia para o backend processar o hash da senha de forma segura
   fetch(URL_API_GOOGLE, {
     method: "POST",
     body: JSON.stringify({
@@ -643,7 +686,6 @@ function entrar() {
     if (resultado.sucesso) {
       console.log("✅ [LOGIN] Autenticação aceita pelo servidor!");
 
-      // Alimenta o escopo global do seu app com a estrutura esperada
       user = {
         usuario: resultado.usuario,
         perfil: resultado.perfil,
@@ -651,17 +693,14 @@ function entrar() {
       }; 
       usuarioLogado = resultado.usuario;
 
-      // Se no seu painel de mesas tiver o badge do operador, já o atualiza aqui:
       const txtNome = document.getElementById("txtNomeUsuario");
       if (txtNome) txtNome.innerText = resultado.usuario.toUpperCase();
 
-      // Verifica se o usuário precisa trocar a senha padrão ("1234")
       if (resultado.senhaPadrao) {
         document.getElementById("modalSenha").style.display = "block";
       } else {
-        render(); // Inicia o seu sistema
+        render(); 
       }
-
     } else {
       console.warn("❌ [LOGIN] Servidor recusou o acesso:", resultado.erro);
       return showMsg(resultado.erro || "Login inválido", "error", 3000);
