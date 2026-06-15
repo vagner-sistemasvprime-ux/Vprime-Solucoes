@@ -9378,10 +9378,27 @@ function abrirModalAdicionaisDelivery(idxItem) {
   const titulo = document.getElementById("tituloAdicionalModal");
   const subtitulo = document.getElementById("subtituloAdicionalModal");
 
+  // ✨ FUNÇÃO AUXILIAR: Remove acentos, pontuações e espaços extras (AÇAÍ vira ACAI)
+  const normalizarTexto = (txt) => {
+    return String(txt || "")
+      .trim()
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
+
+  const categoriaItemLimpa = normalizarTexto(item.categoria);
   const listaGlobal = window.listaAdicionaisGlobal || [];
+  
+  // 🎯 FILTRAGEM BLINDADA (Ignora diferenças de acento e caixa)
   const filtrados = listaGlobal.filter(ad => {
-    return ad.categoria.toUpperCase() === item.categoria.toUpperCase() && 
-           String(ad.ativo).toUpperCase() === "TRUE";
+    const categoriaAdLimpa = normalizarTexto(ad.categoria);
+    
+    const isAtivo = ad.ativo === true || 
+                    String(ad.ativo).trim().toUpperCase() === "TRUE" || 
+                    Number(ad.ativo) === 1;
+
+    return categoriaAdLimpa === categoriaItemLimpa && isAtivo;
   });
 
   if (filtrados.length === 0) {
@@ -9400,21 +9417,26 @@ function abrirModalAdicionaisDelivery(idxItem) {
     listaDiv.innerHTML = filtrados.map(ad => {
       const adExistente = (item.adicionais || []).find(a => a.nome === ad.nome);
       const qtd = adExistente ? adExistente.qtd : 0;
-      const idChaveLimpa = ad.nome.replace(/\s+/g, '');
+      
+      // Remove espaços e caracteres especiais para gerar o ID do span sem quebrar o HTML
+      const idChaveLimpa = ad.nome.replace(/[^a-zA-Z0-9]/g, '');
+      
+      // Escape de aspas simples caso o nome do adicional tenha aspas (ex: "d'alho")
+      const nomeAdicionalEscapado = ad.nome.replace(/'/g, "\\'");
       
       return `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9;">
           <div style="flex: 1;">
             <div style="font-weight: 600; color: #334155;">${ad.nome}</div>
-            <div style="font-size: 13px; color: #10b981; font-weight: bold;">+ R$ ${Number(ad.preco).toFixed(2)}</div>
+            <div style="font-size: 13px; color: #10b981; font-weight: bold;">+ R$ ${Number(ad.preco).toFixed(2).replace(".", ",")}</div>
           </div>
           <div style="display: flex; align-items: center; gap: 12px; background: #f8fafc; padding: 5px 10px; border-radius: 20px;">
-            <button onclick="ajustarAdicionalDelivery(${idxItem}, '${ad.nome}', -1)" 
+            <button onclick="ajustarAdicionalDelivery(${idxItem}, '${nomeAdicionalEscapado}', -1)" 
                     style="width:26px; height:26px; border-radius:50%; border:1px solid #cbd5e1; background:white; cursor:pointer;">-</button>
             
             <span id="qtd-ad-deliv-${idChaveLimpa}" style="font-weight:bold; min-width:20px; text-align:center;">${qtd}</span>
             
-            <button onclick="ajustarAdicionalDelivery(${idxItem}, '${ad.nome}', 1)" 
+            <button onclick="ajustarAdicionalDelivery(${idxItem}, '${nomeAdicionalEscapado}', 1)" 
                     style="width:26px; height:26px; border-radius:50%; border:none; background:#6366f1; color:white; cursor:pointer;">+</button>
           </div>
         </div>
@@ -9450,7 +9472,9 @@ function ajustarAdicionalDelivery(idxItem, nomeAdicional, mudança) {
   const itemAchado = item.adicionais.find(a => a.nome === nomeAdicional);
   const novaQtd = itemAchado ? itemAchado.qtd : 0;
   
-  const el = document.getElementById(`qtd-ad-deliv-${nomeAdicional.replace(/\s+/g, '')}`);
+  // ⚡ CORREÇÃO AQUI: Garante que o seletor de ID limpe caracteres especiais igualzinho ao gerador do HTML
+  const idChaveLimpa = nomeAdicional.replace(/[^a-zA-Z0-9]/g, '');
+  const el = document.getElementById(`qtd-ad-deliv-${idChaveLimpa}`);
   if (el) el.innerText = novaQtd;
 }
 
