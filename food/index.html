@@ -9726,23 +9726,26 @@ function finalizarVenda() {
     return response.json();
   })
   .then(respostaServidor => {
-    let numeroPedido = respostaServidor;
-    if (respostaServidor && typeof respostaServidor === "object") {
-      numeroPedido = respostaServidor.numeroPedido;
-      if (respostaServidor.palavraChave) {
-        dadosVenda.palavraChave = respostaServidor.palavraChave;
-      }
+    // Se o backend disparar um "throw new Error", o 'sucesso: false' cai aqui e gera o alerta na tela
+    if (respostaServidor && respostaServidor.sucesso === false) {
+      throw new Error(respostaServidor.erro || "Erro interno no servidor.");
     }
+
+    // 🎯 Captura o retorno em texto ("PED-XXXXX" ou "ATUALIZADO") vindo da sua função original
+    const resultadoOriginal = respostaServidor ? respostaServidor.retorno : null;
 
     if (btnFinalizar) {
       btnFinalizar.disabled = false;
       btnFinalizar.innerHTML = "✅ Finalizar Venda";
     }
-    if (avisoSenha) avisoSenha.innerText = "";
+    if (avisoSenha) avisoSenha.innerText = "";  
 
-    const nPedidoExibicao = numeroPedido || idPedidoOriginal || "REGISTRADO";
+    // Define qual número exibir com base na resposta da planilha
+    const nPedidoExibicao = (resultadoOriginal && resultadoOriginal !== "ATUALIZADO") 
+      ? resultadoOriginal 
+      : (idPedidoOriginal || "REGISTRADO");
 
-    if (numeroPedido === "ATUALIZADO" || (formaPagamento === "PIX" && idPedidoOriginal)) {
+    if (resultadoOriginal === "ATUALIZADO" || (formaPagamento === "PIX" && idPedidoOriginal)) {
       dadosVenda.numeroPedido = idPedidoOriginal;
       exibirModal({
         titulo: "Pagamento Concluído!",
@@ -9757,25 +9760,26 @@ function finalizarVenda() {
       } catch (e) {
         console.warn("Falha ao invocar a impressão automática:", e);
       }
-      exibirModal({
-        titulo: "Sucesso!",
-        mensagem: `Venda registrada com sucesso!<br><b>Pedido Número: ${nPedidoExibicao}</b>${dadosVenda.palavraChave ? '<br>Palavra-Chave: ' + dadosVenda.palavraChave : ''}`,
-        tipo: "sucesso"
+      exibirModal({ 
+        titulo: "Sucesso!", 
+        mensagem: `Venda registrada com sucesso!<br><b>Pedido Número: ${nPedidoExibicao}</b>`, 
+        tipo: "sucesso" 
       });
     }
 
-    // --- LIMPEZA COMPLETA (igual à primeira função) ---
-    if (typeof pixJaAprovado !== "undefined") window.pixJaAprovado = false;
+    // --- 🧹 BLOCO DE LIMPEZA DO SEU FRONT-END (MANTIDO IGUAL) ---
+    if (typeof pixJaAprovado !== "undefined") window.pixJaAprovado = false; 
 
     const checkCB = document.getElementById("pdvUsarCashback");
     if (checkCB) checkCB.checked = false;
+
     if (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cashback) {
       pdvBeneficiosAtivos.cashback.saldoSendoUsado = 0;
     }
-
+    
     window.taxaEntregaAtual = 0;
-    window.carrinhoData = [];
-
+    window.carrinhoData = []; 
+    
     if (typeof renderCarrinho === "function") {
       try { renderCarrinho(); } catch(e) { console.error("Erro ao renderizar carrinho vazio:", e); }
     }
@@ -9783,39 +9787,43 @@ function finalizarVenda() {
     document.querySelectorAll(".pagamento-formas button").forEach(btn => btn.classList.remove("ativo"));
 
     const inputsParaLimpar = ["formaPagamento", "valorPago", "troco", "ruaNumero", "referencia", "selectBairro", "observacoes", "nomeCliente", "telefoneCliente"];
-    inputsParaLimpar.forEach(id => {
+    inputsParaLimpar.forEach(id => { 
       const el = document.getElementById(id);
-      if (el) el.value = "";
+      if (el) el.value = ""; 
     });
-
-    if (document.getElementById("paraEntrega")) document.getElementById("paraEntrega").checked = false;
-    if (document.getElementById("vendaRapida")) document.getElementById("vendaRapida").checked = false;
-    if (document.getElementById("blocoEntrega")) document.getElementById("blocoEntrega").style.display = "none";
+    
+    const peEl = document.getElementById("paraEntrega");
+    const vrEl = document.getElementById("vendaRapida");
+    const beEl = document.getElementById("blocoEntrega");
+    
+    if (peEl) peEl.checked = false;
+    if (vrEl) vrEl.checked = false;
+    if (beEl) beEl.style.display = "none";
 
     if (typeof pdvBeneficiosAtivos !== "undefined") {
       pdvBeneficiosAtivos.cupom = { ativo: false, tipo: "", valor: 0, codigo: "" };
       pdvBeneficiosAtivos.cashback = { ativo: false, saldoDisponivel: 0, saldoSendoUsado: 0, compraMinima: 0 };
     }
-
+    
     const avisoCupom = document.getElementById("pdvCupomAviso");
     if (avisoCupom) avisoCupom.innerText = "";
     const txtCupom = document.getElementById("pdvCupomTexto");
     if (txtCupom) txtCupom.value = "";
-
+    
     const areaInfoCB = document.getElementById("pdvAreaCashbackInfo");
     if (areaInfoCB) areaInfoCB.innerHTML = "💡 Insira o telefone do cliente na área de entrega para consultar o saldo disponível.";
     const containerCB = document.getElementById("pdvContainerCheckCashback");
     if (containerCB) containerCB.style.display = "none";
 
     const avisoDescontoPrincipal = document.getElementById("pdvDescontoManualAviso");
-    if (avisoDescontoPrincipal) avisoDescontoPrincipal.innerText = "";
+    if (avisoDescontoPrincipal) avisoDescontoPrincipal.innerText = ""; 
     const txtDescontoManual = document.getElementById("pdvDescontoManual");
-    if (txtDescontoManual) txtDescontoManual.value = "";
+    if (txtDescontoManual) txtDescontoManual.value = ""; 
     const txtSenhaAdmin = document.getElementById("pdvSenhaAdmin");
-    if (txtSenhaAdmin) txtSenhaAdmin.value = "";
+    if (txtSenhaAdmin) txtSenhaAdmin.value = ""; 
     const avisoInternoModal = document.getElementById("pdvAvisoSenhaAdmin");
-    if (avisoInternoModal) avisoInternoModal.innerText = "";
-
+    if (avisoInternoModal) avisoInternoModal.innerText = ""; 
+    
     window.pdvDescontoValidado = 0;
     window.pdvDescontoValidated = 0;
     window.pdvDescontoManualCalculado = 0;
