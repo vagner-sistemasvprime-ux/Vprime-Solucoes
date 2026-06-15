@@ -9696,13 +9696,13 @@ function finalizarVenda() {
     const ruaNum = (document.getElementById("ruaNumero")?.value || "").trim();
     const campoBairro = document.getElementById("selectBairro");
     const bairroNome = (campoBairro && campoBairro.selectedIndex >= 0) ? campoBairro.options[campoBairro.selectedIndex].text : "";
-    const cidadeNome = (campoBairro && campoBairro.selectedIndex >= 0) ? campoBairro.options[campoBairro.selectedIndex].getAttribute("data-cidade") || "" : "";
+    const cityNome = (campoBairro && campoBairro.selectedIndex >= 0) ? campoBairro.options[campoBairro.selectedIndex].getAttribute("data-cidade") || "" : "";
     const ref = (document.getElementById("referencia")?.value || "").trim();
     if (!ruaNum || !bairroNome || bairroNome === "Selecione...") {
       if (avisoSenha) avisoSenha.innerText = "";
       return exibirModal({ titulo: "Dados Incompletos", mensagem: "Preencha Rua/Número e Bairro.", tipo: "alerta" });
     }
-    enderecoFinal = `${ruaNum} - ${bairroNome}, ${cidadeNome}${ref ? ' (Ref: ' + ref + ')' : ''}`;
+    enderecoFinal = `${ruaNum} - ${bairroNome}, ${cityNome}${ref ? ' (Ref: ' + ref + ')' : ''}`;
   }
 
   if (btnFinalizar) {
@@ -9713,7 +9713,6 @@ function finalizarVenda() {
   const itemComPedido = dadosCarrinho.find(item => item.numeroPedido);
   const idPedidoOriginal = itemComPedido ? itemComPedido.numeroPedido : null;
 
-  // ✅ CORREÇÃO CRÍTICA: Typo corrigido de "pdvBeneficiosAt" para "pdvBeneficiosAtivos"
   const cupomCod = (typeof pdvBeneficiosAtivos !== "undefined" && pdvBeneficiosAtivos.cupom && pdvBeneficiosAtivos.cupom.codigo)
     ? String(pdvBeneficiosAtivos.cupom.codigo).trim().toUpperCase()
     : "";
@@ -9760,7 +9759,7 @@ function finalizarVenda() {
     isVendaRapida: isVendaRapida,
     statusFinanceiro: (formaPagamento === "PENDENTE") ? "PENDENTE" : "PAGO",
     endereco: enderecoFinal,
-    palavraChave: "", // GAS preenche via listarPalavras() e retorna no response
+    palavraChave: "", 
     observacoes: (document.getElementById("observacoes")?.value || "").trim(),
     total: totalLiquidoVenda,
     cupomUtilizado: cupomPreenchidoEDigitado ? cupomCod : "",
@@ -9770,39 +9769,38 @@ function finalizarVenda() {
     itens: itensFormatados
   };
 
-  fetch(URL_API_GOOGLE, {
-    method: "POST",
-    body: JSON.stringify({
-      acao: "REGISTRAR_VENDA",
-      nomeLoja: CONFIG.cliente.nomeFixo,
-      vendaData: dadosVenda
-    })
-  })
-  .then(response => {
-    if (!response.ok) throw new Error("Erro de conexão com o terminal central.");
-    return response.json();
-  })
-  .then(respostaServidor => {
-    // Se o backend disparar um "throw new Error", o 'sucesso: false' cai aqui e gera o alerta na tela
-    if (respostaServidor && respostaServidor.sucesso === false) {
-      throw new Error(respostaServidor.erro || "Erro interno no servidor.");
-    }
+  // =========================================================================
+  // 🛰️ INÍCIO DA ADAPTAÇÃO CIRÚRGICA: CONTINGÊNCIA LOCALSTORAGE
+  // =========================================================================
+  const pacoteEnvioCompleto = {
+    acao: "REGISTRAR_VENDA",
+    nomeLoja: CONFIG.cliente.nomeFixo,
+    vendaData: dadosVenda
+  };
 
-    // 🎯 Captura o retorno em texto ("PED-XXXXX" ou "ATUALIZADO") vindo da sua função original
-    const resultadoOriginal = respostaServidor ? respostaServidor.retorno : null;
-
+  // Promessa unificada para processar a resposta visual e de limpeza
+  const processarPosVendaGeral = (resultadoOriginal) => {
     if (btnFinalizar) {
       btnFinalizar.disabled = false;
       btnFinalizar.innerHTML = "✅ Finalizar Venda";
     }
     if (avisoSenha) avisoSenha.innerText = "";  
 
-    // Define qual número exibir com base na resposta da planilha
-    const nPedidoExibicao = (resultadoOriginal && resultadoOriginal !== "ATUALIZADO") 
+    const nPedidoExibicao = (resultadoOriginal && resultadoOriginal !== "ATUALIZADO" && resultadoOriginal !== "PED-OFFLINE") 
       ? resultadoOriginal 
       : (idPedidoOriginal || "REGISTRADO");
 
-    if (resultadoOriginal === "ATUALIZADO" || (formaPagamento === "PIX" && idPedidoOriginal)) {
+    if (resultadoOriginal === "PED-OFFLINE") {
+      // Configura número offline temporário para o cupom não sair em branco
+      dadosVenda.numeroPedido = "OFF-" + Math.floor(1000 + Math.random() * 9000);
+      try { if (typeof imprimirComprovante === "function") imprimirComprovante(dadosVenda); } catch (e) {}
+      
+      exibirModal({
+        titulo: "Modo Offline",
+        mensagem: "Seu dispositivo perdeu a conexão. A venda foi impressa e salva localmente no navegador e subirá para a planilha assim que a internet estabilizar.",
+        tipo: "alerta"
+      });
+    } else if (resultadoOriginal === "ATUALIZADO" || (formaPagamento === "PIX" && idPedidoOriginal)) {
       dadosVenda.numeroPedido = idPedidoOriginal;
       exibirModal({
         titulo: "Pagamento Concluído!",
@@ -9812,11 +9810,7 @@ function finalizarVenda() {
       });
     } else {
       dadosVenda.numeroPedido = nPedidoExibicao;
-      try {
-        if (typeof imprimirComprovante === "function") imprimirComprovante(dadosVenda);
-      } catch (e) {
-        console.warn("Falha ao invocar a impressão automática:", e);
-      }
+      try { if (typeof imprimirComprovante === "function") imprimirComprovante(dadosVenda); } catch (e) {}
       exibirModal({ 
         titulo: "Sucesso!", 
         mensagem: `Venda registrada com sucesso!<br><b>Pedido Número: ${nPedidoExibicao}</b>`, 
@@ -9824,7 +9818,7 @@ function finalizarVenda() {
       });
     }
 
-    // --- 🧹 BLOCO DE LIMPEZA DO SEU FRONT-END (MANTIDO IGUAL) ---
+    // --- 🧹 SEU BLOCO DE LIMPEZA E RESET DE MEMÓRIA ORIGINAL INTEGRO CONTIDO ABAIXO ---
     if (typeof pixJaAprovado !== "undefined") window.pixJaAprovado = false; 
 
     const checkCB = document.getElementById("pdvUsarCashback");
@@ -9886,20 +9880,135 @@ function finalizarVenda() {
     window.pdvDescontoManualCalculado = 0;
 
     if (typeof listarPendentesPagamento === "function") listarPendentesPagamento();
+  };
+
+  // Executa rotina de salvamento local interno auxiliar
+  const executarSalvamentoLocalStorage = () => {
+    try {
+      pacoteEnvioCompleto.vendaData.observacoes = "[OFFLINE] " + (pacoteEnvioCompleto.vendaData.observacoes || "");
+      let filaAtual = JSON.parse(localStorage.getItem("pdv_vendas_offline")) || [];
+      filaAtual.push(pacoteEnvioCompleto);
+      localStorage.setItem("pdv_vendas_offline", JSON.stringify(filaAtual));
+    } catch(errStorage) {
+      console.error("Erro ao gravar no localStorage:", errStorage);
+    }
+  };
+
+  // 1. Verificação Primária antes do fetch (Dispositivo totalmente Offline)
+  if (!navigator.onLine) {
+    executarSalvamentoLocalStorage();
+    processarPosVendaGeral("PED-OFFLINE");
+    return;
+  }
+
+  // 2. Fluxo de envio padrão online com interceptador de queda repentina
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify(pacoteEnvioCompleto)
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro de conexão com o terminal central.");
+    return response.json();
+  })
+  .then(respostaServidor => {
+    if (respostaServidor && respostaServidor.sucesso === false) {
+      throw new Error(respostaServidor.erro || "Erro interno no servidor.");
+    }
+    const resultadoOriginal = respostaServidor ? respostaServidor.retorno : null;
+    
+    // Dispara o término contínuo online estável
+    processarPosVendaGeral(resultadoOriginal);
   })
   .catch(err => {
-    if (btnFinalizar) {
-      btnFinalizar.disabled = false;
-      btnFinalizar.innerHTML = "✅ Finalizar Venda";
+    // Se caiu a internet durante a requisição ou deu erro de timeout de rede
+    if (err.message.includes("Failed to fetch") || err.message.includes("conexão") || err.name === "TypeError") {
+      console.warn("Queda de rede detectada no meio do envio. Salvando no cache local...");
+      executarSalvamentoLocalStorage();
+      processarPosVendaGeral("PED-OFFLINE");
+    } else {
+      // Erros lógicos vindos da planilha (ex: senha errada do gerente) não devem ir para o localStorage
+      if (btnFinalizar) {
+        btnFinalizar.disabled = false;
+        btnFinalizar.innerHTML = "✅ Finalizar Venda";
+      }
+      if (avisoSenha) {
+        avisoSenha.style.color = "#ef4444";
+        avisoSenha.innerText = `❌ ${err.message || err}`;
+      }
+      exibirModal({ titulo: "Erro no Servidor", mensagem: err.message || err, tipo: "erro" });
     }
-    if (avisoSenha) {
-      avisoSenha.style.color = "#ef4444";
-      avisoSenha.innerText = `❌ ${err.message || err}`;
+  });  
+}
+
+
+  /**
+ * =========================================================================
+ * 🛰️ ROTINA DE SINCRONIZAÇÃO AUTOMÁTICA (VENDAS OFFLINE -> PLANILHA)
+ * =========================================================================
+ */
+function sincronizarVendasOffline() {
+  // Se o dispositivo estiver offline no momento, nem tenta processar a fila
+  if (!navigator.onLine) return;
+
+  let fila = [];
+  try {
+    fila = JSON.parse(localStorage.getItem("pdv_vendas_offline")) || [];
+  } catch (e) {
+    console.error("Erro ao ler fila do localStorage:", e);
+    return;
+  }
+
+  // Se não houver vendas na fila, encerra a rotina
+  if (fila.length === 0) return;
+
+  console.log(`🔄 Conexão ativa! Sincronizando ${fila.length} pedido(s) pendente(s) com a planilha...`);
+
+  // Pega o primeiro item da fila (Mais antigo) para enviar
+  const pacoteParaEnviar = fila[0];
+
+  fetch(URL_API_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify(pacoteParaEnviar)
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Erro de rede ao sincronizar item.");
+    return response.json();
+  })
+  .then(res => {
+    // Se o servidor aceitou e processou com sucesso (ou se retornou o número do pedido)
+    if (res && res.sucesso !== false) {
+      console.log("🚀 Pedido offline enviado e gravado na planilha com sucesso!");
+      
+      // Remove o item que acabou de ser enviado da fila
+      fila.shift();
+      localStorage.setItem("pdv_vendas_offline", JSON.stringify(fila));
+      
+      // Chama recursivamente para processar o próximo item da fila (se houver)
+      sincronizarVendasOffline();
+    } else {
+      throw new Error(res.erro || "Rejeitado pelo servidor.");
     }
-    exibirModal({ titulo: "Erro no Servidor", mensagem: err.message || err, tipo: "erro" });
+  })
+  .catch(err => {
+    // Se falhar por instabilidade de rede, para o laço e tenta novamente na próxima oscilação
+    console.warn("⚠ Tentativa de sincronização falhou (rede instável ou erro lógico). Aguardando estabilização...", err.message);
   });
 }
 
+// 📡 Ouvintes nativos do navegador: Disparados assim que o sinal de internet volta
+window.addEventListener("online", () => {
+  // Aguarda 3 segundos após o sinal voltar para garantir que o canal de dados estabilizou de verdade
+  setTimeout(sincronizarVendasOffline, 3000);
+});
+
+// 🔄 Executa também imediatamente ao carregar a página (caso o operador tenha fechado o PDV com itens na fila)
+document.addEventListener("DOMContentLoaded", () => {
+  if (navigator.onLine) {
+    sincronizarVendasOffline();
+  }
+});
+
+  
 /**
  * Força parâmetros de quitação de fluxo para transações via PIX aprovadas por Gateway/Webhook
  */
