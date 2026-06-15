@@ -17,112 +17,102 @@
   <script>
 
     // 1. Captura o ID da loja na URL (ex: ?loja=piloto)
-    const parametrosUrl = new URLSearchParams(window.location.search);
-    const idLojaAtual = parametrosUrl.get("loja") || "piloto"; 
+const parametrosUrl = new URLSearchParams(window.location.search);
+const idLojaAtual = parametrosUrl.get("loja") || "piloto"; 
 
-    // 2. Busca as configurações específicas do lojista selecionado
-    const dadosLoja = ROTAS_LOJISTAS[idLojaAtual];
+// Tenta buscar no arquivo de rotas (Mecanismo Online Padrão)
+let dadosLoja = typeof ROTAS_LOJISTAS !== "undefined" ? ROTAS_LOJISTAS[idLojaAtual] : null;
 
-    // Criação do objeto global CONFIG de forma segura e preventiva se ele não existir
-    var CONFIG = CONFIG || {};
-
-    if (!dadosLoja) {
-      console.error(`🚨 ERRO CRÍTICO: O ID de loja '${idLojaAtual}' não foi encontrado no objeto ROTAS_LOJISTAS.`);
-      alert("🚨 Erro: Esta loja não foi localizada em nosso sistema de rotas.");
-    } else {
-      // 3. Solução Multitenant Nativa + Fallbacks de Segurança Embutidos
-      Object.assign(CONFIG, dadosLoja, {
-        planilha: {
-          id: dadosLoja.idPlanilha || "" 
-        },
-        cliente: {
-          nomeFixo: dadosLoja.nome,
-          linkCardapio: dadosLoja.linkCardapio, 
-          urlLogo: dadosLoja.urlLogo
-        },
-        
-        tempo: {
-          intervaloVigilancia: dadosLoja.intervaloVigilancia || 5000
-        },
-    
-        plano: dadosLoja.plano || "PADRAO",
-        
-        pix: {
-          tipo: (dadosLoja.plano === "PADRAO") ? "manual" : (dadosLoja.tipoPix || "manual")
-        },
-        
-        gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
-        pedidos: {
-          tempoMaxCancelamento: dadosLoja.tempoMaxCancelamento || 30
-        },
-        impressao: {
-          larguraPadrao: dadosLoja.larguraImpressao || "58"
-        }
-      });
-
-      // 4. Guarda a URL da API global que o fetch usará para enviar as requisições
-      var URL_API_GOOGLE = dadosLoja.urlGoogleAPI;
-
-      // 1. Altera o título da página dinamicamente com o nome do lojista
-      document.title = CONFIG.cliente.nomeFixo;
-
-      // 🎯 2. ALTERA O ÍCONE DA ABA DO NAVEGADOR (FAVICON) COM A URL DA LOGO
-      const favicon = document.getElementById("favicon-loja");
-      if (favicon && CONFIG.cliente.urlLogo) {
-        favicon.href = CONFIG.cliente.urlLogo;
-        console.log("🖼️ [FAVICON] Ícone da aba atualizado para a logo do lojista!");
-      }
-
-      // 🎯 A MÁGICA VISUAL: Aplica a cor do lojista dinamicamente no CSS!
-      if (dadosLoja.corTema) {
-        // Altera o valor da variável --primary em tempo de execução
-        document.documentElement.style.setProperty('--primary', dadosLoja.corTema);
-        console.log(`🎨 [TEMA] A cor primária do sistema foi alterada para: ${dadosLoja.corTema}`);
-      }
-
-
-
-      // 🎯 PWA MULTILOJA: Atualiza a URL de inicialização do aplicativo com a loja atual do cliente
-const linkManifest = document.querySelector('link[rel="manifest"]');
-if (linkManifest) {
-  // Cria um manifesto dinâmico em formato de texto (Data URI)
-  const novoManifesto = {
-    "name": `Painel - ${CONFIG.cliente.nomeFixo}`,
-    "short_name": CONFIG.cliente.nomeFixo,
-    "start_url": `./index.html?loja=${idLojaAtual}`, // 👈 AQUI ESTÁ O SEGREDO!
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": dadosLoja.corTema || "#6366f1",
-    "icons": [
-      { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
-      { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" }
-    ]
-  };
-
-  // Transforma o objeto em um link que o navegador consegue ler em tempo real
-  const stringManifesto = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(novoManifesto));
-  linkManifest.setAttribute('href', stringManifesto);
-  console.log(`📱 [PWA] Manifesto customizado aplicado para a loja: ${idLojaAtual}`);
+// 💾 MECANISMO DE CONTINGÊNCIA PARA ROTAS OFFLINE
+if (!dadosLoja && !navigator.onLine) {
+  console.log("🧩 [ROTAS OFFLINE] Tentando recuperar configurações da loja no cache local...");
+  const cacheLojaSalva = localStorage.getItem("cache_dados_da_loja_ativa");
+  if (cacheLojaSalva) {
+    dadosLoja = JSON.parse(cacheLojaSalva);
+    console.warn(`🏠 [ROTAS OFFLINE] Sucesso! Carregado dados salvos da loja: "${dadosLoja.nome}"`);
+  }
 }
 
-      
-      // =========================================================================
-      // 📊 RELATÓRIO DO LOJISTA ATIVO (SISTEMA MULTITENANT)
-      // =========================================================================
-      console.log("==================================================");
-      console.log(`🏬 LOJISTA DETECTADO NA URL: "${idLojaAtual.toUpperCase()}"`);
-      console.log("==================================================");
-      console.log("📁 Nome Fantasia :", CONFIG.cliente.nomeFixo);
-      console.log("📊 Plano Atual   :", CONFIG.plano);
-      console.log("💵 Gateway PIX   :", CONFIG.pix.tipo.toUpperCase());
-      console.log("🔗 URL da API    :", URL_API_GOOGLE);
-      console.log("📄 ID Planilha   :", CONFIG.planilha.id);
-      console.log("🍽️ Gestão de Mesa:", CONFIG.gerenciamentoMesa);
-      console.log("🖨️ Impressora    :", CONFIG.impressao.larguraPadrao + "mm");
-      console.log("==================================================");
+// Criação do objeto global CONFIG de forma segura e preventiva se ele não existir
+var CONFIG = CONFIG || {};
 
-      window.CONFIG_PILOTO_OK = true; 
+if (!dadosLoja) {
+  console.error(`🚨 ERRO CRÍTICO: O ID de loja '${idLojaAtual}' não foi encontrado.`);
+  alert("🚨 Erro: Esta loja não foi localizada em nosso sistema de rotas.");
+} else {
+  // 💾 Se estiver online e encontrou a loja, salva no cache para a próxima vez que ficar offline
+  if (navigator.onLine) {
+    try {
+      localStorage.setItem("cache_dados_da_loja_ativa", JSON.stringify(dadosLoja));
+    } catch(e) {
+      console.warn("Falha ao salvar cache de rotas da loja", e);
     }
+  }
+
+  // 3. Solução Multitenant Nativa + Fallbacks de Segurança Embutidos
+  Object.assign(CONFIG, dadosLoja, {
+    planilha: {
+      id: dadosLoja.idPlanilha || "" 
+    },
+    cliente: {
+      nomeFixo: dadosLoja.nome,
+      linkCardapio: dadosLoja.linkCardapio, 
+      urlLogo: dadosLoja.urlLogo
+    },
+    tempo: {
+      intervaloVigilancia: dadosLoja.intervaloVigilancia || 5000
+    },
+    plano: dadosLoja.plano || "PADRAO",
+    pix: {
+      tipo: (dadosLoja.plano === "PADRAO") ? "manual" : (dadosLoja.tipoPix || "manual")
+    },
+    gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
+    pedidos: {
+      tempoMaxCancelamento: dadosLoja.tempoMaxCancelamento || 30
+    },
+    impressao: {
+      larguraPadrao: dadosLoja.larguraImpressao || "58"
+    }
+  });
+
+  // 4. Guarda a URL da API global que o fetch usará para enviar as requisições
+  var URL_API_GOOGLE = dadosLoja.urlGoogleAPI;
+
+  // Altera o título da página dinamicamente com o nome do lojista
+  document.title = CONFIG.cliente.nomeFixo;
+
+  // Altera o ícone da aba do navegador (Favicon)
+  const favicon = document.getElementById("favicon-loja");
+  if (favicon && CONFIG.cliente.urlLogo) {
+    favicon.href = CONFIG.cliente.urlLogo;
+  }
+
+  // Aplica a cor do lojista dinamicamente no CSS
+  if (dadosLoja.corTema) {
+    document.documentElement.style.setProperty('--primary', dadosLoja.corTema);
+  }
+
+  // PWA MULTILOJA: Atualiza a URL de inicialização do manifesto dinâmico
+  const linkManifest = document.querySelector('link[rel="manifest"]');
+  if (linkManifest) {
+    const novoManifesto = {
+      "name": `Painel - ${CONFIG.cliente.nomeFixo}`,
+      "short_name": CONFIG.cliente.nomeFixo,
+      "start_url": `./index.html?loja=${idLojaAtual}`,
+      "display": "standalone",
+      "background_color": "#ffffff",
+      "theme_color": dadosLoja.corTema || "#6366f1",
+      "icons": [
+        { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" }
+      ]
+    };
+    const stringManifesto = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(novoManifesto));
+    linkManifest.setAttribute('href', stringManifesto);
+  }
+  
+  window.CONFIG_PILOTO_OK = true; 
+}
 </script>
   
   <script>
