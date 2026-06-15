@@ -21,97 +21,93 @@
 // 1. Captura o ID da loja na URL
 const parametrosUrl = new URLSearchParams(window.location.search);
 const idLojaAtual = parametrosUrl.get("loja") || "piloto"; 
-console.log(`🔍 [LOG ROTAS] ID da loja pego na URL: "${idLojaAtual}"`);
 
-// Tenta verificar se o objeto global ROTAS_LOJISTAS existe
-console.log("📦 [LOG ROTAS] ROTAS_LOJISTAS existe na memória?", typeof ROTAS_LOJISTAS !== "undefined" ? "SIM" : "NÃO");
-
+// Tenta buscar no arquivo de rotas (Modo Online)
 let dadosLoja = typeof ROTAS_LOJISTAS !== "undefined" ? ROTAS_LOJISTAS[idLojaAtual] : null;
-console.log("📋 [LOG ROTAS] dadosLoja encontrados no arquivo de rotas?", dadosLoja ? "SIM" : "NÃO");
 
-// 💾 MECANISMO DE CONTINGÊNCIA PARA ROTAS OFFLINE
+// 💾 1ª CAMADA DE SEGURANÇA: Busca no Cache Local
 if (!dadosLoja) {
-  console.log("📡 [LOG ROTAS] dadosLoja está vazio. Navegador está online?", navigator.onLine ? "SIM" : "NÃO");
-  
-  const cacheLojaSalva = localStorage.getItem("cache_dados_da_loja_ativa");
-  console.log("💾 [LOG ROTAS] O que tem salvo no localStorage('cache_dados_da_loja_ativa')?:", cacheLojaSalva);
-
-  if (cacheLojaSalva) {
-    try {
+  try {
+    const cacheLojaSalva = localStorage.getItem("cache_dados_da_loja_ativa");
+    if (cacheLojaSalva) {
       dadosLoja = JSON.parse(cacheLojaSalva);
-      console.warn(`🏠 [LOG ROTAS] Sucesso ao ler o cache! Loja recuperada localmente: "${dadosLoja.nome}"`);
-    } catch (e) {
-      console.error("🚨 [LOG ROTAS] Erro ao dar JSON.parse no cache da loja:", e);
     }
+  } catch (e) {
+    console.warn("Falha ao ler localStorage", e);
   }
+}
+
+// 🛡️ 2ª CAMADA DE SEGURANÇA (HARDCODED FALLBACK): 
+// Se o arquivo rotas.js falhar offline E o localStorage estiver vazio, montamos um objeto básico para o sistema NÃO quebrar a linha 43
+if (!dadosLoja) {
+  console.warn("⚠️ [ROTAS] Online e Cache falharam. Aplicando objeto de contingência fixo.");
+  dadosLoja = {
+    nome: idLojaAtual.toUpperCase(), // Evita o erro de ler 'nome' de undefined
+    idPlanilha: "",
+    linkCardapio: "",
+    urlLogo: "./cardapio/logo-padrao.png", // Ajuste para a logo local
+    urlGoogleAPI: "OFFLINE",
+    corTema: "#6366f1",
+    plano: "PADRAO"
+  };
 }
 
 // Criação do objeto global CONFIG de forma segura
 var CONFIG = CONFIG || {};
 
-if (!dadosLoja) {
-  console.error(`🚨 [LOG ROTAS] ERRO CRÍTICO ENTRANDO NO IF: O ID '${idLojaAtual}' não foi resolvido de nenhuma forma.`);
-  alert("🚨 Erro: Esta loja não foi localizada em nosso sistema de rotas.");
-} else {
-  console.log("⚙️ [LOG ROTAS] Iniciando montagem do objeto CONFIG...");
-  
-  if (navigator.onLine) {
-    try {
-      localStorage.setItem("cache_dados_da_loja_ativa", JSON.stringify(dadosLoja));
-      console.log("💾 [LOG ROTAS] Configurações da loja salvas no localStorage para os próximos acessos offline.");
-    } catch(e) {
-      console.warn("⚠️ [LOG ROTAS] Falha ao salvar cache de rotas da loja no dispositivo:", e);
-    }
-  }
+// ⚙️ Montagem do Config Garantida (dadosLoja nunca mais será undefined aqui)
+Object.assign(CONFIG, dadosLoja, {
+  planilha: { id: dadosLoja.idPlanilha || "" },
+  cliente: {
+    nomeFixo: dadosLoja.nome || "Sistema",
+    linkCardapio: dadosLoja.linkCardapio || "", 
+    urlLogo: dadosLoja.urlLogo || ""
+  },
+  tempo: { intervaloVigilancia: dadosLoja.intervaloVigilancia || 5000 },
+  plano: dadosLoja.plano || "PADRAO",
+  pix: { tipo: (dadosLoja.plano === "PADRAO") ? "manual" : (dadosLoja.tipoPix || "manual") },
+  gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
+  pedidos: { tempoMaxCancelamento: dadosLoja.tempoMaxCancelamento || 30 },
+  impressao: { larguraPadrao: dadosLoja.larguraImpressao || "58" }
+});
 
-  // 3. Montagem do Config
-  Object.assign(CONFIG, dadosLoja, {
-    planilha: { id: dadosLoja.idPlanilha || "" },
-    cliente: {
-      nomeFixo: dadosLoja.nome,
-      linkCardapio: dadosLoja.linkCardapio, 
-      urlLogo: dadosLoja.urlLogo
-    },
-    tempo: { intervaloVigilancia: dadosLoja.intervaloVigilancia || 5000 },
-    plano: dadosLoja.plano || "PADRAO",
-    pix: { tipo: (dadosLoja.plano === "PADRAO") ? "manual" : (dadosLoja.tipoPix || "manual") },
-    gerenciamentoMesa: dadosLoja.gerenciamentoMesa || "DESATIVADO",
-    pedidos: { tempoMaxCancelamento: dadosLoja.tempoMaxCancelamento || 30 },
-    impressao: { larguraPadrao: dadosLoja.larguraImpressao || "58" }
-  });
+var URL_API_GOOGLE = dadosLoja.urlGoogleAPI;
+document.title = CONFIG.cliente.nomeFixo;
 
-  var URL_API_GOOGLE = dadosLoja.urlGoogleAPI;
-  document.title = CONFIG.cliente.nomeFixo;
+const favicon = document.getElementById("favicon-loja");
+if (favicon && CONFIG.cliente.urlLogo) favicon.href = CONFIG.cliente.urlLogo;
 
-  const favicon = document.getElementById("favicon-loja");
-  if (favicon && CONFIG.cliente.urlLogo) favicon.href = CONFIG.cliente.urlLogo;
-
-  if (dadosLoja.corTema) {
-    document.documentElement.style.setProperty('--primary', dadosLoja.corTema);
-  }
-
-  // Manifesto Dinâmico PWA
-  const linkManifest = document.querySelector('link[rel="manifest"]');
-  if (linkManifest) {
-    const novoManifesto = {
-      "name": `Painel - ${CONFIG.cliente.nomeFixo}`,
-      "short_name": CONFIG.cliente.nomeFixo,
-      "start_url": `./index.html?loja=${idLojaAtual}`,
-      "display": "standalone",
-      "background_color": "#ffffff",
-      "theme_color": dadosLoja.corTema || "#6366f1",
-      "icons": [
-        { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
-        { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" }
-      ]
-    };
-    const stringManifesto = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(novoManifesto));
-    linkManifest.setAttribute('href', stringManifesto);
-  }
-  
-  window.CONFIG_PILOTO_OK = true; 
-  console.log("✅ [LOG ROTAS] Fim do script de rotas executado com sucesso.");
+if (dadosLoja.corTema) {
+  document.documentElement.style.setProperty('--primary', dadosLoja.corTema);
 }
+
+// 💾 Se estiver de fato ONLINE, salva o objeto real no localStorage para atualizar o cache
+if (navigator.onLine && typeof ROTAS_LOJISTAS !== "undefined" && ROTAS_LOJISTAS[idLojaAtual]) {
+  try {
+    localStorage.setItem("cache_dados_da_loja_ativa", JSON.stringify(ROTAS_LOJISTAS[idLojaAtual]));
+  } catch(e) {}
+}
+
+// Manifesto PWA
+const linkManifest = document.querySelector('link[rel="manifest"]');
+if (linkManifest) {
+  const novoManifesto = {
+    "name": `Painel - ${CONFIG.cliente.nomeFixo}`,
+    "short_name": CONFIG.cliente.nomeFixo,
+    "start_url": `./index.html?loja=${idLojaAtual}`,
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": dadosLoja.corTema || "#6366f1",
+    "icons": [
+      { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
+      { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" }
+    ]
+  };
+  const stringManifesto = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(novoManifesto));
+  linkManifest.setAttribute('href', stringManifesto);
+}
+
+window.CONFIG_PILOTO_OK = true;
 </script>
   
   <script>
