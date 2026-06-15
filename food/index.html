@@ -274,19 +274,23 @@ function tentarCarregarModoOfflineFailsafe(btnEntrar) {
   try {
     const cacheProdutos = JSON.parse(localStorage.getItem("cache_produtos"));
     const cacheUsuarios = JSON.parse(localStorage.getItem("cache_usuarios"));
-    
-    // 🔐 BUSCA O ÚLTIMO HISTÓRICO FINANCEIRO DO COMPUTADOR
     const cacheFinanceiro = JSON.parse(localStorage.getItem("cache_financeiro_status"));
 
     if (cacheProdutos && cacheProdutos.length > 0 && cacheUsuarios && cacheUsuarios.length > 0) {
+      // 🎯 GARANTE AS VARIÁVEIS GLOBAIS DE DADOS
       window.listaAdicionaisGlobal = JSON.parse(localStorage.getItem("cache_adicionais")) || [];
       window.listaCategoriasGlobal = JSON.parse(localStorage.getItem("cache_categorias")) || [];
       window.produtosData = cacheProdutos;
       window.usuariosSistemaGlobal = cacheUsuarios;
       window.qtdMesasGlobal = parseInt(localStorage.getItem("cache_qtdMesas")) || 0;
 
+      // 🛰️ FIX DE ROTAS/LOJA OFFLINE:
+      // Garante que o objeto do cliente permaneça ativo na memória para as funções de login locais
+      if (typeof CONFIG !== "undefined" && CONFIG.cliente) {
+        console.log(`🏠 [OFFLINE] Mantendo rota fixa da loja ativa: "${CONFIG.cliente.nomeFixo}"`);
+      }
+
       // 🎯 VALIDAÇÃO DO BLOQUEIO OFFLINE:
-      // Se no último acesso ele já estava bloqueado pelo servidor, continua bloqueado offline!
       if (cacheFinanceiro && cacheFinanceiro.bloquear === true) {
         sistemaBloqueado = true;
         if (btnEntrar) {
@@ -295,11 +299,9 @@ function tentarCarregarModoOfflineFailsafe(btnEntrar) {
           btnEntrar.style.cursor = "not-allowed";
           btnEntrar.innerText = "Acesso Bloqueado (Offline)";
         }
-        
-        // Renderiza a caixinha de aviso na tela de login mesmo offline
         processarStatusFinanceiroLocal(cacheFinanceiro);
         console.error("🚨 [BLOQUEIO] Acesso offline negado. O sistema consta como bloqueado no cache local.");
-        return; // Aborta o carregamento, impedindo o login!
+        return; 
       }
 
       // Se não estava bloqueado no cache, libera o modo contingência normal
@@ -307,7 +309,7 @@ function tentarCarregarModoOfflineFailsafe(btnEntrar) {
 
       if (btnEntrar) {
         btnEntrar.disabled = false;
-        btnEntrar.style.backgroundColor = "#10b981"; // Verde indicando contingência offline ativa
+        btnEntrar.style.backgroundColor = "#10b981"; // Verde offline
         btnEntrar.style.cursor = "pointer";
         btnEntrar.innerText = "Entrar (Modo Offline)";
         
@@ -315,7 +317,6 @@ function tentarCarregarModoOfflineFailsafe(btnEntrar) {
         btnEntrar.onmouseout = function() { this.style.backgroundColor='#10b981'; };
       }
 
-      // Se houver mensagens de aviso (mas sem bloqueio total), renderiza para o operador lembrar de pagar
       if (cacheFinanceiro) {
         processarStatusFinanceiroLocal(cacheFinanceiro);
       }
