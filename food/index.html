@@ -202,7 +202,7 @@ window.usuariosSistemaGlobal = []; // Memória para o login local funcionar
 let sistemaBloqueado = false;      // Controle de bloqueio financeiro
 
 // =========================================================================
-// 🔄 CARREGAMENTO DINÂMICO E COMPLETO DE DADOS (MODO DEFINITIVO)
+// 🔄 CARREGAMENTO DINÂMICO DE DADOS (COM CACHE E BLOQUEIO ANTIFRAUDE)
 // =========================================================================
 function carregarDadosIniciaisDoSistema() {
   if (!URL_API_GOOGLE) {
@@ -232,39 +232,111 @@ function carregarDadosIniciaisDoSistema() {
     console.log("📦 [CARGA INICIAL] Resposta bruta do servidor:", resultado);
 
     if (resultado.sucesso) {
-      // 🌟 O PULO DO GATO MULTILOJA MANUAL:
-      // Mantemos o CONFIG exatamente como ele foi criado no topo do arquivo (Piloto ou VG).
-      // Não deixamos o servidor sobrescrever as propriedades de plano, pix ou mesas.
-      
-      console.log("⚙️ [CONFIG ATIVO EM MEMÓRIA]:");
-      console.log("   👉 Lojista Atual     :", CONFIG.cliente.nomeFixo);
-      console.log("   👉 Plano Configurado :", CONFIG.plano);
-      console.log("   👉 Modo do PIX       :", CONFIG.pix.tipo.toUpperCase());
-      console.log("   👉 Controle de Mesas :", CONFIG.gerenciamentoMesa);
-
-      // Apenas populamos as listas de dados daquela planilha
+      // Populamos as listas em memória do navegador
       window.listaAdicionaisGlobal = resultado.adicionais || [];
       window.listaCategoriasGlobal = resultado.categorias || [];
       window.produtosData = resultado.produtos || [];
       window.usuariosSistemaGlobal = resultado.usuarios || [];
       window.qtdMesasGlobal = resultado.qtdMesas || 0;
       
+      // 💾 Salva os dados do sistema no computador
+      try {
+        localStorage.setItem("cache_adicionais", JSON.stringify(window.listaAdicionaisGlobal));
+        localStorage.setItem("cache_categorias", JSON.stringify(window.listaCategoriasGlobal));
+        localStorage.setItem("cache_produtos", JSON.stringify(window.produtosData));
+        localStorage.setItem("cache_usuarios", JSON.stringify(window.usuariosSistemaGlobal));
+        localStorage.setItem("cache_qtdMesas", String(window.qtdMesasGlobal));
+      } catch (e) {
+        console.warn("⚠️ Falha ao salvar tabelas no localStorage:", e);
+      }
+
+      // Processa o financeiro e joga na tela (Aqui ele salva o status online)
       processarStatusFinanceiroLocal(resultado.financeiro);
-      console.log("✅ [CARGA INICIAL] Sistema liberado com as configurações fixas do código do lojista!");
+      console.log("✅ [CARGA INICIAL] Sistema liberado online com sucesso!");
     } else {
       console.error("❌ [CARGA INICIAL] O servidor recusou o processamento:", resultado.erro);
-      if (btnEntrar) {
-        btnEntrar.disabled = false;
-        btnEntrar.innerText = "Entrar (Modo Offline)";
-      }
+      tentarCarregarModoOfflineFailsafe(btnEntrar);
     }
   })
   .catch(err => {
-    console.error("❌ [CARGA INICIAL] Erro de rede:", err);
+    console.error("❌ [CARGA INICIAL] Erro de rede detectado (Dispositivo Offline):", err);
+    const btnEntrar = document.getElementById('btn-entrar');
+    tentarCarregarModoOfflineFailsafe(btnEntrar);
   });
 }
+
+/**
+ * 🛰️ FUNÇÃO AUXILIAR: Monta o ambiente offline validando o último status financeiro salvo
+ */
+function tentarCarregarModoOfflineFailsafe(btnEntrar) {
+  console.log("🧩 [CONTINGÊNCIA] Iniciando protocolo de recuperação de dados locais...");
+  
+  try {
+    const cacheProdutos = JSON.parse(localStorage.getItem("cache_produtos"));
+    const cacheUsuarios = JSON.parse(localStorage.getItem("cache_usuarios"));
+    
+    // 🔐 BUSCA O ÚLTIMO HISTÓRICO FINANCEIRO DO COMPUTADOR
+    const cacheFinanceiro = JSON.parse(localStorage.getItem("cache_financeiro_status"));
+
+    if (cacheProdutos && cacheProdutos.length > 0 && cacheUsuarios && cacheUsuarios.length > 0) {
+      window.listaAdicionaisGlobal = JSON.parse(localStorage.getItem("cache_adicionais")) || [];
+      window.listaCategoriasGlobal = JSON.parse(localStorage.getItem("cache_categorias")) || [];
+      window.produtosData = cacheProdutos;
+      window.usuariosSistemaGlobal = cacheUsuarios;
+      window.qtdMesasGlobal = parseInt(localStorage.getItem("cache_qtdMesas")) || 0;
+
+      // 🎯 VALIDAÇÃO DO BLOQUEIO OFFLINE:
+      // Se no último acesso ele já estava bloqueado pelo servidor, continua bloqueado offline!
+      if (cacheFinanceiro && cacheFinanceiro.bloquear === true) {
+        sistemaBloqueado = true;
+        if (btnEntrar) {
+          btnEntrar.disabled = true;
+          btnEntrar.style.backgroundColor = "#ef4444";
+          btnEntrar.style.cursor = "not-allowed";
+          btnEntrar.innerText = "Acesso Bloqueado (Offline)";
+        }
+        
+        // Renderiza a caixinha de aviso na tela de login mesmo offline
+        processarStatusFinanceiroLocal(cacheFinanceiro);
+        console.error("🚨 [BLOQUEIO] Acesso offline negado. O sistema consta como bloqueado no cache local.");
+        return; // Aborta o carregamento, impedindo o login!
+      }
+
+      // Se não estava bloqueado no cache, libera o modo contingência normal
+      sistemaBloqueado = false; 
+
+      if (btnEntrar) {
+        btnEntrar.disabled = false;
+        btnEntrar.style.backgroundColor = "#10b981"; // Verde indicando contingência offline ativa
+        btnEntrar.style.cursor = "pointer";
+        btnEntrar.innerText = "Entrar (Modo Offline)";
+        
+        btnEntrar.onmouseover = function() { this.style.backgroundColor='#059669'; };
+        btnEntrar.onmouseout = function() { this.style.backgroundColor='#10b981'; };
+      }
+
+      // Se houver mensagens de aviso (mas sem bloqueio total), renderiza para o operador lembrar de pagar
+      if (cacheFinanceiro) {
+        processarStatusFinanceiroLocal(cacheFinanceiro);
+      }
+
+      console.warn("🚀 [MODO OFFLINE] Sistema liberado com sucesso utilizando dados locais!");
+    } else {
+      console.error("🚨 [CONTINGÊNCIA FALHOU] Sem dados prévios neste navegador.");
+      if (btnEntrar) {
+        btnEntrar.disabled = true;
+        btnEntrar.style.backgroundColor = "#ef4444";
+        btnEntrar.innerText = "Erro: Sem internet e sem cache";
+      }
+      alert("Não foi possível iniciar o PDV. O dispositivo está sem internet e este navegador ainda não possui uma cópia salva do sistema. O primeiro acesso precisa ser feito Online.");
+    }
+  } catch (error) {
+    console.error("🚨 Erro crítico ao processar cache local:", error);
+  }
+}
+
 // =========================================================================
-// 💳 PROCESSADOR DO STATUS FINANCEIRO (SEM GOOGLE.SCRIPT.RUN)
+// 💳 PROCESSADOR DO STATUS FINANCEIRO (COM PERSISTÊNCIA LOCAL)
 // =========================================================================
 function processarStatusFinanceiroLocal(res) {
   const divAviso = document.getElementById('aviso-financeiro');
@@ -272,7 +344,16 @@ function processarStatusFinanceiroLocal(res) {
   
   if (!btnEntrar) return; 
 
-  // Se NÃO vier dados do financeiro, consideramos LIBERADO por padrão para não travar o lojista
+  // Se vier uma resposta válida da internet, salva ela como o novo padrão histórico do computador
+  if (res && navigator.onLine) {
+    try {
+      localStorage.setItem("cache_financeiro_status", JSON.stringify(res));
+    } catch(e) {
+      console.warn("Falha ao salvar status financeiro no localStorage", e);
+    }
+  }
+
+  // Se NÃO vier dados do financeiro (e não tiver cache), libera por padrão
   if (!res) {
     sistemaBloqueado = false;
     btnEntrar.disabled = false;
@@ -287,18 +368,21 @@ function processarStatusFinanceiroLocal(res) {
     btnEntrar.disabled = true;
     btnEntrar.style.backgroundColor = "#ccc";
     btnEntrar.style.cursor = "not-allowed";
-    btnEntrar.innerText = "Acesso Bloqueado";
+    btnEntrar.innerText = navigator.onLine ? "Acesso Bloqueado" : "Acesso Bloqueado (Offline)";
   } else {
+    // Se o cache local diz que não está bloqueado, mantém o fluxo normal do botão
     sistemaBloqueado = false;
-    btnEntrar.disabled = false;
-    btnEntrar.style.backgroundColor = "#4A86E8";
-    btnEntrar.style.cursor = "pointer";
-    btnEntrar.innerText = "Entrar";
-    
-    btnEntrar.onmouseover = function() { this.style.backgroundColor='#357ABD'; };
-    btnEntrar.onmouseout = function() { this.style.backgroundColor='#4A86E8'; };
+    if (navigator.onLine) {
+      btnEntrar.disabled = false;
+      btnEntrar.style.backgroundColor = "#4A86E8";
+      btnEntrar.style.cursor = "pointer";
+      btnEntrar.innerText = "Entrar";
+      btnEntrar.onmouseover = function() { this.style.backgroundColor='#357ABD'; };
+      btnEntrar.onmouseout = function() { this.style.backgroundColor='#4A86E8'; };
+    }
   }
 
+  // Renderiza a caixinha visual de aviso ou cobrança (funciona online ou offline)
   if (res.exibir && divAviso) {
     let fraseBloqueio = res.bloquear 
       ? "ACESSO SUSPENSO: Regularize seu débito para liberar o login." 
@@ -317,6 +401,8 @@ function processarStatusFinanceiroLocal(res) {
         </button>
       </div>
     `;
+  } else if (!res.exibir && divAviso) {
+    divAviso.innerHTML = ""; // Limpa se o servidor disser que não precisa exibir nada
   }
 }
   
