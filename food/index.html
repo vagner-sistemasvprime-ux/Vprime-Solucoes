@@ -5378,7 +5378,7 @@ function telaPedidosCaixa() {
           </div>
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <label for="pdvSenhaAdmin" style="font-size: 12px; font-weight: bold; color: #475569;">Senha do Administrador:</label>
-            <input id="pdvSenhaAdmin" type="password" placeholder="Digite sua senha"
+            <input id="pdvSenhaAdmin" type="password" autocomplete="new-password" placeholder="Digite sua senha"
                    style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none;">
           </div>
           <span id="pdvAvisoSenhaAdmin" style="font-size: 11px; font-weight: bold; min-height: 15px;"></span>
@@ -6142,17 +6142,20 @@ function pdv_confirmarDescontoModal() {
       window.pdvDescontoValidated = valorNum; 
       window.pdvDescontoValidado = valorNum; // Mantém fallback global
       
+      // 🔐 TRUQUE DE SEGURANÇA: Limpa os inputs ANTES de fechar o modal
+      // Isso quebra a heurística dos navegadores de tentar salvar a senha.
+      campoDesconto.value = "";
+      campoSenha.value = "";
+      aviso.innerText = "";
+      
       const modal = document.getElementById("pdvModalDesconto");
       if (modal) modal.style.display = "none";
-      aviso.innerText = "";
       
       if (typeof atualizarTotalVendaVisual === "function") atualizarTotalVendaVisual();
       if (typeof window.calcularTroco === "function") window.calcularTroco();
     } else {
       window.pdvDescontoValidado = 0; 
       aviso.style.color = "#ef4444";
-      
-      // 💡 AJUSTE AQUI: Prioriza 'resultado.erro' que vem do backend estruturado
       aviso.innerText = `❌ ${resultado.erro || resultado.mensagem || "Senha incorreta."}`;
       
       campoSenha.value = "";
@@ -6170,6 +6173,10 @@ function pdv_confirmarDescontoModal() {
     window.pdvDescontoValidado = 0;
     aviso.style.color = "#ef4444";
     aviso.innerText = `❌ Erro de conexão física com o servidor.`;
+    
+    // Limpa a senha também em caso de erro crítico de rede por segurança
+    campoSenha.value = "";
+    
     if (typeof atualizarTotalVendaVisual === "function") atualizarTotalVendaVisual();
   });
 }
