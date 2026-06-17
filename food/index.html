@@ -449,10 +449,17 @@ function login() {
       width: 100%; 
       box-sizing: border-box;
       padding: 20px;
-      background-color: #f8fafc; /* Um fundo sutil para destacar o card de login */
+      background-color: #f8fafc;
+      position: relative; /* Necessário para ancorar o aviso absoluto */
     ">
 
-      <div id="aviso-financeiro" style="max-width: 400px; width: 100%; margin-bottom: 20px;"></div>
+      <div id="aviso-financeiro" style="
+        position: absolute; 
+        top: 20px; /* Fixa o aviso no topo do container */
+        max-width: 400px; 
+        width: 90%; 
+        z-index: 2;
+      "></div>
 
       <form id="form-login" style="
         max-width: 400px; width: 100%; padding: 30px;
