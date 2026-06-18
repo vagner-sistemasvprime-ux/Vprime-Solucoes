@@ -3,29 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prime - Cardápio</title>
+  <title>VPrime Cardápio</title>
   <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ">
 
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 99%;
-      width: 100%;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-    }
-
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
+    html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+    iframe { width: 100%; height: 100%; border: none; }
   </style>
 </head>
 <body>
-  <iframe src="https://script.google.com/macros/s/AKfycbxuUl5oMXxhfKZBEmsqYz6OR-Re1A830B7Yneu_du3nO8OJkkPFZ2CFAlIXNJtnTjJq/exec" allow="clipboard-read; clipboard-write" title="Vprime sistemas - FOOD"></iframe>
+  <iframe
+  id="iframeCardapio"
+  src=""
+  title="VPrime - Cardápio Digital"
+  allow="clipboard-read; clipboard-write"
+  style="width:100%;height:100%;border:none;"
+></iframe>
+
+  <script>
+    (function() {
+      // URL do Script do Cardápio que você enviou
+      const urlCardapio = "https://script.google.com/macros/s/AKfycbxuUl5oMXxhfKZBEmsqYz6OR-Re1A830B7Yneu_du3nO8OJkkPFZ2CFAlIXNJtnTjJq/exec";
+      
+      // Captura os parâmetros (ex: ?mesa=1)
+      const params = window.location.search;
+      
+      // Carrega o Iframe com a mesa
+      document.getElementById('iframeCardapio').src = urlCardapio + params;
+    })();
+  </script>
 </body>
 </html>
