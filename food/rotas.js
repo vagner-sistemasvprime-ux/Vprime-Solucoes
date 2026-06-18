@@ -50,7 +50,7 @@ const ROTAS_LOJISTAS = {
     
     tipoPix: "automatico",        // Opções: "automatico" ou "manual"
     
-    gerenciamentoMesa: "DESATIVADO", // Opções: "ATIVADO" ou "DESATIVADO"
+    gerenciamentoMesa: "ATIVADO", // Opções: "ATIVADO" ou "DESATIVADO"
     
     intervaloVigilancia: 5000,    // Tempo em milissegundos para checar novos pedidos (ex: 5000 = 5s)
     tempoMaxCancelamento: 30,     // Tempo em minutos que o cliente tem para cancelar um pedido
