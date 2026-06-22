@@ -8427,19 +8427,33 @@ function filtrarProdutos() {
   filtrados.sort((a, b) => Number(b.id) - Number(a.id));
 
   listaProds.innerHTML = filtrados.map(p => {
-    const isAtivo = p.ativo === true || String(p.ativo).toLowerCase().trim() === 'true';
-    const noCardapio = p.cardapio === true || String(p.cardapio).toLowerCase() === 'true';
+    // 1. Checa se o item está ativo na planilha (coluna Ativo)
+    const isAtivo = p.ativo === true || String(p.ativo).toLowerCase().trim() === 'true' || p.ativo === 1;
+    
+    // 2. 🌟 AJUSTE CRUCIAL: Se for adicional, o status do "cardápio" é o próprio status "Ativo"
+    // Se for produto comum, ele mantém a checagem da coluna cardapio
+    const noCardapio = verAdicionais ? isAtivo : (p.cardapio === true || String(p.cardapio).toLowerCase() === 'true');
     
     const dadosCat = (window.categoriasData || []).find(c => c.nome === p.categoria);
     const catNoCardapio = dadosCat ? (dadosCat.cardapio === true || String(dadosCat.cardapio).toLowerCase() === 'true') : true;
 
+    // --- BADGES DE STATUS ---
     let htmlStatus = "";
-    if (noCardapio && catNoCardapio) {
-      htmlStatus = `<span style="background:#d4edda; color:#155724; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold; margin-right:5px;">📱 NO CARDÁPIO</span>`;
-    } else if (!noCardapio) {
-      htmlStatus = `<span style="background:#fff3cd; color:#856404; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold; margin-right:5px;">🚫 FORA (PRODUTO)</span>`;
-    } else if (!catNoCardapio) {
-      htmlStatus = `<span style="background:#f8d7da; color:#721c24; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold; margin-right:5px;">⚠️ FORA (CATEGORIA)</span>`;
+    
+    if (verAdicionais) {
+      if (noCardapio) {
+        htmlStatus = `<span style="background:#e0f2fe; color:#0369a1; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold; margin-right:5px;">➕ ADICIONAL ATIVO</span>`;
+      } else {
+        htmlStatus = `<span style="background:#f4f4f5; color:#71717a; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold; margin-right:5px;">🚫 ADICIONAL INATIVO</span>`;
+      }
+    } else {
+      if (noCardapio && catNoCardapio) {
+        htmlStatus = `<span style="background:#d4edda; color:#155724; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold; margin-right:5px;">📱 NO CARDÁPIO</span>`;
+      } else if (!noCardapio) {
+        htmlStatus = `<span style="background:#fff3cd; color:#856404; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold; margin-right:5px;">🚫 FORA (PRODUTO)</span>`;
+      } else if (!catNoCardapio) {
+        htmlStatus = `<span style="background:#f8d7da; color:#721c24; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold; margin-right:5px;">⚠️ FORA (CATEGORIA)</span>`;
+      }
     }
 
     let htmlPreco = "";
