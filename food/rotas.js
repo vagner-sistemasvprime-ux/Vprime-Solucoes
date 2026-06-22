@@ -41,7 +41,7 @@ const ROTAS_LOJISTAS = {
    // 🏢 DADOS DE IDENTIFICAÇÃO E CONEXÃO
     nome: "Sistema Modelo",
     urlGoogleAPI: "https://script.google.com/macros/s/AKfycbyiD33PF8zAGzRl0qmH4lkur7uZD6wmg4IxVXpuzPRCrvEY2jb3WZRZnq-XiDWFLNI3/exec",
-    linkCardapio: "https://vprimesistemas.com.br/food/cardapio/modeloprime.html",
+    linkCardapio: "https://vprimesistemas.com.br/food/cardapio/sistemamodeloprime.html",
     urlLogo: "https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ",
     idPlanilha: "1sjKEirWF6wiCvtma2iVv30iNqzOZJaK3WIKSP-kMlQg",
     corTema: "#e65100",
