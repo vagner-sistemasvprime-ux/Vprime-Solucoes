@@ -13110,7 +13110,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       valorPix: valorPix,
       valorCartao: valorCartao,
       usuario: caixa.usuario,
-      forcarFechamento: forcar // Passa o parâmetro para o GAS
+      forcarFechamento: forcar 
     })
   })
   .then(response => {
@@ -13118,9 +13118,8 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     return response.json();
   })
   .then(resultado => {
-    // VALIDAÇÃO DO STATUS RETORNADO PELO GAS
+    // --- O BLOCO NOVO FOI ADICIONADO EXATAMENTE AQUI ---
     if (resultado.status === "ALERTA_PENDENTE") {
-      // Abre uma confirmação para o usuário. Se ele aceitar, refaz a função passando true.
       if (confirm("Existem vendas PENDENTES. Deseja fechar o caixa assim mesmo?")) {
         confirmarFechamentoHistorico(index, true);
       }
@@ -13131,9 +13130,13 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       fecharModalHistorico();
       carregarHistoricoCaixa();
       if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
+    } else if (resultado.status === "ERRO_INTERNO") {
+      // Exibe o alerta com o erro exato vindo do Google Sheets
+      alert("Erro no Servidor: " + resultado.mensagem);
     } else {
       if (typeof mostrarToast === "function") mostrarToast("Erro ao fechar caixa.", "vermelho");
     }
+    // --------------------------------------------------
   })
   .catch(err => {
     console.error("Erro no processamento de fechamento:", err);
@@ -13141,6 +13144,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
   });
 }
 
+  
 function fecharModalHistorico() {
   const modal = document.getElementById("modalFechamentoHistorico");
   if (modal) modal.remove();
