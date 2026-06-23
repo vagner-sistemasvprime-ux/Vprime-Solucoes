@@ -13087,16 +13087,22 @@ function parseBRL(valorBRL) {
  * ACTION PIPELINE: Finaliza as contas e submete o balanço cego ao servidor
  */
 function confirmarFechamentoHistorico(index, forcar = false) {
+  if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
-  if (!caixa) return;
 
+  // Elementos do Modal para exibir avisos/erros internamente
   const msgErro = document.getElementById("modalErroMsg");
   const boxAviso = document.getElementById("modalAvisoBox");
   if (msgErro) msgErro.style.display = "none";
 
-  const valorDinheiro = parseBRL(document.getElementById("valorDinheiro").value || "0");
-  const valorPix = parseBRL(document.getElementById("valorPix").value || "0");
-  const valorCartao = parseBRL(document.getElementById("valorCartao").value || "0");
+  const inputDinheiro = document.getElementById("valorDinheiro");
+  const inputPix = document.getElementById("valorPix");
+  const inputCartao = document.getElementById("valorCartao");
+
+  // Pega os valores e garante que são números (ou 0 se vazios)
+  const valorDinheiro = inputDinheiro ? Number(parseBRL(inputDinheiro.value)) || 0 : 0;
+  const valorPix = inputPix ? Number(parseBRL(inputPix.value)) || 0 : 0;
+  const valorCartao = inputCartao ? Number(parseBRL(inputCartao.value)) || 0 : 0;
 
   const valorTotal = valorDinheiro + valorPix + valorCartao;
 
@@ -13104,17 +13110,19 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     if (msgErro) {
       msgErro.innerText = "❌ Informe ao menos um valor!";
       msgErro.style.display = "block";
+    } else if (typeof mostrarToast === "function") {
+      mostrarToast("Informe ao menos um valor!", "vermelho");
     }
     return;
   }
 
-  // Altera o texto do botão para indicar processamento
   const btnFechar = document.getElementById("btnEfetuarFechamento");
   if (btnFechar) {
     btnFechar.innerText = "PROCESSANDO...";
     btnFechar.disabled = true;
   }
 
+  // Faz a requisição para a API do Google
   fetch(URL_API_GOOGLE, {
     method: "POST",
     body: JSON.stringify({
@@ -13124,7 +13132,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       valorPix: valorPix,
       valorCartao: valorCartao,
       usuario: caixa.usuario,
-      forcarFechamento: forcar
+      forcarFechamento: forcar // Mapeado para o parâmetro da sua função
     })
   })
   .then(response => {
@@ -13132,12 +13140,13 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     return response.json();
   })
   .then(resultado => {
-    // 1. Trata Alerta de Vendas Pendentes
-    if (resultado.status === "ALERTA_PENDENTE") {
-      if (btnFechar) {
-        btnFechar.innerText = "EFETUAR FECHAMENTO";
-        btnFechar.disabled = false;
-      }
+    if (btnFechar) {
+      btnFechar.innerText = "EFETUAR FECHAMENTO";
+      btnFechar.disabled = false;
+    }
+
+    // 1. Trata o Alerta de Pendência retornado pela sua função
+    if (resultado && resultado.status === "ALERTA_PENDENTE") {
       if (boxAviso) {
         boxAviso.style.display = "block";
         boxAviso.innerHTML = `
@@ -13146,36 +13155,38 @@ function confirmarFechamentoHistorico(index, forcar = false) {
             FORÇAR FECHAMENTO ASSIM MESMO
           </button>
         `;
+      } else {
+        // Fallback caso não queira usar as divs internas do modal: usa o confirm antigo
+        if (confirm("Existem vendas PENDENTES. Deseja fechar o caixa assim mesmo?")) {
+          confirmarFechamentoHistorico(index, true);
+        }
       }
       return;
     }
 
-    // 2. Trata Sucesso
-    if (resultado.status === "SUCESSO") {
+    // 2. Trata o Sucesso retornado pela sua função
+    if (resultado && resultado.status === "SUCESSO") {
       fecharModalHistorico();
       carregarHistoricoCaixa();
       if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
-    } 
-    // 3. Trata Erro vindo do try/catch do GAS
-    else if (resultado.status === "ERRO_INTERNO") {
-      throw new Error(resultado.mensagem);
     } else {
-      throw new Error("Resposta inválida do servidor.");
+      throw new Error("Não foi possível processar o fechamento.");
     }
   })
   .catch(err => {
-    console.error(err);
+    console.error("Erro no processamento de fechamento:", err);
     if (btnFechar) {
       btnFechar.innerText = "EFETUAR FECHAMENTO";
       btnFechar.disabled = false;
     }
     if (msgErro) {
-      msgErro.innerText = "❌ " + err.message;
+      msgErro.innerText = "❌ Erro ao fechar caixa no servidor.";
       msgErro.style.display = "block";
+    } else if (typeof mostrarToast === "function") {
+      mostrarToast("Erro no encerramento.", "vermelho");
     }
   });
 }
-
   
 function fecharModalHistorico() {
   const modal = document.getElementById("modalFechamentoHistorico");
