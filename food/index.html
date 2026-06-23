@@ -13083,7 +13083,7 @@ function parseBRL(valorBRL) {
 /**
  * ACTION PIPELINE: Finaliza as contas e submete o balanço cego ao servidor
  */
-function confirmarFechamentoHistorico(index) {
+function confirmarFechamentoHistorico(index, forcar = false) {
   if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
 
@@ -13109,17 +13109,31 @@ function confirmarFechamentoHistorico(index) {
       valorDinheiro: valorDinheiro,
       valorPix: valorPix,
       valorCartao: valorCartao,
-      usuario: caixa.usuario
+      usuario: caixa.usuario,
+      forcarFechamento: forcar // Passa o parâmetro para o GAS
     })
   })
   .then(response => {
     if (!response.ok) throw new Error("Erro ao enviar dados do fechamento.");
     return response.json();
   })
-  .then(() => {
-    fecharModalHistorico();
-    carregarHistoricoCaixa();
-    if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
+  .then(resultado => {
+    // VALIDAÇÃO DO STATUS RETORNADO PELO GAS
+    if (resultado.status === "ALERTA_PENDENTE") {
+      // Abre uma confirmação para o usuário. Se ele aceitar, refaz a função passando true.
+      if (confirm("Existem vendas PENDENTES. Deseja fechar o caixa assim mesmo?")) {
+        confirmarFechamentoHistorico(index, true);
+      }
+      return;
+    }
+
+    if (resultado.status === "SUCESSO") {
+      fecharModalHistorico();
+      carregarHistoricoCaixa();
+      if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
+    } else {
+      if (typeof mostrarToast === "function") mostrarToast("Erro ao fechar caixa.", "vermelho");
+    }
   })
   .catch(err => {
     console.error("Erro no processamento de fechamento:", err);
