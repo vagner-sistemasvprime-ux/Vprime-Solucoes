@@ -12972,8 +12972,8 @@ function formatBRL(valor) {
  * MODAL CONSOLE: Monta a cockpit de conferência cega e fechamento físico de valores
  */
 function abrirModalFechamentoHistorico(index) {
-  if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
+  if (!caixa) return;
 
   const antigo = document.getElementById("modalFechamentoHistorico");
   if (antigo) antigo.remove();
@@ -12981,7 +12981,6 @@ function abrirModalFechamentoHistorico(index) {
   const modal = document.createElement("div");
   modal.id = "modalFechamentoHistorico";
   
-  // Design de Overlay Assíncrono com Desfoque de Fundo
   modal.style.cssText = `
     position:fixed; inset:0; background:rgba(0,0,0,0.6);
     display:flex; align-items:center; justify-content:center; z-index:9999;
@@ -12995,13 +12994,17 @@ function abrirModalFechamentoHistorico(index) {
       
       <div style="background:#2c3e50; color:#fff; padding:15px; text-align:center;">
         <h3 style="margin:0; font-size:18px;">Gestão de Caixa</h3>
-        <p style="margin:5px 0 0; font-size:12px; opacity:0.8;">Operador: ${usuario || "-"} | ${status || ""}</p>
+        <p style="margin:5px 0 0; font-size:12px; opacity:0.8;">Operador: ${usuario} | ${status}</p>
       </div>
 
       <div style="padding:20px;">
         <p style="font-size:13px; color:#666; margin-bottom:15px; text-align:center;">
-          Aberto em: <b>${abertura ? new Date(abertura).toLocaleString("pt-BR") : "-"}</b>
+          Aberto em: <b>${new Date(abertura).toLocaleString("pt-BR")}</b>
         </p>
+
+        <div id="modalErroMsg" style="display:none; background:#fce4e4; border:1px solid #f6b0b0; color:#cc0000; padding:10px; border-radius:6px; font-size:13px; margin-bottom:15px; text-align:center;"></div>
+
+        <div id="modalAvisoBox" style="display:none; background:#fff3cd; border:1px solid #ffeeba; padding:10px; border-radius:6px; margin-bottom:15px; text-align:center;"></div>
 
         <table style="width:100%; border-collapse:collapse; font-size:14px;">
           <thead>
@@ -13043,7 +13046,7 @@ function abrirModalFechamentoHistorico(index) {
 
         <div style="margin-top:20px; display:flex; flex-direction:column; gap:8px;">
           ${status === "ABERTO" ? `
-            <button onclick="confirmarFechamentoHistorico(${index})" style="background:#27ae60; color:#fff; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; transition:0.3s;">
+            <button id="btnEfetuarFechamento" onclick="confirmarFechamentoHistorico(${index})" style="background:#27ae60; color:#fff; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; transition:0.3s;">
               EFETUAR FECHAMENTO
             </button>
           ` : `
@@ -13084,21 +13087,32 @@ function parseBRL(valorBRL) {
  * ACTION PIPELINE: Finaliza as contas e submete o balanço cego ao servidor
  */
 function confirmarFechamentoHistorico(index, forcar = false) {
-  if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
+  if (!caixa) return;
 
-  const inputDinheiro = document.getElementById("valorDinheiro");
-  const inputPix = document.getElementById("valorPix");
-  const inputCartao = document.getElementById("valorCartao");
+  const msgErro = document.getElementById("modalErroMsg");
+  const boxAviso = document.getElementById("modalAvisoBox");
+  if (msgErro) msgErro.style.display = "none";
 
-  const valorDinheiro = inputDinheiro ? parseBRL(inputDinheiro.value) : 0;
-  const valorPix = inputPix ? parseBRL(inputPix.value) : 0;
-  const valorCartao = inputCartao ? parseBRL(inputCartao.value) : 0;
+  const valorDinheiro = parseBRL(document.getElementById("valorDinheiro").value || "0");
+  const valorPix = parseBRL(document.getElementById("valorPix").value || "0");
+  const valorCartao = parseBRL(document.getElementById("valorCartao").value || "0");
 
   const valorTotal = valorDinheiro + valorPix + valorCartao;
 
-  if (!valorTotal && typeof mostrarToast === "function") {
-    return mostrarToast("Informe ao menos um valor!", "vermelho");
+  if (!valorTotal) {
+    if (msgErro) {
+      msgErro.innerText = "❌ Informe ao menos um valor!";
+      msgErro.style.display = "block";
+    }
+    return;
+  }
+
+  // Altera o texto do botão para indicar processamento
+  const btnFechar = document.getElementById("btnEfetuarFechamento");
+  if (btnFechar) {
+    btnFechar.innerText = "PROCESSANDO...";
+    btnFechar.disabled = true;
   }
 
   fetch(URL_API_GOOGLE, {
@@ -13110,37 +13124,55 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       valorPix: valorPix,
       valorCartao: valorCartao,
       usuario: caixa.usuario,
-      forcarFechamento: forcar 
+      forcarFechamento: forcar
     })
   })
   .then(response => {
-    if (!response.ok) throw new Error("Erro ao enviar dados do fechamento.");
+    if (!response.ok) throw new Error("Erro na comunicação com o servidor.");
     return response.json();
   })
   .then(resultado => {
-    // --- O BLOCO NOVO FOI ADICIONADO EXATAMENTE AQUI ---
+    // 1. Trata Alerta de Vendas Pendentes
     if (resultado.status === "ALERTA_PENDENTE") {
-      if (confirm("Existem vendas PENDENTES. Deseja fechar o caixa assim mesmo?")) {
-        confirmarFechamentoHistorico(index, true);
+      if (btnFechar) {
+        btnFechar.innerText = "EFETUAR FECHAMENTO";
+        btnFechar.disabled = false;
+      }
+      if (boxAviso) {
+        boxAviso.style.display = "block";
+        boxAviso.innerHTML = `
+          <p style="margin:0 0 8px 0; color:#d35400; font-size:13px; font-weight:bold;">⚠️ Existem vendas PENDENTES para este operador!</p>
+          <button onclick="confirmarFechamentoHistorico(${index}, true)" style="background:#e67e22; color:#fff; border:none; padding:8px; border-radius:4px; font-weight:bold; width:100%; cursor:pointer;">
+            FORÇAR FECHAMENTO ASSIM MESMO
+          </button>
+        `;
       }
       return;
     }
 
+    // 2. Trata Sucesso
     if (resultado.status === "SUCESSO") {
       fecharModalHistorico();
       carregarHistoricoCaixa();
       if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
-    } else if (resultado.status === "ERRO_INTERNO") {
-      // Exibe o alerta com o erro exato vindo do Google Sheets
-      alert("Erro no Servidor: " + resultado.mensagem);
+    } 
+    // 3. Trata Erro vindo do try/catch do GAS
+    else if (resultado.status === "ERRO_INTERNO") {
+      throw new Error(resultado.mensagem);
     } else {
-      if (typeof mostrarToast === "function") mostrarToast("Erro ao fechar caixa.", "vermelho");
+      throw new Error("Resposta inválida do servidor.");
     }
-    // --------------------------------------------------
   })
   .catch(err => {
-    console.error("Erro no processamento de fechamento:", err);
-    if (typeof mostrarToast === "function") mostrarToast("Erro no encerramento.", "vermelho");
+    console.error(err);
+    if (btnFechar) {
+      btnFechar.innerText = "EFETUAR FECHAMENTO";
+      btnFechar.disabled = false;
+    }
+    if (msgErro) {
+      msgErro.innerText = "❌ " + err.message;
+      msgErro.style.display = "block";
+    }
   });
 }
 
