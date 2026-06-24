@@ -13090,34 +13090,9 @@ function confirmarFechamentoHistorico(index, forcar = false) {
   if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
 
-  // 🔍 Diagnóstico amigável: caso ainda dê erro, você verá as propriedades reais no console (F12)
-  console.log("Dados do caixa selecionado na linha:", caixa);
-
-  // Tenta capturar o usuário pelas nomenclaturas mais prováveis em sistemas de caixa
-  const nomeUsuario = caixa.usuario || 
-                      caixa.operador || 
-                      caixa.Usuario || 
-                      caixa.Operador || 
-                      caixa.funcionario || 
-                      caixa.vendedor;
-
   const msgErro = document.getElementById("modalErroMsg");
   const boxAviso = document.getElementById("modalAvisoBox");
   if (msgErro) msgErro.style.display = "none";
-
-  // Se mesmo com a varredura acima ainda for undefined ou vazio:
-  if (!nomeUsuario) {
-    if (msgErro) {
-      msgErro.innerText = "❌ Propriedade 'usuario' não encontrada nesta linha da tabela. Verifique o console (F12).";
-      msgErro.style.display = "block";
-    }
-    const btnFechar = document.getElementById("btnEfetuarFechamento");
-    if (btnFechar) {
-      btnFechar.innerText = "EFETUAR FECHAMENTO";
-      btnFechar.disabled = false;
-    }
-    return;
-  }
 
   const inputDinheiro = document.getElementById("valorDinheiro");
   const inputPix = document.getElementById("valorPix");
@@ -13133,6 +13108,8 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     if (msgErro) {
       msgErro.innerText = "❌ Informe ao menos um valor!";
       msgErro.style.display = "block";
+    } else if (typeof mostrarToast === "function") {
+      mostrarToast("Informe ao menos um valor!", "vermelho");
     }
     return;
   }
@@ -13143,7 +13120,8 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     btnFechar.disabled = true;
   }
 
-  // Faz a requisição enviando o nomeUsuario validado
+  // 🎯 ESTRATÉGIA: Enviamos como text/plain para burlar o CORS, 
+  // mas o conteúdo dentro é o JSON que o seu GAS espera ler!
   fetch(URL_API_GOOGLE, {
     method: "POST",
     headers: {
@@ -13154,8 +13132,8 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       valorDinheiro: valorDinheiro,
       valorPix: valorPix,
       valorCartao: valorCartao,
-      usuario: nomeUsuario, // <-- Enviando o nome correto capturado da linha
-      forcarFechamento: forcar
+      usuario: caixa.usuario,
+      forcarFechamento: forcar // Envia true ou false nativo
     })
   })
   .then(response => {
