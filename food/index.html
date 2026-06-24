@@ -13135,22 +13135,39 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       forcarFechamento: forcar // Mapeado para o parâmetro da sua função
     })
   })
+ // ... dentro do seu fetch em confirmarFechamentoHistorico
   .then(response => {
+    // LOG 1: Verifica o status da resposta HTTP (deve ser 200)
+    console.log("Status HTTP da resposta:", response.status, response.statusText);
     if (!response.ok) throw new Error("Erro na comunicação com o servidor.");
-    return response.json();
+    
+    // Pegamos como texto primeiro para inspecionar caso o Google devolva um HTML de erro
+    return response.text();
   })
-  .then(resultado => {
+  .then(textoBruto => {
+    // LOG 2: Exibe EXATAMENTE o que o Google Apps Script cuspiu
+    console.log("Texto bruto recebido do servidor:", textoBruto);
+
+    let resultado;
+    try {
+      resultado = JSON.parse(textoBruto);
+      // LOG 3: Exibe o objeto já convertido em JavaScript
+      console.log("Objeto JSON mapeado:", resultado);
+    } catch (e) {
+      throw new Error("O servidor não retornou um JSON válido. Retorno recebido: " + textoBruto.substring(0, 100));
+    }
+
     if (btnFechar) {
       btnFechar.innerText = "EFETUAR FECHAMENTO";
       btnFechar.disabled = false;
     }
 
-    // Se o doPost capturou um erro da sua função, mostra o motivo real na tela
+    // Se o doPost capturou um erro da sua função
     if (resultado && resultado.status === "ERRO_INTERNO") {
       throw new Error(resultado.mensagem);
     }
 
-    // Trata o Alerta de Pendência retornado pela sua função
+    // Trata o Alerta de Pendência
     if (resultado && resultado.status === "ALERTA_PENDENTE") {
       if (boxAviso) {
         boxAviso.style.display = "block";
@@ -13166,23 +13183,22 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       return;
     }
 
-    // Trata o Sucesso retornado pela sua função
+    // Trata o Sucesso
     if (resultado && resultado.status === "SUCESSO") {
       fecharModalHistorico();
       carregarHistoricoCaixa();
       if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
     } else {
-      throw new Error("Não foi possível processar o fechamento. Resposta vazia ou inválida.");
+      throw new Error("Não foi possível processar o fechamento. Status retornado: " + (resultado ? resultado.status : "null"));
     }
   })
   .catch(err => {
-    console.error("Erro no processamento de fechamento:", err);
+    console.error("Erro completo capturado no catch:", err);
     if (btnFechar) {
       btnFechar.innerText = "EFETUAR FECHAMENTO";
       btnFechar.disabled = false;
     }
     
-    // Exibe o erro real gerado pela sua planilha (ex: Usuário não encontrado)
     if (msgErro) {
       msgErro.innerText = "❌ " + err.message;
       msgErro.style.display = "block";
