@@ -13145,7 +13145,12 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       btnFechar.disabled = false;
     }
 
-    // 1. Trata o Alerta de Pendência retornado pela sua função
+    // Se o doPost capturou um erro da sua função, mostra o motivo real na tela
+    if (resultado && resultado.status === "ERRO_INTERNO") {
+      throw new Error(resultado.mensagem);
+    }
+
+    // Trata o Alerta de Pendência retornado pela sua função
     if (resultado && resultado.status === "ALERTA_PENDENTE") {
       if (boxAviso) {
         boxAviso.style.display = "block";
@@ -13155,22 +13160,19 @@ function confirmarFechamentoHistorico(index, forcar = false) {
             FORÇAR FECHAMENTO ASSIM MESMO
           </button>
         `;
-      } else {
-        // Fallback caso não queira usar as divs internas do modal: usa o confirm antigo
-        if (confirm("Existem vendas PENDENTES. Deseja fechar o caixa assim mesmo?")) {
-          confirmarFechamentoHistorico(index, true);
-        }
+      } else if (confirm("Existem vendas PENDENTES. Deseja fechar o caixa assim mesmo?")) {
+        confirmarFechamentoHistorico(index, true);
       }
       return;
     }
 
-    // 2. Trata o Sucesso retornado pela sua função
+    // Trata o Sucesso retornado pela sua função
     if (resultado && resultado.status === "SUCESSO") {
       fecharModalHistorico();
       carregarHistoricoCaixa();
       if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
     } else {
-      throw new Error("Não foi possível processar o fechamento.");
+      throw new Error("Não foi possível processar o fechamento. Resposta vazia ou inválida.");
     }
   })
   .catch(err => {
@@ -13179,11 +13181,13 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       btnFechar.innerText = "EFETUAR FECHAMENTO";
       btnFechar.disabled = false;
     }
+    
+    // Exibe o erro real gerado pela sua planilha (ex: Usuário não encontrado)
     if (msgErro) {
-      msgErro.innerText = "❌ Erro ao fechar caixa no servidor.";
+      msgErro.innerText = "❌ " + err.message;
       msgErro.style.display = "block";
     } else if (typeof mostrarToast === "function") {
-      mostrarToast("Erro no encerramento.", "vermelho");
+      mostrarToast(err.message, "vermelho");
     }
   });
 }
