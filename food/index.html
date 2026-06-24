@@ -13120,18 +13120,20 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     btnFechar.disabled = true;
   }
 
+  // 🎯 ESTRATÉGIA: Enviamos como text/plain para burlar o CORS, 
+  // mas o conteúdo dentro é o JSON que o seu GAS espera ler!
   fetch(URL_API_GOOGLE, {
     method: "POST",
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
+      "Content-Type": "text/plain;charset=utf-8"
     },
-    body: new URLSearchParams({
+    body: JSON.stringify({
       acao: "FECHAR_CAIXA",
       valorDinheiro: valorDinheiro,
       valorPix: valorPix,
       valorCartao: valorCartao,
       usuario: caixa.usuario,
-      forcarFechamento: forcar
+      forcarFechamento: forcar // Envia true ou false nativo
     })
   })
   .then(response => {
@@ -13146,19 +13148,16 @@ function confirmarFechamentoHistorico(index, forcar = false) {
 
     console.log("Retorno do Servidor:", resultado);
 
-    // 🔴 TRATAMENTO DE ERRO VINDO DA PLANILHA
-    if (resultado && (resultado.status === "ERRO" || resultado.status === "ERRO_INTERNO")) {
-      const txtErro = resultado.mensagem || "Erro desconhecido na planilha.";
+    // Trata erro retornado pela função interna da planilha se houver
+    if (resultado && resultado.status === "ERRO") {
       if (msgErro) {
-        msgErro.innerText = "❌ " + txtErro;
+        msgErro.innerText = "❌ " + (resultado.mensagem || "Erro no caixa.");
         msgErro.style.display = "block";
-      } else {
-        alert("Erro no servidor: " + txtErro);
       }
-      return; 
+      return;
     }
 
-    // 1. Trata o Alerta de Pendência
+    // 1. Trata o Alerta de Pendência retornado pela sua função
     if (resultado && resultado.status === "ALERTA_PENDENTE") {
       if (boxAviso) {
         boxAviso.style.display = "block";
@@ -13176,14 +13175,13 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       return;
     }
 
-    // 2. Trata o Sucesso
+    // 2. Trata o Sucesso retornado pela sua função
     if (resultado && resultado.status === "SUCESSO") {
       fecharModalHistorico();
       carregarHistoricoCaixa();
       if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
     } else {
-      // Se não caiu em nenhuma regra, mostra o que veio dentro do objeto
-      throw new Error("Status inválido recebido: " + JSON.stringify(resultado));
+      throw new Error("Não foi possível processar o fechamento.");
     }
   })
   .catch(err => {
@@ -13193,7 +13191,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       btnFechar.disabled = false;
     }
     if (msgErro) {
-      msgErro.innerText = "❌ " + err.message;
+      msgErro.innerText = "❌ Erro ao fechar caixa no servidor.";
       msgErro.style.display = "block";
     }
   });
