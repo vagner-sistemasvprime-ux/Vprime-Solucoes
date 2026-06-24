@@ -13090,22 +13090,9 @@ function confirmarFechamentoHistorico(index, forcar = false) {
   if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
 
-  console.log("Dados do caixa selecionado na linha:", caixa);
-
-  // Captura o número da linha na planilha (ex: 4)
-  const numeroLinha = caixa.linha;
-
   const msgErro = document.getElementById("modalErroMsg");
   const boxAviso = document.getElementById("modalAvisoBox");
   if (msgErro) msgErro.style.display = "none";
-
-  if (!numeroLinha) {
-    if (msgErro) {
-      msgErro.innerText = "❌ Erro: O número da linha do caixa não foi encontrado.";
-      msgErro.style.display = "block";
-    }
-    return;
-  }
 
   const inputDinheiro = document.getElementById("valorDinheiro");
   const inputPix = document.getElementById("valorPix");
@@ -13115,25 +13102,38 @@ function confirmarFechamentoHistorico(index, forcar = false) {
   const valorPix = inputPix ? Number(parseBRL(inputPix.value)) || 0 : 0;
   const valorCartao = inputCartao ? Number(parseBRL(inputCartao.value)) || 0 : 0;
 
+  const valorTotal = valorDinheiro + valorPix + valorCartao;
+
+  if (!valorTotal) {
+    if (msgErro) {
+      msgErro.innerText = "❌ Informe ao menos um valor!";
+      msgErro.style.display = "block";
+    } else if (typeof mostrarToast === "function") {
+      mostrarToast("Informe ao menos um valor!", "vermelho");
+    }
+    return;
+  }
+
   const btnFechar = document.getElementById("btnEfetuarFechamento");
   if (btnFechar) {
     btnFechar.innerText = "PROCESSANDO...";
     btnFechar.disabled = true;
   }
 
-  // 🎯 Mudamos a ação para FECHAR_CAIXA_POR_LINHA que usa diretamente o número da linha!
+  // 🎯 ESTRATÉGIA: Enviamos como text/plain para burlar o CORS, 
+  // mas o conteúdo dentro é o JSON que o seu GAS espera ler!
   fetch(URL_API_GOOGLE, {
     method: "POST",
     headers: {
       "Content-Type": "text/plain;charset=utf-8"
     },
     body: JSON.stringify({
-      acao: "FECHAR_CAIXA_POR_LINHA",
-      linhaCaixa: numeroLinha,
-      // Passamos os valores também caso sua função interna precise atualizar os totais informados
+      acao: "FECHAR_CAIXA",
       valorDinheiro: valorDinheiro,
       valorPix: valorPix,
-      valorCartao: valorCartao
+      valorCartao: valorCartao,
+      usuario: caixa.usuario,
+      forcarFechamento: forcar // Envia true ou false nativo
     })
   })
   .then(response => {
@@ -13148,17 +13148,40 @@ function confirmarFechamentoHistorico(index, forcar = false) {
 
     console.log("Retorno do Servidor:", resultado);
 
-    // No seu GAS, a rota por linha retorna { sucesso: true } ou { sucesso: false, erro: ... }
-    if (resultado && resultado.sucesso === true) {
-      fecharModalHistorico();
-      carregarHistoricoCaixa();
-      if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado com sucesso!", "verde");
-    } else {
-      const txtErro = resultado.erro || resultado.mensagem || "Não foi possível processar o fechamento por linha.";
+    // Trata erro retornado pela função interna da planilha se houver
+    if (resultado && resultado.status === "ERRO") {
       if (msgErro) {
-        msgErro.innerText = "❌ " + txtErro;
+        msgErro.innerText = "❌ " + (resultado.mensagem || "Erro no caixa.");
         msgErro.style.display = "block";
       }
+      return;
+    }
+
+    // 1. Trata o Alerta de Pendência retornado pela sua função
+    if (resultado && resultado.status === "ALERTA_PENDENTE") {
+      if (boxAviso) {
+        boxAviso.style.display = "block";
+        boxAviso.innerHTML = `
+          <p style="margin:0 0 8px 0; color:#d35400; font-size:13px; font-weight:bold;">⚠️ Existem vendas PENDENTES para este operador!</p>
+          <button onclick="confirmarFechamentoHistorico(${index}, true)" style="background:#e67e22; color:#fff; border:none; padding:8px; border-radius:4px; font-weight:bold; width:100%; cursor:pointer;">
+            FORÇAR FECHAMENTO ASSIM MESMO
+          </button>
+        `;
+      } else {
+        if (confirm("Existem vendas PENDENTES. Deseja fechar o caixa assim mesmo?")) {
+          confirmarFechamentoHistorico(index, true);
+        }
+      }
+      return;
+    }
+
+    // 2. Trata o Sucesso retornado pela sua função
+    if (resultado && resultado.status === "SUCESSO") {
+      fecharModalHistorico();
+      carregarHistoricoCaixa();
+      if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
+    } else {
+      throw new Error("Não foi possível processar o fechamento.");
     }
   })
   .catch(err => {
