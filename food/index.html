@@ -13090,7 +13090,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
   if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
 
-  // Elementos do Modal para exibir avisos/erros internamente
   const msgErro = document.getElementById("modalErroMsg");
   const boxAviso = document.getElementById("modalAvisoBox");
   if (msgErro) msgErro.style.display = "none";
@@ -13099,7 +13098,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
   const inputPix = document.getElementById("valorPix");
   const inputCartao = document.getElementById("valorCartao");
 
-  // Pega os valores e garante que são números (ou 0 se vazios)
   const valorDinheiro = inputDinheiro ? Number(parseBRL(inputDinheiro.value)) || 0 : 0;
   const valorPix = inputPix ? Number(parseBRL(inputPix.value)) || 0 : 0;
   const valorCartao = inputCartao ? Number(parseBRL(inputCartao.value)) || 0 : 0;
@@ -13122,7 +13120,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     btnFechar.disabled = true;
   }
 
-  // Faz a requisição para a API do Google
   fetch(URL_API_GOOGLE, {
     method: "POST",
     headers: {
@@ -13130,17 +13127,14 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     },
     body: new URLSearchParams({
       acao: "FECHAR_CAIXA",
-      nomeLoja: CONFIG.cliente.nomeFixo,
       valorDinheiro: valorDinheiro,
       valorPix: valorPix,
       valorCartao: valorCartao,
       usuario: caixa.usuario,
-      forcarFechamento: forcar // Passa true ou false
+      forcarFechamento: forcar
     })
   })
   .then(response => {
-    // O Google Apps Script costuma redirecionar (status 302), o fetch lida com isso, 
-    // mas se vier com bloqueio de leitura por CORS, o response.ok pode falhar.
     if (!response.ok) throw new Error("Erro na comunicação com o servidor.");
     return response.json();
   })
@@ -13150,7 +13144,21 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       btnFechar.disabled = false;
     }
 
-    // 1. Trata o Alerta de Pendência retornado pela sua função
+    console.log("Retorno do Servidor:", resultado);
+
+    // 🔴 TRATAMENTO DE ERRO VINDO DA PLANILHA
+    if (resultado && (resultado.status === "ERRO" || resultado.status === "ERRO_INTERNO")) {
+      const txtErro = resultado.mensagem || "Erro desconhecido na planilha.";
+      if (msgErro) {
+        msgErro.innerText = "❌ " + txtErro;
+        msgErro.style.display = "block";
+      } else {
+        alert("Erro no servidor: " + txtErro);
+      }
+      return; 
+    }
+
+    // 1. Trata o Alerta de Pendência
     if (resultado && resultado.status === "ALERTA_PENDENTE") {
       if (boxAviso) {
         boxAviso.style.display = "block";
@@ -13161,7 +13169,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
           </button>
         `;
       } else {
-        // Fallback caso não queira usar as divs internas do modal: usa o confirm antigo
         if (confirm("Existem vendas PENDENTES. Deseja fechar o caixa assim mesmo?")) {
           confirmarFechamentoHistorico(index, true);
         }
@@ -13169,13 +13176,14 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       return;
     }
 
-    // 2. Trata o Sucesso retornado pela sua função
+    // 2. Trata o Sucesso
     if (resultado && resultado.status === "SUCESSO") {
       fecharModalHistorico();
       carregarHistoricoCaixa();
       if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
     } else {
-      throw new Error("Não foi possível processar o fechamento.");
+      // Se não caiu em nenhuma regra, mostra o que veio dentro do objeto
+      throw new Error("Status inválido recebido: " + JSON.stringify(resultado));
     }
   })
   .catch(err => {
@@ -13185,10 +13193,8 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       btnFechar.disabled = false;
     }
     if (msgErro) {
-      msgErro.innerText = "❌ Erro ao fechar caixa no servidor.";
+      msgErro.innerText = "❌ " + err.message;
       msgErro.style.display = "block";
-    } else if (typeof mostrarToast === "function") {
-      mostrarToast("Erro no encerramento.", "vermelho");
     }
   });
 }
