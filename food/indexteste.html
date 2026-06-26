@@ -13087,8 +13087,25 @@ function parseBRL(valorBRL) {
  * ACTION PIPELINE: Finaliza as contas e submete o balanço cego ao servidor
  */
 function confirmarFechamentoHistorico(index, forcar = false) {
-  if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
+  if (!window.historicoCaixas || !window.historicoCaixas[index]) {
+    alert("Erro: Dados do histórico de caixas não encontrados na memória do site.");
+    return;
+  }
+  
   const caixa = window.historicoCaixas[index];
+  console.log("🎯 Depurando caixa selecionado:", caixa); // Log para te ajudar a ver o que tem dentro do objeto
+
+  // 🌟 CORREÇÃO DO UNDEFINED: Garante que o usuário exista no objeto
+  const usuarioDestino = caixa.usuario || caixa.operador || caixa.Usuario || "";
+  
+  if (!usuarioDestino) {
+    if (typeof mostrarToast === "function") {
+      mostrarToast("❌ Erro: Usuário do caixa não identificado!", "vermelho");
+    } else {
+      alert("Erro: Não foi possível identificar o usuário dono deste caixa.");
+    }
+    return;
+  }
 
   const msgErro = document.getElementById("modalErroMsg");
   const boxAviso = document.getElementById("modalAvisoBox");
@@ -13120,9 +13137,13 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     btnFechar.disabled = true;
   }
 
-  // 🎯 Ativando o loader visual padrão para evitar cliques múltiplos
+  // 🎯 CUSTOMIZAÇÃO DO SPINNER: Reaproveita o loader mudando o texto dinamicamente
   const loader = document.getElementById("loader-cozinha");
-  if (loader) loader.style.display = "flex";
+  if (loader) {
+    const textoLoader = loader.querySelector("p");
+    if (textoLoader) textoLoader.innerText = "Processando fechamento de caixa fiscal...";
+    loader.style.display = "flex";
+  }
 
   fetch(URL_API_GOOGLE, {
     method: "POST",
@@ -13134,16 +13155,15 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       valorDinheiro: valorDinheiro,
       valorPix: valorPix,
       valorCartao: valorCartao,
-      usuario: caixa.usuario,
+      usuario: usuarioDestino, // 🌟 Enviando a variável tratada sem chance de ser undefined
       forcarFechamento: forcar
     })
   })
   .then(response => {
     if (!response.ok) throw new Error("Erro na comunicação com o servidor.");
-    return response.text(); // 🌟 PILAR 1: Lemos como texto para não quebrar no redirecionamento do GAS
+    return response.text();
   })
   .then(textoBruto => {
-    // Se vier vazio cria um objeto padrão, se não, faz o parse correto
     const resultado = textoBruto ? JSON.parse(textoBruto) : { status: "SUCESSO" };
 
     if (btnFechar) {
@@ -13153,7 +13173,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
 
     console.log("Retorno do Servidor:", resultado);
 
-    // Trata erro retornado pela função interna da planilha se houver
     if (resultado && (resultado.status === "ERRO" || resultado.status === "ERRO_INTERNO")) {
       if (msgErro) {
         msgErro.innerText = "❌ " + (resultado.mensagem || "Erro no caixa.");
@@ -13162,7 +13181,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       return;
     }
 
-    // 1. Trata o Alerta de Pendência retornado pela sua função
     if (resultado && resultado.status === "ALERTA_PENDENTE") {
       if (boxAviso) {
         boxAviso.style.display = "block";
@@ -13180,7 +13198,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       return;
     }
 
-    // 2. Trata o Sucesso retornado pela sua função
     if (resultado && resultado.status === "SUCESSO") {
       fecharModalHistorico();
       carregarHistoricoCaixa();
@@ -13201,8 +13218,12 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     }
   })
   .finally(() => {
-    // 🎯 Desliga o loader visual
-    if (loader) loader.style.display = "none";
+    // 🎯 Desliga o loader e restaura o texto original da Cozinha para as outras funções
+    if (loader) {
+      loader.style.display = "none";
+      const textoLoader = loader.querySelector("p");
+      if (textoLoader) textoLoader.innerText = "Atualizando cozinha, aguarde...";
+    }
   });
 }
   
