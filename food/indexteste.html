@@ -12972,8 +12972,8 @@ function formatBRL(valor) {
  * MODAL CONSOLE: Monta a cockpit de conferência cega e fechamento físico de valores
  */
 function abrirModalFechamentoHistorico(index) {
+  if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
-  if (!caixa) return;
 
   const antigo = document.getElementById("modalFechamentoHistorico");
   if (antigo) antigo.remove();
@@ -12987,7 +12987,17 @@ function abrirModalFechamentoHistorico(index) {
     backdrop-filter: blur(2px);
   `;
 
-  const { dinheiro: dSis, pix: pSis, cartao: cSis, total, diferenca, usuario, abertura, status } = caixa;
+  // 🌟 CORREÇÃO CIRÚRGICA: Mapeia alternativas para evitar o undefined caso venha da planilha modificado
+  const dSis = caixa.dinheiro || caixa.Dinheiro || 0;
+  const pSis = caixa.pix || caixa.Pix || 0;
+  const cSis = caixa.cartao || caixa.Cartao || 0;
+  const total = caixa.total || caixa.Total || 0;
+  const diferenca = caixa.diferenca || caixa.Diferenca || 0;
+  const status = caixa.status || caixa.Status || "FECHADO";
+  const abertura = caixa.abertura || caixa.Abertura || new Date();
+  
+  // Captura o usuário lidando com variações de letras maiúsculas ou chaves de operadores
+  const usuario = caixa.usuario || caixa.Usuario || caixa.operador || caixa.Operador || "OPERADOR";
 
   modal.innerHTML = `
     <div style="background:#fff; width:380px; border-radius:12px; overflow:hidden; box-shadow:0 10px 25px rgba(0,0,0,0.2); font-family: 'Segoe UI', Tahoma, sans-serif;">
@@ -13064,7 +13074,6 @@ function abrirModalFechamentoHistorico(index) {
 
   document.body.appendChild(modal);
 }
-
 /**
  * INTERCEPTOR MÁSCARA: Processa em real-time a digitação do operador convertendo em moeda local
  */
