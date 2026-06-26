@@ -13120,8 +13120,10 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     btnFechar.disabled = true;
   }
 
-  // 🎯 ESTRATÉGIA: Enviamos como text/plain para burlar o CORS, 
-  // mas o conteúdo dentro é o JSON que o seu GAS espera ler!
+  // 🎯 Ativando o loader visual padrão para evitar cliques múltiplos
+  const loader = document.getElementById("loader-cozinha");
+  if (loader) loader.style.display = "flex";
+
   fetch(URL_API_GOOGLE, {
     method: "POST",
     headers: {
@@ -13133,14 +13135,17 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       valorPix: valorPix,
       valorCartao: valorCartao,
       usuario: caixa.usuario,
-      forcarFechamento: forcar // Envia true ou false nativo
+      forcarFechamento: forcar
     })
   })
   .then(response => {
     if (!response.ok) throw new Error("Erro na comunicação com o servidor.");
-    return response.json();
+    return response.text(); // 🌟 PILAR 1: Lemos como texto para não quebrar no redirecionamento do GAS
   })
-  .then(resultado => {
+  .then(textoBruto => {
+    // Se vier vazio cria um objeto padrão, se não, faz o parse correto
+    const resultado = textoBruto ? JSON.parse(textoBruto) : { status: "SUCESSO" };
+
     if (btnFechar) {
       btnFechar.innerText = "EFETUAR FECHAMENTO";
       btnFechar.disabled = false;
@@ -13149,7 +13154,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     console.log("Retorno do Servidor:", resultado);
 
     // Trata erro retornado pela função interna da planilha se houver
-    if (resultado && resultado.status === "ERRO") {
+    if (resultado && (resultado.status === "ERRO" || resultado.status === "ERRO_INTERNO")) {
       if (msgErro) {
         msgErro.innerText = "❌ " + (resultado.mensagem || "Erro no caixa.");
         msgErro.style.display = "block";
@@ -13194,6 +13199,10 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       msgErro.innerText = "❌ Erro ao fechar caixa no servidor.";
       msgErro.style.display = "block";
     }
+  })
+  .finally(() => {
+    // 🎯 Desliga o loader visual
+    if (loader) loader.style.display = "none";
   });
 }
   
