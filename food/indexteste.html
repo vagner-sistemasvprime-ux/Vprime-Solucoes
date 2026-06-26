@@ -13180,6 +13180,13 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     loader.style.display = "flex";
   }
 
+  // --- ANTES DO FETCH, ADICIONE ESTE LOG E ALERTA DE VALIDAÇÃO ---
+  const usuarioFinalEnvio = usuarioDestino || caixa.usuario || "WES";
+
+  // Alerta visual para você ver na tela antes de ir para o servidor
+  alert("Dados que serão enviados no payload:\nAction: FECHAR_CAIXA\nUsuário detectado: " + usuarioFinalEnvio);
+
+  
   fetch(URL_API_GOOGLE, {
     method: "POST",
     headers: {
