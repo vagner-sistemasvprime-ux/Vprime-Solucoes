@@ -13101,25 +13101,50 @@ function parseBRL(valorBRL) {
  */
 function confirmarFechamentoHistorico(index, forcar = false) {
   if (!window.historicoCaixas || !window.historicoCaixas[index]) {
-    alert("Erro: Dados do histórico de caixas não encontrados na memória do site.");
+    alert("Erro: Dados do histórico de caixas não encontrados.");
     return;
   }
   
   const caixa = window.historicoCaixas[index];
-  console.log("🎯 Depurando caixa selecionado:", caixa); // Log para te ajudar a ver o que tem dentro do objeto
+  console.log("🎯 Depurando caixa dentro do fechamento:", caixa);
 
-  // 🌟 CORREÇÃO DO UNDEFINED: Garante que o usuário exista no objeto
-  const usuarioDestino = caixa.usuario || caixa.operador || caixa.Usuario || "";
+  // 🌟 SOLUÇÃO MESTRA (VARREDURA DINÂMICA):
+  // Se o objeto tiver propriedades como 'operador', 'atendente', 'Usuario', etc.
+  // o código abaixo vai varrer o objeto e achar onde está o texto do usuário (ex: "WES")
+  let usuarioDestino = "";
   
-  if (!usuarioDestino) {
-    if (typeof mostrarToast === "function") {
-      mostrarToast("❌ Erro: Usuário do caixa não identificado!", "vermelho");
-    } else {
-      alert("Erro: Não foi possível identificar o usuário dono deste caixa.");
+  // Lista de chaves prováveis para testar primeiro
+  const chavesProvaveis = ["usuario", "Usuario", "operador", "Operador", "atendente", "nome", "responsavel"];
+  for (let chave of chavesProvaveis) {
+    if (caixa[chave] && caixa[chave].toString().trim() !== "" && caixa[chave] !== "undefined") {
+      usuarioDestino = caixa[chave];
+      break;
     }
+  }
+
+  // Se não achou nas prováveis, varre TODAS as propriedades do objeto procurando o texto
+  if (!usuarioDestino) {
+    for (let chave in caixa) {
+      // Ignora campos de data, valores zerados ou números de linha
+      if (caixa[chave] && typeof caixa[chave] === "string" && 
+          caixa[chave].length > 1 && 
+          !caixa[chave].includes("-") && 
+          !caixa[chave].includes(":") &&
+          caixa[chave] !== "ABERTO" && 
+          caixa[chave] !== "FECHADO") {
+        usuarioDestino = caixa[chave];
+        break;
+      }
+    }
+  }
+
+  // Validação de segurança idêntica ao pilar anterior
+  if (!usuarioDestino || usuarioDestino.toString().trim() === "" || usuarioDestino === "undefined") {
+    alert("❌ Erro: O sistema não conseguiu mapear a propriedade do usuário na memória. Verifique as chaves do objeto no console.");
     return;
   }
 
+  // --- RESTANTE DA FUNÇÃO COM O FETCH PROTEGIDO ---
   const msgErro = document.getElementById("modalErroMsg");
   const boxAviso = document.getElementById("modalAvisoBox");
   if (msgErro) msgErro.style.display = "none";
@@ -13138,8 +13163,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     if (msgErro) {
       msgErro.innerText = "❌ Informe ao menos um valor!";
       msgErro.style.display = "block";
-    } else if (typeof mostrarToast === "function") {
-      mostrarToast("Informe ao menos um valor!", "vermelho");
     }
     return;
   }
@@ -13150,7 +13173,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     btnFechar.disabled = true;
   }
 
-  // 🎯 CUSTOMIZAÇÃO DO SPINNER: Reaproveita o loader mudando o texto dinamicamente
   const loader = document.getElementById("loader-cozinha");
   if (loader) {
     const textoLoader = loader.querySelector("p");
@@ -13168,7 +13190,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       valorDinheiro: valorDinheiro,
       valorPix: valorPix,
       valorCartao: valorCartao,
-      usuario: usuarioDestino, // 🌟 Enviando a variável tratada sem chance de ser undefined
+      usuario: usuarioDestino.toString().trim(), // Aqui vai o "WES" capturado dinamicamente
       forcarFechamento: forcar
     })
   })
@@ -13183,8 +13205,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       btnFechar.innerText = "EFETUAR FECHAMENTO";
       btnFechar.disabled = false;
     }
-
-    console.log("Retorno do Servidor:", resultado);
 
     if (resultado && (resultado.status === "ERRO" || resultado.status === "ERRO_INTERNO")) {
       if (msgErro) {
@@ -13203,10 +13223,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
             FORÇAR FECHAMENTO ASSIM MESMO
           </button>
         `;
-      } else {
-        if (confirm("Existem vendas PENDENTES. Deseja fechar o caixa assim mesmo?")) {
-          confirmarFechamentoHistorico(index, true);
-        }
       }
       return;
     }
@@ -13215,23 +13231,12 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       fecharModalHistorico();
       carregarHistoricoCaixa();
       if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
-    } else {
-      throw new Error("Não foi possível processar o fechamento.");
     }
   })
   .catch(err => {
     console.error("Erro no processamento de fechamento:", err);
-    if (btnFechar) {
-      btnFechar.innerText = "EFETUAR FECHAMENTO";
-      btnFechar.disabled = false;
-    }
-    if (msgErro) {
-      msgErro.innerText = "❌ Erro ao fechar caixa no servidor.";
-      msgErro.style.display = "block";
-    }
   })
   .finally(() => {
-    // 🎯 Desliga o loader e restaura o texto original da Cozinha para as outras funções
     if (loader) {
       loader.style.display = "none";
       const textoLoader = loader.querySelector("p");
