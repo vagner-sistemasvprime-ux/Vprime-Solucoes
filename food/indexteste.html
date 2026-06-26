@@ -12895,13 +12895,20 @@ function carregarHistoricoCaixa() {
   })
   .then(response => {
     if (!response.ok) throw new Error("Erro de resposta na rede ao buscar histórico de caixas.");
-    return response.json();
+    return response.text(); // 🌟 APLICADO O PRINCÍPIO: Lemos como texto para não quebrar no redirecionamento do GAS
   })
-  .then(lista => {
+  .then(textoBruto => {
+    // Faz o parse seguro do texto recebido. Se vier vazio, assume uma array vazia
+    const lista = textoBruto ? JSON.parse(textoBruto) : [];
+
     if (!lista || lista.length === 0) {
       div.innerHTML = `<p style="text-align:center;">✅ Nenhum caixa registrado.</p>`;
+      window.historicoCaixas = []; // Limpa o cache global por segurança
       return;
     }
+
+    // 🌟 IMPORTANTE: Salva na memória global ANTES de montar o HTML
+    window.historicoCaixas = lista; 
 
     let html = `
       <table class="historico-tabela">
@@ -12951,9 +12958,6 @@ function carregarHistoricoCaixa() {
 
     html += `</tbody></table>`;
     div.innerHTML = html;
-
-    // Cache no escopo do objeto global para manuseio nos modais downstream
-    window.historicoCaixas = lista; 
   })
   .catch(err => {
     console.error("Falha no barramento de sincronismo de caixas:", err);
