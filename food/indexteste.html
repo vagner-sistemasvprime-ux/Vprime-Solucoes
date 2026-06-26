@@ -13260,8 +13260,13 @@ document.head.appendChild(style);
  * MUTATOR: Define globalmente o nível de carga/status operacional da cozinha
  */
 function setCozinha(status) {
+  // 1. Liga o efeito visual de carregamento
+  const loader = document.getElementById("loader-cozinha");
+  if (loader) loader.style.display = "flex";
+
   fetch(URL_API_GOOGLE, {
     method: "POST",
+    mode: "cors", // Opcional, mas ajuda a estabilizar requisições ao GAS
     body: JSON.stringify({
       acao: "SET_STATUS_COZINHA",
       nomeLoja: CONFIG.cliente.nomeFixo,
@@ -13270,12 +13275,23 @@ function setCozinha(status) {
   })
   .then(response => {
     if (!response.ok) throw new Error("Erro de comunicação ao redefinir status da cozinha.");
-    return response.json();
+    return response.text(); // 🌟 Lemos como texto primeiro para não quebrar no redirecionamento
   })
-  .then(() => {
+  .then(textoBruto => {
+    // Se o Google responder vazio por causa do redirecionamento, criamos um JSON falso de sucesso
+    const dados = textoBruto ? JSON.parse(textoBruto) : { sucesso: true };
+    
+    // 2. Atualiza a tela normalmente
     carregarStatusCozinha();
   })
-  .catch(err => console.error("Falha na alteração da retaguarda:", err));
+  .catch(err => {
+    console.error("Falha na alteração da retaguarda:", err);
+    alert("Não foi possível salvar o status na planilha.");
+  })
+  .finally(() => {
+    // 3. Desliga o efeito visual de carregamento (independente de dar certo ou erro)
+    if (loader) loader.style.display = "none";
+  });
 }
 
 /**
@@ -15278,7 +15294,25 @@ function fecharNovoModal() {
   }
 </style>
 
+<div id="loader-cozinha" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center; color: white; font-family: sans-serif; flex-direction: column;">
+  <div class="spinner-cozinha"></div>
+  <p style="margin-top: 15px; font-weight: bold; font-size: 1.1rem;">Atualizando cozinha, aguarde...</p>
+</div>
 
+<style>
+  .spinner-cozinha {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top: 4px solid #fff;
+    width: 40px;
+    height: 40px;
+    animation: rodarSpinner 0.8s linear infinite;
+  }
+  @keyframes rodarSpinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
 
  
 
