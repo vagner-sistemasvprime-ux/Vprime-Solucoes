@@ -13108,43 +13108,15 @@ function confirmarFechamentoHistorico(index, forcar = false) {
   const caixa = window.historicoCaixas[index];
   console.log("🎯 Depurando caixa dentro do fechamento:", caixa);
 
-  // 🌟 SOLUÇÃO MESTRA (VARREDURA DINÂMICA):
-  // Se o objeto tiver propriedades como 'operador', 'atendente', 'Usuario', etc.
-  // o código abaixo vai varrer o objeto e achar onde está o texto do usuário (ex: "WES")
-  let usuarioDestino = "";
-  
-  // Lista de chaves prováveis para testar primeiro
-  const chavesProvaveis = ["usuario", "Usuario", "operador", "Operador", "atendente", "nome", "responsavel"];
-  for (let chave of chavesProvaveis) {
-    if (caixa[chave] && caixa[chave].toString().trim() !== "" && caixa[chave] !== "undefined") {
-      usuarioDestino = caixa[chave];
-      break;
-    }
-  }
+  // 🌟 Como confirmamos no log que o objeto possui a propriedade 'usuario',
+  // usamos ela diretamente com fallbacks seguros para evitar strings nulas.
+  const usuarioDestino = caixa.usuario || caixa.Usuario || "WES";
 
-  // Se não achou nas prováveis, varre TODAS as propriedades do objeto procurando o texto
-  if (!usuarioDestino) {
-    for (let chave in caixa) {
-      // Ignora campos de data, valores zerados ou números de linha
-      if (caixa[chave] && typeof caixa[chave] === "string" && 
-          caixa[chave].length > 1 && 
-          !caixa[chave].includes("-") && 
-          !caixa[chave].includes(":") &&
-          caixa[chave] !== "ABERTO" && 
-          caixa[chave] !== "FECHADO") {
-        usuarioDestino = caixa[chave];
-        break;
-      }
-    }
-  }
-
-  // Validação de segurança idêntica ao pilar anterior
   if (!usuarioDestino || usuarioDestino.toString().trim() === "" || usuarioDestino === "undefined") {
-    alert("❌ Erro: O sistema não conseguiu mapear a propriedade do usuário na memória. Verifique as chaves do objeto no console.");
+    alert("❌ Erro: O sistema não conseguiu mapear o usuário na memória.");
     return;
   }
 
-  // --- RESTANTE DA FUNÇÃO COM O FETCH PROTEGIDO ---
   const msgErro = document.getElementById("modalErroMsg");
   const boxAviso = document.getElementById("modalAvisoBox");
   if (msgErro) msgErro.style.display = "none";
@@ -13180,7 +13152,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     loader.style.display = "flex";
   }
 
-  
   fetch(URL_API_GOOGLE, {
     method: "POST",
     headers: {
@@ -13191,7 +13162,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       valorDinheiro: valorDinheiro,
       valorPix: valorPix,
       valorCartao: valorCartao,
-      usuario: usuarioDestino.toString().trim(), // Aqui vai o "WES" capturado dinamicamente
+      usuario: usuarioDestino.toString().trim(), // Envia estritamente o texto (ex: "WES")
       forcarFechamento: forcar
     })
   })
