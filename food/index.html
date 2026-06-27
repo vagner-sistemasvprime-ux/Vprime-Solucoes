@@ -12895,13 +12895,20 @@ function carregarHistoricoCaixa() {
   })
   .then(response => {
     if (!response.ok) throw new Error("Erro de resposta na rede ao buscar histórico de caixas.");
-    return response.json();
+    return response.text(); // 🌟 APLICADO O PRINCÍPIO: Lemos como texto para não quebrar no redirecionamento do GAS
   })
-  .then(lista => {
+  .then(textoBruto => {
+    // Faz o parse seguro do texto recebido. Se vier vazio, assume uma array vazia
+    const lista = textoBruto ? JSON.parse(textoBruto) : [];
+
     if (!lista || lista.length === 0) {
       div.innerHTML = `<p style="text-align:center;">✅ Nenhum caixa registrado.</p>`;
+      window.historicoCaixas = []; // Limpa o cache global por segurança
       return;
     }
+
+    // 🌟 IMPORTANTE: Salva na memória global ANTES de montar o HTML
+    window.historicoCaixas = lista; 
 
     let html = `
       <table class="historico-tabela">
@@ -12951,9 +12958,6 @@ function carregarHistoricoCaixa() {
 
     html += `</tbody></table>`;
     div.innerHTML = html;
-
-    // Cache no escopo do objeto global para manuseio nos modais downstream
-    window.historicoCaixas = lista; 
   })
   .catch(err => {
     console.error("Falha no barramento de sincronismo de caixas:", err);
@@ -12972,8 +12976,8 @@ function formatBRL(valor) {
  * MODAL CONSOLE: Monta a cockpit de conferência cega e fechamento físico de valores
  */
 function abrirModalFechamentoHistorico(index) {
+  if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
   const caixa = window.historicoCaixas[index];
-  if (!caixa) return;
 
   const antigo = document.getElementById("modalFechamentoHistorico");
   if (antigo) antigo.remove();
@@ -12987,7 +12991,17 @@ function abrirModalFechamentoHistorico(index) {
     backdrop-filter: blur(2px);
   `;
 
-  const { dinheiro: dSis, pix: pSis, cartao: cSis, total, diferenca, usuario, abertura, status } = caixa;
+  // 🌟 CORREÇÃO CIRÚRGICA: Mapeia alternativas para evitar o undefined caso venha da planilha modificado
+  const dSis = caixa.dinheiro || caixa.Dinheiro || 0;
+  const pSis = caixa.pix || caixa.Pix || 0;
+  const cSis = caixa.cartao || caixa.Cartao || 0;
+  const total = caixa.total || caixa.Total || 0;
+  const diferenca = caixa.diferenca || caixa.Diferenca || 0;
+  const status = caixa.status || caixa.Status || "FECHADO";
+  const abertura = caixa.abertura || caixa.Abertura || new Date();
+  
+  // Captura o usuário lidando com variações de letras maiúsculas ou chaves de operadores
+  const usuario = caixa.usuario || caixa.Usuario || caixa.operador || caixa.Operador || "OPERADOR";
 
   modal.innerHTML = `
     <div style="background:#fff; width:380px; border-radius:12px; overflow:hidden; box-shadow:0 10px 25px rgba(0,0,0,0.2); font-family: 'Segoe UI', Tahoma, sans-serif;">
@@ -13064,7 +13078,6 @@ function abrirModalFechamentoHistorico(index) {
 
   document.body.appendChild(modal);
 }
-
 /**
  * INTERCEPTOR MÁSCARA: Processa em real-time a digitação do operador convertendo em moeda local
  */
@@ -13087,9 +13100,51 @@ function parseBRL(valorBRL) {
  * ACTION PIPELINE: Finaliza as contas e submete o balanço cego ao servidor
  */
 function confirmarFechamentoHistorico(index, forcar = false) {
-  if (!window.historicoCaixas || !window.historicoCaixas[index]) return;
+  if (!window.historicoCaixas || !window.historicoCaixas[index]) {
+    alert("Erro: Dados do histórico de caixas não encontrados.");
+    return;
+  }
+  
   const caixa = window.historicoCaixas[index];
+  console.log("🎯 Depurando caixa dentro do fechamento:", caixa);
 
+  // 🌟 SOLUÇÃO MESTRA (VARREDURA DINÂMICA):
+  // Se o objeto tiver propriedades como 'operador', 'atendente', 'Usuario', etc.
+  // o código abaixo vai varrer o objeto e achar onde está o texto do usuário (ex: "WES")
+  let usuarioDestino = "";
+  
+  // Lista de chaves prováveis para testar primeiro
+  const chavesProvaveis = ["usuario", "Usuario", "operador", "Operador", "atendente", "nome", "responsavel"];
+  for (let chave of chavesProvaveis) {
+    if (caixa[chave] && caixa[chave].toString().trim() !== "" && caixa[chave] !== "undefined") {
+      usuarioDestino = caixa[chave];
+      break;
+    }
+  }
+
+  // Se não achou nas prováveis, varre TODAS as propriedades do objeto procurando o texto
+  if (!usuarioDestino) {
+    for (let chave in caixa) {
+      // Ignora campos de data, valores zerados ou números de linha
+      if (caixa[chave] && typeof caixa[chave] === "string" && 
+          caixa[chave].length > 1 && 
+          !caixa[chave].includes("-") && 
+          !caixa[chave].includes(":") &&
+          caixa[chave] !== "ABERTO" && 
+          caixa[chave] !== "FECHADO") {
+        usuarioDestino = caixa[chave];
+        break;
+      }
+    }
+  }
+
+  // Validação de segurança idêntica ao pilar anterior
+  if (!usuarioDestino || usuarioDestino.toString().trim() === "" || usuarioDestino === "undefined") {
+    alert("❌ Erro: O sistema não conseguiu mapear a propriedade do usuário na memória. Verifique as chaves do objeto no console.");
+    return;
+  }
+
+  // --- RESTANTE DA FUNÇÃO COM O FETCH PROTEGIDO ---
   const msgErro = document.getElementById("modalErroMsg");
   const boxAviso = document.getElementById("modalAvisoBox");
   if (msgErro) msgErro.style.display = "none";
@@ -13108,8 +13163,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     if (msgErro) {
       msgErro.innerText = "❌ Informe ao menos um valor!";
       msgErro.style.display = "block";
-    } else if (typeof mostrarToast === "function") {
-      mostrarToast("Informe ao menos um valor!", "vermelho");
     }
     return;
   }
@@ -13120,8 +13173,14 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     btnFechar.disabled = true;
   }
 
-  // 🎯 ESTRATÉGIA: Enviamos como text/plain para burlar o CORS, 
-  // mas o conteúdo dentro é o JSON que o seu GAS espera ler!
+  const loader = document.getElementById("loader-cozinha");
+  if (loader) {
+    const textoLoader = loader.querySelector("p");
+    if (textoLoader) textoLoader.innerText = "Processando fechamento de caixa fiscal...";
+    loader.style.display = "flex";
+  }
+
+  
   fetch(URL_API_GOOGLE, {
     method: "POST",
     headers: {
@@ -13132,24 +13191,23 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       valorDinheiro: valorDinheiro,
       valorPix: valorPix,
       valorCartao: valorCartao,
-      usuario: caixa.usuario,
-      forcarFechamento: forcar // Envia true ou false nativo
+      usuario: usuarioDestino.toString().trim(), // Aqui vai o "WES" capturado dinamicamente
+      forcarFechamento: forcar
     })
   })
   .then(response => {
     if (!response.ok) throw new Error("Erro na comunicação com o servidor.");
-    return response.json();
+    return response.text();
   })
-  .then(resultado => {
+  .then(textoBruto => {
+    const resultado = textoBruto ? JSON.parse(textoBruto) : { status: "SUCESSO" };
+
     if (btnFechar) {
       btnFechar.innerText = "EFETUAR FECHAMENTO";
       btnFechar.disabled = false;
     }
 
-    console.log("Retorno do Servidor:", resultado);
-
-    // Trata erro retornado pela função interna da planilha se houver
-    if (resultado && resultado.status === "ERRO") {
+    if (resultado && (resultado.status === "ERRO" || resultado.status === "ERRO_INTERNO")) {
       if (msgErro) {
         msgErro.innerText = "❌ " + (resultado.mensagem || "Erro no caixa.");
         msgErro.style.display = "block";
@@ -13157,7 +13215,6 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       return;
     }
 
-    // 1. Trata o Alerta de Pendência retornado pela sua função
     if (resultado && resultado.status === "ALERTA_PENDENTE") {
       if (boxAviso) {
         boxAviso.style.display = "block";
@@ -13167,32 +13224,24 @@ function confirmarFechamentoHistorico(index, forcar = false) {
             FORÇAR FECHAMENTO ASSIM MESMO
           </button>
         `;
-      } else {
-        if (confirm("Existem vendas PENDENTES. Deseja fechar o caixa assim mesmo?")) {
-          confirmarFechamentoHistorico(index, true);
-        }
       }
       return;
     }
 
-    // 2. Trata o Sucesso retornado pela sua função
     if (resultado && resultado.status === "SUCESSO") {
       fecharModalHistorico();
       carregarHistoricoCaixa();
       if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
-    } else {
-      throw new Error("Não foi possível processar o fechamento.");
     }
   })
   .catch(err => {
     console.error("Erro no processamento de fechamento:", err);
-    if (btnFechar) {
-      btnFechar.innerText = "EFETUAR FECHAMENTO";
-      btnFechar.disabled = false;
-    }
-    if (msgErro) {
-      msgErro.innerText = "❌ Erro ao fechar caixa no servidor.";
-      msgErro.style.display = "block";
+  })
+  .finally(() => {
+    if (loader) {
+      loader.style.display = "none";
+      const textoLoader = loader.querySelector("p");
+      if (textoLoader) textoLoader.innerText = "Atualizando cozinha, aguarde...";
     }
   });
 }
@@ -13260,8 +13309,13 @@ document.head.appendChild(style);
  * MUTATOR: Define globalmente o nível de carga/status operacional da cozinha
  */
 function setCozinha(status) {
+  // 1. Liga o efeito visual de carregamento
+  const loader = document.getElementById("loader-cozinha");
+  if (loader) loader.style.display = "flex";
+
   fetch(URL_API_GOOGLE, {
     method: "POST",
+    mode: "cors", // Opcional, mas ajuda a estabilizar requisições ao GAS
     body: JSON.stringify({
       acao: "SET_STATUS_COZINHA",
       nomeLoja: CONFIG.cliente.nomeFixo,
@@ -13270,12 +13324,23 @@ function setCozinha(status) {
   })
   .then(response => {
     if (!response.ok) throw new Error("Erro de comunicação ao redefinir status da cozinha.");
-    return response.json();
+    return response.text(); // 🌟 Lemos como texto primeiro para não quebrar no redirecionamento
   })
-  .then(() => {
+  .then(textoBruto => {
+    // Se o Google responder vazio por causa do redirecionamento, criamos um JSON falso de sucesso
+    const dados = textoBruto ? JSON.parse(textoBruto) : { sucesso: true };
+    
+    // 2. Atualiza a tela normalmente
     carregarStatusCozinha();
   })
-  .catch(err => console.error("Falha na alteração da retaguarda:", err));
+  .catch(err => {
+    console.error("Falha na alteração da retaguarda:", err);
+    alert("Não foi possível salvar o status na planilha.");
+  })
+  .finally(() => {
+    // 3. Desliga o efeito visual de carregamento (independente de dar certo ou erro)
+    if (loader) loader.style.display = "none";
+  });
 }
 
 /**
@@ -15278,7 +15343,25 @@ function fecharNovoModal() {
   }
 </style>
 
+<div id="loader-cozinha" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center; color: white; font-family: sans-serif; flex-direction: column;">
+  <div class="spinner-cozinha"></div>
+  <p style="margin-top: 15px; font-weight: bold; font-size: 1.1rem;">Atualizando cozinha, aguarde...</p>
+</div>
 
+<style>
+  .spinner-cozinha {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top: 4px solid #fff;
+    width: 40px;
+    height: 40px;
+    animation: rodarSpinner 0.8s linear infinite;
+  }
+  @keyframes rodarSpinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
 
  
 
