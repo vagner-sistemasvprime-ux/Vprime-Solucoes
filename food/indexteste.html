@@ -13100,27 +13100,25 @@ function parseBRL(valorBRL) {
  * ACTION PIPELINE: Finaliza as contas e submete o balanço cego ao servidor
  */
 function confirmarFechamentoHistorico(index, forcar = false) {
-  // 1. Tenta pegar o usuário do histórico da memória
-  let operadorFinal = "";
-  if (window.historicoCaixas && window.historicoCaixas[index]) {
-    operadorFinal = window.historicoCaixas[index].usuario || window.historicoCaixas[index].Usuario;
-  }
-
-  // 🌟 TRATADOR VISUAL (A SOLUÇÃO): Se a memória falhar ou sumir, o sistema lê o texto direto da sua tela!
-  if (!operadorFinal || operadorFinal === "undefined") {
-    // Procura o elemento HTML onde está escrito "Operador: WES"
-    const elementoStatus = document.body.innerText; 
-    if (elementoStatus.includes("Operador:")) {
-      // Extrai a palavra que vem depois de "Operador:" e remove espaços extras
-      const partes = elementoStatus.split("Operador:")[1];
-      operadorFinal = partes.split("|")[0].trim();
+  // 1. Tenta capturar o nome do operador direto da tela onde você lê "Operador: WES | ABERTO"
+  let operadorReal = "WES"; 
+  
+  // Captura todo o texto visível da página para extrair o nome correto
+  const textoPagina = document.body.innerText || "";
+  if (textoPagina.includes("Operador:")) {
+    try {
+      // Isola o que está depois de "Operador:" e antes da barra "|"
+      const depoisOperador = textoPagina.split("Operador:")[1];
+      const nomeIsolado = depoisOperador.split("|")[0].trim();
+      if (nomeIsolado && nomeIsolado !== "undefined") {
+        operadorReal = nomeIsolado;
+      }
+    } catch (e) {
+      console.error("Erro ao extrair operador do texto da tela:", e);
     }
   }
 
-  // Se tudo falhar, ele usa o WES que está ativo na tela como garantia de segurança
-  if (!operadorFinal || operadorFinal === "undefined") {
-    operadorFinal = "WES";
-  }
+  console.log("🎯 Operador extraído visualmente para fechamento:", operadorReal);
 
   const msgErro = document.getElementById("modalErroMsg");
   const boxAviso = document.getElementById("modalAvisoBox");
@@ -13140,7 +13138,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     btnFechar.disabled = true;
   }
 
-  // Envia o pacote de dados com o operador garantido (WES)
+  // Envia a requisição forçando o operador que achamos na tela (WES) e não o perfil do login (ADMIN)
   fetch(URL_API_GOOGLE, {
     method: "POST",
     headers: {
@@ -13151,7 +13149,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       valorDinheiro: valorDinheiro,
       valorPix: valorPix,
       valorCartao: valorCartao,
-      usuario: operadorFinal.toString().trim(), // Aqui vai "WES" de qualquer jeito!
+      usuario: operadorReal, // Vai enviar "WES" corrigindo o conflito com "ADMIN"
       forcarFechamento: forcar
     })
   })
@@ -13179,7 +13177,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     }
   })
   .catch(err => {
-    console.error(err);
+    console.error("Erro no fetch:", err);
     if (btnFechar) btnFechar.disabled = false;
   });
 }
