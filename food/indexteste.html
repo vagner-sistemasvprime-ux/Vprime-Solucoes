@@ -13100,25 +13100,45 @@ function parseBRL(valorBRL) {
  * ACTION PIPELINE: Finaliza as contas e submete o balanço cego ao servidor
  */
 function confirmarFechamentoHistorico(index, forcar = false) {
-  // 1. Tenta capturar o nome do operador direto da tela onde você lê "Operador: WES | ABERTO"
-  let operadorReal = "WES"; 
+  if (!window.historicoCaixas || !window.historicoCaixas[index]) {
+    alert("Erro: Dados do histórico de caixas não encontrados.");
+    return;
+  }
   
-  // Captura todo o texto visível da página para extrair o nome correto
-  const textoPagina = document.body.innerText || "";
-  if (textoPagina.includes("Operador:")) {
-    try {
-      // Isola o que está depois de "Operador:" e antes da barra "|"
-      const depoisOperador = textoPagina.split("Operador:")[1];
-      const nomeIsolado = depoisOperador.split("|")[0].trim();
-      if (nomeIsolado && nomeIsolado !== "undefined") {
-        operadorReal = nomeIsolado;
-      }
-    } catch (e) {
-      console.error("Erro ao extrair operador do texto da tela:", e);
+  const caixa = window.historicoCaixas[index];
+  console.log("🎯 Dados do caixa selecionado para fechamento:", caixa);
+
+  // 🌟 CAPTURA 100% DINÂMICA: Procura o nome do operador dentro do objeto clicado
+  let operadorDinamico = "";
+  
+  // Lista de chaves possíveis que a sua planilha ou API podem ter gerado
+  const chavesProcuradas = ["usuario", "Usuario", "operador", "Operador", "atendente", "nome"];
+  
+  for (let chave of chavesProcuradas) {
+    if (caixa[chave] && caixa[chave].toString().trim() !== "" && caixa[chave].toString() !== "undefined") {
+      operadorDinamico = caixa[chave].toString().trim();
+      break;
     }
   }
 
-  console.log("🎯 Operador extraído visualmente para fechamento:", operadorReal);
+  // Se por acaso o objeto não tiver nenhuma dessas chaves, faz uma varredura geral por texto limpo
+  if (!operadorDinamico) {
+    for (let propriedade in caixa) {
+      const valor = caixa[propriedade];
+      if (typeof valor === "string" && valor.length > 1 && !valor.includes("-") && !valor.includes(":") && valor !== "ABERTO" && valor !== "FECHADO") {
+        operadorDinamico = valor.trim();
+        break;
+      }
+    }
+  }
+
+  // Se ainda assim tudo falhar, usamos o perfil ativo do sistema como último recurso
+  if (!operadorDinamico || operadorDinamico === "undefined") {
+    operadorDinamico = "ADMIN"; 
+  }
+
+  // Mostra no console exatamente quem o sistema descobriu que é o dono do caixa
+  console.log("🚀 OPERADOR IDENTIFICADO DINAMICAMENTE:", operadorDinamico);
 
   const msgErro = document.getElementById("modalErroMsg");
   const boxAviso = document.getElementById("modalAvisoBox");
@@ -13138,7 +13158,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     btnFechar.disabled = true;
   }
 
-  // Envia a requisição forçando o operador que achamos na tela (WES) e não o perfil do login (ADMIN)
+  // Envia a requisição com o operador correto daquela linha específica
   fetch(URL_API_GOOGLE, {
     method: "POST",
     headers: {
@@ -13149,22 +13169,27 @@ function confirmarFechamentoHistorico(index, forcar = false) {
       valorDinheiro: valorDinheiro,
       valorPix: valorPix,
       valorCartao: valorCartao,
-      usuario: operadorReal, // Vai enviar "WES" corrigindo o conflito com "ADMIN"
+      usuario: operadorDinamico, // Passa o nome dinâmico (WES, MARIA, etc.)
       forcarFechamento: forcar
     })
   })
   .then(response => response.text())
   .then(textoBruto => {
-    const resultado = textoBruto ? JSON.parse(textoBruto) : { status: "SUCESSO" };
-
     if (btnFechar) {
       btnFechar.innerText = "EFETUAR FECHAMENTO";
       btnFechar.disabled = false;
     }
 
+    let resultado;
+    try {
+      resultado = textoBruto ? JSON.parse(textoBruto) : { status: "SUCESSO" };
+    } catch(e) {
+      resultado = { status: "ERRO", mensagem: textoBruto || "Erro na resposta do servidor." };
+    }
+
     if (resultado && (resultado.status === "ERRO" || resultado.status === "ERRO_INTERNO")) {
       if (msgErro) {
-        msgErro.innerText = "❌ " + (resultado.mensagem || "Erro no caixa.");
+        msgErro.innerText = "❌ " + (resultado.mensagem || "Erro ao processar fechamento.");
         msgErro.style.display = "block";
       }
       return;
@@ -13173,15 +13198,14 @@ function confirmarFechamentoHistorico(index, forcar = false) {
     if (resultado && resultado.status === "SUCESSO") {
       fecharModalHistorico();
       carregarHistoricoCaixa();
-      if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado!", "verde");
+      if (typeof mostrarToast === "function") mostrarToast("✅ Caixa fechado com sucesso!", "verde");
     }
   })
   .catch(err => {
-    console.error("Erro no fetch:", err);
+    console.error("Erro na requisição:", err);
     if (btnFechar) btnFechar.disabled = false;
   });
-}
-  
+}  
 function fecharModalHistorico() {
   const modal = document.getElementById("modalFechamentoHistorico");
   if (modal) modal.remove();
