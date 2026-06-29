@@ -548,12 +548,11 @@ function solicitarPagamento(email) {
   btn.style.opacity = "0.7";
   btn.innerHTML = `<span>Redirecionando...</span>`;
 
-  // 🔄 CONVERSÃO PARA FETCH: Pede o link de pagamento para a API
+  // 🔄 FIX DE CORS: Para o Google Apps Script aceitar o POST sem bloquear CORS,
+  // nós NÃO enviamos nenhum header customizado e usamos o modo "cors" simplificado.
   fetch(URL_API_GOOGLE, {
     method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
+    mode: "cors", // Garante a tentativa de conexão cruzada
     body: JSON.stringify({
       acao: "GERAR_LINK_PAGAMENTO",
       emailCliente: email,
@@ -561,8 +560,9 @@ function solicitarPagamento(email) {
     })
   })
   .then(response => {
-    if (!response.ok) throw new Error("Servidor Central indisponível.");
-    return response.text(); // 🌟 Lemos como texto por segurança
+    // Nota: O Google costuma retornar status 200 ou redirecionar. 
+    // Se a rede falhar de verdade, cai no catch.
+    return response.text(); 
   })
   .then(textoBruto => {
     let resultado;
@@ -574,9 +574,8 @@ function solicitarPagamento(email) {
 
     if (resultado.sucesso && resultado.url) {
       window.open(resultado.url, '_blank');
-      iniciarVigilanciaPagamento(); // Começa a checar se a planilha atualizou
+      if (typeof iniciarVigilanciaPagamento === "function") iniciarVigilanciaPagamento(); 
     } else {
-      // 🌟 SUBSTUIÇÃO DO ALERT POR MODAL DE ERRO
       exibirModal({
         titulo: "Erro de Faturamento",
         mensagem: "Não foi possível gerar o link de pagamento. Verifique as credenciais da API de pagamentos.",
@@ -591,10 +590,9 @@ function solicitarPagamento(email) {
   .catch(err => {
     console.error("❌ Erro de conexão ao gerar pagamento:", err);
     
-    // 🌟 SUBSTUIÇÃO DO ALERT POR MODAL DE ERRO
     exibirModal({
       titulo: "Falha de Comunicação",
-      mensagem: "Ocorreu um erro ao tentar se conectar ao servidor financeiro central.",
+      mensagem: "Ocorreu um erro de CORS ou rede ao tentar se conectar ao servidor central do Google.",
       tipo: "erro"
     });
 
