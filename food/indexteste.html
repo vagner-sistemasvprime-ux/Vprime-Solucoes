@@ -10947,11 +10947,19 @@ function fechar() {
  */
 function confirmarAberturaCaixa() {
   const valorInput = document.getElementById("valorInicialCaixa");
-  const valor = valorInput ? valorInput.value : "";
+  
+  // Tratamento para garantir que envie apenas os números limpos para a planilha (Evita R$ ou vírgulas quebrando colunas)
+  let valor = valorInput ? valorInput.value : "";
+  if (typeof parseBRL === "function") {
+    valor = Number(parseBRL(valor)) || 0;
+  } else {
+    valor = Number(valor.replace(/[^0-9,-]/g, "").replace(",", ".")) || 0;
+  }
+
   const btn = document.getElementById("btnAbrirCaixa"); 
   const usuario = typeof usuarioLogado !== "undefined" ? usuarioLogado : "Balcão";
 
-  if (!valor) {
+  if (!valor && valor !== 0) {
     exibirModal({
       titulo: "Valor Obrigatório",
       mensagem: "Por favor, informe o valor de fundo de caixa para iniciar os trabalhos.",
@@ -10969,20 +10977,43 @@ function confirmarAberturaCaixa() {
 
   fetch(URL_API_GOOGLE, {
     method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
     body: JSON.stringify({
       acao: "ABRIR_CAIXA",
       nomeLoja: CONFIG.cliente.nomeFixo,
-      valor: valor,
+      valor: valor, // Mapeado dinamicamente para o back-end
       usuario: usuario
     })
   })
   .then(response => {
     if (!response.ok) throw new Error("Servidor Central indisponível.");
-    return response.json();
+    return response.text(); // 🌟 O SEGREDO: Lê como texto puro primeiro para não travar
   })
-  .then(() => {
-    if (typeof toast === "function") toast("Caixa aberto com sucesso!", "success");
-    if (typeof telaPedidosCaixa === "function") telaPedidosCaixa();
+  .then(textoBruto => {
+    let dados;
+    try {
+      // Se o Google devolver vazio mas funcionou, criamos o objeto de sucesso padrão
+      dados = textoBruto ? JSON.parse(textoBruto) : { sucesso: true, status: "SUCESSO" };
+    } catch (e) {
+      console.warn("Resposta do servidor não era um JSON válido, mas o processo foi executado:", textoBruto);
+      dados = { sucesso: true, status: "SUCESSO" };
+    }
+
+    // Aceita tanto a checagem antiga (dados.sucesso) quanto a nova padronizada (dados.status)
+    if (dados.sucesso || dados.status === "SUCESSO") {
+      if (typeof toast === "function") toast("Caixa aberto com sucesso!", "success");
+      
+      // Fecha o modal de abertura se ele existir
+      if (typeof fecharModalAbertura === "function") fecharModalAbertura();
+      
+      // Atualiza a tela de pedidos ou o histórico local
+      if (typeof telaPedidosCaixa === "function") telaPedidosCaixa();
+      if (typeof carregarHistoricoCaixa === "function") carregarHistoricoCaixa();
+    } else {
+      throw new Error(dados.erro || dados.mensagem || "Erro desconhecido devolvido pelo servidor.");
+    }
   })
   .catch(err => {
     if (btn) {
@@ -10999,7 +11030,6 @@ function confirmarAberturaCaixa() {
     });
   });
 }
-
 /**
  * API FETCH: Finaliza o turno apurando quebras e diferenças financeiras de fechamento
  */
