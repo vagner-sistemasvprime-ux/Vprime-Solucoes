@@ -267,7 +267,7 @@ function tentarCarregarModoOfflineFailsafe(btnEntrar) {
 
       // 🛰️ FIX DE ROTAS/LOJA OFFLINE:
       if (typeof CONFIG !== "undefined" && CONFIG.cliente) {
-        console.log(`🏠 [OFFLINE] Mantendo rota fixa da loja ativa: "${CONFIG.cliente.nomeFixo}"`);
+        console.log(`🏠 [OFFLINE] Mantendo rota fixa da loja activa: "${CONFIG.cliente.nomeFixo}"`);
       }
 
       // 🎯 VALIDAÇÃO DO BLOQUEIO OFFLINE:
@@ -309,7 +309,13 @@ function tentarCarregarModoOfflineFailsafe(btnEntrar) {
         btnEntrar.style.backgroundColor = "#ef4444";
         btnEntrar.innerText = "Erro: Sem internet e sem cache";
       }
-      alert("Não foi possível iniciar o PDV. O dispositivo está sem internet e este navegador ainda não possui uma cópia salva do sistema. O primeiro acesso precisa ser feito Online.");
+      
+      // 🌟 SUBSTUIÇÃO DO ALERT PELO MODAL UNIVERSAL
+      exibirModal({
+        titulo: "Dispositivo Sem Internet",
+        mensagem: "Não foi possível iniciar o PDV. O dispositivo está sem conexão com a internet e este navegador ainda não possui uma cópia salva do sistema.<br><br><strong>Nota:</strong> O primeiro acesso precisa ser feito Obrigatoriamente Online.",
+        tipo: "erro"
+      });
     }
   } catch (error) {
     console.error("🚨 Erro crítico ao processar cache local:", error);
@@ -545,19 +551,38 @@ function solicitarPagamento(email) {
   // 🔄 CONVERSÃO PARA FETCH: Pede o link de pagamento para a API
   fetch(URL_API_GOOGLE, {
     method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
     body: JSON.stringify({
       acao: "GERAR_LINK_PAGAMENTO",
       emailCliente: email,
       nomeLoja: CONFIG.cliente.nomeFixo
     })
   })
-  .then(response => response.json())
-  .then(resultado => {
+  .then(response => {
+    if (!response.ok) throw new Error("Servidor Central indisponível.");
+    return response.text(); // 🌟 Lemos como texto por segurança
+  })
+  .then(textoBruto => {
+    let resultado;
+    try {
+      resultado = textoBruto ? JSON.parse(textoBruto) : {};
+    } catch(e) {
+      resultado = { sucesso: false };
+    }
+
     if (resultado.sucesso && resultado.url) {
       window.open(resultado.url, '_blank');
       iniciarVigilanciaPagamento(); // Começa a checar se a planilha atualizou
     } else {
-      alert("Erro ao gerar link de pagamento.");
+      // 🌟 SUBSTUIÇÃO DO ALERT POR MODAL DE ERRO
+      exibirModal({
+        titulo: "Erro de Faturamento",
+        mensagem: "Não foi possível gerar o link de pagamento. Verifique as credenciais da API de pagamentos.",
+        tipo: "erro"
+      });
+
       btn.disabled = false;
       btn.innerHTML = textoOriginal;
       btn.style.opacity = "1";
@@ -565,7 +590,14 @@ function solicitarPagamento(email) {
   })
   .catch(err => {
     console.error("❌ Erro de conexão ao gerar pagamento:", err);
-    alert("Falha na comunicação com o servidor.");
+    
+    // 🌟 SUBSTUIÇÃO DO ALERT POR MODAL DE ERRO
+    exibirModal({
+      titulo: "Falha de Comunicação",
+      mensagem: "Ocorreu um erro ao tentar se conectar ao servidor financeiro central.",
+      tipo: "erro"
+    });
+
     btn.disabled = false;
     btn.innerHTML = textoOriginal;
     btn.style.opacity = "1";
@@ -5970,7 +6002,6 @@ function pdv_acaoAlternarCashback() {
   
   if (checkboxCashback && checkboxCashback.checked) {
     // 1. Calcula o total disponível temporário antes de aplicar o cashback
-    // Fazemos um cálculo rápido simulando o valor com desconto do cupom atual
     const dadosCarrinhoAtual = window.carrinhoData || [];
     let totalBrutoProdutos = dadosCarrinhoAtual.reduce((s, item) => {
       if (item.id === "FRETE") return s; 
@@ -6001,18 +6032,13 @@ function pdv_acaoAlternarCashback() {
       // Força o desmarcar do elemento visual
       checkboxCashback.checked = false;
       
-      // 🎯 DISPARA O ALERTA EXATAMENTE QUANDO HOUVE A TENTATIVA DE ATIVAÇÃO
-      if (typeof exibirModal === "function") {
-        exibirModal({
-          titulo: "Compra Mínima Não Atingida",
-          mensagem: `O uso do cashback exige um valor mínimo líquido em produtos de <b>R$ ${compraMinimaCashback.toFixed(2).replace(".", ",")}</b>.<br>Seu subtotal atual é de <b>R$ ${totalParaCashback.toFixed(2).replace(".", ",")}</b>.`,
-          tipo: "alerta"
-        });
-      } else if (typeof showMsg === "function") {
-        showMsg("Compra mínima para cashback não atingida.", "error");
-      } else {
-        alert("Compra mínima para cashback não atingida.");
-      }
+      // 🌟 PADRONIZAÇÃO EXCLUSIVA COM O SEU MODAL UNIVERSAL
+      exibirModal({
+        titulo: "Compra Mínima Não Atingida",
+        mensagem: `O uso do saldo de cashback exige um valor mínimo líquido em produtos de <b>R$ ${compraMinimaCashback.toFixed(2).replace(".", ",")}</b>.<br><br>Seu subtotal atual (descontando cupons) é de <b>R$ ${totalParaCashback.toFixed(2).replace(".", ",")}</b>.`,
+        tipo: "alerta"
+      });
+
       return; // Aborta a execução para não atualizar o total à toa
     }
   }
@@ -6020,7 +6046,6 @@ function pdv_acaoAlternarCashback() {
   // Se passou na validação ou se o operador está apenas desmarcando a caixa, recalcula a interface normalmente
   atualizarTotalVendaVisual();
 }
-
 
 
 /* =========================================================================
@@ -6941,17 +6966,12 @@ function addAoCarrinhoModal() {
 
   if (p.variacoes && p.variacoes.length > 0) {
     if (!p.variacaoSelecionada) {
-      if (typeof showMsgcadasto === "function") {
-        showMsgcadasto("Selecione um tamanho ou modelo antes de adicionar!", "error");
-      } else if (typeof exibirModal === "function") {
-        exibirModal({
-          titulo: "Opção Obrigatória",
-          mensagem: "Por favor, selecione uma variação/tamanho antes de adicionar ao carrinho.",
-          tipo: "alerta"
-        });
-      } else {
-        alert("Por favor, selecione uma opção antes de adicionar ao carrinho.");
-      }
+      // 🌟 PADRONIZAÇÃO EXCLUSIVA COM O SEU MODAL UNIVERSAL
+      exibirModal({
+        titulo: "Opção Obrigatória",
+        mensagem: "Por favor, selecione uma variação ou tamanho antes de adicionar o produto ao carrinho.",
+        tipo: "alerta"
+      });
       return;
     }
   }
@@ -7227,8 +7247,13 @@ const executarFechamento = (forcar = false) => {
         mensagem: erro.message || "Não foi possível sincronizar o encerramento do caixa com o servidor."
       });
     } else {
-      alert("Erro no Fechamento: " + (erro.message || "Falha de comunicação."));
-    }
+  // 🌟 SUBSTUIÇÃO DO ALERT NATIVO POR MODAL DE ERRO
+  exibirModal({
+    titulo: "Erro no Fechamento",
+    mensagem: "Não foi possível concluir o encerramento do caixa:<br><br><strong>" + (erro.message || "Falha de comunicação com o servidor central.") + "</strong>",
+    tipo: "erro"
+  });
+}
   });
 };
 
@@ -7856,12 +7881,13 @@ function salvarConfiguracaoPix() {
   };
 
   if (!configTemporariaPix.chavePix || !configTemporariaPix.nomeLoja) {
-    if (typeof showMsg === "function") {
-      return showMsg("Preencha os campos obrigatórios!", "error");
-    } else {
-      alert("Preencha os campos obrigatórios!");
-      return;
-    }
+    // 🌟 PADRONIZAÇÃO COM O SEU MODAL UNIVERSAL
+    exibirModal({
+      titulo: "Campos Obrigatórios",
+      mensagem: "Por favor, preencha a <strong>Chave PIX</strong> e o <strong>Nome do Beneficiário/Loja</strong> antes de prosseguir.",
+      tipo: "alerta"
+    });
+    return; // Garante a interrupção da execução
   }
 
   const modalSenha = document.getElementById("modalSenhaAdmin");
@@ -7891,18 +7917,15 @@ function confirmarSalvarPix() {
   const senha = inputSenha ? inputSenha.value : "";
   
   if (!senha) {
-    if (typeof exibirModal === "function") {
-      exibirModal({
-        titulo: "Senha Necessária",
-        mensagem: "A senha de administrador é obrigatória para alterar os dados de pagamento.",
-        tipo: "alerta"
-      });
-    } else {
-      alert("A senha de administrador é obrigatória.");
-    }
-    return;
-  }
-
+  // 🌟 PADRONIZAÇÃO EXCLUSIVA COM O SEU MODAL UNIVERSAL
+  exibirModal({
+    titulo: "Senha Necessária",
+    mensagem: "A senha de administrador é obrigatória para alterar os dados de pagamento.",
+    tipo: "alerta"
+  });
+  return;
+}
+  
   const modalSenha = document.getElementById("modalSenhaAdmin");
   if (modalSenha) modalSenha.style.display = "none";
   
@@ -11961,7 +11984,13 @@ function entregarMotoboyModal(botaoClicado) {
   // Validação simples
   if (!nomeMotoboy || nomeMotoboy.trim() === "") {
     console.warn("⚠️ [MOTOBOY] Validação: Motoboy vazio.");
-    alert("Por favor, selecione um motoboy!");
+    
+    // 🌟 1. SUBSTUIÇÃO: Alerta de validação de campo obrigatório
+    exibirModal({
+      titulo: "Selecione o Entregador",
+      mensagem: "Por favor, escolha um motoboy na lista antes de confirmar o despacho da entrega.",
+      tipo: "alerta"
+    });
     return;
   }
 
@@ -11994,20 +12023,45 @@ function entregarMotoboyModal(botaoClicado) {
 
   fetch(URL_API_GOOGLE, {
     method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
     body: JSON.stringify(dadosEnvio)
   })
   .then(res => {
     console.log("🌐 [MOTOBOY] Resposta do servidor recebida. Status:", res.status);
-    return res.json();
+    if (!res.ok) throw new Error("Servidor fora do ar ou ocupado.");
+    return res.text(); // 🌟 Lemos primeiro como texto por segurança anti-crash
   })
-  .then(resposta => {
+  .then(textoBruto => {
+    let resposta;
+    try {
+      resposta = textoBruto ? JSON.parse(textoBruto) : {};
+    } catch(e) {
+      resposta = { sucesso: false, erro: "Resposta corrompida do servidor central." };
+    }
+
     console.log("📥 [MOTOBOY] Dados retornados pelo Google:", resposta);
+    
     if (resposta && resposta.sucesso) {
-      alert("✅ Pedido enviado com o motoboy!");
-      if (typeof fecharModalPedido === "function") fecharModalPedido();
-      if (typeof renderizarPedidosProntos === "function") renderizarPedidosProntos();
+      // 🌟 2. SUBSTUIÇÃO: Modal de sucesso ao despachar para o motoboy
+      exibirModal({
+        titulo: "Pedido Despachado!",
+        mensagem: `O pedido foi associado ao entregador <strong>${nomeMotoboy}</strong> com sucesso!`,
+        tipo: "sucesso",
+        aoConfirmar: () => {
+          if (typeof fecharModalPedido === "function") fecharModalPedido();
+          if (typeof renderizarPedidosProntos === "function") renderizarPedidosProntos();
+        }
+      });
     } else {
-      alert("❌ O Google recusou: " + (resposta.erro || "Erro desconhecido"));
+      // 🌟 3. SUBSTUIÇÃO: Modal de recusa do Google Apps Script
+      exibirModal({
+        titulo: "Operação Recusada",
+        mensagem: "O servidor retornou uma falha: " + (resposta.erro || "Erro desconhecido ao registrar entrega."),
+        tipo: "erro"
+      });
+
       if (btn) {
         btn.disabled = false;
         btn.textContent = "Confirmar Motoboy";
@@ -12016,7 +12070,14 @@ function entregarMotoboyModal(botaoClicado) {
   })
   .catch(err => {
     console.error("❌ [MOTOBOY] Erro na requisição de rede:", err);
-    alert("Erro ao conectar com o servidor.");
+    
+    // 🌟 4. SUBSTUIÇÃO: Modal de erro crítico ou queda de internet
+    exibirModal({
+      titulo: "Erro de Conexão",
+      mensagem: "Não foi possível sincronizar o despacho com a planilha central. Verifique sua conexão com a rede.",
+      tipo: "erro"
+    });
+
     if (btn) {
       btn.disabled = false;
       btn.textContent = "Confirmar Motoboy";
@@ -13159,9 +13220,13 @@ function parseBRL(valorBRL) {
  * ACTION PIPELINE: Finaliza as contas e submete o balanço cego ao servidor
  */
 function confirmarFechamentoHistorico(index, forcar = false) {
-  // Caso os dados não existam na memória, avisa o usuário
+  // 🌟 SUBSTUIÇÃO DO ALERT POR MODAL DE ERRO
   if (!window.historicoCaixas || !window.historicoCaixas[index]) {
-    alert("Erro: Dados do histórico de caixas não encontrados.");
+    exibirModal({
+      titulo: "Erro de Contexto",
+      mensagem: "Não foi possível localizar os dados desta linha para fechamento.",
+      tipo: "erro"
+    });
     return;
   }
   
@@ -13369,10 +13434,16 @@ function setCozinha(status) {
     // 2. Atualiza a tela normalmente
     carregarStatusCozinha();
   })
-  .catch(err => {
-    console.error("Falha na alteração da retaguarda:", err);
-    alert("Não foi possível salvar o status na planilha.");
-  })
+ .catch(err => {
+  console.error("Falha na alteração da retaguarda:", err);
+  
+  // 🌟 SUBSTITUIÇÃO DO ALERT POR MODAL DE ERRO
+  exibirModal({
+    titulo: "Falha na Sincronização",
+    mensagem: "Não foi possível salvar o status na retaguarda. Verifique sua conexão e tente novamente.",
+    tipo: "erro"
+  });
+})
   .finally(() => {
     // 3. Desliga o efeito visual de carregamento (independente de dar certo ou erro)
     if (loader) loader.style.display = "none";
@@ -14804,10 +14875,13 @@ function fecharContaMesa(numMesa, valorTotal, itensTexto) {
 function processarFechamento(numMesa, valorTotal, itensTexto) {
   const usuarioLogado = (typeof user !== "undefined" && user.usuario) ? user.usuario : "SISTEMA";
 
-  toast("Enviando para o caixa...", "info");
+  if (typeof toast === "function") toast("Enviando para o caixa...", "info");
 
   fetch(URL_API_GOOGLE, {
     method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
     body: JSON.stringify({
       acao: "FECHAR_CONSUMO_MESA_PARA_PAGAMENTO",
       nomeLoja: CONFIG.cliente.nomeFixo,
@@ -14817,44 +14891,54 @@ function processarFechamento(numMesa, valorTotal, itensTexto) {
   })
   .then(response => {
     if (!response.ok) throw new Error("Falha de resposta no Gateway da API.");
-    return response.json();
+    return response.text(); // 🌟 Lemos como texto por segurança anti-crash
   })
-  .then(res => {
-    if (typeof exibirModal === "function") {
-      exibirModal({
-        titulo: "Mesa Enviada ao Caixa",
-        mensagem: `A Mesa ${numMesa} foi fechada com sucesso. O consumo agora consta como pendente no balcão para pagamento.`,
-        tipo: "sucesso"
-      });
+  .then(textoBruto => {
+    let res;
+    try {
+      res = textoBruto ? JSON.parse(textoBruto) : { sucesso: true };
+    } catch(e) {
+      res = { sucesso: true }; // Se salvou na planilha, assume sucesso
     }
+
+    // 🌟 PADRONIZAÇÃO DO MODAL UNIVERSAL (Sucesso)
+    exibirModal({
+      titulo: "Mesa Enviada ao Caixa",
+      mensagem: `A Mesa ${numMesa} foi fechada com sucesso. O consumo agora consta como pendente no balcão para pagamento.`,
+      tipo: "sucesso"
+    });
     
-    fecharModalDetalhes();
+    if (typeof fecharModalDetalhes === "function") fecharModalDetalhes();
     
     // Atualização em background do mapa de salão pós-fechamento
     fetch(URL_API_GOOGLE, {
       method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
       body: JSON.stringify({ acao: "GET_MESAS", nomeLoja: CONFIG.cliente.nomeFixo })
     })
-    .then(r => r.json())
-    .then(mesas => {
-      if (typeof gerarCardsMesas === "function") gerarCardsMesas(mesas);
+    .then(r => r.ok ? r.text() : "[]")
+    .then(textoMesas => {
+      try {
+        const mesas = JSON.parse(textoMesas);
+        if (typeof gerarCardsMesas === "function") gerarCardsMesas(mesas);
+      } catch(e) {
+        console.warn("Erro ao atualizar visual das mesas em background.");
+      }
     });
     
     if (typeof listarPendentesPagamento === "function") listarPendentesPagamento();
   })
   .catch(err => {
-    if (typeof exibirModal === "function") {
-      exibirModal({
-        titulo: "Falha no Fechamento",
-        mensagem: `Não foi possível fechar a Mesa ${numMesa}. Erro: ${err.message}`,
-        tipo: "erro"
-      });
-    } else {
-      alert("Erro crítico: " + err.message);
-    }
+    // 🌟 PADRONIZAÇÃO EXCLUSIVA DO MODAL UNIVERSAL (Erro sem alert)
+    exibirModal({
+      titulo: "Falha no Fechamento",
+      mensagem: `Não foi possível fechar a Mesa <strong>${numMesa}</strong>.<br><br>Motivo: ${err.message || err}`,
+      tipo: "erro"
+    });
   });
 }
-
 let estaSincronizando = false;
 
 function sincronizarSistema() {
