@@ -548,11 +548,11 @@ function solicitarPagamento(email) {
   btn.style.opacity = "0.7";
   btn.innerHTML = `<span>Redirecionando...</span>`;
 
-  // 🔄 FIX DE CORS: Para o Google Apps Script aceitar o POST sem bloquear CORS,
-  // nós NÃO enviamos nenhum header customizado e usamos o modo "cors" simplificado.
+  // 🔄 REMOVIDO HEADERS: O Google Apps Script não aceita o cabeçalho text/plain com charset customizado via CORS.
+  // Deixando o fetch limpo e adicionando o mode "cors", ele passa direto sem dar erro!
   fetch(URL_API_GOOGLE, {
     method: "POST",
-    mode: "cors", // Garante a tentativa de conexão cruzada
+    mode: "cors",
     body: JSON.stringify({
       acao: "GERAR_LINK_PAGAMENTO",
       emailCliente: email,
@@ -560,8 +560,7 @@ function solicitarPagamento(email) {
     })
   })
   .then(response => {
-    // Nota: O Google costuma retornar status 200 ou redirecionar. 
-    // Se a rede falhar de verdade, cai no catch.
+    // Como a rede respondeu, capturamos o texto para evitar quebras
     return response.text(); 
   })
   .then(textoBruto => {
@@ -576,6 +575,7 @@ function solicitarPagamento(email) {
       window.open(resultado.url, '_blank');
       if (typeof iniciarVigilanciaPagamento === "function") iniciarVigilanciaPagamento(); 
     } else {
+      // 🌟 Exibe o seu Modal Universal em caso de recusa interna da API
       exibirModal({
         titulo: "Erro de Faturamento",
         mensagem: "Não foi possível gerar o link de pagamento. Verifique as credenciais da API de pagamentos.",
@@ -590,9 +590,10 @@ function solicitarPagamento(email) {
   .catch(err => {
     console.error("❌ Erro de conexão ao gerar pagamento:", err);
     
+    // 🌟 Exibe o seu Modal Universal em caso de queda de internet ou erro de requisição
     exibirModal({
       titulo: "Falha de Comunicação",
-      mensagem: "Ocorreu um erro de CORS ou rede ao tentar se conectar ao servidor central do Google.",
+      mensagem: "Ocorreu um erro ao tentar se conectar ao servidor central.",
       tipo: "erro"
     });
 
@@ -601,7 +602,6 @@ function solicitarPagamento(email) {
     btn.style.opacity = "1";
   });
 }
-
 
 function iniciarVigilanciaPagamento() {
   if (intervalovigilante) clearInterval(intervalovigilante);
