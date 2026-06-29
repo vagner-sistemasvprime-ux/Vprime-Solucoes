@@ -6033,31 +6033,60 @@ let ultimoContadorBloqueados = 0;
  * API FETCH: Monitora em segundo plano se existem novos pedidos travados por segurança
  */
 function monitorarPedidosBloqueados() {
-  fetch(URL_API_GOOGLE, {
+  // 🌟 BUSTER CACHE: Adiciona um número único baseado no tempo atual no fim da URL
+  // Isso força o navegador a ir buscar direto no servidor, ignorando o cache!
+  const urlAntiCache = URL_API_GOOGLE + (URL_API_GOOGLE.includes("?") ? "&" : "?") + "t=" + new Date().getTime();
+
+  fetch(urlAntiCache, {
     method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
     body: JSON.stringify({
       acao: "LISTAR_PEDIDOS_PLANILHA",
       nomeLoja: CONFIG.cliente.nomeFixo
     })
   })
-  .then(response => response.json())
-  .then(pedidos => {
+  .then(response => {
+    if (!response.ok) throw new Error("Falha na comunicação com o servidor.");
+    return response.text(); // 🌟 Primeiro lemos como texto por segurança
+  })
+  .then(textoBruto => {
+    let pedidos;
+    try {
+      pedidos = textoBruto ? JSON.parse(textoBruto) : [];
+    } catch (e) {
+      console.warn("Massa de dados recebida inválida no monitoramento, tentando recuperar...");
+      pedidos = [];
+    }
+
     if (Array.isArray(pedidos)) {
-      const bloqueados = pedidos.filter(p => p.Status === "Bloqueado");
+      // Filtra os bloqueados (tratando maiúsculo/minúsculo por garantia)
+      const bloqueados = pedidos.filter(p => {
+        const status = p.Status || p.status || "";
+        return status.toString().trim().toLowerCase() === "bloqueado";
+      });
+      
       const qtdBloqueados = bloqueados.length;
 
       // Executa re-renderização apenas se a volumetria for alterada
       if (qtdBloqueados !== ultimoContadorBloqueados) {
         ultimoContadorBloqueados = qtdBloqueados;
-        carregarPedidosBloqueados();
+        
+        // Garante que a função de carregamento existe antes de chamar
+        if (typeof carregarPedidosBloqueados === "function") {
+          carregarPedidosBloqueados();
+        }
       }
     }
-    // Mantém o pooling ativo de forma segura
+    
+    // Mantém o pooling ativo de forma segura (10 segundos)
     setTimeout(monitorarPedidosBloqueados, 10000);
   })
   .catch(err => {
     console.error("❌ Erro no loop de monitoramento de bloqueados:", err);
-    setTimeout(monitorarPedidosBloqueados, 15000); // Aguarda mais tempo em caso de falha de rede
+    // Aguarda um pouco mais em caso de erro para não sobrecarregar a rede (15 segundos)
+    setTimeout(monitorarPedidosBloqueados, 15000); 
   });
 }
 
