@@ -9922,8 +9922,11 @@ function finalizarVenda() {
       }, 0);
 
   const valorDescontoManual = typeof pdv_obterDescontoManualNumerico === "function" ? pdv_obterDescontoManualNumerico() : 0;
-  const inputSenhaAdmin = document.getElementById("pdvSenhaAdmin");
-  const senhaAdmin = inputSenhaAdmin ? inputSenhaAdmin.value.trim() : "";
+  
+  // 🌟 AJUSTE CIRÚRGICO: Lê a senha salva na memória global ao invés do input HTML limpo
+  const senhaAdmin = (typeof window.pdvSenhaGerenteValidada !== "undefined" && window.pdvSenhaGerenteValidada) 
+    ? window.pdvSenhaGerenteValidada.trim() 
+    : "";
 
   if (valorDescontoManual > 0 && senhaAdmin === "") {
     return exibirModal({
@@ -9986,7 +9989,7 @@ function finalizarVenda() {
     if (item.id === "FRETE") {
       return {
         qtd: 1,
-        nome: item.nome.toUpperCase(),
+        name: item.nome.toUpperCase(),
         preco: Number(item.preco || 0),
         obs: "",
         numeroPedido: null,
@@ -10028,9 +10031,6 @@ function finalizarVenda() {
     itens: itensFormatados
   };
 
-  // =========================================================================
-  // 🛰️ INÍCIO DA ADAPTAÇÃO CIRÚRGICA: CONTINGÊNCIA LOCALSTORAGE
-  // =========================================================================
   const pacoteEnvioCompleto = {
     acao: "REGISTRAR_VENDA",
     nomeLoja: CONFIG.cliente.nomeFixo,
@@ -10050,7 +10050,6 @@ function finalizarVenda() {
       : (idPedidoOriginal || "REGISTRADO");
 
     if (resultadoOriginal === "PED-OFFLINE") {
-      // Configura número offline temporário para o cupom não sair em branco
       dadosVenda.numeroPedido = "OFF-" + Math.floor(1000 + Math.random() * 9000);
       try { if (typeof imprimirComprovante === "function") imprimirComprovante(dadosVenda); } catch (e) {}
       
@@ -10077,7 +10076,6 @@ function finalizarVenda() {
       });
     }
 
-    // --- 🧹 SEU BLOCO DE LIMPEZA E RESET DE MEMÓRIA ORIGINAL INTEGRO CONTIDO ABAIXO ---
     if (typeof pixJaAprovado !== "undefined") window.pixJaAprovado = false; 
 
     const checkCB = document.getElementById("pdvUsarCashback");
@@ -10137,11 +10135,13 @@ function finalizarVenda() {
     window.pdvDescontoValidado = 0;
     window.pdvDescontoValidated = 0;
     window.pdvDescontoManualCalculado = 0;
+    
+    // 🌟 RESET DA SENHA GLOBAL: Expira a autorização para que o próximo cliente não use sem senha
+    window.pdvSenhaGerenteValidada = null;
 
     if (typeof listarPendentesPagamento === "function") listarPendentesPagamento();
   };
 
-  // Executa rotina de salvamento local interno auxiliar
   const executarSalvamentoLocalStorage = () => {
     try {
       pacoteEnvioCompleto.vendaData.observacoes = "[OFFLINE] " + (pacoteEnvioCompleto.vendaData.observacoes || "");
@@ -10153,16 +10153,15 @@ function finalizarVenda() {
     }
   };
 
-  // 1. Verificação Primária antes do fetch (Dispositivo totalmente Offline)
   if (!navigator.onLine) {
     executarSalvamentoLocalStorage();
     processarPosVendaGeral("PED-OFFLINE");
     return;
   }
 
-  // 2. Fluxo de envio padrão online com interceptador de queda repentina
   fetch(URL_API_GOOGLE, {
     method: "POST",
+    mode: "cors", // Adicionado suporte a CORS explícito
     body: JSON.stringify(pacoteEnvioCompleto)
   })
   .then(response => {
@@ -10174,18 +10173,14 @@ function finalizarVenda() {
       throw new Error(respostaServidor.erro || "Erro interno no servidor.");
     }
     const resultadoOriginal = respostaServidor ? respostaServidor.retorno : null;
-    
-    // Dispara o término contínuo online estável
     processarPosVendaGeral(resultadoOriginal);
   })
   .catch(err => {
-    // Se caiu a internet durante a requisição ou deu erro de timeout de rede
     if (err.message.includes("Failed to fetch") || err.message.includes("conexão") || err.name === "TypeError") {
       console.warn("Queda de rede detectada no meio do envio. Salvando no cache local...");
       executarSalvamentoLocalStorage();
       processarPosVendaGeral("PED-OFFLINE");
     } else {
-      // Erros lógicos vindos da planilha (ex: senha errada do gerente) não devem ir para o localStorage
       if (btnFinalizar) {
         btnFinalizar.disabled = false;
         btnFinalizar.innerHTML = "✅ Finalizar Venda";
@@ -10198,7 +10193,6 @@ function finalizarVenda() {
     }
   });  
 }
-
 
   /**
  * =========================================================================
