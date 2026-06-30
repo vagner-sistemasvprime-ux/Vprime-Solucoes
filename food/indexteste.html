@@ -6195,27 +6195,40 @@ function pdv_confirmarDescontoModal() {
   aviso.style.color = "#ea580c";
   aviso.innerText = "⏳ Validando...";
 
-  // 🔄 FETCH: Comunicação direta com a API
+  // 🔄 FETCH AJUSTADO: Sem headers customizados para evitar o bloqueio de CORS do Google Apps Script
   fetch(URL_API_GOOGLE, {
     method: "POST",
+    mode: "cors",
     body: JSON.stringify({
       acao: "VALIDAR_SENHA_GERENTE",
       nomeLoja: CONFIG.cliente.nomeFixo,
       senhaGerente: senha
     })
   })
-  .then(response => response.json())
-  .then(resultado => {
+  .then(response => {
+    if (!response.ok) throw new Error("Servidor Central indisponível.");
+    return response.text(); // 🌟 Proteção anti-crash
+  })
+  .then(textoBruto => {
+    let resultado;
+    try {
+      resultado = textoBruto ? JSON.parse(textoBruto) : {};
+    } catch(e) {
+      resultado = { sucesso: false, mensagem: "Resposta inválida do servidor." };
+    }
+
     if (btnConfirmar) {
       btnConfirmar.disabled = false;
       btnConfirmar.innerText = "Confirmar";
     }
 
     if (resultado.sucesso) {
+      // ✅ SALVA NAS VARIÁVEIS GLOBAIS DA JANELA
       window.pdvDescontoValidated = valorNum; 
       window.pdvDescontoValidado = valorNum; 
+      window.pdvSenhaGerenteValidada = senha; // 🌟 SALVA A SENHA NA MEMÓRIA GLOBAL (Evita o erro de campo limpo na finalização)
       
-      // Limpa os inputs ANTES de fechar o modal para evitar que o navegador salve a senha
+      // Limpa os inputs visuais
       campoDesconto.value = "";
       campoSenha.value = "";
       aviso.innerText = "";
@@ -6227,13 +6240,13 @@ function pdv_confirmarDescontoModal() {
       if (typeof window.calcularTroco === "function") window.calcularTroco();
     } else {
       window.pdvDescontoValidado = 0; 
+      window.pdvDescontoValidated = 0;
+      window.pdvSenhaGerenteValidada = null;
       
-      // 🚨 AVISO DE SENHA INVÁLIDA CRISTALINO NA TELA
-      aviso.style.color = "#dc2626"; // Vermelho forte de erro
+      aviso.style.color = "#dc2626"; 
       aviso.style.fontWeight = "bold";
       aviso.innerText = `❌ Senha Inválida! ${resultado.erro || resultado.mensagem || "Acesso negado."}`;
       
-      // Limpa o campo de senha errado e joga o cursor de volta nele
       campoSenha.value = "";
       campoSenha.focus();
       
@@ -6247,6 +6260,9 @@ function pdv_confirmarDescontoModal() {
       btnConfirmar.innerText = "Confirmar";
     }
     window.pdvDescontoValidado = 0;
+    window.pdvDescontoValidated = 0;
+    window.pdvSenhaGerenteValidada = null;
+    
     aviso.style.color = "#ef4444";
     aviso.innerText = `❌ Erro de conexão física com o servidor.`;
     campoSenha.value = "";
