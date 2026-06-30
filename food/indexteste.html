@@ -16,7 +16,7 @@
 
   <script>
     (function() {
-      console.log("🚀 [LOG ROTAS] Iniciando varredura de ambiente...");
+      //console.log("🚀 [LOG ROTAS] Iniciando varredura de ambiente...");
 
       // 1. Captura o ID da loja na URL
       const parametrosUrl = new URLSearchParams(window.location.search);
@@ -27,7 +27,7 @@
       try {
         if (typeof ROTAS_LOJISTAS !== "undefined" && ROTAS_LOJISTAS[idLojaAtual]) {
           dadosLoja = ROTAS_LOJISTAS[idLojaAtual];
-          console.log("🌐 [LOG ROTAS] Dados carregados via memória/rede do rotas.js");
+         // console.log("🌐 [LOG ROTAS] Dados carregados via memória/rede do rotas.js");
         }
       } catch (err) {
         console.warn("Mecanismo de rotas online indisponível.");
@@ -39,7 +39,7 @@
           const cacheLojaSalva = localStorage.getItem("cache_dados_da_loja_ativa");
           if (cacheLojaSalva) {
             dadosLoja = JSON.parse(cacheLojaSalva);
-            console.log("💾 [LOG ROTAS] Configurações recuperadas com sucesso do cache local.");
+            //console.log("💾 [LOG ROTAS] Configurações recuperadas com sucesso do cache local.");
           }
         } catch (e) {
           console.error("Falha ao ler localStorage", e);
@@ -119,7 +119,7 @@
       }
 
       window.CONFIG_PILOTO_OK = true;
-      console.log("✅ [LOG ROTAS] Estrutura inicial do sistema configurada com sucesso.");
+      //console.log("✅ [LOG ROTAS] Estrutura inicial do sistema configurada com sucesso.");
     })();
   </script>
 
@@ -127,7 +127,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('✅ PWA: Service Worker ativo!', reg.scope))
+          .then(reg => //console.log('✅ PWA: Service Worker ativo!', reg.scope))
           .catch(err => console.error('❌ PWA: Erro no Service Worker:', err));
       });
     }
@@ -199,7 +199,7 @@ function carregarDadosIniciaisDoSistema() {
     btnEntrar.disabled = true; 
   }
 
-  console.log(`📡 [CARGA INICIAL] Disparando requisição para a loja: "${CONFIG.cliente.nomeFixo}"`);
+  //console.log(`📡 [CARGA INICIAL] Disparando requisição para a loja: "${CONFIG.cliente.nomeFixo}"`);
 
   fetch(URL_API_GOOGLE, {
     method: "POST",
@@ -210,7 +210,7 @@ function carregarDadosIniciaisDoSistema() {
   })
   .then(response => response.json())
   .then(resultado => {
-    console.log("📦 [CARGA INICIAL] Resposta bruta do servidor:", resultado);
+    //console.log("📦 [CARGA INICIAL] Resposta bruta do servidor:", resultado);
 
     if (resultado.sucesso) {
       // Populamos as listas em memória do navegador
@@ -233,7 +233,7 @@ function carregarDadosIniciaisDoSistema() {
 
       // Processa o financeiro e joga na tela (Aqui ele salva o status online)
       processarStatusFinanceiroLocal(resultado.financeiro);
-      console.log("✅ [CARGA INICIAL] Sistema liberado online com sucesso!");
+      //console.log("✅ [CARGA INICIAL] Sistema liberado online com sucesso!");
     } else {
       console.error("❌ [CARGA INICIAL] O servidor recusou o processamento:", resultado.erro);
       tentarCarregarModoOfflineFailsafe(btnEntrar);
@@ -250,7 +250,7 @@ function carregarDadosIniciaisDoSistema() {
  * 🛰️ FUNÇÃO AUXILIAR: Monta o ambiente offline validando o último status financeiro salvo
  */
 function tentarCarregarModoOfflineFailsafe(btnEntrar) {
-  console.log("🧩 [CONTINGÊNCIA] Iniciando protocolo de recuperação de dados locais...");
+  //console.log("🧩 [CONTINGÊNCIA] Iniciando protocolo de recuperação de dados locais...");
   
   try {
     const cacheProdutos = JSON.parse(localStorage.getItem("cache_produtos"));
@@ -267,7 +267,7 @@ function tentarCarregarModoOfflineFailsafe(btnEntrar) {
 
       // 🛰️ FIX DE ROTAS/LOJA OFFLINE:
       if (typeof CONFIG !== "undefined" && CONFIG.cliente) {
-        console.log(`🏠 [OFFLINE] Mantendo rota fixa da loja activa: "${CONFIG.cliente.nomeFixo}"`);
+        //console.log(`🏠 [OFFLINE] Mantendo rota fixa da loja activa: "${CONFIG.cliente.nomeFixo}"`);
       }
 
       // 🎯 VALIDAÇÃO DO BLOQUEIO OFFLINE:
@@ -416,7 +416,7 @@ function render() {
     ATENDENTE: atendente
   };
 
-  console.log(`🎬 [RENDER] Tentando carregar a tela para o perfil: ${user.perfil}`);
+  //console.log(`🎬 [RENDER] Tentando carregar a tela para o perfil: ${user.perfil}`);
 
   const tela = telas[user.perfil];
   if (tela) {
@@ -428,8 +428,8 @@ function render() {
       console.error("Onde quebrou (Pilha):", erroInterno.stack);
       
       // Verificação rápida: Se o erro for no 'user'
-      console.log("[Estado Atual] Objeto 'user' na memória:", user);
-      console.log("[Estado Atual] CONFIG do lojista:", typeof CONFIG !== 'undefined' ? CONFIG : 'Não definido');
+      //console.log("[Estado Atual] Objeto 'user' na memória:", user);
+      //console.log("[Estado Atual] CONFIG do lojista:", typeof CONFIG !== 'undefined' ? CONFIG : 'Não definido');
     }
   } else {
     console.warn(`⚠️ Perfil '${user.perfil}' não possui uma tela mapeada no render.`);
@@ -608,11 +608,11 @@ function iniciarVigilanciaPagamento() {
   
   // 🛡️ TRAVA OFFLINE: Se não há rede, não inicia o monitoramento na planilha
   if (!navigator.onLine) {
-    console.log("⏳ [VIGILÂNCIA] Monitoramento de pagamento ignorado: Dispositivo Offline.");
+    //console.log("⏳ [VIGILÂNCIA] Monitoramento de pagamento ignorado: Dispositivo Offline.");
     return;
   }
   
-  console.log("👀 Vigilância ativada: Monitorando baixa do pagamento na planilha...");
+  //console.log("👀 Vigilância ativada: Monitorando baixa do pagamento na planilha...");
 
   intervalovigilante = setInterval(function() {
     if (!navigator.onLine) return; // Pausa as tentativas se a internet cair no meio do caminho
@@ -678,7 +678,7 @@ function entrar() {
 
   // 🛡️ CONTINGÊNCIA: SE ESTIVER OFFLINE, VALIDA DIRETO NO CACHE LOCAL
   if (!navigator.onLine) {
-    console.log(`🔐 [LOGIN OFFLINE] Autenticando operador localmente: "${usuarioInput}"`);
+    //console.log(`🔐 [LOGIN OFFLINE] Autenticando operador localmente: "${usuarioInput}"`);
     
     if (window.usuariosSistemaGlobal && window.usuariosSistemaGlobal.length > 0) {
       // Varre a lista baixada anteriormente procurando usuário e senha idênticos
@@ -687,7 +687,7 @@ function entrar() {
       );
 
       if (usuarioEncontrado) {
-        console.log("✅ [LOGIN OFFLINE] Credenciais locais validadas com sucesso!");
+        //console.log("✅ [LOGIN OFFLINE] Credenciais locais validadas com sucesso!");
         
         user = {
           usuario: usuarioEncontrado.usuario,
@@ -719,7 +719,7 @@ function entrar() {
   // 🌐 FLUXO NORMAL ONLINE (Se houver internet)
   if (loader) loader.style.display = "flex"; 
 
-  console.log(`📡 [LOGIN] Enviando requisição de hash para o operador: "${usuarioInput}"`);
+  //console.log(`📡 [LOGIN] Enviando requisição de hash para o operador: "${usuarioInput}"`);
 
   fetch(URL_API_GOOGLE, {
     method: "POST",
@@ -735,7 +735,7 @@ function entrar() {
     if (loader) loader.style.display = "none"; 
 
     if (resultado.sucesso) {
-      console.log("✅ [LOGIN] Autenticação aceita pelo servidor!");
+      //console.log("✅ [LOGIN] Autenticação aceita pelo servidor!");
 
       user = {
         usuario: resultado.usuario,
@@ -1682,13 +1682,13 @@ window.addEventListener('load', function() {
   // nossa carga inicial já salvou na memória do app de forma segura!
   if (inputMesas && typeof window.qtdMesasGlobal !== 'undefined') {
     inputMesas.value = window.qtdMesasGlobal;
-    console.log("📊 [Config] Input de mesas sincronizado com os dados iniciais.");
+    //console.log("📊 [Config] Input de mesas sincronizado com os dados iniciais.");
   }
 });
 
 // Função para exibir o modal na tela e carregar a última campanha salva
 function abrirModalTransmissao() {
-  console.log("[Transmissão] 1. Função abrirModalTransmissao disparada.");
+  //console.log("[Transmissão] 1. Função abrirModalTransmissao disparada.");
   
   const txtStatus = document.getElementById("txtStatusProgresso")?.innerText;
   
@@ -1712,7 +1712,7 @@ function abrirModalTransmissao() {
   const modal = document.getElementById("modalTransmissao");
   if (modal) modal.style.display = "flex";
 
-  console.log("[Transmissão] 2. Buscando progresso via API externa...");
+  //console.log("[Transmissão] 2. Buscando progresso via API externa...");
 
   // 🔄 CONVERSÃO PARA FETCH: Pede o progresso da campanha ao Back-end do Google
   fetch(URL_API_GOOGLE, {
@@ -1724,17 +1724,17 @@ function abrirModalTransmissao() {
   })
   .then(response => response.json())
   .then(resultado => {
-    console.log("[Transmissão] 🟢 Dados recebidos da API:", resultado);
+    //console.log("[Transmissão] 🟢 Dados recebidos da API:", resultado);
     
     if (txtArea) {
       txtArea.disabled = false; // Devolve o controle do campo
       
       // Se o servidor retornou sucesso, o template e os clientes pendentes
       if (resultado.sucesso && resultado.data && resultado.data.templateOriginal && resultado.data.pendentes > 0) {
-        console.log("[Transmissão] 🎯 Template antigo recuperado com sucesso!");
+        //console.log("[Transmissão] 🎯 Template antigo recuperado com sucesso!");
         txtArea.value = resultado.data.templateOriginal;
       } else {
-        console.log("[Transmissão] 📭 Nenhuma campanha pendente. Campo limpo.");
+        //console.log("[Transmissão] 📭 Nenhuma campanha pendente. Campo limpo.");
         txtArea.value = "";
         txtArea.placeholder = "Olá, {{nome}}! Que tal um lanche hoje?...";
       }
@@ -1783,7 +1783,7 @@ function resetarBotoesEInterface() {
 }
 
 async function dispararCampanha(modoDefinido = null) {
-  console.log(`[Disparo] 🚀 Função dispararCampanha iniciada. Modo Definido recebido: "${modoDefinido}"`);
+  //console.log(`[Disparo] 🚀 Função dispararCampanha iniciada. Modo Definido recebido: "${modoDefinido}"`);
   
   const btn = document.getElementById("btnIniciarTransmissao");
   
@@ -1795,7 +1795,7 @@ async function dispararCampanha(modoDefinido = null) {
   const radioSelecionado = document.querySelector('input[name="radioPublico"]:checked');
   const publico = radioSelecionado ? radioSelecionado.value : null;
 
-  console.log(`[Disparo] Dados capturados -> BotID: ${telefoneBot} | Público: ${publico} | Tamanho da mensagem: ${mensagem.length} caracteres.`);
+  //console.log(`[Disparo] Dados capturados -> BotID: ${telefoneBot} | Público: ${publico} | Tamanho da mensagem: ${mensagem.length} caracteres.`);
 
   // 2. Validações de segurança
   if (!telefoneBot) {
@@ -1821,7 +1821,7 @@ async function dispararCampanha(modoDefinido = null) {
 
   // Bloco de envio estruturado convertido para Fetch
   const executarEnvioComModo = (modo) => {
-    console.log(`[Disparo] 🛰️ executarEnvioComModo acionado! Modo enviado via Fetch: "${modo}"`);
+    //console.log(`[Disparo] 🛰️ executarEnvioComModo acionado! Modo enviado via Fetch: "${modo}"`);
     
     if (btn) {
       btn.disabled = true;
@@ -1829,7 +1829,7 @@ async function dispararCampanha(modoDefinido = null) {
       btn.innerText = "⏳ Configurando Fila...";
     }
 
-    console.log("[Disparo] Disparando Fetch para a API do Google...");
+    //console.log("[Disparo] Disparando Fetch para a API do Google...");
 
     // 🔄 CONVERSÃO PARA FETCH: Envia os parâmetros da campanha para o back-end central
     fetch(URL_API_GOOGLE, {
@@ -1845,7 +1845,7 @@ async function dispararCampanha(modoDefinido = null) {
     })
     .then(response => response.json())
     .then(resultado => {
-      console.log("[Disparo] 🟢 Resposta recebida do Apps Script:", resultado);
+      //console.log("[Disparo] 🟢 Resposta recebida do Apps Script:", resultado);
 
       if (!resultado || !resultado.sucesso) {
         console.error("[Disparo] Erro: Resposta inválida ou erro tratado de back-end.");
@@ -1862,7 +1862,7 @@ async function dispararCampanha(modoDefinido = null) {
 
       // 🔀 Servidor solicitou decisão do usuário (Campanha pendente existente)
       if (data && data.requerDecisao) {
-        console.log("[Disparo] 🔀 Servidor solicitou decisão do usuário! Abrindo modal de Continuar/Reiniciar.");
+        //console.log("[Disparo] 🔀 Servidor solicitou decisão do usuário! Abrindo modal de Continuar/Reiniciar.");
         resetarBotoesEInterface();
         
         exibirModal({
@@ -1870,21 +1870,21 @@ async function dispararCampanha(modoDefinido = null) {
           titulo: 'Transmissão Pendente Encontrada!',
           mensagem: 'Identificamos que ainda existem mensagens pendentes da última campanha.<br><br>Deseja continuar a transmitir?',
           aoConfirmar: () => {
-            console.log("[Disparo] Usuário clicou em CONTINUAR de onde parou.");
+            //console.log("[Disparo] Usuário clicou em CONTINUAR de onde parou.");
             dispararCampanha("continuar");
           },
           aoCancelar: () => {
-            console.log("[Disparo] Usuário clicou na opção de Reiniciar. Abrindo contra-confirmação...");
+            //console.log("[Disparo] Usuário clicou na opção de Reiniciar. Abrindo contra-confirmação...");
             exibirModal({
               tipo: 'pergunta',
               titulo: 'Tem certeza?',
               mensagem: 'Ao reiniciar, a lista anterior será apagada e uma nova lista será montada baseada no filtro atual. Deseja prosseguir?',
               aoConfirmar: () => {
-                console.log("[Disparo] Usuário confirmou REINICIAR.");
+                //console.log("[Disparo] Usuário confirmou REINICIAR.");
                 dispararCampanha("reiniciar");
               },
               aoCancelar: () => { 
-                console.log("[Disparo] Usuário desistiu de reiniciar.");
+                //console.log("[Disparo] Usuário desistiu de reiniciar.");
                 resetarBotoesEInterface(); 
               }
             });
@@ -1894,7 +1894,7 @@ async function dispararCampanha(modoDefinido = null) {
       }
 
       // Sucesso absoluto! Fila criada ou continuada com sucesso
-      console.log("[Disparo] 🎉 Sucesso absoluto recebido! Atualizando interface...");
+      //console.log("[Disparo] 🎉 Sucesso absoluto recebido! Atualizando interface...");
       exibirModal({
         tipo: 'sucesso',
         titulo: 'Campanha Iniciada!',
@@ -1918,19 +1918,19 @@ async function dispararCampanha(modoDefinido = null) {
 
   // Se o modo já veio definido pelas decisões dos modais anteriores, pula a confirmação inicial
   if (modoDefinido) {
-    console.log(`[Disparo] Pulando confirmação inicial pois o modo já está definido como: "${modoDefinido}"`);
+    //console.log(`[Disparo] Pulando confirmação inicial pois o modo já está definido como: "${modoDefinido}"`);
     executarEnvioComModo(modoDefinido);
     return;
   }
 
   // 3. Modal de confirmação padrão (Primeiro clique do usuário)
-  console.log("[Disparo] Exibindo modal de confirmação padrão (Primeiro clique).");
+  //console.log("[Disparo] Exibindo modal de confirmação padrão (Primeiro clique).");
   exibirModal({
     tipo: 'pergunta',
     titulo: 'Iniciar Transmissão?',
     mensagem: 'O sistema filtrará os clientes e iniciará o envio em segundo plano.<br><br><b>Você poderá fechar a tela ou sair do sistema se desejar.</b><br><br>Deseja continuar?',
     aoConfirmar: () => {
-      console.log("[Disparo] Usuário aceitou a confirmação inicial. Rodando com modo: null");
+      //console.log("[Disparo] Usuário aceitou a confirmação inicial. Rodando com modo: null");
       executarEnvioComModo(null); 
     }
   });
@@ -2625,7 +2625,7 @@ function carregarQtdMesas() {
   
   if (input && typeof window.qtdMesasGlobal !== 'undefined') {
     input.value = window.qtdMesasGlobal;
-    console.log("📊 [Mesas] Input preenchido localmente com a contagem global.");
+    //console.log("📊 [Mesas] Input preenchido localmente com a contagem global.");
   } else {
     console.warn("⚠️ [Mesas] Variável global de contagem de mesas não encontrada ou input ausente.");
   }
@@ -2852,7 +2852,7 @@ function dispararConexaoWhats(usarCodigo) {
   })
   .then(response => response.json())
   .then(resultado => {
-    console.log("Conexão enviada com sucesso:", resultado);
+    //console.log("Conexão enviada com sucesso:", resultado);
 
     // Dispara a checagem rápida após o tempo de inicialização do motor
     setTimeout(carregarDadosWhatsApp, 1200);
@@ -2925,7 +2925,7 @@ function desconectarWhatsCompleto() {
       })
       .then(response => response.json())
       .then(res => {
-        console.log("Desconexão efetuada:", res);
+        //console.log("Desconexão efetuada:", res);
         estadoWhats = "idle";
 
         // Força recarga rápida dos campos de monitoramento
@@ -3002,7 +3002,7 @@ function salvarConfigWhats(e) {
         titulo: 'Sucesso!',
         mensagem: 'As configurações do WhatsApp foram atualizadas com sucesso.',
         aoConfirmar: () => {
-          console.log("Usuário confirmou o salvamento.");
+          //console.log("Usuário confirmou o salvamento.");
         }
       });
     } else {
@@ -3493,7 +3493,7 @@ function salvarTaxasBairros() {
       exibirModal({
         tipo: 'sucesso',
         titulo: 'Sucesso!',
-        mensagem: 'As taxas de entrega por bairro e cidade foram atualizadas na planilha.',
+        mensagem: 'As taxas de entrega por bairro e cidade foram atualizadas.',
         aoConfirmar: () => {
           // Opcional: Chamar atualização local se necessário
         }
@@ -3775,7 +3775,7 @@ function carregarCaixasAdmin() {
   .catch(err => {
     console.error("🔥 Erro ao carregar caixas abertos:", err);
     select.innerHTML = `<option value="">Erro ao carregar</option>`;
-    info.innerHTML = "❌ Erro ao carregar caixas da planilha.";
+    info.innerHTML = "❌ Erro ao carregar caixas.";
   });
 }
 
@@ -5092,7 +5092,7 @@ function caixa() {
   .then(response => response.json())
   .then(res => {
     // 💡 LOG ADICIONAL: Mostra exatamente o que o servidor respondeu para o Caixa
-    console.log("📥 [CAIXA] Resposta recebida do servidor:", res);
+    //console.log("📥 [CAIXA] Resposta recebida do servidor:", res);
 
     if (res && res.sucesso) {
       if (res.aberto) {
@@ -5891,7 +5891,7 @@ function pdv_obterDescontoManualNumerico() {
  * CALCULO DO LÍQUIDO: Consolida as camadas de preço (Bruto -> Cupom -> Cashback -> Gerencial)
  */
 function atualizarTotalVendaVisual() {
-  console.log("=== 🔍 INÍCIO DA RASTREABILIDADE DO TOTAL ===");
+  //console.log("=== 🔍 INÍCIO DA RASTREABILIDADE DO TOTAL ===");
   
   if (typeof window.carrinhoData === "undefined" || !Array.isArray(window.carrinhoData)) {
     return 0;
@@ -5921,7 +5921,7 @@ function atualizarTotalVendaVisual() {
     return s + (qtdItem * (precoItem + valorAdicionais));
   }, 0);
 
-  console.log(`💰 Total Bruto de Produtos: R$ ${totalBrutoProdutos.toFixed(2)}`);
+  //console.log(`💰 Total Bruto de Produtos: R$ ${totalBrutoProdutos.toFixed(2)}`);
 
   let totalComDescontos = totalBrutoProdutos;
 
@@ -5976,8 +5976,8 @@ function atualizarTotalVendaVisual() {
   // 🎯 5️⃣ NÍVEL 5: Soma Final com o Frete listado no carrinho
   let valorFinalComFrete = totalComDescontos + taxaEntregaDetectada;
 
-  console.log(`🚚 Subtotal C/ Descontos: R$ ${totalComDescontos.toFixed(2)} | Frete do Carrinho: R$ ${taxaEntregaDetectada.toFixed(2)}`);
-  console.log(`🛑 VALOR FINAL DA INTERFACE: R$ ${valorFinalComFrete.toFixed(2)}`);
+  //console.log(`🚚 Subtotal C/ Descontos: R$ ${totalComDescontos.toFixed(2)} | Frete do Carrinho: R$ ${taxaEntregaDetectada.toFixed(2)}`);
+  //console.log(`🛑 VALOR FINAL DA INTERFACE: R$ ${valorFinalComFrete.toFixed(2)}`);
 
   // Injeta o resultado final no display da UI
   const elementoTotal = document.getElementById("totalVenda");
@@ -5985,7 +5985,7 @@ function atualizarTotalVendaVisual() {
     elementoTotal.innerText = `R$ ${valorFinalComFrete.toFixed(2).replace(".", ",")}`;
   }
 
-  console.log("=== 🔚 FIM DA RASTREABILIDADE ===");
+  //console.log("=== 🔚 FIM DA RASTREABILIDADE ===");
   window.pdvDescontoManualCalculado = descontoManualEfetivo;
   return valorFinalComFrete;
 }
@@ -6622,7 +6622,7 @@ function carregarListaBairrosEfetiva() {
     return;
   }
 
-  console.log("📡 [FRETE] Carregando matriz de bairros cadastrados...");
+  //console.log("📡 [FRETE] Carregando matriz de bairros cadastrados...");
   
   fetch(URL_API_GOOGLE, {
     method: "POST",
@@ -6642,7 +6642,7 @@ function carregarListaBairrosEfetiva() {
         selectBairro.add(opt);
       });
       if (divBairro) divBairro.style.display = "block";
-      console.log("✅ [FRETE] Lista de bairros injetada!");
+      //console.log("✅ [FRETE] Lista de bairros injetada!");
     }
   })
   .catch(err => console.error("Erro ao carregar lista de bairros:", err));
@@ -7661,7 +7661,7 @@ function verificarStatusPagamentoAutomatico(idPagamento) {
         clearInterval(intervaloVerificacao);
         if (typeof pixIntervalo !== "undefined" && pixIntervalo) clearInterval(pixIntervalo);
         
-        console.log("💰 Mercado Pago aprovou o pagamento! Finalizando venda...");
+        //console.log("💰 Mercado Pago aprovou o pagamento! Finalizando venda...");
 
         // 2. 🎯 Dispara o fluxo automático de preenchimento e gravação na planilha
         if (typeof finalizarVendaPix === "function") {
@@ -9392,11 +9392,11 @@ function loadProdutosCaixa() {
  * Avalia precificação baseada em vigência de promoções ou variações e anexa ao carrinho
  */
 function addAoCarrinho(id, variacao = null) {
-  console.log(`\n📥 [addAoCarrinho] Disparado para o ID: ${id}`);
+  //console.log(`\n📥 [addAoCarrinho] Disparado para o ID: ${id}`);
 
   // 1️⃣ Rastreando a busca do produto
   const listaProdutos = window.produtosData || (typeof CONFIG !== 'undefined' && CONFIG.produtos) || window.produtos || [];
-  console.log(`🔍 [addAoCarrinho] Total de produtos na base para busca: ${listaProdutos.length}`);
+  //console.log(`🔍 [addAoCarrinho] Total de produtos na base para busca: ${listaProdutos.length}`);
   
   const produto = listaProdutos.find(p => p.id == id || p.ID == id);
   
@@ -9404,11 +9404,11 @@ function addAoCarrinho(id, variacao = null) {
     console.error(`❌ [addAoCarrinho] Bloqueio 1: Produto com ID ${id} NÃO encontrado.`);
     return;
   }
-  console.log(`✅ [addAoCarrinho] Produto encontrado: ${produto.nome || produto.NOME}`);
+  //console.log(`✅ [addAoCarrinho] Produto encontrado: ${produto.nome || produto.NOME}`);
 
   // 2️⃣ Rastreando o bloqueio de Pedido Pendente (Modo Mesa)
   if (!modoMesaAtivo) {
-    console.log("ℹ [addAoCarrinho] Modo Mesa desativado. Verificando pendências...");
+    //console.log("ℹ [addAoCarrinho] Modo Mesa desativado. Verificando pendências...");
     const temPendente = (window.carrinhoData || []).some(item => item.vindoDoPedido === true);
     if (temPendente) {
       console.warn("❌ [addAoCarrinho] Bloqueio 2: Carrinho bloqueado por pedido pendente.");
@@ -9441,7 +9441,7 @@ function addAoCarrinho(id, variacao = null) {
     
     precoVenda = emPromoAtiva ? tratarPreco(produto.precoPromocional) : tratarPreco(produto.preco || produto.PRECO);
   }
-  console.log(`💰 [addAoCarrinho] Preço definido para venda: R$ ${precoVenda}`);
+  //console.log(`💰 [addAoCarrinho] Preço definido para venda: R$ ${precoVenda}`);
 
   // 4️⃣ Montando o objeto final
   const itemParaAdicionar = { 
@@ -9461,24 +9461,24 @@ function addAoCarrinho(id, variacao = null) {
 
   // 5️⃣ Rastreando a inserção real na memória
   if (typeof modoMesaAtivo !== 'undefined' && modoMesaAtivo) {
-    console.log("📌 [addAoCarrinho] Inserindo no carrinhoMesa...");
+    //console.log("📌 [addAoCarrinho] Inserindo no carrinhoMesa...");
     if (typeof carrinhoMesa !== 'undefined') {
       carrinhoMesa.push(itemParaAdicionar);
-      console.log("✅ [addAoCarrinho] Adicionado ao carrinhoMesa com sucesso.");
+      //console.log("✅ [addAoCarrinho] Adicionado ao carrinhoMesa com sucesso.");
       if (typeof atualizarBarraCarrinhoMesa === "function") atualizarBarraCarrinhoMesa();
     } else {
       console.error("❌ [addAoCarrinho] Erro: 'carrinhoMesa' não está definido!");
     }
   } else {
-    console.log("📌 [addAoCarrinho] Inserindo no window.carrinhoData tradicional...");
+    //console.log("📌 [addAoCarrinho] Inserindo no window.carrinhoData tradicional...");
     if (!window.carrinhoData) window.carrinhoData = [];
     
     window.carrinhoData.push(itemParaAdicionar);
-    console.log(`✅ [addAoCarrinho] Adicionado! Itens no carrinhoData agora: ${window.carrinhoData.length}`);
+    //console.log(`✅ [addAoCarrinho] Adicionado! Itens no carrinhoData agora: ${window.carrinhoData.length}`);
   }
 
   // 6️⃣ Executando as atualizações visuais
-  console.log("🔄 [addAoCarrinho] Disparando atualizações visuais de tela...");
+  //console.log("🔄 [addAoCarrinho] Disparando atualizações visuais de tela...");
   if (typeof renderCarrinho === "function") renderCarrinho();
   //if (typeof atualizarBarraCarrinho === "function") atualizarBarraCarrinho();
   if (typeof atualizarTotalVendaVisual === "function") {
@@ -9575,9 +9575,9 @@ function abrirModalAdicionaisDelivery(idxItem) {
   const titulo = document.getElementById("tituloAdicionalModal");
   const subtitulo = document.getElementById("subtituloAdicionalModal");
 
-  console.log("=== 🔍 INÍCIO DO RASTREAMENTO DE ADICIONAIS ===");
-  console.log("📦 Produto clicado:", item.nome);
-  console.log("🏷️ Categoria do Produto (Original):", `"${item.categoria}"`);
+  //console.log("=== 🔍 INÍCIO DO RASTREAMENTO DE ADICIONAIS ===");
+  //console.log("📦 Produto clicado:", item.nome);
+  //console.log("🏷️ Categoria do Produto (Original):", `"${item.categoria}"`);
 
   // Função auxiliar de normalização
   const normalizarTexto = (txt) => {
@@ -9589,10 +9589,10 @@ function abrirModalAdicionaisDelivery(idxItem) {
   };
 
   const categoryItemLimpa = normalizarTexto(item.categoria);
-  console.log("🧹 Categoria do Produto (Normalizada):", `"${categoryItemLimpa}"`);
+  //console.log("🧹 Categoria do Produto (Normalizada):", `"${categoryItemLimpa}"`);
 
   const listaGlobal = window.listaAdicionaisGlobal || [];
-  console.log("📋 Total de adicionais na lista global:", listaGlobal.length);
+  //console.log("📋 Total de adicionais na lista global:", listaGlobal.length);
   
   if (listaGlobal.length === 0) {
     console.error("🚨 Alerta: 'window.listaAdicionaisGlobal' está completamente vazia! Verifique se a carga do Sheets funcionou.");
@@ -9621,8 +9621,8 @@ function abrirModalAdicionaisDelivery(idxItem) {
     return categoryAdLimpa === categoryItemLimpa && isAtivo;
   });
 
-  console.log("🎯 Total de adicionais que passaram no filtro:", filtrados.length);
-  console.log("=== 🔚 FIM DO RASTREAMENTO ===");
+  //console.log("🎯 Total de adicionais que passaram no filtro:", filtrados.length);
+  //console.log("=== 🔚 FIM DO RASTREAMENTO ===");
 
   if (filtrados.length === 0) {
     exibirModal({
@@ -10040,7 +10040,7 @@ function finalizarVenda() {
       
       exibirModal({
         titulo: "Modo Offline",
-        mensagem: "Seu dispositivo perdeu a conexão. A venda foi impressa e salva localmente no navegador e subirá para a planilha assim que a internet estabilizar.",
+        mensagem: "Seu dispositivo perdeu a conexão. A venda foi realizada em contigência.",
         tipo: "alerta"
       });
     } else if (resultadoOriginal === "ATUALIZADO" || (formaPagamento === "PIX" && idPedidoOriginal)) {
@@ -10204,7 +10204,7 @@ function sincronizarVendasOffline() {
   // Se não houver vendas na fila, encerra a rotina
   if (fila.length === 0) return;
 
-  console.log(`🔄 Conexão ativa! Sincronizando ${fila.length} pedido(s) pendente(s) com a planilha...`);
+  //console.log(`🔄 Conexão ativa! Sincronizando ${fila.length} pedido(s) pendente(s) com a planilha...`);
 
   // Pega o primeiro item da fila (Mais antigo) para enviar
   const pacoteParaEnviar = fila[0];
@@ -10220,7 +10220,7 @@ function sincronizarVendasOffline() {
   .then(res => {
     // Se o servidor aceitou e processou com sucesso (ou se retornou o número do pedido)
     if (res && res.sucesso !== false) {
-      console.log("🚀 Pedido offline enviado e gravado na planilha com sucesso!");
+      //console.log("🚀 Pedido offline enviado e gravado na planilha com sucesso!");
       
       // Remove o item que acabou de ser enviado da fila
       fila.shift();
@@ -10545,7 +10545,7 @@ function alterarStatus(pedido, status) {
 function carregarPedidosCozinha() {
 
   if (!navigator.onLine) {
-    console.log("⏳ [COZINHA] Pooling omitido temporariamente: Dispositivo Offline.");
+    //console.log("⏳ [COZINHA] Pooling omitido temporariamente: Dispositivo Offline.");
     return; 
   }
   
@@ -11882,7 +11882,7 @@ function confirmarSalvamento() {
    ========================================================================= */
 
 function entregarClienteModal(botaoClicado) {
-  console.log("🖱️ [FRONT] Botão 'Cliente' foi clicado de fato!");
+ // console.log("🖱️ [FRONT] Botão 'Cliente' foi clicado de fato!");
   
   // 🎯 CORREÇÃO CRUCIAL: Força a leitura direto do escopo global (window)
   const pedidoAtivo = window.pedidoSelecionado;
@@ -11895,7 +11895,7 @@ function entregarClienteModal(botaoClicado) {
 
   const msgDiv = document.getElementById("msgMotoboy"); 
   const idPedido = pedidoAtivo.pedido; // 🎯 Pega o ID com segurança
-  console.log(`📦 [FRONT] Identificado Pedido ID: ${idPedido}`);
+  //console.log(`📦 [FRONT] Identificado Pedido ID: ${idPedido}`);
 
   if (msgDiv) {
     msgDiv.textContent = "⏳ Registrando entrega para o cliente...";
@@ -11916,22 +11916,22 @@ function entregarClienteModal(botaoClicado) {
     motoboy: "CLIENTE"
   };
 
-  console.log("📡 [FRONT] Disparando FETCH para o Google Sheets com o payload:", payload);
+  //console.log("📡 [FRONT] Disparando FETCH para o Google Sheets com o payload:", payload);
 
   fetch(URL_API_GOOGLE, {
     method: "POST",
     body: JSON.stringify(payload)
   })
   .then(response => {
-    console.log(`🌐 [FRONT] Resposta HTTP recebida do Google Status: ${response.status}`);
+    //console.log(`🌐 [FRONT] Resposta HTTP recebida do Google Status: ${response.status}`);
     if (!response.ok) throw new Error("Erro na rede ao registrar entrega.");
     return response.json();
   })
   .then(resultado => {
-    console.log("📥 [FRONT] JSON convertido recebido do servidor:", resultado);
+    //console.log("📥 [FRONT] JSON convertido recebido do servidor:", resultado);
 
     if (resultado && resultado.sucesso) {
-      console.log("✅ [FRONT] Sucesso confirmado pelo servidor! Atualizando telas...");
+     // console.log("✅ [FRONT] Sucesso confirmado pelo servidor! Atualizando telas...");
       if (msgDiv) {
         msgDiv.textContent = "Pedido entregue com sucesso! ✅";
         msgDiv.style.color = "green";
@@ -11967,7 +11967,7 @@ function entregarClienteModal(botaoClicado) {
 
 function entregarMotoboyModal(botaoClicado) {
   // 🎯 LOG 1: Esse vai aparecer independente de qualquer coisa se o clique acontecer
-  console.log("🖱️ [MOTOBOY] Clique detectado no botão!");
+  //console.log("🖱️ [MOTOBOY] Clique detectado no botão!");
 
   // Captura o select de forma isolada
   const campoSelect = document.getElementById("selectMotoboy");
@@ -11977,7 +11977,7 @@ function entregarMotoboyModal(botaoClicado) {
   }
 
   const nomeMotoboy = campoSelect.value;
-  console.log("👤 [MOTOBOY] Valor selecionado no select:", nomeMotoboy);
+ // console.log("👤 [MOTOBOY] Valor selecionado no select:", nomeMotoboy);
 
   // Validação simples
   if (!nomeMotoboy || nomeMotoboy.trim() === "") {
@@ -11993,7 +11993,7 @@ function entregarMotoboyModal(botaoClicado) {
   }
 
   // 🎯 LOG 2: Se o código passar daqui, a captura do motoboy está certa
-  console.log("🚀 [MOTOBOY] Passou da validação! Preparando envio...");
+  //console.log("🚀 [MOTOBOY] Passou da validação! Preparando envio...");
 
   // Captura o ID do pedido direto da janela de forma ultra-segura
   const idPedido = window.pedidoSelecionado ? window.pedidoSelecionado.pedido : null;
@@ -12017,7 +12017,7 @@ function entregarMotoboyModal(botaoClicado) {
     motoboy: String(nomeMotoboy).trim()
   };
 
-  console.log("📡 [MOTOBOY] Enviando FETCH com o payload:", dadosEnvio);
+  //console.log("📡 [MOTOBOY] Enviando FETCH com o payload:", dadosEnvio);
 
   fetch(URL_API_GOOGLE, {
     method: "POST",
@@ -12027,7 +12027,7 @@ function entregarMotoboyModal(botaoClicado) {
     body: JSON.stringify(dadosEnvio)
   })
   .then(res => {
-    console.log("🌐 [MOTOBOY] Resposta do servidor recebida. Status:", res.status);
+    //console.log("🌐 [MOTOBOY] Resposta do servidor recebida. Status:", res.status);
     if (!res.ok) throw new Error("Servidor fora do ar ou ocupado.");
     return res.text(); // 🌟 Lemos primeiro como texto por segurança anti-crash
   })
@@ -12039,7 +12039,7 @@ function entregarMotoboyModal(botaoClicado) {
       resposta = { sucesso: false, erro: "Resposta corrompida do servidor central." };
     }
 
-    console.log("📥 [MOTOBOY] Dados retornados pelo Google:", resposta);
+    //console.log("📥 [MOTOBOY] Dados retornados pelo Google:", resposta);
     
     if (resposta && resposta.sucesso) {
       // 🌟 2. SUBSTUIÇÃO: Modal de sucesso ao despachar para o motoboy
@@ -12072,7 +12072,7 @@ function entregarMotoboyModal(botaoClicado) {
     // 🌟 4. SUBSTUIÇÃO: Modal de erro crítico ou queda de internet
     exibirModal({
       titulo: "Erro de Conexão",
-      mensagem: "Não foi possível sincronizar o despacho com a planilha central. Verifique sua conexão com a rede.",
+      mensagem: "Não foi possível sincronizar. Verifique sua conexão com a rede.",
       tipo: "erro"
     });
 
@@ -12084,7 +12084,7 @@ function entregarMotoboyModal(botaoClicado) {
 }
   
 function carregarMotoboys() {
-  console.log("📡 [MOTOBOYS] Buscando lista de entregadores no Google...");
+ // console.log("📡 [MOTOBOYS] Buscando lista de entregadores no Google...");
 
   fetch(URL_API_GOOGLE, {
     method: "POST",
@@ -12098,7 +12098,7 @@ function carregarMotoboys() {
     return response.json();
   })
   .then(motoboys => {
-    console.log("📥 [MOTOBOYS] Dados brutos recebidos do servidor:", motoboys);
+    //console.log("📥 [MOTOBOYS] Dados brutos recebidos do servidor:", motoboys);
 
     const select = document.getElementById("selectMotoboy");
     if (!select) {
@@ -12124,7 +12124,7 @@ function carregarMotoboys() {
         opt.value = nomeIdentificador;
         opt.textContent = nomeIdentificador;
         select.appendChild(opt);
-        console.log(`✅ [MOTOBOYS] Injetado no select: "${nomeIdentificador}"`);
+        //console.log(`✅ [MOTOBOYS] Injetado no select: "${nomeIdentificador}"`);
       }
     });
   })
@@ -13229,7 +13229,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
   }
   
   const caixa = window.historicoCaixas[index];
-  console.log("🎯 Analisando dados da linha clicada:", caixa);
+  //console.log("🎯 Analisando dados da linha clicada:", caixa);
 
   // 🌟 CAÇA AO OPERADOR (Múltiplas tentativas para nunca enviar undefined)
   let operadorFinal = "";
@@ -13275,7 +13275,7 @@ function confirmarFechamentoHistorico(index, forcar = false) {
   // Remove espaços e garante string limpa
   operadorFinal = operadorFinal.toString().trim();
 
-  console.log("🚀 OPERADOR DEFINIDO COM SEGURANÇA MÁXIMA:", operadorFinal);
+  //console.log("🚀 OPERADOR DEFINIDO COM SEGURANÇA MÁXIMA:", operadorFinal);
 
   // --- PREPARAÇÃO DOS VALORES E DO FETCH ---
   const msgErro = document.getElementById("modalErroMsg");
@@ -13550,8 +13550,8 @@ function atualizarAvisoCozinha() {
  */
 /* ===== 📊 FUNÇÃO ATUALIZAR FRETE ATUALIZADA (INSTANTÂNEA) ===== */
 function atualizarFrete() {
-  console.log("--------------------------------------------------");
-  console.log("🎯 [FRETE] Função atualizarFrete() disparada!");
+  //console.log("--------------------------------------------------");
+  //console.log("🎯 [FRETE] Função atualizarFrete() disparada!");
 
   const chkEntrega = document.getElementById("paraEntrega");
   const divBairro = document.getElementById("campoBairro");
@@ -13567,7 +13567,7 @@ function atualizarFrete() {
     divBairro.style.display = "none";
     if (existeFreteIndex !== -1) {
       window.carrinhoData.splice(existeFreteIndex, 1);
-      console.log("🗑️ [FRETE] Pedido Balcão: Frete removido do carrinhoData.");
+      //console.log("🗑️ [FRETE] Pedido Balcão: Frete removido do carrinhoData.");
     }
     window.taxaEntregaAtual = 0;
     if (typeof renderCarrinho === "function") renderCarrinho();
@@ -13593,10 +13593,10 @@ function atualizarFrete() {
     };
 
     if (existeFreteIndex !== -1) {
-      console.log("🔄 [FRETE] Atualizando valor do frete existente no carrinho.");
+      //console.log("🔄 [FRETE] Atualizando valor do frete existente no carrinho.");
       window.carrinhoData[existeFreteIndex] = itemFrete;
     } else {
-      console.log("➕ [FRETE] Inserindo novo frete no carrinho.");
+      //console.log("➕ [FRETE] Inserindo novo frete no carrinho.");
       window.carrinhoData.push(itemFrete);
     }
     
@@ -13613,7 +13613,7 @@ function atualizarFrete() {
   if (typeof renderCarrinho === "function") {
     renderCarrinho();
   }
-  console.log("--------------------------------------------------");
+  //console.log("--------------------------------------------------");
 }
 
 /* =========================================================================
@@ -14567,7 +14567,7 @@ function fecharModalDetalhes() {
     })
     .then(response => response.json())
     .then(res => {
-      if (res.sucesso) console.log(`Mutex liberado para mesa: ${mesaParaLiberar}`);
+      if (res.sucesso) //console.log(`Mutex liberado para mesa: ${mesaParaLiberar}`);
     })
     .catch(err => console.error("Falha no transporte do sinal de destravamento:", err));
     
@@ -14761,7 +14761,7 @@ function cancelarAtendimentoMesa() {
       })
     })
     .then(r => r.json())
-    .then(() => console.log(`Rollback: Bloqueio da mesa ${numMesaParaLiberar} limpo.`))
+    .then(() => //console.log(`Rollback: Bloqueio da mesa ${numMesaParaLiberar} limpo.`))
     .catch(err => console.error("Erro no descarte de locks voláteis:", err));
   }
 
@@ -14942,7 +14942,7 @@ let estaSincronizando = false;
 function sincronizarSistema() {
 
   if (!navigator.onLine) {
-    console.log("⏳ [SINCRONIZAÇÃO] Sincronização assíncrona pausada em modo offline.");
+    //console.log("⏳ [SINCRONIZAÇÃO] Sincronização assíncrona pausada em modo offline.");
     return;
   }
   
@@ -15082,7 +15082,7 @@ async function exibirModalCartao() {
       paymentMethods: { maxInstallments: 12 },
     },
     callbacks: {
-      onReady: () => console.log("✅ Brick Pronto"),
+      onReady: () => //console.log("✅ Brick Pronto"),
       onSubmit: (formData) => {
         return new Promise((resolve, reject) => {
           
