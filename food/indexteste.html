@@ -14567,7 +14567,7 @@ function fecharModalDetalhes() {
     })
     .then(response => response.json())
     .then(res => {
-      if (res.sucesso) //console.log(`Mutex liberado para mesa: ${mesaParaLiberar}`);
+      if (res.sucesso) console.log(`Mutex liberado para mesa: ${mesaParaLiberar}`);
     })
     .catch(err => console.error("Falha no transporte do sinal de destravamento:", err));
     
