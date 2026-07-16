@@ -12392,9 +12392,9 @@ setInterval(renderizarPedidosPendentes, 60000);
 /* =========================================================================
    📦 GESTÃO DE INTERFACE: ALIMENTAÇÃO DINÂMICA DE MODAIS DE INTERAÇÃO
    ========================================================================= */
-
 function abrirModalPedidoPendente(pedido) {
-  window.pedidoPendenteSelecionado = pedido;
+  // SALVA DIRETAMENTE NA VARIÁVEL GLOBAL DO SISTEMA
+  pedidoPendenteSelecionado = pedido; 
 
   const modal = document.getElementById("modalPedidoPendente");
   const conteudo = document.getElementById("conteudoPedidoPendente");
@@ -12412,7 +12412,8 @@ function abrirModalPedidoPendente(pedido) {
     <p><strong>Data:</strong> ${dataExibicao}</p> 
   `;
 
-  const podeCancelar = verificarPodeCancelar(pedido.dataPedido || pedido.timestamp);
+  // CORREÇÃO DE SEGURANÇA: Garante que a verificação de SLA use a função de tempo correto
+  const podeCancelar = podeCancelarPedido(pedido.dataPedido || pedido.timestamp);
 
   btnCancelar.disabled = !podeCancelar;
   btnCancelar.style.opacity = podeCancelar ? "1" : "0.5"; 
