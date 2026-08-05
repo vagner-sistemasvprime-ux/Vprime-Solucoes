@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Store VIP - Ofertas Exclusivas</title>
+    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1XQd9Cv5ut-yOHlXO09w07jJc4EH4mcCO">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --cor-fundo: #000000;
+            --cor-dourado-principal: #CBA135;
+            --cor-dourado-claro: #F5E0A3;
+            --cor-prata: #E0E0E0;
+            --fonte-titulo: 'Playfair Display', serif;
+            --fonte-corpo: 'Montserrat', sans-serif;
+            --shadow-gold: 0 0 15px rgba(203, 161, 53, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--cor-fundo);
+            color: var(--cor-prata);
+            font-family: var(--fonte-corpo);
+            line-height: 1.6;
+        }
+
+        a { text-decoration: none; color: inherit; transition: 0.3s ease; }
+
+        header {
+            background-color: #050505;
+            border-bottom: 2px solid var(--cor-dourado-principal);
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+        }
+
+        .container-header {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo-completo {
+            max-width: 180px;
+            height: auto;
+            display: block;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 0 8px rgba(203, 161, 53, 0.4));
+        }
+
+        header h1 {
+            font-family: var(--fonte-titulo);
+            color: var(--cor-dourado-claro);
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-top: -5px;
+        }
+
+        nav { margin-top: 15px; }
+        nav ul { list-style: none; display: flex; gap: 30px; }
+        nav a {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            padding: 5px 0;
+            border-bottom: 2px solid transparent;
+        }
+        nav a:hover {
+            color: var(--cor-dourado-claro);
+            border-bottom: 2px solid var(--cor-dourado-principal);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .hero-text {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .hero-text h2 {
+            font-family: var(--fonte-titulo);
+            font-size: 2.5rem;
+            color: var(--cor-dourado-principal);
+            margin-bottom: 10px;
+        }
+
+        .filtros-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .btn-filtro {
+            background-color: #0A0A0A;
+            border: 1px solid var(--cor-dourado-principal);
+            color: var(--cor-dourado-claro);
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .btn-filtro:hover, .btn-filtro.ativo {
+            background-color: var(--cor-dourado-principal);
+            color: var(--cor-fundo);
+            box-shadow: 0 0 10px rgba(203, 161, 53, 0.4);
+        }
+
+        .grid-produtos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .produto-card {
+            background-color: #0A0A0A;
+            border: 1px solid #1A1A1A;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .produto-card:hover {
+            border-color: var(--cor-dourado-principal);
+            box-shadow: var(--shadow-gold);
+            transform: translateY(-5px);
+        }
+
+        .produto-card::before {
+            content: '%';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--cor-dourado-principal);
+            color: var(--cor-fundo);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 2;
+        }
+
+        .produto-card img {
+            width: 100%;
+            height: 160px;
+            object-fit: contain;
+            background-color: #050505;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            padding: 5px;
+        }
+
+        .produto-card h3 {
+            font-size: 1.05rem;
+            color: var(--cor-prata);
+            margin-bottom: 10px;
+            min-height: 40px;
+        }
+
+        .preco-de {
+            text-decoration: line-through;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .preco-por {
+            color: var(--cor-dourado-claro);
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+
+        .btn-afiliado {
+            display: inline-block;
+            background-color: var(--cor-dourado-principal);
+            color: var(--cor-fundo);
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .btn-afiliado:hover {
+            background-color: var(--cor-dourado-claro);
+            box-shadow: 0 0 10px rgba(245, 224, 163, 0.7);
+        }
+
+        .spinner-container {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 0;
+            gap: 15px;
+        }
+
+        .spinner {
+            width: 45px;
+            height: 45px;
+            border: 4px solid rgba(203, 161, 53, 0.2);
+            border-top: 4px solid var(--cor-dourado-principal);
+            border-radius: 50%;
+            animation: girar 0.8s linear infinite;
+        }
+
+        @keyframes girar {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner-texto {
+            color: var(--cor-dourado-claro);
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 768px) {
+            .logo-completo { max-width: 120px; }
+            nav ul { gap: 15px; flex-wrap: wrap; justify-content: center; }
+            .hero-text h2 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container-header">
+            <img src="https://lh3.googleusercontent.com/d/1XQd9Cv5ut-yOHlXO09w07jJc4EH4mcCO" alt="Prime Store VIP" class="logo-completo">
+            <h1>Seu Portal de Ofertas Premium</h1>
+            <nav>
+                <ul>
+                    <li><a href="#">Início</a></li>
+                    <li><a href="#">Mais Vendidos</a></li>
+                    <li><a href="#">Cupons</a></li>
+                    <li><a href="#">Contato</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="hero-text">
+            <h2>Ofertas Exclusivas Selecionadas</h2>
+            <p>Garanta os melhores preços do Mercado Livre e Shopee antes que acabem.</p>
+        </div>
+
+        <div class="filtros-container" id="filtros-container">
+            <button class="btn-filtro ativo" onclick="filtrarProdutos('todos', this)">Todos</button>
+        </div>
+
+        <div class="grid-produtos" id="grid-produtos">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+                <span class="spinner-texto">Carregando ofertas...</span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const urlPlanilha = 'https://script.google.com/macros/s/AKfycbwOI3vJihMw3pGcRzzvdWNQF9M3ngecBPspyGYrXGwjqxLgaPFDz26_dB6GlFNL813d/exec'; 
+        let listaGlobalProdutos = [];
+
+        function formatarMoeda(valor) {
+            if (!valor) return '';
+            let numero = parseFloat(String(valor).replace(/[^\d.,]/g, '').replace(',', '.'));
+            if (isNaN(numero)) return valor;
+            return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function carregarProdutos() {
+            // Verifica se já temos os dados salvos no navegador e se têm menos de 30 minutos
+            const cacheSalvo = localStorage.getItem('cache_produtos_prime');
+            const tempoCache = localStorage.getItem('cache_tempo_prime');
+            const tempoExpiracao = 30 * 60 * 1000; // 30 minutos em milissegundos
+
+            if (cacheSalvo && tempoCache && (new Date().getTime() - tempoCache < tempoExpiracao)) {
+                // Se o cache for recente, carrega INSTANTANEAMENTE
+                listaGlobalProdutos = JSON.parse(cacheSalvo);
+                criarBotoesCategorias(listaGlobalProdutos);
+                exibirProdutos(listaGlobalProdutos);
+                return;
+            }
+
+            // Se não houver cache válido, busca na planilha do Google (com o spinner rodando)
+            fetch(urlPlanilha)
+                .then(response => response.json())
+                .then(produtos => {
+                    listaGlobalProdutos = produtos;
+                    
+                    // Salva no cache do navegador
+                    localStorage.setItem('cache_produtos_prime', JSON.stringify(produtos));
+                    localStorage.setItem('cache_tempo_prime', new Date().getTime());
+
+                    criarBotoesCategorias(produtos);
+                    exibirProdutos(produtos);
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    // Se falhar a rede mas tiver cache antigo, usa ele de segurança
+                    if (cacheSalvo) {
+                        listaGlobalProdutos = JSON.parse(cacheSalvo);
+                        criarBotoesCategorias(listaGlobalProdutos);
+                        exibirProdutos(listaGlobalProdutos);
+                    } else {
+                        document.getElementById('grid-produtos').innerHTML = '<p style="text-align: center; color: red; grid-column: 1/-1;">Erro ao carregar as ofertas.</p>';
+                    }
+                });
+        }
+
+        function exibirProdutos(produtos) {
+            const grid = document.getElementById('grid-produtos');
+            grid.innerHTML = '';
+
+            if (produtos.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: var(--cor-prata); grid-column: 1/-1;">Nenhum produto encontrado.</p>';
+                return;
+            }
+
+            produtos.forEach(produto => {
+                const card = document.createElement('div');
+                card.className = 'produto-card';
+
+                const precoDeFormatado = formatarMoeda(produto.precoDe);
+                const precoPorFormatado = formatarMoeda(produto.precoPor);
+
+                card.innerHTML = `
+                    <img src="${produto.imagem}" alt="${produto.titulo}">
+                    <h3>${produto.titulo}</h3>
+                    <div>
+                        <p class="preco-de">${precoDeFormatado}</p>
+                        <p class="preco-por">${precoPorFormatado}</p>
+                        <a href="${produto.link}" class="btn-afiliado" target="_blank">Aproveitar Oferta</a>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function criarBotoesCategorias(produtos) {
+            const containerFiltros = document.getElementById('filtros-container');
+            // Mantém o botão "Todos" e limpa o resto para duplicar
+            containerFiltros.innerHTML = '<button class="btn-filtro ativo" onclick="filtrarProdutos(\'todos\', this)">Todos</button>';
+            
+            const categorias = [...new Set(produtos.map(p => p.categoria).filter(Boolean))];
+
+            categorias.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-filtro';
+                btn.innerText = cat;
+                btn.onclick = () => filtrarProdutos(cat, btn);
+                containerFiltros.appendChild(btn);
+            });
+        }
+
+        function filtrarProdutos(categoria, elementoBotao) {
+            document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('ativo'));
+            elementoBotao.classList.add('ativo');
+
+            if (categoria === 'todos') {
+                exibirProdutos(listaGlobalProdutos);
+            } else {
+                const filtrados = listaGlobalProdutos.filter(p => p.categoria === categoria);
+                exibirProdutos(filtrados);
+            }
+        }
+
+        // Executa o carregamento ao abrir a página
+        carregarProdutos();
+    </script>
+</body>
+</html>
