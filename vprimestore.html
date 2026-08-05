@@ -35,6 +35,7 @@
             padding: 15px 0;
             text-align: center;
             box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            position: relative;
         }
 
         .container-header {
@@ -64,24 +65,160 @@
             margin-top: -5px;
         }
 
-        nav { margin-top: 15px; }
-        nav ul { list-style: none; display: flex; gap: 30px; }
-        nav a {
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-            padding: 5px 0;
-            border-bottom: 2px solid transparent;
+        /* --- BARRA DE CONTROLE (BOTÃO CATEGORIAS + PESQUISA) --- */
+        .barra-controle {
+            max-width: 1200px;
+            margin: 30px auto 20px auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
         }
-        nav a:hover {
+
+        .btn-menu-lateral {
+            background-color: #0A0A0A;
+            border: 1px solid var(--cor-dourado-principal);
             color: var(--cor-dourado-claro);
-            border-bottom: 2px solid var(--cor-dourado-principal);
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+
+        .btn-menu-lateral:hover {
+            background-color: var(--cor-dourado-principal);
+            color: var(--cor-fundo);
+            box-shadow: 0 0 10px rgba(203, 161, 53, 0.4);
+        }
+
+        .campo-pesquisa {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .campo-pesquisa input {
+            width: 100%;
+            background-color: #0A0A0A;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: var(--cor-prata);
+            font-family: var(--fonte-corpo);
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .campo-pesquisa input:focus {
+            border-color: var(--cor-dourado-principal);
+            box-shadow: 0 0 8px rgba(203, 161, 53, 0.3);
+        }
+
+        /* --- MENU LATERAL (GAVETA / SIDEBAR) --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100%;
+            background-color: #080808;
+            border-right: 2px solid var(--cor-dourado-principal);
+            z-index: 1000;
+            transition: 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.9);
+        }
+
+        .sidebar.ativa {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h3 {
+            font-family: var(--fonte-titulo);
+            color: var(--cor-dourado-claro);
+            font-size: 1.2rem;
+        }
+
+        .btn-fechar-sidebar {
+            background: none;
+            border: none;
+            color: var(--cor-prata);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-fechar-sidebar:hover {
+            color: var(--cor-dourado-principal);
+        }
+
+        .sidebar-conteudo {
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-filtro-lateral {
+            background-color: transparent;
+            border: 1px solid #222;
+            color: var(--cor-prata);
+            text-align: left;
+            padding: 12px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .btn-filtro-lateral:hover, .btn-filtro-lateral.ativo {
+            background-color: var(--cor-dourado-principal);
+            border-color: var(--cor-dourado-principal);
+            color: var(--cor-fundo);
+            padding-left: 20px;
+        }
+
+        /* Overlay escuro quando o menu abre */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 999;
+            display: none;
+            backdrop-filter: blur(2px);
+        }
+
+        .overlay.ativo {
+            display: block;
         }
 
         main {
             max-width: 1200px;
-            margin: 40px auto;
+            margin: 20px auto 40px auto;
             padding: 0 20px;
         }
 
@@ -92,36 +229,9 @@
 
         .hero-text h2 {
             font-family: var(--fonte-titulo);
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             color: var(--cor-dourado-principal);
             margin-bottom: 10px;
-        }
-
-        .filtros-container {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-        }
-
-        .btn-filtro {
-            background-color: #0A0A0A;
-            border: 1px solid var(--cor-dourado-principal);
-            color: var(--cor-dourado-claro);
-            padding: 8px 18px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            transition: 0.3s;
-        }
-
-        .btn-filtro:hover, .btn-filtro.ativo {
-            background-color: var(--cor-dourado-principal);
-            color: var(--cor-fundo);
-            box-shadow: 0 0 10px rgba(203, 161, 53, 0.4);
         }
 
         .grid-produtos {
@@ -247,29 +357,48 @@
 
         @media (max-width: 768px) {
             .logo-completo { max-width: 120px; }
-            nav ul { gap: 15px; flex-wrap: wrap; justify-content: center; }
-            .hero-text h2 { font-size: 2rem; }
+            .hero-text h2 { font-size: 1.8rem; }
+            .barra-controle { flex-direction: column; align-items: stretch; }
+            .campo-pesquisa { max-width: 100%; }
         }
     </style>
 </head>
 <body>
 
+    <!-- MENU LATERAL (GAVETA DE CATEGORIAS) -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Categorias</h3>
+            <button class="btn-fechar-sidebar" onclick="fecharMenu()">&times;</button>
+        </div>
+        <div class="sidebar-conteudo" id="sidebar-conteudo">
+            <button class="btn-filtro-lateral ativo" onclick="filtrarPorCategoria('todos', this)">Todas as Ofertas</button>
+        </div>
+    </div>
+    
+    <div class="overlay" id="overlay" onclick="fecharMenu()"></div>
+
     <header>
         <div class="container-header">
             <img src="https://lh3.googleusercontent.com/d/1XQd9Cv5ut-yOHlXO09w07jJc4EH4mcCO" alt="Prime Store VIP" class="logo-completo">
             <h1>Seu Portal de Ofertas Premium</h1>
-           
         </div>
     </header>
+
+    <!-- BARRA DE CONTROLE: BOTÃO HAMBÚRGUER + CAMPO DE PESQUISA -->
+    <div class="barra-controle">
+        <button class="btn-menu-lateral" onclick="abrirMenu()">
+            ☰ Categorias
+        </button>
+        <div class="campo-pesquisa">
+            <input type="text" id="input-pesquisa" placeholder="Buscar produto ou categoria..." oninput="filtrarPesquisa()">
+        </div>
+    </div>
 
     <main>
         <div class="hero-text">
             <h2>Ofertas Exclusivas Selecionadas</h2>
             <p>Garanta os melhores preços do Mercado.</p>
-        </div>
-
-        <div class="filtros-container" id="filtros-container">
-            <button class="btn-filtro ativo" onclick="filtrarProdutos('todos', this)">Todos</button>
         </div>
 
         <div class="grid-produtos" id="grid-produtos">
@@ -283,6 +412,7 @@
     <script>
         const urlPlanilha = 'https://script.google.com/macros/s/AKfycbwOI3vJihMw3pGcRzzvdWNQF9M3ngecBPspyGYrXGwjqxLgaPFDz26_dB6GlFNL813d/exec'; 
         let listaGlobalProdutos = [];
+        let categoriaAtual = 'todos';
 
         function formatarMoeda(valor) {
             if (!valor) return '';
@@ -291,39 +421,43 @@
             return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
+        function abrirMenu() {
+            document.getElementById('sidebar').classList.add('ativa');
+            document.getElementById('overlay').classList.add('ativo');
+        }
+
+        function fecharMenu() {
+            document.getElementById('sidebar').classList.remove('ativa');
+            document.getElementById('overlay').classList.remove('ativo');
+        }
+
         function carregarProdutos() {
-            // Verifica se já temos os dados salvos no navegador e se têm menos de 30 minutos
             const cacheSalvo = localStorage.getItem('cache_produtos_prime');
             const tempoCache = localStorage.getItem('cache_tempo_prime');
-            const tempoExpiracao = 30 * 60 * 1000; // 30 minutos em milissegundos
+            const tempoExpiracao = 30 * 60 * 1000; 
 
             if (cacheSalvo && tempoCache && (new Date().getTime() - tempoCache < tempoExpiracao)) {
-                // Se o cache for recente, carrega INSTANTANEAMENTE
                 listaGlobalProdutos = JSON.parse(cacheSalvo);
-                criarBotoesCategorias(listaGlobalProdutos);
+                popularMenuCategorias(listaGlobalProdutos);
                 exibirProdutos(listaGlobalProdutos);
                 return;
             }
 
-            // Se não houver cache válido, busca na planilha do Google (com o spinner rodando)
             fetch(urlPlanilha)
                 .then(response => response.json())
                 .then(produtos => {
                     listaGlobalProdutos = produtos;
-                    
-                    // Salva no cache do navegador
                     localStorage.setItem('cache_produtos_prime', JSON.stringify(produtos));
                     localStorage.setItem('cache_tempo_prime', new Date().getTime());
 
-                    criarBotoesCategorias(produtos);
+                    popularMenuCategorias(produtos);
                     exibirProdutos(produtos);
                 })
                 .catch(error => {
                     console.error('Erro:', error);
-                    // Se falhar a rede mas tiver cache antigo, usa ele de segurança
                     if (cacheSalvo) {
                         listaGlobalProdutos = JSON.parse(cacheSalvo);
-                        criarBotoesCategorias(listaGlobalProdutos);
+                        popularMenuCategorias(listaGlobalProdutos);
                         exibirProdutos(listaGlobalProdutos);
                     } else {
                         document.getElementById('grid-produtos').innerHTML = '<p style="text-align: center; color: red; grid-column: 1/-1;">Erro ao carregar as ofertas.</p>';
@@ -336,7 +470,7 @@
             grid.innerHTML = '';
 
             if (produtos.length === 0) {
-                grid.innerHTML = '<p style="text-align: center; color: var(--cor-prata); grid-column: 1/-1;">Nenhum produto encontrado.</p>';
+                grid.innerHTML = '<p style="text-align: center; color: var(--cor-prata); grid-column: 1/-1; padding: 40px 0;">Nenhum produto encontrado.</p>';
                 return;
             }
 
@@ -361,35 +495,56 @@
             });
         }
 
-        function criarBotoesCategorias(produtos) {
-            const containerFiltros = document.getElementById('filtros-container');
-            // Mantém o botão "Todos" e limpa o resto para duplicar
-            containerFiltros.innerHTML = '<button class="btn-filtro ativo" onclick="filtrarProdutos(\'todos\', this)">Todos</button>';
+        function popularMenuCategorias(produtos) {
+            const containerSidebar = document.getElementById('sidebar-conteudo');
+            containerSidebar.innerHTML = '<button class="btn-filtro-lateral ativo" onclick="filtrarPorCategoria(\'todos\', this)">Todas as Ofertas</button>';
             
             const categorias = [...new Set(produtos.map(p => p.categoria).filter(Boolean))];
 
             categorias.forEach(cat => {
                 const btn = document.createElement('button');
-                btn.className = 'btn-filtro';
+                btn.className = 'btn-filtro-lateral';
                 btn.innerText = cat;
-                btn.onclick = () => filtrarProdutos(cat, btn);
-                containerFiltros.appendChild(btn);
+                btn.onclick = () => filtrarPorCategoria(cat, btn);
+                containerSidebar.appendChild(btn);
             });
         }
 
-        function filtrarProdutos(categoria, elementoBotao) {
-            document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('ativo'));
-            elementoBotao.classList.add('ativo');
+        function filtrarPorCategoria(categoria, elementoBotao) {
+            categoriaAtual = categoria;
+            document.querySelectorAll('.btn-filtro-lateral').forEach(b => b.classList.remove('ativo'));
+            if(elementoBotao) elementoBotao.classList.add('ativo');
 
-            if (categoria === 'todos') {
-                exibirProdutos(listaGlobalProdutos);
-            } else {
-                const filtrados = listaGlobalProdutos.filter(p => p.categoria === categoria);
-                exibirProdutos(filtrados);
-            }
+            fecharMenu();
+            aplicarFiltrosGlobais();
         }
 
-        // Executa o carregamento ao abrir a página
+        function filtrarPesquisa() {
+            aplicarFiltrosGlobais();
+        }
+
+        function aplicarFiltrosGlobais() {
+            const termo = document.getElementById('input-pesquisa').value.toLowerCase().trim();
+
+            let resultado = listaGlobalProdutos;
+
+            // Filtro por categoria
+            if (categoriaAtual !== 'todos') {
+                resultado = resultado.filter(p => p.categoria === categoriaAtual);
+            }
+
+            // Filtro por texto de pesquisa (título ou categoria)
+            if (termo !== '') {
+                resultado = resultado.filter(p => {
+                    const tituloMatch = p.titulo && p.titulo.toLowerCase().includes(termo);
+                    const categoriaMatch = p.categoria && p.categoria.toLowerCase().includes(termo);
+                    return tituloMatch || categoriaMatch;
+                });
+            }
+
+            exibirProdutos(resultado);
+        }
+
         carregarProdutos();
     </script>
 </body>
