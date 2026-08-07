@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin - Guia Tamoios</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            oceano: '#006699',
+            amareloSol: '#FFB703',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800 pb-10">
+
+  <!-- URL DA SUA API DO GOOGLE APPS SCRIPT -->
+  <script>
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbw3okYlTJNMu7z7qvlKRWSIhfupRA62d0_gbm7ATObL068qZzKUDU_EXrT5E-hMBEeI/exec";
+  </script>
+
+  <!-- Login Modal -->
+  <div id="telaLogin" class="fixed inset-0 bg-oceano z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl text-center space-y-4">
+      <div class="w-12 h-12 bg-blue-100 text-oceano rounded-full flex items-center justify-center mx-auto text-xl">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h2 class="font-bold text-xl text-gray-900">Acesso Painel Admin</h2>
+      <input type="password" id="senhaAdmin" placeholder="Digite a senha" class="w-full border rounded-xl p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-oceano">
+      <button onclick="autenticarAdmin()" class="w-full bg-oceano text-white font-bold py-3 rounded-xl hover:bg-blue-800 transition">
+        Entrar
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal de Edição -->
+  <div id="modalEdicao" class="fixed inset-0 bg-black/50 z-40 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl space-y-4 my-8">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="font-bold text-lg text-gray-900 flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-oceano"></i> Editar Cadastro
+        </h3>
+        <button onclick="fecharModalEdicao()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <form id="formEdicao" onsubmit="salvarEdicao(event)" class="space-y-3 text-sm">
+        <input type="hidden" id="editLinhaIndex">
+
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Nome do Negócio</label>
+          <input type="text" id="editNome" required class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1">Categoria</label>
+            <input type="text" id="editCategoria" required class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1">WhatsApp (com DDD)</label>
+            <input type="text" id="editWhatsApp" required class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Endereço</label>
+          <input type="text" id="editEndereco" class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Descrição</label>
+          <textarea id="editDescricao" rows="3" class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none resize-none"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1">Plano</label>
+            <select id="editPlano" class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none bg-white">
+              <option value="Gratuito">Gratuito</option>
+              <option value="Destaque Mensal">Destaque Mensal</option>
+              <option value="Destaque Anual">Destaque Anual</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1">Status</label>
+            <select id="editStatus" class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none bg-white">
+              <option value="Pendente">Pendente</option>
+              <option value="Aprovado">Aprovado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-3 flex gap-2 justify-end">
+          <button type="button" onclick="fecharModalEdicao()" class="px-4 py-2 border rounded-xl font-semibold text-gray-600 hover:bg-gray-100">
+            Cancelar
+          </button>
+          <button type="submit" id="btnSalvarModal" class="px-5 py-2 bg-oceano text-white font-bold rounded-xl hover:bg-blue-800 transition flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> Salvar Alterações
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard Principal -->
+  <div class="max-w-6xl mx-auto p-4 space-y-6">
+    <header class="bg-white rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Gerenciador Guia Tamoios</h1>
+        <p class="text-sm text-gray-500">Aprove, edite ou remova cadastros em tempo real</p>
+      </div>
+      <button onclick="carregarDados()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-xl text-sm flex items-center gap-2">
+        <i class="fa-solid fa-rotate"></i> Atualizar Lista
+      </button>
+    </header>
+
+    <!-- Abas -->
+    <div class="flex gap-2 border-b border-gray-200 pb-2">
+      <button id="btnAbaPendentes" onclick="trocarAba('pendentes')" class="px-4 py-2 font-bold rounded-xl bg-oceano text-white text-sm flex items-center gap-2">
+        <i class="fa-solid fa-clock"></i> Pendentes <span id="badgePendentes" class="bg-amareloSol text-gray-900 px-2 py-0.5 rounded-full text-xs">0</span>
+      </button>
+      <button id="btnAbaAprovados" onclick="trocarAba('aprovados')" class="px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2">
+        <i class="fa-solid fa-circle-check"></i> Aprovados
+      </button>
+    </div>
+
+    <!-- Lista em Cards -->
+    <div id="gridAdmin" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+  </div>
+
+  <script>
+    let dadosEmpresas = [];
+    let senhaSalva = "";
+    let abaAtual = 'pendentes';
+
+    async function autenticarAdmin() {
+      const senha = document.getElementById('senhaAdmin').value;
+      senhaSalva = senha;
+      await carregarDados();
+    }
+
+    async function carregarDados() {
+      try {
+        const resp = await fetch(`${URL_SCRIPT}?acao=obterAdmin&senha=${encodeURIComponent(senhaSalva)}`);
+        const res = await resp.json();
+
+        if (res.sucesso) {
+          document.getElementById('telaLogin').classList.add('hidden');
+          dadosEmpresas = res.empresas;
+          renderizarPainel();
+        } else {
+          alert(res.mensagem || 'Erro ao autenticar');
+        }
+      } catch (err) {
+        alert("Erro na conexão com a API: " + err.message);
+      }
+    }
+
+    function trocarAba(aba) {
+      abaAtual = aba;
+      document.getElementById('btnAbaPendentes').className = aba === 'pendentes' 
+        ? 'px-4 py-2 font-bold rounded-xl bg-oceano text-white text-sm flex items-center gap-2'
+        : 'px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2';
+      
+      document.getElementById('btnAbaAprovados').className = aba === 'aprovados' 
+        ? 'px-4 py-2 font-bold rounded-xl bg-oceano text-white text-sm flex items-center gap-2'
+        : 'px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2';
+
+      renderizarPainel();
+    }
+
+    function renderizarPainel() {
+      const grid = document.getElementById('gridAdmin');
+      grid.innerHTML = '';
+
+      const pendentes = dadosEmpresas.filter(e => e.Status_Pagamento !== 'Aprovado');
+      const aprovados = dadosEmpresas.filter(e => e.Status_Pagamento === 'Aprovado');
+
+      document.getElementById('badgePendentes').innerText = pendentes.length;
+
+      const listaExibir = abaAtual === 'pendentes' ? pendentes : aprovados;
+
+      if (listaExibir.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">Nenhum registro encontrado nesta aba.</div>`;
+        return;
+      }
+
+      listaExibir.forEach(emp => {
+        const imgLogo = emp.URL_Logo_LH3 || 'https://via.placeholder.com/150?text=Sem+Foto';
+        
+        const card = `
+          <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-between space-y-4">
+            <div>
+              <div class="flex items-center gap-3 mb-3">
+                <img src="${imgLogo}" class="w-14 h-14 rounded-xl object-cover border">
+                <div>
+                  <h3 class="font-bold text-gray-900">${emp.Nome_Negocio}</h3>
+                  <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-medium">${emp.Categoria}</span>
+                  <span class="text-xs font-bold ${emp.Plano !== 'Gratuito' ? 'text-amber-600' : 'text-gray-400'} block">${emp.Plano}</span>
+                </div>
+              </div>
+              <p class="text-sm text-gray-600 line-clamp-2">${emp.Descricao || 'Sem descrição'}</p>
+              <div class="text-xs text-gray-500 mt-2 space-y-1">
+                <p><i class="fa-brands fa-whatsapp text-green-500"></i> ${emp.WhatsApp}</p>
+                <p><i class="fa-solid fa-location-dot"></i> ${emp.Endereco || 'Não informado'}</p>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t flex gap-2">
+              ${abaAtual === 'pendentes' ? `
+                <button onclick="aprovar(${emp.linhaIndex})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-check"></i> Aprovar
+                </button>
+              ` : ''}
+              
+              <!-- Botão Editar -->
+              <button onclick='abrirEdicao(${JSON.stringify(emp).replace(/'/g, "&apos;")})' class="bg-blue-50 hover:bg-blue-100 text-oceano font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1">
+                <i class="fa-solid fa-pen-to-square"></i> Editar
+              </button>
+
+              <!-- Botão Excluir -->
+              <button onclick="excluir(${emp.linhaIndex})" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-2 rounded-xl text-xs">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        grid.innerHTML += card;
+      });
+    }
+
+    // Modal de Edição
+    function abrirEdicao(emp) {
+      document.getElementById('editLinhaIndex').value = emp.linhaIndex;
+      document.getElementById('editNome').value = emp.Nome_Negocio || '';
+      document.getElementById('editCategoria').value = emp.Categoria || '';
+      document.getElementById('editWhatsApp').value = emp.WhatsApp || '';
+      document.getElementById('editEndereco').value = emp.Endereco || '';
+      document.getElementById('editDescricao').value = emp.Descricao || '';
+      document.getElementById('editPlano').value = emp.Plano || 'Gratuito';
+      document.getElementById('editStatus').value = emp.Status_Pagamento || 'Pendente';
+
+      document.getElementById('modalEdicao').classList.remove('hidden');
+    }
+
+    function fecharModalEdicao() {
+      document.getElementById('modalEdicao').classList.add('hidden');
+    }
+
+    async function salvarEdicao(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSalvarModal');
+      btn.disabled = true;
+      btn.innerText = "Salvando...";
+
+      const linha = document.getElementById('editLinhaIndex').value;
+      const nome = document.getElementById('editNome').value;
+      const categoria = document.getElementById('editCategoria').value;
+      const whatsapp = document.getElementById('editWhatsApp').value;
+      document.getElementById('editEndereco').value;
+      const endereco = document.getElementById('editEndereco').value;
+      const descricao = document.getElementById('editDescricao').value;
+      const plano = document.getElementById('editPlano').value;
+      const status = document.getElementById('editStatus').value;
+
+      const url = `${URL_SCRIPT}?acao=salvarEdicao&linha=${linha}&nome=${encodeURIComponent(nome)}&categoria=${encodeURIComponent(categoria)}&whatsapp=${encodeURIComponent(whatsapp)}&endereco=${encodeURIComponent(endereco)}&descricao=${encodeURIComponent(descricao)}&plano=${encodeURIComponent(plano)}&status=${encodeURIComponent(status)}`;
+
+      try {
+        const resp = await fetch(url);
+        const res = await resp.json();
+
+        if (res.sucesso) {
+          fecharModalEdicao();
+          await carregarDados();
+        } else {
+          alert('Erro ao salvar alterações.');
+        }
+      } catch (err) {
+        alert('Erro ao conectar com o servidor: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alterações';
+      }
+    }
+
+    async function aprovar(linha) {
+      if (confirm('Deseja publicar este anúncio no site público?')) {
+        await fetch(`${URL_SCRIPT}?acao=aprovar&linha=${linha}`);
+        carregarDados();
+      }
+    }
+
+    async function excluir(linha) {
+      if (confirm('Deseja excluir este registro da planilha?')) {
+        await fetch(`${URL_SCRIPT}?acao=excluir&linha=${linha}`);
+        carregarDados();
+      }
+    }
+  </script>
+</body>
+</html>
