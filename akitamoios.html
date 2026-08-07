@@ -40,7 +40,7 @@
   <!-- URL DA SUA API DO GOOGLE APPS SCRIPT -->
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbw3okYlTJNMu7z7qvlKRWSIhfupRA62d0_gbm7ATObL068qZzKUDU_EXrT5E-hMBEeI/exec"; // Cole aqui a URL de Deploy do GAS
-    const MP_PUBLIC_KEY = "SUA_PUBLIC_KEY_MERCADO_PAGO_AQUI"; // Cole sua Public Key do MP
+    const MP_PUBLIC_KEY = "APP_USR-af8f60f1-e7a7-4a8a-a68b-6292d9a9f59b"; // Cole sua Public Key do MP
 
     // Adicione o seu número de WhatsApp como Administrador (com DDD)
     const whatsappAdmin = "22981166221";
@@ -536,64 +536,94 @@
 
     // Envios para a API
     async function enviarFormulario(e) {
-      e.preventDefault();
-      const btn = document.getElementById('btnSalvar');
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+  e.preventDefault();
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
 
-      const fotoFile = document.getElementById('fotoInput').files[0];
-      let imagemBase64 = "";
-      let nomeImagem = "";
+  const fotoFile = document.getElementById('fotoInput').files[0];
+  let imagemBase64 = "";
+  let nomeImagem = "";
 
-      if (fotoFile) {
-        imagemBase64 = await toBase64(fotoFile);
-        nomeImagem = fotoFile.name;
-      }
+  if (fotoFile) {
+    imagemBase64 = await toBase64(fotoFile);
+    nomeImagem = fotoFile.name;
+  }
 
-      const payload = {
-        nomeNegocio: document.getElementById('nomeNegocio').value,
-        categoria: document.getElementById('categoria').value,
-        whatsapp: document.getElementById('whatsapp').value,
-        endereco: document.getElementById('endereco').value,
-        descricao: document.getElementById('descricao').value,
-        plano: document.getElementById('planoEscolhido').value,
-        imagemBase64: imagemBase64,
-        nomeImagem: nomeImagem
-      };
+  const payload = {
+    nomeNegocio: document.getElementById('nomeNegocio').value,
+    categoria: document.getElementById('categoria').value,
+    whatsapp: document.getElementById('whatsapp').value,
+    endereco: document.getElementById('endereco').value,
+    descricao: document.getElementById('descricao').value,
+    plano: document.getElementById('planoEscolhido').value,
+    imagemBase64: imagemBase64,
+    nomeImagem: nomeImagem
+  };
 
-      try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-        const respData = await res.json();
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const respData = await res.json();
 
-        if (payload.plano !== 'Gratuito') {
-          notificar(
-            "Cadastro realizado com sucesso! Em breve você será direcionado para efetuar o pagamento do destaque.", 
-            "sucesso", 
-            "Cadastro Recebido!"
-          );
-        } else {
-          notificar(
-            "Seu negócio foi cadastrado com sucesso e já está visível no Akitamoios!", 
-            "sucesso", 
-            "Parabéns!"
-          );
-        }
+    fecharModalCadastro();
 
-        fecharModalCadastro();
-        carregarDados();
-      } catch (err) {
-        notificar(
-          "Não foi possível salvar os dados. Verifique a sua conexão ou tente novamente mais tarde.", 
-          "erro"
-        );
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<span>Salvar e Finalizar</span>`;
-      }
+    // Se o plano for pago e o backend retornar a URL do Mercado Pago
+    if (payload.plano !== 'Gratuito' && respData.init_point) {
+      notificar(
+        "Cadastro realizado! Redirecionando para o pagamento...", 
+        "sucesso", 
+        "Aguarde"
+      );
+      
+      // Redireciona para o checkout Pix/Cartão do Mercado Pago após 1.5s
+      setTimeout(() => {
+        window.location.href = respData.init_point;
+      }, 1500);
+
+    } else {
+      notificar(
+        "Seu negócio foi cadastrado com sucesso e já está visível no Akitamoios!", 
+        "sucesso", 
+        "Parabéns!"
+      );
+      carregarDados();
     }
+
+  } catch (err) {
+    notificar(
+      "Não foi possível salvar os dados. Verifique sua conexão e tente novamente.", 
+      "erro"
+    );
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>Salvar e Finalizar</span>`;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  carregarDados();
+
+  // Captura o status do pagamento retornado na URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const statusPagamento = urlParams.get('status');
+
+  if (statusPagamento === 'sucesso') {
+    notificar(
+      "Pagamento confirmado com sucesso! Seu anúncio em destaque já foi ativado.", 
+      "sucesso", 
+      "Pagamento Aprovado!"
+    );
+  } else if (statusPagamento === 'pendente') {
+    notificar(
+      "Seu pagamento (Pix/Boleto) está pendente. Assim que for compensado, o destaque será ativado.", 
+      "info", 
+      "Pagamento em Processamento"
+    );
+  }
+});
 
     const toBase64 = file => new Promise((resolve, reject) => {
       const reader = new FileReader();
