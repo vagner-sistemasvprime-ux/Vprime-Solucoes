@@ -3,306 +3,1071 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel Admin - Akitamoios</title>
+  <title>Akitamoios - O Comércio Local em um só Lugar</title>
+
+  <!-- Favicon SVG Dinâmico -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23006699'/><path d='M50 20C36.2 20 25 31.2 25 45c0 22.5 25 35 25 35s25-12.5 25-35c0-13.8-11.2-25-25-25zm0 33c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z' fill='%23FFB703'/></svg>">
+
+  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome para Ícones -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SDK do Mercado Pago -->
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+
+  <!-- Leaflet CSS & JS (Mapa Interativo Gratuito) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <script>
+    // Personalização do Tailwind com as cores de Tamoios
     tailwind.config = {
       theme: {
         extend: {
           colors: {
             oceano: '#006699',
+            oceanoEscuro: '#004d73',
             amareloSol: '#FFB703',
+            verdeWhats: '#25D366'
           }
         }
       }
     }
   </script>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800 pb-10">
+<body class="bg-gray-100 font-sans text-gray-800 antialiased min-h-screen flex flex-col">
 
-  <!-- URL DA SUA API DO GOOGLE APPS SCRIPT -->
+  <!-- CONFIGURAÇÕES DA API E MERCADO PAGO -->
   <script>
-    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbw3okYlTJNMu7z7qvlKRWSIhfupRA62d0_gbm7ATObL068qZzKUDU_EXrT5E-hMBEeI/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbw3okYlTJNMu7z7qvlKRWSIhfupRA62d0_gbm7ATObL068qZzKUDU_EXrT5E-hMBEeI/exec"; 
+    const MP_PUBLIC_KEY = "APP_USR-af8f60f1-e7a7-4a8a-a68b-6292d9a9f59b"; 
+
+    // Número do Administrador
+    const whatsappAdmin = "22981166221";
   </script>
 
-  <!-- Login Modal -->
-  <div id="telaLogin" class="fixed inset-0 bg-oceano z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl text-center space-y-4">
-      <div class="w-12 h-12 bg-blue-100 text-oceano rounded-full flex items-center justify-center mx-auto text-xl">
-        <i class="fa-solid fa-lock"></i>
+  <!-- ==================== HEADER ==================== -->
+  <header class="bg-oceano text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div class="flex items-center gap-2 cursor-pointer" onclick="filtrarCategoria('Todas')">
+        <i class="fa-solid fa-location-dot text-amareloSol text-2xl"></i>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight leading-none">Aki<span class="text-amareloSol">tamoios</span></h1>
+          <p class="text-xs text-blue-100">Cabo Frio & Litoral</p>
+        </div>
       </div>
-      <h2 class="font-bold text-xl text-gray-900">Acesso Painel Admin</h2>
-      <input type="password" id="senhaAdmin" placeholder="Digite a senha" class="w-full border rounded-xl p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-oceano">
-      <button onclick="autenticarAdmin()" class="w-full bg-oceano text-white font-bold py-3 rounded-xl hover:bg-blue-800 transition">
-        Entrar
-      </button>
+
+      <div class="flex gap-2 w-full sm:w-auto">
+        <button onclick="abrirModalCadastro('Gratuito')" class="flex-1 sm:flex-none bg-white text-oceano hover:bg-gray-100 font-semibold px-4 py-2 rounded-lg text-sm transition shadow-sm">
+          <i class="fa-solid fa-plus mr-1"></i> Cadastrar Grátis
+        </button>
+        <button onclick="abrirModalCadastro('Destaque_Home')" class="flex-1 sm:flex-none bg-amareloSol hover:bg-yellow-500 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm transition shadow-sm animate-pulse">
+          <i class="fa-solid fa-rocket mr-1"></i> Destaque-se
+        </button>
+      </div>
     </div>
-  </div>
+  </header>
 
-  <!-- Modal de Edição -->
-  <div id="modalEdicao" class="fixed inset-0 bg-black/50 z-40 hidden flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl space-y-4 my-8">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="font-bold text-lg text-gray-900 flex items-center gap-2">
-          <i class="fa-solid fa-pen-to-square text-oceano"></i> Editar Cadastro
-        </h3>
-        <button onclick="fecharModalEdicao()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+  <!-- ==================== BARRA DE BUSCA E FILTROS ==================== -->
+  <section class="bg-oceanoEscuro text-white py-8 px-4 shadow-inner">
+    <div class="max-w-3xl mx-auto space-y-5">
+      <div class="space-y-1">
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+          O que você procura <span class="text-amareloSol">Aki em Tamoios</span>?
+        </h1>
+        <p class="text-sm text-blue-100">
+          Encontre comércios, serviços, horários e contatos com um clique!
+        </p>
       </div>
 
-      <form id="formEdicao" onsubmit="salvarEdicao(event)" class="space-y-3 text-sm">
-        <input type="hidden" id="editLinhaIndex">
+      <div class="relative">
+        <input type="text" id="campoBusca" oninput="filtrarEmpresas()" placeholder="Buscar por nome, serviço, pizzaria, farmácia..." 
+          class="w-full pl-11 pr-4 py-3.5 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-amareloSol shadow-md text-sm sm:text-base">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+      </div>
 
-        <div>
-          <label class="block font-semibold text-gray-700 mb-1">Nome do Negócio</label>
-          <input type="text" id="editNome" required class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
-        </div>
+      <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none text-sm" id="containerCategorias">
+        <button onclick="filtrarCategoria('Todas')" class="btn-cat bg-amareloSol text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm">Todas</button>
+        <button onclick="filtrarCategoria('Alimentação')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Alimentação</button>
+        <button onclick="filtrarCategoria('Serviços')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Serviços</button>
+        <button onclick="filtrarCategoria('Saúde e Beleza')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Saúde e Beleza</button>
+        <button onclick="filtrarCategoria('Comércio')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Comércio</button>
+        <button onclick="filtrarCategoria('Construção')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Construção</button>
+      </div>
+    </div>
+  </section>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-semibold text-gray-700 mb-1">Categoria</label>
-            <input type="text" id="editCategoria" required class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
+  <!-- ==================== BANNERS EM DESTAQUE ==================== -->
+  <section id="secaoBanners" class="max-w-6xl mx-auto px-4 mt-6 hidden">
+    <div id="containerBanners" class="w-full overflow-hidden rounded-2xl shadow-lg border border-yellow-200 bg-white">
+      <!-- Banners carregados via JS -->
+    </div>
+  </section>
+
+  <!-- ==================== ÁREA DE PROMOÇÕES ==================== -->
+  <section id="secaoPromocoes" class="max-w-6xl mx-auto px-4 mt-8 hidden">
+    <div class="flex items-center gap-2 mb-4">
+      <i class="fa-solid fa-fire text-red-500 text-2xl"></i>
+      <h2 class="text-xl font-bold text-gray-800">Promoções do Bairro</h2>
+    </div>
+    <div id="containerPromocoes" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <!-- Cards de Ofertas carregados via JS -->
+    </div>
+  </section>
+
+  <!-- ==================== LISTA DE EMPRESAS (CARTÕES) ==================== -->
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+        <i class="fa-solid fa-store text-oceano"></i> Guia Comercial
+      </h2>
+      <span id="contadorEmpresas" class="text-sm bg-blue-100 text-oceano font-semibold px-3 py-1 rounded-full">0 encontrados</span>
+    </div>
+
+    <!-- State de Carregando -->
+    <div id="loading" class="text-center py-12">
+      <i class="fa-solid fa-spinner fa-spin text-oceano text-4xl mb-3"></i>
+      <p class="text-gray-500 font-medium">Carregando empresas de Tamoios...</p>
+    </div>
+
+    <!-- Grid de Empresas -->
+    <div id="gridEmpresas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Cards gerados via JS -->
+    </div>
+
+    <div id="semResultados" class="hidden text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
+      <i class="fa-solid fa-store-slash text-gray-300 text-5xl mb-3"></i>
+      <p class="text-gray-600 font-semibold text-lg">Nenhum negócio encontrado.</p>
+      <p class="text-gray-400 text-sm mt-1">Tente mudar o termo da busca ou selecione outra categoria.</p>
+    </div>
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="bg-gray-900 text-gray-400 py-8 px-4 border-t border-gray-800 text-sm">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+      <div>
+        <p class="font-bold text-white text-base">Akitamoios</p>
+        <p class="text-xs text-gray-500">Valorizando o comércio local do 2º Distrito de Cabo Frio.</p>
+      </div>
+      <p>© 2026 Akitamoios. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- ==================== MODAL DE CADASTRO ==================== -->
+  <div id="modalCadastro" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="bg-oceano text-white p-4 flex justify-between items-center">
+        <h3 id="modalTitulo" class="font-bold text-lg">Cadastrar Negócio</h3>
+        <button onclick="fecharModalCadastro()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+      </div>
+
+      <form id="formCadastro" onsubmit="enviarFormulario(event)" class="p-6 overflow-y-auto space-y-4">
+        <input type="hidden" id="planoEscolhido" value="Gratuito">
+
+        <!-- Seleção de Plano dentro do Modal -->
+        <div id="seletorPlanoContainer" class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+          <label class="block text-xs font-bold text-amber-900 uppercase tracking-wide mb-2">Escolha o Tipo de Anúncio:</label>
+          <div class="space-y-2 text-sm">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="radioPlano" value="Gratuito" checked onclick="mudarPlano('Gratuito')" class="text-oceano focus:ring-oceano">
+              <span><strong>Grátis</strong> (Listagem padrão no guia)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="radioPlano" value="Destaque_Categoria" onclick="mudarPlano('Destaque_Categoria')" class="text-oceano focus:ring-oceano">
+              <span><strong>Destaque Categoria</strong> - R$ 29,90/mês</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="radioPlano" value="Destaque_Home" onclick="mudarPlano('Destaque_Home')" class="text-oceano focus:ring-oceano">
+              <span><strong>Destaque Home + Promoção</strong> - R$ 49,90/mês</span>
+            </label>
           </div>
-          <div>
-            <label class="block font-semibold text-gray-700 mb-1">WhatsApp (com DDD)</label>
-            <input type="text" id="editWhatsApp" required class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
-          </div>
         </div>
 
         <div>
-          <label class="block font-semibold text-gray-700 mb-1">Endereço</label>
-          <input type="text" id="editEndereco" class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nome da Empresa / Negócio *</label>
+          <input type="text" id="nomeNegocio" required placeholder="Ex: Padaria do Bairro" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
         </div>
 
-        <div>
-          <label class="block font-semibold text-gray-700 mb-1">Descrição</label>
-          <textarea id="editDescricao" rows="3" class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none resize-none"></textarea>
-        </div>
 
-        <div class="grid grid-cols-2 gap-3">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block font-semibold text-gray-700 mb-1">Plano</label>
-            <select id="editPlano" class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none bg-white">
-              <option value="Gratuito">Gratuito</option>
-              <option value="Destaque Mensal">Destaque Mensal</option>
-              <option value="Destaque Anual">Destaque Anual</option>
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoria *</label>
+            <select id="categoria" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none bg-white">
+              <option value="Alimentação">Alimentação</option>
+              <option value="Serviços">Serviços</option>
+              <option value="Saúde e Beleza">Saúde e Beleza</option>
+              <option value="Comércio">Comércio</option>
+              <option value="Construção">Construção</option>
+              <option value="Outros">Outros</option>
             </select>
           </div>
           <div>
-            <label class="block font-semibold text-gray-700 mb-1">Status</label>
-            <select id="editStatus" class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none bg-white">
-              <option value="Pendente">Pendente</option>
-              <option value="Aprovado">Aprovado</option>
-            </select>
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp (com DDD) *</label>
+            <input type="tel" id="whatsapp" required placeholder="22999999999" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
           </div>
         </div>
 
-        <div class="pt-3 flex gap-2 justify-end">
-          <button type="button" onclick="fecharModalEdicao()" class="px-4 py-2 border rounded-xl font-semibold text-gray-600 hover:bg-gray-100">
-            Cancelar
-          </button>
-          <button type="submit" id="btnSalvarModal" class="px-5 py-2 bg-oceano text-white font-bold rounded-xl hover:bg-blue-800 transition flex items-center gap-2">
-            <i class="fa-solid fa-floppy-disk"></i> Salvar Alterações
+<div class="mb-4">
+  <label for="nomeResponsavel" class="block text-xs font-semibold text-gray-700 mb-1">Nome do Responsável:</label>
+  <input type="text" id="nomeResponsavel" required placeholder="Ex: João da Silva" 
+         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+</div>
+
+<div class="mb-4">
+  <label for="chaveSeguranca" class="block text-xs font-semibold text-gray-700 mb-1">Palavra-Chave de Segurança:</label>
+  <input type="password" id="chaveSeguranca" required placeholder="Crie uma senha para edições futuras" 
+         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+  <p class="text-[10px] text-gray-400 mt-0.5">Guarde esta senha. Ela será exigida para alterar ou excluir este anúncio.</p>
+</div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Endereço / Bairro *</label>
+          <input type="text" id="endereco" required placeholder="Ex: Av. Independência, Barra de Tamoios" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição Breve do Negócio</label>
+          <textarea id="descricao" rows="2" placeholder="Ex: Entregas ao domicílio, aceitamos cartões e PIX..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Logo ou Foto da Fachada</label>
+          <input type="file" id="fotoInput" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-oceano hover:file:bg-blue-100">
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" id="btnSalvar" class="w-full bg-oceano hover:bg-oceanoEscuro text-white font-bold py-3 rounded-xl transition shadow flex items-center justify-center gap-2">
+            <span>Salvar e Finalizar</span>
           </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Dashboard Principal -->
-  <div class="max-w-6xl mx-auto p-4 space-y-6">
-    <header class="bg-white rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Gerenciador Guia Tamoios</h1>
-        <p class="text-sm text-gray-500">Aprove, edite ou remova cadastros em tempo real</p>
+  <!-- ==================== MODAL DE NOTIFICAÇÃO ==================== -->
+  <div id="modalNotificacao" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm transition-opacity">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-6 text-center transform transition-all space-y-4">
+      <div id="notificacaoIconeContainer" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl">
+        <i id="notificacaoIcone" class="fa-solid fa-check"></i>
       </div>
-      <button onclick="carregarDados()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-xl text-sm flex items-center gap-2">
-        <i class="fa-solid fa-rotate"></i> Atualizar Lista
-      </button>
-    </header>
-
-    <!-- Abas -->
-    <div class="flex gap-2 border-b border-gray-200 pb-2">
-      <button id="btnAbaPendentes" onclick="trocarAba('pendentes')" class="px-4 py-2 font-bold rounded-xl bg-oceano text-white text-sm flex items-center gap-2">
-        <i class="fa-solid fa-clock"></i> Pendentes <span id="badgePendentes" class="bg-amareloSol text-gray-900 px-2 py-0.5 rounded-full text-xs">0</span>
-      </button>
-      <button id="btnAbaAprovados" onclick="trocarAba('aprovados')" class="px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2">
-        <i class="fa-solid fa-circle-check"></i> Aprovados
+      <div class="space-y-1">
+        <h3 id="notificacaoTitulo" class="font-bold text-gray-900 text-lg">Sucesso!</h3>
+        <p id="notificacaoMensagem" class="text-sm text-gray-600 leading-relaxed">Sua operação foi concluída.</p>
+      </div>
+      <button onclick="fecharNotificacao()" id="btnFecharNotificacao" class="w-full bg-oceano hover:bg-oceanoEscuro text-white font-bold py-2.5 rounded-xl transition shadow">
+        Entendi
       </button>
     </div>
-
-    <!-- Lista em Cards -->
-    <div id="gridAdmin" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
   </div>
 
+<div id="modalValidarDono" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl relative animate-fade-in">
+    <button onclick="fecharModalValidacao()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+    <h3 class="text-base font-bold text-gray-800 mb-2">Verificação de Proprietário</h3>
+    <p class="text-xs text-gray-500 mb-4">Informe a palavra-chave cadastrada para este anúncio para poder editá-lo ou excluí-lo.</p>
+    
+    <input type="hidden" id="validarIdEmpresa">
+    
+    <div class="mb-4">
+      <label class="block text-xs font-semibold text-gray-700 mb-1">Palavra-Chave de Segurança:</label>
+      <input type="password" id="inputChaveValidacao" placeholder="Digite sua senha" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+    </div>
+    
+    <button onclick="confirmarChaveDono()" id="btnValidarChave" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-sm transition flex items-center justify-center gap-2">
+      Validar Acesso
+    </button>
+  </div>
+</div>
+
+<!-- Modal 2: Edição e Exclusão pelo Cliente (Com Upload de Foto) -->
+<div id="modalEditarAnuncioCliente" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">
+    <button onclick="fecharModalEdicaoCliente()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Gerenciar Anúncio</h3>
+
+    <form id="formEdicaoCliente" onsubmit="salvarEdicaoCliente(event)" class="space-y-4">
+      <input type="hidden" id="editClienteLinha">
+      <input type="hidden" id="editClienteId">
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Nome do Negócio:</label>
+        <input type="text" id="editClienteNome" required class="w-full px-3 py-2 border rounded-lg text-sm">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Categoria:</label>
+        <input type="text" id="editClienteCategoria" required class="w-full px-3 py-2 border rounded-lg text-sm">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">WhatsApp:</label>
+        <input type="text" id="editClienteWhatsapp" required class="w-full px-3 py-2 border rounded-lg text-sm">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Endereço:</label>
+        <input type="text" id="editClienteEndereco" class="w-full px-3 py-2 border rounded-lg text-sm">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Descrição:</label>
+        <textarea id="editClienteDescricao" rows="3" class="w-full px-3 py-2 border rounded-lg text-sm"></textarea>
+      </div>
+
+      <!-- NOVO CAMPO: Alterar Foto / Logo -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Foto / Logo do Negócio:</label>
+        <div class="flex items-center gap-3 mb-2">
+          <img id="editClientePreviewFoto" src="" alt="Foto Atual" referrerpolicy="no-referrer" style="max-width: 100%; height: auto; border-radius: 8px;" />
+          <span class="text-xs text-gray-500">Sua foto atual</span>
+        </div>
+        <input type="file" id="editClienteNovaFoto" accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+        <p class="text-[10px] text-gray-400 mt-1">Deixe em branco caso não queira alterar a imagem atual.</p>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button type="submit" id="btnSalvarEditCliente" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg text-sm transition flex items-center justify-center gap-2">
+          Salvar Alterações
+        </button>
+        <button type="button" onclick="excluirAnuncioCliente()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+          Excluir Anúncio
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+  <!-- ==================== MODAL DE MAPA ==================== -->
+  <div id="modalMapa" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <div class="bg-oceano text-white p-4 flex justify-between items-center">
+        <h3 id="mapaTitulo" class="font-bold text-base flex items-center gap-2">
+          <i class="fa-solid fa-location-dot text-amareloSol"></i> Localização no Mapa
+        </h3>
+        <button onclick="fecharModalMapa()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+      </div>
+      <div class="p-4 space-y-3">
+        <p id="mapaEndereco" class="text-xs text-gray-600 font-medium"></p>
+        <div id="mapaContainer" class="w-full h-72 bg-gray-100 rounded-xl overflow-hidden border"></div>
+        <div class="pt-2 flex justify-end gap-2">
+          <a id="btnGmapsExterno" href="#" target="_blank" class="bg-oceano hover:bg-oceanoEscuro text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-route"></i> Abrir Rota no Google Maps
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOGICA JAVASCRIPT ==================== -->
   <script>
-    let dadosEmpresas = [];
-    let senhaSalva = "";
-    let abaAtual = 'pendentes';
+    let dadosGlobais = { empresas: [], promocoes: [], banners: [] };
+    let categoriaAtual = 'Todas';
+    let leafletMap = null;
+    let leafletMarker = null;
 
-    async function autenticarAdmin() {
-      const senha = document.getElementById('senhaAdmin').value;
-      senhaSalva = senha;
-      await carregarDados();
-    }
+    // Carregar Dados e verificar retorno do Mercado Pago ao inicializar
+    document.addEventListener("DOMContentLoaded", () => {
+      carregarDados();
 
-    async function carregarDados() {
-      try {
-        const resp = await fetch(`${URL_SCRIPT}?acao=obterAdmin&senha=${encodeURIComponent(senhaSalva)}`);
-        const res = await resp.json();
+      // Captura o status do pagamento retornado na URL pelo Mercado Pago
+      const urlParams = new URLSearchParams(window.location.search);
+      const statusPagamento = urlParams.get('status');
 
-        if (res.sucesso) {
-          document.getElementById('telaLogin').classList.add('hidden');
-          dadosEmpresas = res.empresas;
-          renderizarPainel();
-        } else {
-          alert(res.mensagem || 'Erro ao autenticar');
-        }
-      } catch (err) {
-        alert("Erro na conexão com a API: " + err.message);
+      if (statusPagamento === 'sucesso' || statusPagamento === 'approved') {
+        notificar(
+          "Pagamento confirmado com sucesso! Seu anúncio em destaque já foi ativado.", 
+          "sucesso", 
+          "Pagamento Aprovado!"
+        );
+      } else if (statusPagamento === 'pendente' || statusPagamento === 'in_process') {
+        notificar(
+          "Seu pagamento (Pix/Boleto) está pendente. Assim que for compensado, o destaque será ativado.", 
+          "info", 
+          "Pagamento em Processamento"
+        );
+      } else if (statusPagamento === 'failure' || statusPagamento === 'rejected') {
+        notificar(
+          "O pagamento não foi concluído. Seu anúncio foi registrado no plano gratuito.", 
+          "erro", 
+          "Pagamento Não Realizado"
+        );
       }
+    });
+
+  async function carregarDados() {
+  try {
+    const res = await fetch(API_URL);
+    const resposta = await res.json();
+    
+    // Garante que dadosGlobais receba as listas corretamente ou listas vazias se falhar
+    dadosGlobais = {
+      empresas: resposta.empresas || [],
+      banners: resposta.banners || []
+    };
+    
+    // Reseta o índice do carrossel para o primeiro slide ao recarregar os dados
+    if (typeof bannerAtualIndex !== 'undefined') {
+      bannerAtualIndex = 0;
+    }
+    
+    document.getElementById('loading').classList.add('hidden');
+    renderizarEmpresas();
+    renderizarPromocoes();
+    renderizarBanners(); // Agora executa com a nova lógica de carrossel rotativo
+
+  } catch (err) {
+    console.error("Erro ao carregar dados:", err);
+    document.getElementById('loading').innerHTML = `
+      <p class="text-red-500 font-semibold">Não foi possível carregar os dados no momento.</p>
+      <p class="text-xs text-gray-400 mt-1">Verifique a conexão ou a configuração da API_URL.</p>
+    `;
+  }
+}
+
+    // Notificação Customizada
+    function notificar(mensagem, tipo = 'sucesso', titulo = null) {
+      const modal = document.getElementById('modalNotificacao');
+      const elTitulo = document.getElementById('notificacaoTitulo');
+      const elMensagem = document.getElementById('notificacaoMensagem');
+      const elIcone = document.getElementById('notificacaoIcone');
+      const elIconeContainer = document.getElementById('notificacaoIconeContainer');
+
+      if (tipo === 'sucesso') {
+        elTitulo.innerText = titulo || 'Tudo Certo!';
+        elIcone.className = 'fa-solid fa-circle-check';
+        elIconeContainer.className = 'w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl bg-emerald-100 text-emerald-600';
+      } else if (tipo === 'erro') {
+        elTitulo.innerText = titulo || 'Ops! Algo deu errado';
+        elIcone.className = 'fa-solid fa-triangle-exclamation';
+        elIconeContainer.className = 'w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl bg-red-100 text-red-600';
+      } else if (tipo === 'info') {
+        elTitulo.innerText = titulo || 'Aviso';
+        elIcone.className = 'fa-solid fa-circle-info';
+        elIconeContainer.className = 'w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl bg-blue-100 text-oceano';
+      }
+
+      elMensagem.innerText = mensagem;
+      modal.classList.remove('hidden');
     }
 
-    function trocarAba(aba) {
-      abaAtual = aba;
-      document.getElementById('btnAbaPendentes').className = aba === 'pendentes' 
-        ? 'px-4 py-2 font-bold rounded-xl bg-oceano text-white text-sm flex items-center gap-2'
-        : 'px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2';
+    function fecharNotificacao() {
+      document.getElementById('modalNotificacao').classList.add('hidden');
+    }
+
+   // Renderizar Cards de Empresas (Com Ordenação por Plano e Estilização de Destaque)
+function renderizarEmpresas() {
+  const grid = document.getElementById('gridEmpresas');
+  const termoBusca = document.getElementById('campoBusca').value.toLowerCase();
+  grid.innerHTML = '';
+
+  // 1. Filtragem inicial (Categoria e Busca)
+  let filtradas = (dadosGlobais.empresas || []).filter(emp => {
+    const bateCategoria = categoriaAtual === 'Todas' || emp.Categoria === categoriaAtual;
+    const bateBusca = (emp.Nome_Negocio && emp.Nome_Negocio.toLowerCase().includes(termoBusca)) || 
+                      (emp.Descricao && emp.Descricao.toLowerCase().includes(termoBusca)) ||
+                      (emp.Endereco && emp.Endereco.toLowerCase().includes(termoBusca));
+    return bateCategoria && bateBusca;
+  });
+
+  // 2. ORDENAÇÃO PRIORITÁRIA (Destaques no Topo)
+  filtradas.sort((a, b) => {
+    const getPeso = (emp) => {
+      const plano = String(emp.Plano || '').toLowerCase();
+      if (plano.includes('home') || plano.includes('promocao') || plano.includes('49')) return 1; // Topo (R$ 49,90)
+      if (plano.includes('categoria') || plano.includes('29')) return 2;                          // Segundo Topo (R$ 29,90)
+      return 3;                                                                                   // Gratuito
+    };
+
+    return getPeso(a) - getPeso(b);
+  });
+
+  document.getElementById('contadorEmpresas').innerText = `${filtradas.length} encontrados`;
+
+  if (filtradas.length === 0) {
+    document.getElementById('semResultados').classList.remove('hidden');
+    return;
+  } else {
+    document.getElementById('semResultados').classList.add('hidden');
+  }
+
+  // 3. Renderização dos Cards
+  filtradas.forEach(emp => {
+    // Identifica se é plano Pago/Destaque
+    const planoStr = String(emp.Plano || '').toLowerCase();
+    const ehDestaque = emp.Plano && planoStr !== 'gratuito' && planoStr !== '';
+
+    const imgLogo = emp.URL_Logo_LH3 || 'https://via.placeholder.com/150?text=Akitamoios';
+    const msgWhats = encodeURIComponent(`Olá! Vi seu anúncio no Akitamoios e gostaria de mais informações.`);
+    const linkGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((emp.Endereco || '') + ', Tamoios, Cabo Frio')}`;
+
+    // ID do anúncio (trata maiúsculas/minúsculas vindas da planilha)
+    const idAnuncio = emp.ID_Cadastro || emp.id || emp.ID || '';
+
+    // Estilos dinâmicos do Card Destaque vs Card Normal
+    const classeBordaEAnel = ehDestaque 
+      ? 'border-2 border-amareloSol ring-4 ring-amareloSol/20 shadow-md scale-[1.01]' 
+      : 'border border-gray-100 shadow-sm';
+
+    const card = `
+      <div class="bg-white rounded-2xl ${classeBordaEAnel} hover:shadow-lg p-5 flex flex-col justify-between transition-all duration-300 relative overflow-hidden">
+        
+        ${ehDestaque ? `
+          <div class="absolute top-0 right-0">
+            <span class="bg-amareloSol text-gray-900 text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm flex items-center gap-1">
+              <i class="fa-solid fa-star text-[9px]"></i> Destaque
+            </span>
+          </div>
+        ` : ''}
+        
+        <div class="${ehDestaque ? 'pt-1' : ''}">
+          <div class="flex items-center gap-4 mb-4">
+            <img src="${imgLogo}" alt="${emp.Nome_Negocio}" class="w-16 h-16 rounded-xl object-cover border border-gray-100 shadow-sm">
+            <div>
+              <h3 class="font-bold text-gray-900 text-lg leading-snug">${emp.Nome_Negocio}</h3>
+              <span class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-md mt-1 font-medium">${emp.Categoria}</span>
+            </div>
+          </div>
+          <p class="text-gray-600 text-sm mb-4 line-clamp-2">${emp.Descricao || 'Atendimento de qualidade em Tamoios.'}</p>
+        </div>
+
+        <div class="space-y-3 pt-2 border-t border-gray-100">
+          <div class="flex items-center justify-between gap-2 text-xs text-gray-500">
+            <p class="truncate flex items-center gap-1.5">
+              <i class="fa-solid fa-location-dot text-red-500"></i> ${emp.Endereco || 'Tamoios - Cabo Frio'}
+            </p>
+            <div class="flex gap-1">
+              <button onclick="abrirMapaModal('${(emp.Nome_Negocio || '').replace(/'/g, "\\'")}', '${(emp.Endereco || '').replace(/'/g, "\\'")}')" class="text-oceano bg-blue-50 hover:bg-blue-100 font-bold px-2 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
+                <i class="fa-solid fa-map"></i> Ver
+              </button>
+              <a href="${linkGmaps}" target="_blank" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold px-2 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
+                <i class="fa-solid fa-diamond-turn-right"></i> Rota
+              </a>
+            </div>
+          </div>
+
+          <a href="https://wa.me/55${emp.WhatsApp}?text=${msgWhats}" target="_blank" 
+            class="w-full bg-verdeWhats hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition text-sm">
+            <i class="fa-brands fa-whatsapp text-lg"></i> Conversar no WhatsApp
+          </a>
+
+          <div class="pt-1 text-center">
+            <button onclick="abrirValidacaoDono('${idAnuncio}')" 
+                    class="text-[11px] text-gray-400 hover:text-blue-600 transition inline-flex items-center justify-center gap-1 mt-2">
+              <i class="fa-solid fa-pen-to-square"></i> É dono deste negócio? Editar informações
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    grid.innerHTML += card;
+  });
+}
+
+
+    // Lógica para o Mapa no Modal
+    function abrirMapaModal(nome, endereco) {
+      document.getElementById('modalMapa').classList.remove('hidden');
+      document.getElementById('mapaTitulo').innerHTML = `<i class="fa-solid fa-location-dot text-amareloSol"></i> ${nome}`;
+      document.getElementById('mapaEndereco').innerText = endereco ? `${endereco}, Tamoios - Cabo Frio` : 'Tamoios, Cabo Frio - RJ';
       
-      document.getElementById('btnAbaAprovados').className = aba === 'aprovados' 
-        ? 'px-4 py-2 font-bold rounded-xl bg-oceano text-white text-sm flex items-center gap-2'
-        : 'px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2';
+      const urlGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((endereco || '') + ', Tamoios, Cabo Frio')}`;
+      document.getElementById('btnGmapsExterno').href = urlGmaps;
 
-      renderizarPainel();
+      const latPadrao = -22.6288;
+      const lngPadrao = -42.0225;
+
+      setTimeout(() => {
+        if (!leafletMap) {
+          leafletMap = L.map('mapaContainer').setView([latPadrao, lngPadrao], 14);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+          }).addTo(leafletMap);
+        } else {
+          leafletMap.invalidateSize();
+          leafletMap.setView([latPadrao, lngPadrao], 14);
+        }
+
+        if (leafletMarker) {
+          leafletMap.removeLayer(leafletMarker);
+        }
+
+        leafletMarker = L.marker([latPadrao, lngPadrao]).addTo(leafletMap)
+          .bindPopup(`<b>${nome}</b><br>${endereco || 'Tamoios'}`)
+          .openPopup();
+      }, 300);
     }
 
-    function renderizarPainel() {
-      const grid = document.getElementById('gridAdmin');
-      grid.innerHTML = '';
+    function fecharModalMapa() {
+      document.getElementById('modalMapa').classList.add('hidden');
+    }
 
-      const pendentes = dadosEmpresas.filter(e => e.Status_Pagamento !== 'Aprovado');
-      const aprovados = dadosEmpresas.filter(e => e.Status_Pagamento === 'Aprovado');
-
-      document.getElementById('badgePendentes').innerText = pendentes.length;
-
-      const listaExibir = abaAtual === 'pendentes' ? pendentes : aprovados;
-
-      if (listaExibir.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">Nenhum registro encontrado nesta aba.</div>`;
+    // Renderizar Promoções
+    function renderizarPromocoes() {
+      const container = document.getElementById('containerPromocoes');
+      const secao = document.getElementById('secaoPromocoes');
+      
+      if (!dadosGlobais.promocoes || dadosGlobais.promocoes.length === 0) {
+        secao.classList.add('hidden');
         return;
       }
 
-      listaExibir.forEach(emp => {
-        const imgLogo = emp.URL_Logo_LH3 || 'https://via.placeholder.com/150?text=Sem+Foto';
-        
+      secao.classList.remove('hidden');
+      container.innerHTML = '';
+
+      dadosGlobais.promocoes.forEach(p => {
         const card = `
-          <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-between space-y-4">
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-4 items-center">
+            <img src="${p.Foto_Oferta_LH3}" class="w-20 h-20 rounded-xl object-cover">
             <div>
-              <div class="flex items-center gap-3 mb-3">
-                <img src="${imgLogo}" class="w-14 h-14 rounded-xl object-cover border">
-                <div>
-                  <h3 class="font-bold text-gray-900">${emp.Nome_Negocio}</h3>
-                  <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-medium">${emp.Categoria}</span>
-                  <span class="text-xs font-bold ${emp.Plano !== 'Gratuito' ? 'text-amber-600' : 'text-gray-400'} block">${emp.Plano}</span>
-                </div>
-              </div>
-              <p class="text-sm text-gray-600 line-clamp-2">${emp.Descricao || 'Sem descrição'}</p>
-              <div class="text-xs text-gray-500 mt-2 space-y-1">
-                <p><i class="fa-brands fa-whatsapp text-green-500"></i> ${emp.WhatsApp}</p>
-                <p><i class="fa-solid fa-location-dot"></i> ${emp.Endereco || 'Não informado'}</p>
-              </div>
-            </div>
-
-            <div class="pt-3 border-t flex gap-2">
-              ${abaAtual === 'pendentes' ? `
-                <button onclick="aprovar(${emp.linhaIndex})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1">
-                  <i class="fa-solid fa-check"></i> Aprovar
-                </button>
-              ` : ''}
-              
-              <!-- Botão Editar -->
-              <button onclick='abrirEdicao(${JSON.stringify(emp).replace(/'/g, "&apos;")})' class="bg-blue-50 hover:bg-blue-100 text-oceano font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1">
-                <i class="fa-solid fa-pen-to-square"></i> Editar
-              </button>
-
-              <!-- Botão Excluir -->
-              <button onclick="excluir(${emp.linhaIndex})" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-2 rounded-xl text-xs">
-                <i class="fa-solid fa-trash"></i>
-              </button>
+              <span class="text-[10px] font-bold uppercase bg-red-500 text-white px-2 py-0.5 rounded-md">Oferta</span>
+              <h4 class="font-bold text-gray-900 text-sm mt-1">${p.Titulo_Oferta}</h4>
+              <p class="text-xs text-gray-600 mt-0.5">${p.Regras}</p>
             </div>
           </div>
         `;
-        grid.innerHTML += card;
+        container.innerHTML += card;
       });
     }
+let bannerAtualIndex = 0;
+let intervaloBanner = null;
 
-    // Modal de Edição
-    function abrirEdicao(emp) {
-      document.getElementById('editLinhaIndex').value = emp.linhaIndex;
-      document.getElementById('editNome').value = emp.Nome_Negocio || '';
-      document.getElementById('editCategoria').value = emp.Categoria || '';
-      document.getElementById('editWhatsApp').value = emp.WhatsApp || '';
-      document.getElementById('editEndereco').value = emp.Endereco || '';
-      document.getElementById('editDescricao').value = emp.Descricao || '';
-      document.getElementById('editPlano').value = emp.Plano || 'Gratuito';
-      document.getElementById('editStatus').value = emp.Status_Pagamento || 'Pendente';
+// Renderizar Banners Rotativos
+function renderizarBanners() {
+  const container = document.getElementById('containerBanners');
+  const secao = document.getElementById('secaoBanners');
 
-      document.getElementById('modalEdicao').classList.remove('hidden');
-    }
+  // Limpa temporizadores anteriores se houver re-renderização
+  if (intervaloBanner) clearInterval(intervaloBanner);
 
-    function fecharModalEdicao() {
-      document.getElementById('modalEdicao').classList.add('hidden');
-    }
+  if (!dadosGlobais.banners || dadosGlobais.banners.length === 0) {
+    if (secao) secao.classList.add('hidden');
+    return;
+  }
 
-    async function salvarEdicao(e) {
-      e.preventDefault();
-      const btn = document.getElementById('btnSalvarModal');
-      btn.disabled = true;
-      btn.innerText = "Salvando...";
+  if (secao) secao.classList.remove('hidden');
 
-      const linha = document.getElementById('editLinhaIndex').value;
-      const nome = document.getElementById('editNome').value;
-      const categoria = document.getElementById('editCategoria').value;
-      const whatsapp = document.getElementById('editWhatsApp').value;
-      document.getElementById('editEndereco').value;
-      const endereco = document.getElementById('editEndereco').value;
-      const descricao = document.getElementById('editDescricao').value;
-      const plano = document.getElementById('editPlano').value;
-      const status = document.getElementById('editStatus').value;
+  const listaBanners = dadosGlobais.banners;
+  let slidesHTML = '';
+  let pontinhosHTML = '';
 
-      const url = `${URL_SCRIPT}?acao=salvarEdicao&linha=${linha}&nome=${encodeURIComponent(nome)}&categoria=${encodeURIComponent(categoria)}&whatsapp=${encodeURIComponent(whatsapp)}&endereco=${encodeURIComponent(endereco)}&descricao=${encodeURIComponent(descricao)}&plano=${encodeURIComponent(plano)}&status=${encodeURIComponent(status)}`;
+  listaBanners.forEach((b, index) => {
+    const link = b.Link_Destino || '#';
+    const imagem = b.Imagem_Banner_LH3 || b.URL_Logo_LH3 || 'https://via.placeholder.com/800x200';
+    
+    slidesHTML += `
+      <div class="banner-slide ${index === 0 ? 'block' : 'hidden'} transition-all duration-500 ease-in-out w-full" data-index="${index}">
+        <a href="${link}" target="_blank" class="block w-full overflow-hidden rounded-2xl shadow-md border border-gray-100 hover:opacity-95 transition">
+          <img src="${imagem}" alt="${b.Nome_Anunciante || 'Banner'}" class="w-full h-32 sm:h-48 object-cover rounded-2xl">
+        </a>
+      </div>
+    `;
 
-      try {
-        const resp = await fetch(url);
-        const res = await resp.json();
+    pontinhosHTML += `
+      <button onclick="irParaSlide(${index})" class="w-2.5 h-2.5 rounded-full transition-all ${index === 0 ? 'bg-white scale-125' : 'bg-white/50'}"></button>
+    `;
+  });
 
-        if (res.sucesso) {
-          fecharModalEdicao();
-          await carregarDados();
+  container.innerHTML = `
+    <div class="relative w-full overflow-hidden rounded-2xl group">
+      <!-- Slides -->
+      <div id="slidesWrapper">
+        ${slidesHTML}
+      </div>
+
+      <!-- Controles (exibidos apenas se houver 2 ou mais banners) -->
+      ${listaBanners.length > 1 ? `
+        <!-- Botão Anterior -->
+        <button onclick="mudarSlide(-1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition z-10">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+
+        <!-- Botão Próximo -->
+        <button onclick="mudarSlide(1)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition z-10">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+
+        <!-- Indicadores (Pontinhos) -->
+        <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10" id="indicadoresBanners">
+          ${pontinhosHTML}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  // Se houver mais de 1 banner, ativa a rotação a cada 4 segundos
+  if (listaBanners.length > 1) {
+    iniciarRotacaoAutomatica(listaBanners.length);
+  }
+}
+
+// Alterna para um slide específico
+function irParaSlide(index) {
+  const slides = document.querySelectorAll('.banner-slide');
+  const pontos = document.querySelectorAll('#indicadoresBanners button');
+
+  if (slides.length === 0) return;
+
+  slides.forEach(s => s.classList.add('hidden'));
+  pontos.forEach(p => {
+    p.classList.remove('bg-white', 'scale-125');
+    p.classList.add('bg-white/50');
+  });
+
+  bannerAtualIndex = index;
+  slides[bannerAtualIndex].classList.remove('hidden');
+  
+  if (pontos[bannerAtualIndex]) {
+    pontos[bannerAtualIndex].classList.add('bg-white', 'scale-125');
+    pontos[bannerAtualIndex].classList.remove('bg-white/50');
+  }
+}
+
+// Avança ou volta os slides manualmente pelas setas
+function mudarSlide(direcao) {
+  const total = document.querySelectorAll('.banner-slide').length;
+  let novoIndex = bannerAtualIndex + direcao;
+
+  if (novoIndex >= total) novoIndex = 0;
+  if (novoIndex < 0) novoIndex = total - 1;
+
+  irParaSlide(novoIndex);
+  reiniciarTemporizador(total);
+}
+
+// Inicia o timer da rotação
+function iniciarRotacaoAutomatica(total) {
+  if (intervaloBanner) clearInterval(intervaloBanner);
+  intervaloBanner = setInterval(() => {
+    let novoIndex = (bannerAtualIndex + 1) % total;
+    irParaSlide(novoIndex);
+  }, 4000); // Mudar tempo aqui (4000ms = 4 segundos)
+}
+
+function reiniciarTemporizador(total) {
+  if (intervaloBanner) clearInterval(intervaloBanner);
+  iniciarRotacaoAutomatica(total);
+}    // Filtros e Buscas
+    function filtrarCategoria(cat) {
+      categoriaAtual = cat;
+      document.querySelectorAll('.btn-cat').forEach(btn => {
+        if(btn.innerText === cat) {
+          btn.className = "btn-cat bg-amareloSol text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm";
         } else {
-          alert('Erro ao salvar alterações.');
+          btn.className = "btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap";
         }
-      } catch (err) {
-        alert('Erro ao conectar com o servidor: ' + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alterações';
+      });
+      renderizarEmpresas();
+    }
+
+    function filtrarEmpresas() {
+      renderizarEmpresas();
+    }
+
+    // Modais e Form
+    function abrirModalCadastro(planoInicial = 'Gratuito') {
+      document.getElementById('formCadastro').reset();
+      document.getElementById('modalCadastro').classList.remove('hidden');
+      mudarPlano(planoInicial);
+    }
+
+    function fecharModalCadastro() {
+      document.getElementById('modalCadastro').classList.add('hidden');
+    }
+
+    function mudarPlano(plano) {
+      document.getElementById('planoEscolhido').value = plano;
+      const radio = document.querySelector(`input[name="radioPlano"][value="${plano}"]`);
+      if (radio) {
+        radio.checked = true;
       }
     }
 
-    async function aprovar(linha) {
-      if (confirm('Deseja publicar este anúncio no site público?')) {
-        await fetch(`${URL_SCRIPT}?acao=aprovar&linha=${linha}`);
-        carregarDados();
-      }
+    // Envios para a API
+async function enviarFormulario(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+
+  // 1. Pega e garante o valor do plano
+  const campoPlano = document.getElementById('planoEscolhido');
+  const planoSelecionado = campoPlano ? campoPlano.value.trim() : "Gratuito";
+
+  const fotoFile = document.getElementById('fotoInput').files[0];
+  let imagemBase64 = "";
+  let nomeImagem = "";
+
+  if (fotoFile) {
+    imagemBase64 = await toBase64(fotoFile);
+    nomeImagem = fotoFile.name;
+  }
+
+  const payload = {
+    nomeNegocio: document.getElementById('nomeNegocio').value,
+    nomeResponsavel: document.getElementById('nomeResponsavel').value, // <--- NOVO
+    chaveSeguranca: document.getElementById('chaveSeguranca').value,   // <--- NOVO
+    categoria: document.getElementById('categoria').value,
+    whatsapp: document.getElementById('whatsapp').value,
+    endereco: document.getElementById('endereco').value,
+    descricao: document.getElementById('descricao').value,
+    plano: planoSelecionado,
+    imagemBase64: imagemBase64,
+    nomeImagem: nomeImagem
+  };
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const respData = await res.json();
+
+    fecharModalCadastro();
+
+    // Normaliza a verificação do plano pago
+    const planoLower = planoSelecionado.toLowerCase();
+    const ehPlanoPago = planoLower !== 'gratuito' && planoLower !== 'grátis' && planoLower !== '';
+
+    // CASO 1: Plano Pago e Mercado Pago gerou o link com sucesso
+    if (ehPlanoPago && respData.init_point) {
+      notificar(
+        "Seu anúncio está em análise e em breve será exibido aqui! Redirecionando para o pagamento no Mercado Pago...", 
+        "sucesso", 
+        "Aguarde o Redirecionamento"
+      );
+      
+      setTimeout(() => {
+        window.location.href = respData.init_point;
+      }, 2000);
+
+    // CASO 2: Plano Pago mas falhou ao gerar o link
+    } else if (ehPlanoPago && !respData.init_point) {
+      notificar(
+        "Seu cadastro foi recebido, mas houve um problema ao gerar o link do Mercado Pago. Entre em contato com o suporte.",
+        "erro",
+        "Atenção"
+      );
+      carregarDados();
+
+    // CASO 3: Cadastro Gratuito concluído
+    } else {
+      notificar(
+        "Recebemos seu anúncio com sucesso e já está em análise, em breve estará disponível no Akitamoios!", 
+        "sucesso", 
+        "Parabéns!"
+      );
+      carregarDados();
     }
 
-    async function excluir(linha) {
-      if (confirm('Deseja excluir este registro da planilha?')) {
-        await fetch(`${URL_SCRIPT}?acao=excluir&linha=${linha}`);
-        carregarDados();
+  } catch (err) {
+    console.error("Erro no envio:", err);
+    notificar(
+      "Não foi possível salvar os dados. Verifique sua conexão e tente novamente.", 
+      "erro"
+    );
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>Salvar e Finalizar</span>`;
+  }
+}
+
+    const toBase64 = file => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+
+
+// Abre o modal de pedir senha
+function abrirValidacaoDono(id) {
+  document.getElementById('validarIdEmpresa').value = id;
+  document.getElementById('inputChaveValidacao').value = '';
+  document.getElementById('modalValidarDono').classList.remove('hidden');
+}
+
+function fecharModalValidacao() {
+  document.getElementById('modalValidarDono').classList.add('hidden');
+}
+
+function fecharModalEdicaoCliente() {
+  document.getElementById('modalEditarAnuncioCliente').classList.add('hidden');
+}
+
+// Função auxiliar para converter arquivo em Base64
+function converterParaBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result.split(',')[1]); // Remove o cabeçalho 'data:image/...;base64,'
+    reader.onerror = error => reject(error);
+  });
+}
+
+// 1. Confirma se a senha bate e carrega os dados no modal
+async function confirmarChaveDono() {
+  const id = document.getElementById('validarIdEmpresa').value;
+  const chave = document.getElementById('inputChaveValidacao').value.trim();
+  const btn = document.getElementById('btnValidarChave');
+
+  if (!chave) {
+    notificar("Por favor, digite a palavra-chave.", "erro");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Verificando...`;
+
+  try {
+    const res = await fetch(`${API_URL}?acao=validarChaveCliente&id=${encodeURIComponent(id)}&chave=${encodeURIComponent(chave)}`);
+    const resp = await res.json();
+
+    if (resp.sucesso) {
+      fecharModalValidacao();
+      
+      const emp = resp.empresa;
+      document.getElementById('editClienteLinha').value = emp.linhaIndex;
+      document.getElementById('editClienteId').value = emp.id;
+      document.getElementById('editClienteNome').value = emp.nome || '';
+      document.getElementById('editClienteCategoria').value = emp.categoria || '';
+      document.getElementById('editClienteWhatsapp').value = emp.whatsapp || '';
+      document.getElementById('editClienteEndereco').value = emp.endereco || '';
+      document.getElementById('editClienteDescricao').value = emp.descricao || '';
+      
+      // --- TRATAMENTO DA URL DA FOTO ---
+      // Pega a URL vinda do backend (aceita urlLogo, foto, logo ou imagem)
+      let urlFoto = emp.urlLogo || emp.foto || emp.logo || emp.imagem || '';
+
+      if (urlFoto) {
+        // Se for um link padrão do Google Drive, extrai o ID e converte para lh3
+        if (urlFoto.includes("drive.google.com")) {
+          const match = urlFoto.match(/\/d\/([^\/\?]+)/) || urlFoto.match(/id=([^&]+)/);
+          if (match && match[1]) {
+            urlFoto = "https://lh3.googleusercontent.com/d/" + match[1];
+          }
+        }
+      } else {
+        urlFoto = 'https://via.placeholder.com/150';
       }
+
+      // Atribui a URL tratada ao preview
+      const imgElem = document.getElementById('editClientePreviewFoto');
+      if (imgElem) {
+        // Garante que o navegador não envie o cabeçalho Referer
+        imgElem.setAttribute('referrerpolicy', 'no-referrer');
+        imgElem.src = urlFoto;
+      }
+
+      document.getElementById('editClienteNovaFoto').value = '';
+      document.getElementById('modalEditarAnuncioCliente').classList.remove('hidden');
+    } else {
+      notificar(resp.mensagem || "Palavra-chave incorreta!", "erro");
     }
+  } catch (err) {
+    console.error(err);
+    notificar("Erro ao validar senha. Tente novamente.", "erro");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `Validar Acesso`;
+  }
+}
+
+// 2. Salva as edições do Cliente (Enviando foto se houver)
+async function salvarEdicaoCliente(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btnSalvarEditCliente');
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+
+  const linha = document.getElementById('editClienteLinha').value;
+  const inputFoto = document.getElementById('editClienteNovaFoto');
+  
+  let imagemBase64 = "";
+  let nomeImagem = "";
+
+  // Se o usuário escolheu uma nova foto, converte para Base64
+  if (inputFoto.files && inputFoto.files[0]) {
+    const file = inputFoto.files[0];
+    nomeImagem = file.name;
+    try {
+      imagemBase64 = await converterParaBase64(file);
+    } catch (err) {
+      console.error("Erro ao converter imagem:", err);
+      notificar("Erro ao processar a nova imagem.", "erro");
+      btn.disabled = false;
+      btn.innerText = "Salvar Alterações";
+      return;
+    }
+  }
+
+  // Prepara o objeto com todos os dados
+  const payload = {
+    acao: 'salvarEdicao',
+    linha: linha,
+    nome: document.getElementById('editClienteNome').value,
+    categoria: document.getElementById('editClienteCategoria').value,
+    whatsapp: document.getElementById('editClienteWhatsapp').value,
+    endereco: document.getElementById('editClienteEndereco').value,
+    descricao: document.getElementById('editClienteDescricao').value,
+    plano: 'Gratuito',
+    status: 'Pendente', // Volta para Pendente para você re-aprovar
+    imagemBase64: imagemBase64,
+    nomeImagem: nomeImagem
+  };
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    
+    const resp = await res.json();
+
+    if (resp.sucesso) {
+      fecharModalEdicaoCliente();
+      notificar("Anúncio atualizado com sucesso! Ele passará por uma breve re-análise.", "sucesso");
+      carregarDados();
+    } else {
+      notificar("Erro ao salvar alterações.", "erro");
+    }
+  } catch (err) {
+    console.error(err);
+    notificar("Erro de conexão.", "erro");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Salvar Alterações";
+  }
+}
+
+// Exclui o anúncio a pedido do Cliente
+async function excluirAnuncioCliente() {
+  if (!confirm("Tem certeza que deseja excluir seu anúncio definitivamente?")) return;
+
+  const linha = document.getElementById('editClienteLinha').value;
+  
+  try {
+    const res = await fetch(`${API_URL}?acao=excluir&linha=${linha}`);
+    const resp = await res.json();
+
+    if (resp.sucesso) {
+      fecharModalEdicaoCliente();
+      notificar("Anúncio excluído com sucesso.", "sucesso");
+      carregarDados();
+    } else {
+      notificar("Erro ao excluir anúncio.", "erro");
+    }
+  } catch (err) {
+    console.error(err);
+    notificar("Erro de conexão.", "erro");
+  }
+}
   </script>
 </body>
 </html>
