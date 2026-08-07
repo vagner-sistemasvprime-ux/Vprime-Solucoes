@@ -37,12 +37,12 @@
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 antialiased min-h-screen flex flex-col">
 
-  <!-- URL DA SUA API DO GOOGLE APPS SCRIPT -->
+  <!-- CONFIGURAÇÕES DA API E MERCADO PAGO -->
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbw3okYlTJNMu7z7qvlKRWSIhfupRA62d0_gbm7ATObL068qZzKUDU_EXrT5E-hMBEeI/exec"; // Cole aqui a URL de Deploy do GAS
-    const MP_PUBLIC_KEY = "APP_USR-af8f60f1-e7a7-4a8a-a68b-6292d9a9f59b"; // Cole sua Public Key do MP
+    const API_URL = "https://script.google.com/macros/s/AKfycbw3okYlTJNMu7z7qvlKRWSIhfupRA62d0_gbm7ATObL068qZzKUDU_EXrT5E-hMBEeI/exec"; 
+    const MP_PUBLIC_KEY = "APP_USR-af8f60f1-e7a7-4a8a-a68b-6292d9a9f59b"; 
 
-    // Adicione o seu número de WhatsApp como Administrador (com DDD)
+    // Número do Administrador
     const whatsappAdmin = "22981166221";
   </script>
 
@@ -61,46 +61,41 @@
         <button onclick="abrirModalCadastro('Gratuito')" class="flex-1 sm:flex-none bg-white text-oceano hover:bg-gray-100 font-semibold px-4 py-2 rounded-lg text-sm transition shadow-sm">
           <i class="fa-solid fa-plus mr-1"></i> Cadastrar Grátis
         </button>
-        <button onclick="abrirModalCadastro('Destaque')" class="flex-1 sm:flex-none bg-amareloSol hover:bg-yellow-500 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm transition shadow-sm animate-pulse">
+        <button onclick="abrirModalCadastro('Destaque_Home')" class="flex-1 sm:flex-none bg-amareloSol hover:bg-yellow-500 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm transition shadow-sm animate-pulse">
           <i class="fa-solid fa-rocket mr-1"></i> Destaque-se
         </button>
       </div>
     </div>
   </header>
 
- <!-- ==================== BARRA DE BUSCA E FILTROS ==================== -->
-<section class="bg-oceanoEscuro text-white py-8 px-4 shadow-inner">
-  <div class="max-w-3xl mx-auto space-y-5">
-    
-    <!-- Chamada Principal / Hero Text -->
-    <div class="space-y-1">
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-        O que você procura <span class="text-amareloSol">Aki em Tamoios</span>?
-      </h1>
-      <p class="text-sm text-blue-100">
-        Encontre comércios, serviços, horários e contatos com um clique!
-      </p>
-    </div>
+  <!-- ==================== BARRA DE BUSCA E FILTROS ==================== -->
+  <section class="bg-oceanoEscuro text-white py-8 px-4 shadow-inner">
+    <div class="max-w-3xl mx-auto space-y-5">
+      <div class="space-y-1">
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+          O que você procura <span class="text-amareloSol">Aki em Tamoios</span>?
+        </h1>
+        <p class="text-sm text-blue-100">
+          Encontre comércios, serviços, horários e contatos com um clique!
+        </p>
+      </div>
 
-    <!-- Campo de Busca (Isolado em container relative) -->
-    <div class="relative">
-      <input type="text" id="campoBusca" oninput="filtrarEmpresas()" placeholder="Buscar por nome, serviço, pizzaria, farmácia..." 
-        class="w-full pl-11 pr-4 py-3.5 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-amareloSol shadow-md text-sm sm:text-base">
-      <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
-    </div>
+      <div class="relative">
+        <input type="text" id="campoBusca" oninput="filtrarEmpresas()" placeholder="Buscar por nome, serviço, pizzaria, farmácia..." 
+          class="w-full pl-11 pr-4 py-3.5 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-amareloSol shadow-md text-sm sm:text-base">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+      </div>
 
-    <!-- Categorias em Carrossel Horizontal -->
-    <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none text-sm" id="containerCategorias">
-      <button onclick="filtrarCategoria('Todas')" class="btn-cat bg-amareloSol text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm">Todas</button>
-      <button onclick="filtrarCategoria('Alimentação')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Alimentação</button>
-      <button onclick="filtrarCategoria('Serviços')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Serviços</button>
-      <button onclick="filtrarCategoria('Saúde e Beleza')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Saúde e Beleza</button>
-      <button onclick="filtrarCategoria('Comércio')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Comércio</button>
-      <button onclick="filtrarCategoria('Construção')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Construção</button>
+      <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none text-sm" id="containerCategorias">
+        <button onclick="filtrarCategoria('Todas')" class="btn-cat bg-amareloSol text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm">Todas</button>
+        <button onclick="filtrarCategoria('Alimentação')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Alimentação</button>
+        <button onclick="filtrarCategoria('Serviços')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Serviços</button>
+        <button onclick="filtrarCategoria('Saúde e Beleza')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Saúde e Beleza</button>
+        <button onclick="filtrarCategoria('Comércio')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Comércio</button>
+        <button onclick="filtrarCategoria('Construção')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Construção</button>
+      </div>
     </div>
-
-  </div>
-</section>
+  </section>
 
   <!-- ==================== BANNERS EM DESTAQUE ==================== -->
   <section id="secaoBanners" class="max-w-6xl mx-auto px-4 mt-6 hidden">
@@ -235,7 +230,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL DE NOTIFICAÇÃO (Substituto do Alert) ==================== -->
+  <!-- ==================== MODAL DE NOTIFICAÇÃO ==================== -->
   <div id="modalNotificacao" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm transition-opacity">
     <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-6 text-center transform transition-all space-y-4">
       <div id="notificacaoIconeContainer" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl">
@@ -251,7 +246,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL DE MAPA (OPÇÃO 3) ==================== -->
+  <!-- ==================== MODAL DE MAPA ==================== -->
   <div id="modalMapa" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
     <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col">
       <div class="bg-oceano text-white p-4 flex justify-between items-center">
@@ -279,9 +274,33 @@
     let leafletMap = null;
     let leafletMarker = null;
 
-    // Carregar Dados ao Abrir o Site
+    // Carregar Dados e verificar retorno do Mercado Pago ao inicializar
     document.addEventListener("DOMContentLoaded", () => {
       carregarDados();
+
+      // Captura o status do pagamento retornado na URL pelo Mercado Pago
+      const urlParams = new URLSearchParams(window.location.search);
+      const statusPagamento = urlParams.get('status');
+
+      if (statusPagamento === 'sucesso' || statusPagamento === 'approved') {
+        notificar(
+          "Pagamento confirmado com sucesso! Seu anúncio em destaque já foi ativado.", 
+          "sucesso", 
+          "Pagamento Aprovado!"
+        );
+      } else if (statusPagamento === 'pendente' || statusPagamento === 'in_process') {
+        notificar(
+          "Seu pagamento (Pix/Boleto) está pendente. Assim que for compensado, o destaque será ativado.", 
+          "info", 
+          "Pagamento em Processamento"
+        );
+      } else if (statusPagamento === 'failure' || statusPagamento === 'rejected') {
+        notificar(
+          "O pagamento não foi concluído. Seu anúncio foi registrado no plano gratuito.", 
+          "erro", 
+          "Pagamento Não Realizado"
+        );
+      }
     });
 
     async function carregarDados() {
@@ -338,9 +357,9 @@
       const termoBusca = document.getElementById('campoBusca').value.toLowerCase();
       grid.innerHTML = '';
 
-      const filtradas = dadosGlobais.empresas.filter(emp => {
+      const filtradas = (dadosGlobais.empresas || []).filter(emp => {
         const bateCategoria = categoriaAtual === 'Todas' || emp.Categoria === categoriaAtual;
-        const bateBusca = emp.Nome_Negocio.toLowerCase().includes(termoBusca) || 
+        const bateBusca = (emp.Nome_Negocio && emp.Nome_Negocio.toLowerCase().includes(termoBusca)) || 
                           (emp.Descricao && emp.Descricao.toLowerCase().includes(termoBusca)) ||
                           (emp.Endereco && emp.Endereco.toLowerCase().includes(termoBusca));
         return bateCategoria && bateBusca;
@@ -378,31 +397,25 @@
             </div>
 
             <div class="space-y-3 pt-2 border-t border-gray-50">
-              
-              <!-- Endereço com Botões de Ação para o Mapa -->
               <div class="flex items-center justify-between gap-2 text-xs text-gray-500">
                 <p class="truncate flex items-center gap-1.5">
                   <i class="fa-solid fa-location-dot text-red-500"></i> ${emp.Endereco || 'Tamoios - Cabo Frio'}
                 </p>
                 <div class="flex gap-1">
-                  <!-- Botão Mapa Modal -->
-                  <button onclick="abrirMapaModal('${emp.Nome_Negocio.replace(/'/g, "\\'")}', '${(emp.Endereco || '').replace(/'/g, "\\'")}')" class="text-oceano bg-blue-50 hover:bg-blue-100 font-bold px-2 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
+                  <button onclick="abrirMapaModal('${(emp.Nome_Negocio || '').replace(/'/g, "\\'")}', '${(emp.Endereco || '').replace(/'/g, "\\'")}')" class="text-oceano bg-blue-50 hover:bg-blue-100 font-bold px-2 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
                     <i class="fa-solid fa-map"></i> Ver
                   </button>
-                  <!-- Botão Rota Externa -->
                   <a href="${linkGmaps}" target="_blank" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold px-2 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
                     <i class="fa-solid fa-diamond-turn-right"></i> Rota
                   </a>
                 </div>
               </div>
 
-              <!-- Botão do WhatsApp -->
               <a href="https://wa.me/55${emp.WhatsApp}?text=${msgWhats}" target="_blank" 
                 class="w-full bg-verdeWhats hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition text-sm">
                 <i class="fa-brands fa-whatsapp text-lg"></i> Conversar no WhatsApp
               </a>
 
-              <!-- Botão para Editar/Remover -->
               <div class="pt-1 text-center">
                 <a href="https://wa.me/55${whatsappAdmin}?text=${msgSuporte}" target="_blank" 
                    class="text-[11px] text-gray-400 hover:text-oceano transition inline-flex items-center justify-center gap-1">
@@ -425,7 +438,6 @@
       const urlGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((endereco || '') + ', Tamoios, Cabo Frio')}`;
       document.getElementById('btnGmapsExterno').href = urlGmaps;
 
-      // Coordenadas Padrão de Tamoios / Barra de Tamoios
       const latPadrao = -22.6288;
       const lngPadrao = -42.0225;
 
@@ -520,8 +532,9 @@
 
     // Modais e Form
     function abrirModalCadastro(planoInicial = 'Gratuito') {
+      document.getElementById('formCadastro').reset();
       document.getElementById('modalCadastro').classList.remove('hidden');
-      mudarPlano(planoInicial === 'Destaque' ? 'Destaque_Home' : 'Gratuito');
+      mudarPlano(planoInicial);
     }
 
     function fecharModalCadastro() {
@@ -531,99 +544,90 @@
     function mudarPlano(plano) {
       document.getElementById('planoEscolhido').value = plano;
       const radio = document.querySelector(`input[name="radioPlano"][value="${plano}"]`);
-      if(radio) radio.checked = true;
+      if (radio) {
+        radio.checked = true;
+      }
     }
 
     // Envios para a API
     async function enviarFormulario(e) {
-  e.preventDefault();
-  const btn = document.getElementById('btnSalvar');
-  btn.disabled = true;
-  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+      e.preventDefault();
+      const btn = document.getElementById('btnSalvar');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
 
-  const fotoFile = document.getElementById('fotoInput').files[0];
-  let imagemBase64 = "";
-  let nomeImagem = "";
+      const planoSelecionado = document.getElementById('planoEscolhido').value;
+      const fotoFile = document.getElementById('fotoInput').files[0];
+      let imagemBase64 = "";
+      let nomeImagem = "";
 
-  if (fotoFile) {
-    imagemBase64 = await toBase64(fotoFile);
-    nomeImagem = fotoFile.name;
-  }
+      if (fotoFile) {
+        imagemBase64 = await toBase64(fotoFile);
+        nomeImagem = fotoFile.name;
+      }
 
-  const payload = {
-    nomeNegocio: document.getElementById('nomeNegocio').value,
-    categoria: document.getElementById('categoria').value,
-    whatsapp: document.getElementById('whatsapp').value,
-    endereco: document.getElementById('endereco').value,
-    descricao: document.getElementById('descricao').value,
-    plano: document.getElementById('planoEscolhido').value,
-    imagemBase64: imagemBase64,
-    nomeImagem: nomeImagem
-  };
+      const payload = {
+        nomeNegocio: document.getElementById('nomeNegocio').value,
+        categoria: document.getElementById('categoria').value,
+        whatsapp: document.getElementById('whatsapp').value,
+        endereco: document.getElementById('endereco').value,
+        descricao: document.getElementById('descricao').value,
+        plano: planoSelecionado,
+        imagemBase64: imagemBase64,
+        nomeImagem: nomeImagem
+      };
 
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
-    const respData = await res.json();
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const respData = await res.json();
 
-    fecharModalCadastro();
+        fecharModalCadastro();
 
-    // Se o plano for pago e o backend retornar a URL do Mercado Pago
-    if (payload.plano !== 'Gratuito' && respData.init_point) {
-      notificar(
-        "Cadastro realizado! Redirecionando para o pagamento...", 
-        "sucesso", 
-        "Aguarde"
-      );
-      
-      // Redireciona para o checkout Pix/Cartão do Mercado Pago após 1.5s
-      setTimeout(() => {
-        window.location.href = respData.init_point;
-      }, 1500);
+        // Se o plano selecionado for pago e o backend tiver retornado a URL do checkout do Mercado Pago
+        if (planoSelecionado !== 'Gratuito' && respData.init_point) {
+          notificar(
+            "Cadastro realizado com sucesso! Redirecionando para o pagamento no Mercado Pago...", 
+            "sucesso", 
+            "Aguarde o Redirecionamento"
+          );
+          
+          setTimeout(() => {
+            window.location.href = respData.init_point;
+          }, 1500);
 
-    } else {
-      notificar(
-        "Seu negócio foi cadastrado com sucesso e já está visível no Akitamoios!", 
-        "sucesso", 
-        "Parabéns!"
-      );
-      carregarDados();
+        } else if (planoSelecionado !== 'Gratuito' && !respData.init_point) {
+          // Trata o caso em que o plano pago foi selecionado mas o GAS não retornou a propriedade init_point
+          notificar(
+            "Seu cadastro foi recebido, mas houve um problema ao gerar a fatura do Mercado Pago. Entre em contato com o suporte.",
+            "erro",
+            "Atenção"
+          );
+          carregarDados();
+
+        } else {
+          // Cadastro Gratuito concluído
+          notificar(
+            "Seu negócio foi cadastrado com sucesso e já está visível no Akitamoios!", 
+            "sucesso", 
+            "Parabéns!"
+          );
+          carregarDados();
+        }
+
+      } catch (err) {
+        console.error("Erro no envio:", err);
+        notificar(
+          "Não foi possível salvar os dados. Verifique sua conexão e tente novamente.", 
+          "erro"
+        );
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Salvar e Finalizar</span>`;
+      }
     }
-
-  } catch (err) {
-    notificar(
-      "Não foi possível salvar os dados. Verifique sua conexão e tente novamente.", 
-      "erro"
-    );
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = `<span>Salvar e Finalizar</span>`;
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  carregarDados();
-
-  // Captura o status do pagamento retornado na URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const statusPagamento = urlParams.get('status');
-
-  if (statusPagamento === 'sucesso') {
-    notificar(
-      "Pagamento confirmado com sucesso! Seu anúncio em destaque já foi ativado.", 
-      "sucesso", 
-      "Pagamento Aprovado!"
-    );
-  } else if (statusPagamento === 'pendente') {
-    notificar(
-      "Seu pagamento (Pix/Boleto) está pendente. Assim que for compensado, o destaque será ativado.", 
-      "info", 
-      "Pagamento em Processamento"
-    );
-  }
-});
 
     const toBase64 = file => new Promise((resolve, reject) => {
       const reader = new FileReader();
