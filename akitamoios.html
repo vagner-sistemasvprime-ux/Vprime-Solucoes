@@ -580,84 +580,91 @@ function renderizarEmpresas() {
     }
 
     // Envios para a API
-    async function enviarFormulario(e) {
-      e.preventDefault();
-      const btn = document.getElementById('btnSalvar');
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+async function enviarFormulario(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
 
-      const planoSelecionado = document.getElementById('planoEscolhido').value;
-      const fotoFile = document.getElementById('fotoInput').files[0];
-      let imagemBase64 = "";
-      let nomeImagem = "";
+  // 1. Pega e garante o valor do plano
+  const campoPlano = document.getElementById('planoEscolhido');
+  const planoSelecionado = campoPlano ? campoPlano.value.trim() : "Gratuito";
 
-      if (fotoFile) {
-        imagemBase64 = await toBase64(fotoFile);
-        nomeImagem = fotoFile.name;
-      }
+  const fotoFile = document.getElementById('fotoInput').files[0];
+  let imagemBase64 = "";
+  let nomeImagem = "";
 
-      const payload = {
-        nomeNegocio: document.getElementById('nomeNegocio').value,
-        categoria: document.getElementById('categoria').value,
-        whatsapp: document.getElementById('whatsapp').value,
-        endereco: document.getElementById('endereco').value,
-        descricao: document.getElementById('descricao').value,
-        plano: planoSelecionado,
-        imagemBase64: imagemBase64,
-        nomeImagem: nomeImagem
-      };
+  if (fotoFile) {
+    imagemBase64 = await toBase64(fotoFile);
+    nomeImagem = fotoFile.name;
+  }
 
-      try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-        const respData = await res.json();
+  const payload = {
+    nomeNegocio: document.getElementById('nomeNegocio').value,
+    categoria: document.getElementById('categoria').value,
+    whatsapp: document.getElementById('whatsapp').value,
+    endereco: document.getElementById('endereco').value,
+    descricao: document.getElementById('descricao').value,
+    plano: planoSelecionado, // Envia o valor limpo
+    imagemBase64: imagemBase64,
+    nomeImagem: nomeImagem
+  };
 
-        fecharModalCadastro();
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const respData = await res.json();
 
-        // Se o plano selecionado for pago e o backend tiver retornado a URL do checkout do Mercado Pago
-        if (planoSelecionado !== 'Gratuito' && respData.init_point) {
-          notificar(
-            "Cadastro realizado com sucesso! Redirecionando para o pagamento no Mercado Pago...", 
-            "sucesso", 
-            "Aguarde o Redirecionamento"
-          );
-          
-          setTimeout(() => {
-            window.location.href = respData.init_point;
-          }, 1500);
+    fecharModalCadastro();
 
-        } else if (planoSelecionado !== 'Gratuito' && !respData.init_point) {
-          // Trata o caso em que o plano pago foi selecionado mas o GAS não retornou a propriedade init_point
-          notificar(
-            "Seu cadastro foi recebido, mas houve um problema ao gerar a fatura do Mercado Pago. Entre em contato com o suporte.",
-            "erro",
-            "Atenção"
-          );
-          carregarDados();
+    // Normaliza a verificação do plano pago
+    const planoLower = planoSelecionado.toLowerCase();
+    const ehPlanoPago = planoLower !== 'gratuito' && planoLower !== 'grátis' && planoLower !== '';
 
-        } else {
-          // Cadastro Gratuito concluído
-          notificar(
-            "Seu anúncio está em análise e em breve será exibido no Akitamoios!", 
-            "sucesso", 
-            "Parabéns!"
-          );
-          carregarDados();
-        }
+    // CASO 1: Plano Pago e Mercado Pago gerou o link com sucesso
+    if (ehPlanoPago && respData.init_point) {
+      notificar(
+        "Seu anúncio está em análise e em breve será exibido aqui! Redirecionando para o pagamento no Mercado Pago...", 
+        "sucesso", 
+        "Aguarde o Redirecionamento"
+      );
+      
+      setTimeout(() => {
+        window.location.href = respData.init_point;
+      }, 2000);
 
-      } catch (err) {
-        console.error("Erro no envio:", err);
-        notificar(
-          "Não foi possível salvar os dados. Verifique sua conexão e tente novamente.", 
-          "erro"
-        );
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<span>Salvar e Finalizar</span>`;
-      }
+    // CASO 2: Plano Pago mas falhou ao gerar o link
+    } else if (ehPlanoPago && !respData.init_point) {
+      notificar(
+        "Seu cadastro foi recebido, mas houve um problema ao gerar o link do Mercado Pago. Entre em contato com o suporte.",
+        "erro",
+        "Atenção"
+      );
+      carregarDados();
+
+    // CASO 3: Cadastro Gratuito concluído
+    } else {
+      notificar(
+        "Seu anúncio foi cadastrado com sucesso e já está disponível no Akitamoios!", 
+        "sucesso", 
+        "Parabéns!"
+      );
+      carregarDados();
     }
+
+  } catch (err) {
+    console.error("Erro no envio:", err);
+    notificar(
+      "Não foi possível salvar os dados. Verifique sua conexão e tente novamente.", 
+      "erro"
+    );
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>Salvar e Finalizar</span>`;
+  }
+}
 
     const toBase64 = file => new Promise((resolve, reject) => {
       const reader = new FileReader();
