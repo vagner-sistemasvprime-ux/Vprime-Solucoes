@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Akitamoios - O Comércio Local em um só Lugar</title>
+
+  <!-- Favicon SVG Dinâmico -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23006699'/><path d='M50 20C36.2 20 25 31.2 25 45c0 22.5 25 35 25 35s25-12.5 25-35c0-13.8-11.2-25-25-25zm0 33c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z' fill='%23FFB703'/></svg>">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome para Ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SDK do Mercado Pago -->
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+
+  <!-- Leaflet CSS & JS (Mapa Interativo Gratuito) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // Personalização do Tailwind com as cores de Tamoios
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            oceano: '#006699',
+            oceanoEscuro: '#004d73',
+            amareloSol: '#FFB703',
+            verdeWhats: '#25D366'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 antialiased min-h-screen flex flex-col">
+
+  <!-- URL DA SUA API DO GOOGLE APPS SCRIPT -->
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbw3okYlTJNMu7z7qvlKRWSIhfupRA62d0_gbm7ATObL068qZzKUDU_EXrT5E-hMBEeI/exec"; // Cole aqui a URL de Deploy do GAS
+    const MP_PUBLIC_KEY = "SUA_PUBLIC_KEY_MERCADO_PAGO_AQUI"; // Cole sua Public Key do MP
+
+    // Adicione o seu número de WhatsApp como Administrador (com DDD)
+    const whatsappAdmin = "22981166221";
+  </script>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="bg-oceano text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div class="flex items-center gap-2 cursor-pointer" onclick="filtrarCategoria('Todas')">
+        <i class="fa-solid fa-location-dot text-amareloSol text-2xl"></i>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight leading-none">Aki<span class="text-amareloSol">tamoios</span></h1>
+          <p class="text-xs text-blue-100">Cabo Frio & Litoral</p>
+        </div>
+      </div>
+
+      <div class="flex gap-2 w-full sm:w-auto">
+        <button onclick="abrirModalCadastro('Gratuito')" class="flex-1 sm:flex-none bg-white text-oceano hover:bg-gray-100 font-semibold px-4 py-2 rounded-lg text-sm transition shadow-sm">
+          <i class="fa-solid fa-plus mr-1"></i> Cadastrar Grátis
+        </button>
+        <button onclick="abrirModalCadastro('Destaque')" class="flex-1 sm:flex-none bg-amareloSol hover:bg-yellow-500 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm transition shadow-sm animate-pulse">
+          <i class="fa-solid fa-rocket mr-1"></i> Destaque-se
+        </button>
+      </div>
+    </div>
+  </header>
+
+ <!-- ==================== BARRA DE BUSCA E FILTROS ==================== -->
+<section class="bg-oceanoEscuro text-white py-8 px-4 shadow-inner">
+  <div class="max-w-3xl mx-auto space-y-5">
+    
+    <!-- Chamada Principal / Hero Text -->
+    <div class="space-y-1">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+        O que você procura <span class="text-amareloSol">Aki em Tamoios</span>?
+      </h1>
+      <p class="text-sm text-blue-100">
+        Encontre comércios, serviços, horários e contatos com um clique!
+      </p>
+    </div>
+
+    <!-- Campo de Busca (Isolado em container relative) -->
+    <div class="relative">
+      <input type="text" id="campoBusca" oninput="filtrarEmpresas()" placeholder="Buscar por nome, serviço, pizzaria, farmácia..." 
+        class="w-full pl-11 pr-4 py-3.5 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-amareloSol shadow-md text-sm sm:text-base">
+      <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+    </div>
+
+    <!-- Categorias em Carrossel Horizontal -->
+    <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none text-sm" id="containerCategorias">
+      <button onclick="filtrarCategoria('Todas')" class="btn-cat bg-amareloSol text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm">Todas</button>
+      <button onclick="filtrarCategoria('Alimentação')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Alimentação</button>
+      <button onclick="filtrarCategoria('Serviços')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Serviços</button>
+      <button onclick="filtrarCategoria('Saúde e Beleza')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Saúde e Beleza</button>
+      <button onclick="filtrarCategoria('Comércio')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Comércio</button>
+      <button onclick="filtrarCategoria('Construção')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Construção</button>
+    </div>
+
+  </div>
+</section>
+
+  <!-- ==================== BANNERS EM DESTAQUE ==================== -->
+  <section id="secaoBanners" class="max-w-6xl mx-auto px-4 mt-6 hidden">
+    <div id="containerBanners" class="w-full overflow-hidden rounded-2xl shadow-lg border border-yellow-200 bg-white">
+      <!-- Banners carregados via JS -->
+    </div>
+  </section>
+
+  <!-- ==================== ÁREA DE PROMOÇÕES ==================== -->
+  <section id="secaoPromocoes" class="max-w-6xl mx-auto px-4 mt-8 hidden">
+    <div class="flex items-center gap-2 mb-4">
+      <i class="fa-solid fa-fire text-red-500 text-2xl"></i>
+      <h2 class="text-xl font-bold text-gray-800">Promoções do Bairro</h2>
+    </div>
+    <div id="containerPromocoes" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <!-- Cards de Ofertas carregados via JS -->
+    </div>
+  </section>
+
+  <!-- ==================== LISTA DE EMPRESAS (CARTÕES) ==================== -->
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+        <i class="fa-solid fa-store text-oceano"></i> Guia Comercial
+      </h2>
+      <span id="contadorEmpresas" class="text-sm bg-blue-100 text-oceano font-semibold px-3 py-1 rounded-full">0 encontrados</span>
+    </div>
+
+    <!-- State de Carregando -->
+    <div id="loading" class="text-center py-12">
+      <i class="fa-solid fa-spinner fa-spin text-oceano text-4xl mb-3"></i>
+      <p class="text-gray-500 font-medium">Carregando empresas de Tamoios...</p>
+    </div>
+
+    <!-- Grid de Empresas -->
+    <div id="gridEmpresas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Cards gerados via JS -->
+    </div>
+
+    <div id="semResultados" class="hidden text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
+      <i class="fa-solid fa-store-slash text-gray-300 text-5xl mb-3"></i>
+      <p class="text-gray-600 font-semibold text-lg">Nenhum negócio encontrado.</p>
+      <p class="text-gray-400 text-sm mt-1">Tente mudar o termo da busca ou selecione outra categoria.</p>
+    </div>
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="bg-gray-900 text-gray-400 py-8 px-4 border-t border-gray-800 text-sm">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+      <div>
+        <p class="font-bold text-white text-base">Akitamoios</p>
+        <p class="text-xs text-gray-500">Valorizando o comércio local do 2º Distrito de Cabo Frio.</p>
+      </div>
+      <p>© 2026 Akitamoios. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- ==================== MODAL DE CADASTRO ==================== -->
+  <div id="modalCadastro" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="bg-oceano text-white p-4 flex justify-between items-center">
+        <h3 id="modalTitulo" class="font-bold text-lg">Cadastrar Negócio</h3>
+        <button onclick="fecharModalCadastro()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+      </div>
+
+      <form id="formCadastro" onsubmit="enviarFormulario(event)" class="p-6 overflow-y-auto space-y-4">
+        <input type="hidden" id="planoEscolhido" value="Gratuito">
+
+        <!-- Seleção de Plano dentro do Modal -->
+        <div id="seletorPlanoContainer" class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+          <label class="block text-xs font-bold text-amber-900 uppercase tracking-wide mb-2">Escolha o Tipo de Anúncio:</label>
+          <div class="space-y-2 text-sm">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="radioPlano" value="Gratuito" checked onclick="mudarPlano('Gratuito')" class="text-oceano focus:ring-oceano">
+              <span><strong>Grátis</strong> (Listagem padrão no guia)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="radioPlano" value="Destaque_Categoria" onclick="mudarPlano('Destaque_Categoria')" class="text-oceano focus:ring-oceano">
+              <span><strong>Destaque Categoria</strong> - R$ 29,90/mês</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="radioPlano" value="Destaque_Home" onclick="mudarPlano('Destaque_Home')" class="text-oceano focus:ring-oceano">
+              <span><strong>Destaque Home + Promoção</strong> - R$ 49,90/mês</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nome da Empresa / Negócio *</label>
+          <input type="text" id="nomeNegocio" required placeholder="Ex: Padaria do Bairro" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoria *</label>
+            <select id="categoria" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none bg-white">
+              <option value="Alimentação">Alimentação</option>
+              <option value="Serviços">Serviços</option>
+              <option value="Saúde e Beleza">Saúde e Beleza</option>
+              <option value="Comércio">Comércio</option>
+              <option value="Construção">Construção</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp (com DDD) *</label>
+            <input type="tel" id="whatsapp" required placeholder="22999999999" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Endereço / Bairro *</label>
+          <input type="text" id="endereco" required placeholder="Ex: Av. Independência, Barra de Tamoios" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição Breve do Negócio</label>
+          <textarea id="descricao" rows="2" placeholder="Ex: Entregas ao domicílio, aceitamos cartões e PIX..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Logo ou Foto da Fachada</label>
+          <input type="file" id="fotoInput" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-oceano hover:file:bg-blue-100">
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" id="btnSalvar" class="w-full bg-oceano hover:bg-oceanoEscuro text-white font-bold py-3 rounded-xl transition shadow flex items-center justify-center gap-2">
+            <span>Salvar e Finalizar</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL DE NOTIFICAÇÃO (Substituto do Alert) ==================== -->
+  <div id="modalNotificacao" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm transition-opacity">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-6 text-center transform transition-all space-y-4">
+      <div id="notificacaoIconeContainer" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl">
+        <i id="notificacaoIcone" class="fa-solid fa-check"></i>
+      </div>
+      <div class="space-y-1">
+        <h3 id="notificacaoTitulo" class="font-bold text-gray-900 text-lg">Sucesso!</h3>
+        <p id="notificacaoMensagem" class="text-sm text-gray-600 leading-relaxed">Sua operação foi concluída.</p>
+      </div>
+      <button onclick="fecharNotificacao()" id="btnFecharNotificacao" class="w-full bg-oceano hover:bg-oceanoEscuro text-white font-bold py-2.5 rounded-xl transition shadow">
+        Entendi
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL DE MAPA (OPÇÃO 3) ==================== -->
+  <div id="modalMapa" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <div class="bg-oceano text-white p-4 flex justify-between items-center">
+        <h3 id="mapaTitulo" class="font-bold text-base flex items-center gap-2">
+          <i class="fa-solid fa-location-dot text-amareloSol"></i> Localização no Mapa
+        </h3>
+        <button onclick="fecharModalMapa()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+      </div>
+      <div class="p-4 space-y-3">
+        <p id="mapaEndereco" class="text-xs text-gray-600 font-medium"></p>
+        <div id="mapaContainer" class="w-full h-72 bg-gray-100 rounded-xl overflow-hidden border"></div>
+        <div class="pt-2 flex justify-end gap-2">
+          <a id="btnGmapsExterno" href="#" target="_blank" class="bg-oceano hover:bg-oceanoEscuro text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-route"></i> Abrir Rota no Google Maps
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOGICA JAVASCRIPT ==================== -->
+  <script>
+    let dadosGlobais = { empresas: [], promocoes: [], banners: [] };
+    let categoriaAtual = 'Todas';
+    let leafletMap = null;
+    let leafletMarker = null;
+
+    // Carregar Dados ao Abrir o Site
+    document.addEventListener("DOMContentLoaded", () => {
+      carregarDados();
+    });
+
+    async function carregarDados() {
+      try {
+        const res = await fetch(API_URL);
+        dadosGlobais = await res.json();
+        
+        document.getElementById('loading').classList.add('hidden');
+        renderizarEmpresas();
+        renderizarPromocoes();
+        renderizarBanners();
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err);
+        document.getElementById('loading').innerHTML = `
+          <p class="text-red-500 font-semibold">Não foi possível carregar os dados no momento.</p>
+          <p class="text-xs text-gray-400 mt-1">Verifique a configuração do API_URL.</p>
+        `;
+      }
+    }
+
+    // Notificação Customizada
+    function notificar(mensagem, tipo = 'sucesso', titulo = null) {
+      const modal = document.getElementById('modalNotificacao');
+      const elTitulo = document.getElementById('notificacaoTitulo');
+      const elMensagem = document.getElementById('notificacaoMensagem');
+      const elIcone = document.getElementById('notificacaoIcone');
+      const elIconeContainer = document.getElementById('notificacaoIconeContainer');
+
+      if (tipo === 'sucesso') {
+        elTitulo.innerText = titulo || 'Tudo Certo!';
+        elIcone.className = 'fa-solid fa-circle-check';
+        elIconeContainer.className = 'w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl bg-emerald-100 text-emerald-600';
+      } else if (tipo === 'erro') {
+        elTitulo.innerText = titulo || 'Ops! Algo deu errado';
+        elIcone.className = 'fa-solid fa-triangle-exclamation';
+        elIconeContainer.className = 'w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl bg-red-100 text-red-600';
+      } else if (tipo === 'info') {
+        elTitulo.innerText = titulo || 'Aviso';
+        elIcone.className = 'fa-solid fa-circle-info';
+        elIconeContainer.className = 'w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl bg-blue-100 text-oceano';
+      }
+
+      elMensagem.innerText = mensagem;
+      modal.classList.remove('hidden');
+    }
+
+    function fecharNotificacao() {
+      document.getElementById('modalNotificacao').classList.add('hidden');
+    }
+
+    // Renderizar Cards de Empresas
+    function renderizarEmpresas() {
+      const grid = document.getElementById('gridEmpresas');
+      const termoBusca = document.getElementById('campoBusca').value.toLowerCase();
+      grid.innerHTML = '';
+
+      const filtradas = dadosGlobais.empresas.filter(emp => {
+        const bateCategoria = categoriaAtual === 'Todas' || emp.Categoria === categoriaAtual;
+        const bateBusca = emp.Nome_Negocio.toLowerCase().includes(termoBusca) || 
+                          (emp.Descricao && emp.Descricao.toLowerCase().includes(termoBusca)) ||
+                          (emp.Endereco && emp.Endereco.toLowerCase().includes(termoBusca));
+        return bateCategoria && bateBusca;
+      });
+
+      document.getElementById('contadorEmpresas').innerText = `${filtradas.length} encontrados`;
+
+      if (filtradas.length === 0) {
+        document.getElementById('semResultados').classList.remove('hidden');
+        return;
+      } else {
+        document.getElementById('semResultados').classList.add('hidden');
+      }
+
+      filtradas.forEach(emp => {
+        const ehDestaque = emp.Plano !== 'Gratuito';
+        const imgLogo = emp.URL_Logo_LH3 || 'https://via.placeholder.com/150?text=Akitamoios';
+        const msgWhats = encodeURIComponent(`Olá! Vi seu anúncio no Akitamoios e gostaria de mais informações.`);
+        const msgSuporte = encodeURIComponent(`Olá, sou responsável pelo estabelecimento "${emp.Nome_Negocio}" no Akitamoios e gostaria de solicitar uma alteração/remoção.`);
+        const linkGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((emp.Endereco || '') + ', Tamoios, Cabo Frio')}`;
+
+        const card = `
+          <div class="bg-white rounded-2xl shadow-sm hover:shadow-md border ${ehDestaque ? 'border-amareloSol ring-2 ring-amareloSol/30' : 'border-gray-100'} p-5 flex flex-col justify-between transition relative overflow-hidden">
+            ${ehDestaque ? '<span class="absolute top-3 right-3 bg-amareloSol text-gray-900 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">Destaque</span>' : ''}
+            
+            <div>
+              <div class="flex items-center gap-4 mb-4">
+                <img src="${imgLogo}" alt="${emp.Nome_Negocio}" class="w-16 h-16 rounded-xl object-cover border border-gray-100 shadow-sm">
+                <div>
+                  <h3 class="font-bold text-gray-900 text-lg leading-snug">${emp.Nome_Negocio}</h3>
+                  <span class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-md mt-1 font-medium">${emp.Categoria}</span>
+                </div>
+              </div>
+              <p class="text-gray-600 text-sm mb-4 line-clamp-2">${emp.Descricao || 'Atendimento de qualidade em Tamoios.'}</p>
+            </div>
+
+            <div class="space-y-3 pt-2 border-t border-gray-50">
+              
+              <!-- Endereço com Botões de Ação para o Mapa -->
+              <div class="flex items-center justify-between gap-2 text-xs text-gray-500">
+                <p class="truncate flex items-center gap-1.5">
+                  <i class="fa-solid fa-location-dot text-red-500"></i> ${emp.Endereco || 'Tamoios - Cabo Frio'}
+                </p>
+                <div class="flex gap-1">
+                  <!-- Botão Mapa Modal -->
+                  <button onclick="abrirMapaModal('${emp.Nome_Negocio.replace(/'/g, "\\'")}', '${(emp.Endereco || '').replace(/'/g, "\\'")}')" class="text-oceano bg-blue-50 hover:bg-blue-100 font-bold px-2 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
+                    <i class="fa-solid fa-map"></i> Ver
+                  </button>
+                  <!-- Botão Rota Externa -->
+                  <a href="${linkGmaps}" target="_blank" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold px-2 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
+                    <i class="fa-solid fa-diamond-turn-right"></i> Rota
+                  </a>
+                </div>
+              </div>
+
+              <!-- Botão do WhatsApp -->
+              <a href="https://wa.me/55${emp.WhatsApp}?text=${msgWhats}" target="_blank" 
+                class="w-full bg-verdeWhats hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition text-sm">
+                <i class="fa-brands fa-whatsapp text-lg"></i> Conversar no WhatsApp
+              </a>
+
+              <!-- Botão para Editar/Remover -->
+              <div class="pt-1 text-center">
+                <a href="https://wa.me/55${whatsappAdmin}?text=${msgSuporte}" target="_blank" 
+                   class="text-[11px] text-gray-400 hover:text-oceano transition inline-flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-pen-to-square"></i> É dono deste negócio? Editar informações
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+        grid.innerHTML += card;
+      });
+    }
+
+    // Lógica para o Mapa no Modal
+    function abrirMapaModal(nome, endereco) {
+      document.getElementById('modalMapa').classList.remove('hidden');
+      document.getElementById('mapaTitulo').innerHTML = `<i class="fa-solid fa-location-dot text-amareloSol"></i> ${nome}`;
+      document.getElementById('mapaEndereco').innerText = endereco ? `${endereco}, Tamoios - Cabo Frio` : 'Tamoios, Cabo Frio - RJ';
+      
+      const urlGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((endereco || '') + ', Tamoios, Cabo Frio')}`;
+      document.getElementById('btnGmapsExterno').href = urlGmaps;
+
+      // Coordenadas Padrão de Tamoios / Barra de Tamoios
+      const latPadrao = -22.6288;
+      const lngPadrao = -42.0225;
+
+      setTimeout(() => {
+        if (!leafletMap) {
+          leafletMap = L.map('mapaContainer').setView([latPadrao, lngPadrao], 14);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+          }).addTo(leafletMap);
+        } else {
+          leafletMap.invalidateSize();
+          leafletMap.setView([latPadrao, lngPadrao], 14);
+        }
+
+        if (leafletMarker) {
+          leafletMap.removeLayer(leafletMarker);
+        }
+
+        leafletMarker = L.marker([latPadrao, lngPadrao]).addTo(leafletMap)
+          .bindPopup(`<b>${nome}</b><br>${endereco || 'Tamoios'}`)
+          .openPopup();
+      }, 300);
+    }
+
+    function fecharModalMapa() {
+      document.getElementById('modalMapa').classList.add('hidden');
+    }
+
+    // Renderizar Promoções
+    function renderizarPromocoes() {
+      const container = document.getElementById('containerPromocoes');
+      const secao = document.getElementById('secaoPromocoes');
+      
+      if (!dadosGlobais.promocoes || dadosGlobais.promocoes.length === 0) {
+        secao.classList.add('hidden');
+        return;
+      }
+
+      secao.classList.remove('hidden');
+      container.innerHTML = '';
+
+      dadosGlobais.promocoes.forEach(p => {
+        const card = `
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-4 items-center">
+            <img src="${p.Foto_Oferta_LH3}" class="w-20 h-20 rounded-xl object-cover">
+            <div>
+              <span class="text-[10px] font-bold uppercase bg-red-500 text-white px-2 py-0.5 rounded-md">Oferta</span>
+              <h4 class="font-bold text-gray-900 text-sm mt-1">${p.Titulo_Oferta}</h4>
+              <p class="text-xs text-gray-600 mt-0.5">${p.Regras}</p>
+            </div>
+          </div>
+        `;
+        container.innerHTML += card;
+      });
+    }
+
+    // Renderizar Banners
+    function renderizarBanners() {
+      const container = document.getElementById('containerBanners');
+      const secao = document.getElementById('secaoBanners');
+
+      if (!dadosGlobais.banners || dadosGlobais.banners.length === 0) {
+        secao.classList.add('hidden');
+        return;
+      }
+
+      secao.classList.remove('hidden');
+      const b = dadosGlobais.banners[0];
+      container.innerHTML = `
+        <a href="${b.Link_Destino || '#'}" target="_blank">
+          <img src="${b.Imagem_Banner_LH3}" alt="${b.Nome_Anunciante}" class="w-full h-32 sm:h-48 object-cover">
+        </a>
+      `;
+    }
+
+    // Filtros e Buscas
+    function filtrarCategoria(cat) {
+      categoriaAtual = cat;
+      document.querySelectorAll('.btn-cat').forEach(btn => {
+        if(btn.innerText === cat) {
+          btn.className = "btn-cat bg-amareloSol text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm";
+        } else {
+          btn.className = "btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap";
+        }
+      });
+      renderizarEmpresas();
+    }
+
+    function filtrarEmpresas() {
+      renderizarEmpresas();
+    }
+
+    // Modais e Form
+    function abrirModalCadastro(planoInicial = 'Gratuito') {
+      document.getElementById('modalCadastro').classList.remove('hidden');
+      mudarPlano(planoInicial === 'Destaque' ? 'Destaque_Home' : 'Gratuito');
+    }
+
+    function fecharModalCadastro() {
+      document.getElementById('modalCadastro').classList.add('hidden');
+    }
+
+    function mudarPlano(plano) {
+      document.getElementById('planoEscolhido').value = plano;
+      const radio = document.querySelector(`input[name="radioPlano"][value="${plano}"]`);
+      if(radio) radio.checked = true;
+    }
+
+    // Envios para a API
+    async function enviarFormulario(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSalvar');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+
+      const fotoFile = document.getElementById('fotoInput').files[0];
+      let imagemBase64 = "";
+      let nomeImagem = "";
+
+      if (fotoFile) {
+        imagemBase64 = await toBase64(fotoFile);
+        nomeImagem = fotoFile.name;
+      }
+
+      const payload = {
+        nomeNegocio: document.getElementById('nomeNegocio').value,
+        categoria: document.getElementById('categoria').value,
+        whatsapp: document.getElementById('whatsapp').value,
+        endereco: document.getElementById('endereco').value,
+        descricao: document.getElementById('descricao').value,
+        plano: document.getElementById('planoEscolhido').value,
+        imagemBase64: imagemBase64,
+        nomeImagem: nomeImagem
+      };
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const respData = await res.json();
+
+        if (payload.plano !== 'Gratuito') {
+          notificar(
+            "Cadastro realizado com sucesso! Em breve você será direcionado para efetuar o pagamento do destaque.", 
+            "sucesso", 
+            "Cadastro Recebido!"
+          );
+        } else {
+          notificar(
+            "Seu negócio foi cadastrado com sucesso e já está visível no Akitamoios!", 
+            "sucesso", 
+            "Parabéns!"
+          );
+        }
+
+        fecharModalCadastro();
+        carregarDados();
+      } catch (err) {
+        notificar(
+          "Não foi possível salvar os dados. Verifique a sua conexão ou tente novamente mais tarde.", 
+          "erro"
+        );
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Salvar e Finalizar</span>`;
+      }
+    }
+
+    const toBase64 = file => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  </script>
+</body>
+</html>
