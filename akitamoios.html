@@ -188,6 +188,8 @@
           <input type="text" id="nomeNegocio" required placeholder="Ex: Padaria do Bairro" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
         </div>
 
+
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoria *</label>
@@ -205,6 +207,19 @@
             <input type="tel" id="whatsapp" required placeholder="22999999999" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
           </div>
         </div>
+
+<div class="mb-4">
+  <label for="nomeResponsavel" class="block text-xs font-semibold text-gray-700 mb-1">Nome do Responsável:</label>
+  <input type="text" id="nomeResponsavel" required placeholder="Ex: João da Silva" 
+         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+</div>
+
+<div class="mb-4">
+  <label for="chaveSeguranca" class="block text-xs font-semibold text-gray-700 mb-1">Palavra-Chave de Segurança:</label>
+  <input type="password" id="chaveSeguranca" required placeholder="Crie uma senha para edições futuras" 
+         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+  <p class="text-[10px] text-gray-400 mt-0.5">Guarde esta senha. Ela será exigida para alterar ou excluir este anúncio.</p>
+</div>
 
         <div>
           <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Endereço / Bairro *</label>
@@ -245,6 +260,89 @@
       </button>
     </div>
   </div>
+
+<div id="modalValidarDono" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl relative animate-fade-in">
+    <button onclick="fecharModalValidacao()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+    <h3 class="text-base font-bold text-gray-800 mb-2">Verificação de Proprietário</h3>
+    <p class="text-xs text-gray-500 mb-4">Informe a palavra-chave cadastrada para este anúncio para poder editá-lo ou excluí-lo.</p>
+    
+    <input type="hidden" id="validarIdEmpresa">
+    
+    <div class="mb-4">
+      <label class="block text-xs font-semibold text-gray-700 mb-1">Palavra-Chave de Segurança:</label>
+      <input type="password" id="inputChaveValidacao" placeholder="Digite sua senha" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+    </div>
+    
+    <button onclick="confirmarChaveDono()" id="btnValidarChave" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-sm transition flex items-center justify-center gap-2">
+      Validar Acesso
+    </button>
+  </div>
+</div>
+
+<!-- Modal 2: Edição e Exclusão pelo Cliente (Com Upload de Foto) -->
+<div id="modalEditarAnuncioCliente" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">
+    <button onclick="fecharModalEdicaoCliente()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Gerenciar Anúncio</h3>
+
+    <form id="formEdicaoCliente" onsubmit="salvarEdicaoCliente(event)" class="space-y-4">
+      <input type="hidden" id="editClienteLinha">
+      <input type="hidden" id="editClienteId">
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Nome do Negócio:</label>
+        <input type="text" id="editClienteNome" required class="w-full px-3 py-2 border rounded-lg text-sm">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Categoria:</label>
+        <input type="text" id="editClienteCategoria" required class="w-full px-3 py-2 border rounded-lg text-sm">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">WhatsApp:</label>
+        <input type="text" id="editClienteWhatsapp" required class="w-full px-3 py-2 border rounded-lg text-sm">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Endereço:</label>
+        <input type="text" id="editClienteEndereco" class="w-full px-3 py-2 border rounded-lg text-sm">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Descrição:</label>
+        <textarea id="editClienteDescricao" rows="3" class="w-full px-3 py-2 border rounded-lg text-sm"></textarea>
+      </div>
+
+      <!-- NOVO CAMPO: Alterar Foto / Logo -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Foto / Logo do Negócio:</label>
+        <div class="flex items-center gap-3 mb-2">
+          <img id="editClientePreviewFoto" src="" alt="Foto Atual" referrerpolicy="no-referrer" style="max-width: 100%; height: auto; border-radius: 8px;" />
+          <span class="text-xs text-gray-500">Sua foto atual</span>
+        </div>
+        <input type="file" id="editClienteNovaFoto" accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+        <p class="text-[10px] text-gray-400 mt-1">Deixe em branco caso não queira alterar a imagem atual.</p>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button type="submit" id="btnSalvarEditCliente" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg text-sm transition flex items-center justify-center gap-2">
+          Salvar Alterações
+        </button>
+        <button type="button" onclick="excluirAnuncioCliente()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+          Excluir Anúncio
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 
   <!-- ==================== MODAL DE MAPA ==================== -->
   <div id="modalMapa" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
@@ -363,7 +461,7 @@
       document.getElementById('modalNotificacao').classList.add('hidden');
     }
 
-    // Renderizar Cards de Empresas (Com Ordenação por Plano e Estilização de Destaque)
+   // Renderizar Cards de Empresas (Com Ordenação por Plano e Estilização de Destaque)
 function renderizarEmpresas() {
   const grid = document.getElementById('gridEmpresas');
   const termoBusca = document.getElementById('campoBusca').value.toLowerCase();
@@ -380,12 +478,11 @@ function renderizarEmpresas() {
 
   // 2. ORDENAÇÃO PRIORITÁRIA (Destaques no Topo)
   filtradas.sort((a, b) => {
-    // Função auxiliar para calcular o peso de prioridade
     const getPeso = (emp) => {
       const plano = String(emp.Plano || '').toLowerCase();
-      if (plano.includes('home') || plano.includes('promocao') || plano.includes('49')) return 1; // Topo Absoluto (R$ 49,90)
-      if (plano.includes('categoria') || plano.includes('29')) return 2;                      // Segundo Topo (R$ 29,90)
-      return 3;                                                                               // Gratuito
+      if (plano.includes('home') || plano.includes('promocao') || plano.includes('49')) return 1; // Topo (R$ 49,90)
+      if (plano.includes('categoria') || plano.includes('29')) return 2;                          // Segundo Topo (R$ 29,90)
+      return 3;                                                                                   // Gratuito
     };
 
     return getPeso(a) - getPeso(b);
@@ -408,8 +505,10 @@ function renderizarEmpresas() {
 
     const imgLogo = emp.URL_Logo_LH3 || 'https://via.placeholder.com/150?text=Akitamoios';
     const msgWhats = encodeURIComponent(`Olá! Vi seu anúncio no Akitamoios e gostaria de mais informações.`);
-    const msgSuporte = encodeURIComponent(`Olá, sou responsável pelo estabelecimento "${emp.Nome_Negocio}" no Akitamoios e gostaria de solicitar uma alteração/remoção.`);
     const linkGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((emp.Endereco || '') + ', Tamoios, Cabo Frio')}`;
+
+    // ID do anúncio (trata maiúsculas/minúsculas vindas da planilha)
+    const idAnuncio = emp.ID_Cadastro || emp.id || emp.ID || '';
 
     // Estilos dinâmicos do Card Destaque vs Card Normal
     const classeBordaEAnel = ehDestaque 
@@ -459,10 +558,10 @@ function renderizarEmpresas() {
           </a>
 
           <div class="pt-1 text-center">
-            <a href="https://wa.me/55${whatsappAdmin}?text=${msgSuporte}" target="_blank" 
-               class="text-[11px] text-gray-400 hover:text-oceano transition inline-flex items-center justify-center gap-1">
+            <button onclick="abrirValidacaoDono('${idAnuncio}')" 
+                    class="text-[11px] text-gray-400 hover:text-blue-600 transition inline-flex items-center justify-center gap-1 mt-2">
               <i class="fa-solid fa-pen-to-square"></i> É dono deste negócio? Editar informações
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -470,6 +569,7 @@ function renderizarEmpresas() {
     grid.innerHTML += card;
   });
 }
+
 
     // Lógica para o Mapa no Modal
     function abrirMapaModal(nome, endereco) {
@@ -711,11 +811,13 @@ async function enviarFormulario(e) {
 
   const payload = {
     nomeNegocio: document.getElementById('nomeNegocio').value,
+    nomeResponsavel: document.getElementById('nomeResponsavel').value, // <--- NOVO
+    chaveSeguranca: document.getElementById('chaveSeguranca').value,   // <--- NOVO
     categoria: document.getElementById('categoria').value,
     whatsapp: document.getElementById('whatsapp').value,
     endereco: document.getElementById('endereco').value,
     descricao: document.getElementById('descricao').value,
-    plano: planoSelecionado, // Envia o valor limpo
+    plano: planoSelecionado,
     imagemBase64: imagemBase64,
     nomeImagem: nomeImagem
   };
@@ -782,6 +884,190 @@ async function enviarFormulario(e) {
       reader.onload = () => resolve(reader.result);
       reader.onerror = error => reject(error);
     });
+
+
+// Abre o modal de pedir senha
+function abrirValidacaoDono(id) {
+  document.getElementById('validarIdEmpresa').value = id;
+  document.getElementById('inputChaveValidacao').value = '';
+  document.getElementById('modalValidarDono').classList.remove('hidden');
+}
+
+function fecharModalValidacao() {
+  document.getElementById('modalValidarDono').classList.add('hidden');
+}
+
+function fecharModalEdicaoCliente() {
+  document.getElementById('modalEditarAnuncioCliente').classList.add('hidden');
+}
+
+// Função auxiliar para converter arquivo em Base64
+function converterParaBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result.split(',')[1]); // Remove o cabeçalho 'data:image/...;base64,'
+    reader.onerror = error => reject(error);
+  });
+}
+
+// 1. Confirma se a senha bate e carrega os dados no modal
+async function confirmarChaveDono() {
+  const id = document.getElementById('validarIdEmpresa').value;
+  const chave = document.getElementById('inputChaveValidacao').value.trim();
+  const btn = document.getElementById('btnValidarChave');
+
+  if (!chave) {
+    notificar("Por favor, digite a palavra-chave.", "erro");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Verificando...`;
+
+  try {
+    const res = await fetch(`${API_URL}?acao=validarChaveCliente&id=${encodeURIComponent(id)}&chave=${encodeURIComponent(chave)}`);
+    const resp = await res.json();
+
+    if (resp.sucesso) {
+      fecharModalValidacao();
+      
+      const emp = resp.empresa;
+      document.getElementById('editClienteLinha').value = emp.linhaIndex;
+      document.getElementById('editClienteId').value = emp.id;
+      document.getElementById('editClienteNome').value = emp.nome || '';
+      document.getElementById('editClienteCategoria').value = emp.categoria || '';
+      document.getElementById('editClienteWhatsapp').value = emp.whatsapp || '';
+      document.getElementById('editClienteEndereco').value = emp.endereco || '';
+      document.getElementById('editClienteDescricao').value = emp.descricao || '';
+      
+      // --- TRATAMENTO DA URL DA FOTO ---
+      // Pega a URL vinda do backend (aceita urlLogo, foto, logo ou imagem)
+      let urlFoto = emp.urlLogo || emp.foto || emp.logo || emp.imagem || '';
+
+      if (urlFoto) {
+        // Se for um link padrão do Google Drive, extrai o ID e converte para lh3
+        if (urlFoto.includes("drive.google.com")) {
+          const match = urlFoto.match(/\/d\/([^\/\?]+)/) || urlFoto.match(/id=([^&]+)/);
+          if (match && match[1]) {
+            urlFoto = "https://lh3.googleusercontent.com/d/" + match[1];
+          }
+        }
+      } else {
+        urlFoto = 'https://via.placeholder.com/150';
+      }
+
+      // Atribui a URL tratada ao preview
+      const imgElem = document.getElementById('editClientePreviewFoto');
+      if (imgElem) {
+        // Garante que o navegador não envie o cabeçalho Referer
+        imgElem.setAttribute('referrerpolicy', 'no-referrer');
+        imgElem.src = urlFoto;
+      }
+
+      document.getElementById('editClienteNovaFoto').value = '';
+      document.getElementById('modalEditarAnuncioCliente').classList.remove('hidden');
+    } else {
+      notificar(resp.mensagem || "Palavra-chave incorreta!", "erro");
+    }
+  } catch (err) {
+    console.error(err);
+    notificar("Erro ao validar senha. Tente novamente.", "erro");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `Validar Acesso`;
+  }
+}
+
+// 2. Salva as edições do Cliente (Enviando foto se houver)
+async function salvarEdicaoCliente(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btnSalvarEditCliente');
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+
+  const linha = document.getElementById('editClienteLinha').value;
+  const inputFoto = document.getElementById('editClienteNovaFoto');
+  
+  let imagemBase64 = "";
+  let nomeImagem = "";
+
+  // Se o usuário escolheu uma nova foto, converte para Base64
+  if (inputFoto.files && inputFoto.files[0]) {
+    const file = inputFoto.files[0];
+    nomeImagem = file.name;
+    try {
+      imagemBase64 = await converterParaBase64(file);
+    } catch (err) {
+      console.error("Erro ao converter imagem:", err);
+      notificar("Erro ao processar a nova imagem.", "erro");
+      btn.disabled = false;
+      btn.innerText = "Salvar Alterações";
+      return;
+    }
+  }
+
+  // Prepara o objeto com todos os dados
+  const payload = {
+    acao: 'salvarEdicao',
+    linha: linha,
+    nome: document.getElementById('editClienteNome').value,
+    categoria: document.getElementById('editClienteCategoria').value,
+    whatsapp: document.getElementById('editClienteWhatsapp').value,
+    endereco: document.getElementById('editClienteEndereco').value,
+    descricao: document.getElementById('editClienteDescricao').value,
+    plano: 'Gratuito',
+    status: 'Pendente', // Volta para Pendente para você re-aprovar
+    imagemBase64: imagemBase64,
+    nomeImagem: nomeImagem
+  };
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    
+    const resp = await res.json();
+
+    if (resp.sucesso) {
+      fecharModalEdicaoCliente();
+      notificar("Anúncio atualizado com sucesso! Ele passará por uma breve re-análise.", "sucesso");
+      carregarDados();
+    } else {
+      notificar("Erro ao salvar alterações.", "erro");
+    }
+  } catch (err) {
+    console.error(err);
+    notificar("Erro de conexão.", "erro");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Salvar Alterações";
+  }
+}
+
+// Exclui o anúncio a pedido do Cliente
+async function excluirAnuncioCliente() {
+  if (!confirm("Tem certeza que deseja excluir seu anúncio definitivamente?")) return;
+
+  const linha = document.getElementById('editClienteLinha').value;
+  
+  try {
+    const res = await fetch(`${API_URL}?acao=excluir&linha=${linha}`);
+    const resp = await res.json();
+
+    if (resp.sucesso) {
+      fecharModalEdicaoCliente();
+      notificar("Anúncio excluído com sucesso.", "sucesso");
+      carregarDados();
+    } else {
+      notificar("Erro ao excluir anúncio.", "erro");
+    }
+  } catch (err) {
+    console.error(err);
+    notificar("Erro de conexão.", "erro");
+  }
+}
   </script>
 </body>
 </html>
