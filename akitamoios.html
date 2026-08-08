@@ -17,6 +17,15 @@
 
   <!-- Leaflet CSS & JS (Mapa Interativo Gratuito) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<!-- Configurações do PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0284c7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Akitamoios">
+<link rel="apple-touch-icon" href="/icon-192.png">
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
@@ -1055,5 +1064,17 @@ async function excluirAnuncioCliente() {
   }
 }
   </script>
+
+<script>
+  // Registrar o Service Worker se o navegador for compatível
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('PWA Service Worker registrado com sucesso!', reg))
+        .catch(err => console.error('Erro ao registrar Service Worker:', err));
+    });
+  }
+</script>
+
 </body>
 </html>
