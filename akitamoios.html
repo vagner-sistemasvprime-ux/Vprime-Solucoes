@@ -521,18 +521,25 @@ function renderizarEmpresas() {
     const planoStr = String(emp.Plano || '').toLowerCase();
     const ehDestaque = emp.Plano && planoStr !== 'gratuito' && planoStr !== '';
 
-    // LÓGICA DO AVATAR / LOGO:
-    // 1. Gera URL de Avatar dinâmico com as iniciais do Nome do Negócio (fundo azul e letras brancas)
+    // LÓGICA DO AVATAR / LOGO
     const urlAvatarPadrao = `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.Nome_Negocio || 'Akitamoios')}&background=0284c7&color=ffffff&size=150&font-size=0.33`;
-    
-    // 2. Verifica se existe uma logo válida informada no cadastro
     const temLogoValida = emp.URL_Logo_LH3 && emp.URL_Logo_LH3.trim().length > 10;
     const imgLogo = temLogoValida ? emp.URL_Logo_LH3.trim() : urlAvatarPadrao;
+
+    // LÓGICA DE FORMATAÇÃO DO TELEFONE/WHATSAPP (Exiba em texto visível)
+    const numWhatsLimpo = String(emp.WhatsApp || '').replace(/\D/g, ''); // Apenas números
+    let whatsFormatado = emp.WhatsApp || 'Não informado';
+
+    if (numWhatsLimpo.length === 11) {
+      whatsFormatado = `(${numWhatsLimpo.slice(0, 2)}) ${numWhatsLimpo.slice(2, 7)}-${numWhatsLimpo.slice(7)}`;
+    } else if (numWhatsLimpo.length === 10) {
+      whatsFormatado = `(${numWhatsLimpo.slice(0, 2)}) ${numWhatsLimpo.slice(2, 6)}-${numWhatsLimpo.slice(6)}`;
+    }
 
     const msgWhats = encodeURIComponent(`Olá! Vi seu anúncio no Akitamoios e gostaria de mais informações.`);
     const linkGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((emp.Endereco || '') + ', Tamoios, Cabo Frio')}`;
 
-    // ID do anúncio (trata maiúsculas/minúsculas vindas da planilha)
+    // ID do anúncio
     const idAnuncio = emp.ID_Cadastro || emp.id || emp.ID || '';
 
     // Estilos dinâmicos do Card Destaque vs Card Normal
@@ -579,7 +586,13 @@ function renderizarEmpresas() {
             </div>
           </div>
 
-          <a href="https://wa.me/55${emp.WhatsApp}?text=${msgWhats}" target="_blank" 
+          <!-- Contato em texto visível (Funciona offline e para chamadas de voz) -->
+          <div class="flex items-center justify-center gap-2 bg-gray-50 py-1.5 px-3 rounded-lg text-xs font-semibold text-gray-700 border border-gray-100">
+            <i class="fa-solid fa-phone text-blue-600 text-xs"></i>
+            <span>Tel: <a href="tel:${numWhatsLimpo}" class="hover:underline text-gray-900 font-bold">${whatsFormatado}</a></span>
+          </div>
+
+          <a href="https://wa.me/55${numWhatsLimpo}?text=${msgWhats}" target="_blank" 
             class="w-full bg-verdeWhats hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition text-sm">
             <i class="fa-brands fa-whatsapp text-lg"></i> Conversar no WhatsApp
           </a>
