@@ -389,17 +389,20 @@
       }
     });
 
-  async function carregarDados() {
+ async function carregarDados() {
   try {
     const res = await fetch(API_URL);
     const resposta = await res.json();
     
-    // Garante que dadosGlobais receba as listas corretamente ou listas vazias se falhar
+    // 1. Garante que dadosGlobais receba as listas corretamente ou listas vazias se falhar
     dadosGlobais = {
       empresas: resposta.empresas || [],
       banners: resposta.banners || []
     };
-    
+
+    // 2. SALVA NO CELULAR: Guarda uma cópia atualizada para uso offline
+    localStorage.setItem('akitamoios_dados_cache', JSON.stringify(dadosGlobais));
+
     // Reseta o índice do carrossel para o primeiro slide ao recarregar os dados
     if (typeof bannerAtualIndex !== 'undefined') {
       bannerAtualIndex = 0;
@@ -411,11 +414,38 @@
     renderizarBanners(); // Agora executa com a nova lógica de carrossel rotativo
 
   } catch (err) {
-    console.error("Erro ao carregar dados:", err);
-    document.getElementById('loading').innerHTML = `
-      <p class="text-red-500 font-semibold">Não foi possível carregar os dados no momento.</p>
-      <p class="text-xs text-gray-400 mt-1">Verifique a conexão ou a configuração da API_URL.</p>
-    `;
+    console.error("Erro ou falta de conexão ao carregar dados:", err);
+
+    // 3. RECUPERA DO CELULAR: Tenta pegar a cópia gravada anteriormente
+    const dadosSalvos = localStorage.getItem('akitamoios_dados_cache');
+
+    if (dadosSalvos) {
+      dadosGlobais = JSON.parse(dadosSalvos);
+
+      if (typeof bannerAtualIndex !== 'undefined') {
+        bannerAtualIndex = 0;
+      }
+
+      document.getElementById('loading').classList.add('hidden');
+      renderizarEmpresas();
+      renderizarPromocoes();
+      renderizarBanners();
+
+      // Alerta sutil no contador informando o modo offline
+      const contador = document.getElementById('contadorEmpresas');
+      if (contador) {
+        contador.innerHTML += ' <span class="text-amber-600 font-normal text-xs ml-1">(Modo Offline)</span>';
+      }
+    } else {
+      // Caso seja o primeiro acesso da pessoa e ela já abra sem internet
+      document.getElementById('loading').innerHTML = `
+        <div class="text-center py-6">
+          <i class="fa-solid fa-wifi text-3xl text-gray-300 mb-2"></i>
+          <p class="text-gray-600 font-semibold text-sm">Você está sem internet no momento.</p>
+          <p class="text-xs text-gray-400 mt-1">Conecte-se para carregar os anúncios pela primeira vez.</p>
+        </div>
+      `;
+    }
   }
 }
 
