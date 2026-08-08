@@ -482,7 +482,14 @@ function renderizarEmpresas() {
     const planoStr = String(emp.Plano || '').toLowerCase();
     const ehDestaque = emp.Plano && planoStr !== 'gratuito' && planoStr !== '';
 
-    const imgLogo = emp.URL_Logo_LH3 || 'https://via.placeholder.com/150?text=Akitamoios';
+    // LÓGICA DO AVATAR / LOGO:
+    // 1. Gera URL de Avatar dinâmico com as iniciais do Nome do Negócio (fundo azul e letras brancas)
+    const urlAvatarPadrao = `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.Nome_Negocio || 'Akitamoios')}&background=0284c7&color=ffffff&size=150&font-size=0.33`;
+    
+    // 2. Verifica se existe uma logo válida informada no cadastro
+    const temLogoValida = emp.URL_Logo_LH3 && emp.URL_Logo_LH3.trim().length > 10;
+    const imgLogo = temLogoValida ? emp.URL_Logo_LH3.trim() : urlAvatarPadrao;
+
     const msgWhats = encodeURIComponent(`Olá! Vi seu anúncio no Akitamoios e gostaria de mais informações.`);
     const linkGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((emp.Endereco || '') + ', Tamoios, Cabo Frio')}`;
 
@@ -507,7 +514,10 @@ function renderizarEmpresas() {
         
         <div class="${ehDestaque ? 'pt-1' : ''}">
           <div class="flex items-center gap-4 mb-4">
-            <img src="${imgLogo}" alt="${emp.Nome_Negocio}" class="w-16 h-16 rounded-xl object-cover border border-gray-100 shadow-sm">
+            <img src="${imgLogo}" 
+                 alt="${emp.Nome_Negocio}" 
+                 onerror="this.onerror=null; this.src='${urlAvatarPadrao}';" 
+                 class="w-16 h-16 rounded-xl object-cover border border-gray-100 shadow-sm flex-shrink-0">
             <div>
               <h3 class="font-bold text-gray-900 text-lg leading-snug">${emp.Nome_Negocio}</h3>
               <span class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-md mt-1 font-medium">${emp.Categoria}</span>
@@ -547,7 +557,6 @@ function renderizarEmpresas() {
     grid.innerHTML += card;
   });
 }
-
     // Lógica para o Mapa no Modal
     function abrirMapaModal(nome, endereco) {
       document.getElementById('modalMapa').classList.remove('hidden');
