@@ -543,9 +543,7 @@ function renderizarEmpresas() {
               <i class="fa-solid fa-location-dot text-red-500"></i> ${emp.Endereco || 'Tamoios - Cabo Frio'}
             </p>
             <div class="flex gap-1">
-              <button onclick="abrirMapaModal('${(emp.Nome_Negocio || '').replace(/'/g, "\\'")}', '${(emp.Endereco || '').replace(/'/g, "\\'")}')" class="text-oceano bg-blue-50 hover:bg-blue-100 font-bold px-2 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
-                <i class="fa-solid fa-map"></i> Ver
-              </button>
+              
               <a href="${linkGmaps}" target="_blank" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold px-2 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
                 <i class="fa-solid fa-diamond-turn-right"></i> Rota
               </a>
