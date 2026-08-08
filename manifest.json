@@ -1,0 +1,21 @@
+{
+  "short_name": "Akitamoios",
+  "name": "Akitamoios - Guia Comercial de Tamoios",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/index.html",
+  "background_color": "#ffffff",
+  "theme_color": "#0284c7",
+  "display": "standalone",
+  "orientation": "portrait"
+}
