@@ -86,109 +86,223 @@
   </script>
 
   <!-- ==================== HEADER ==================== -->
-  <header class="bg-oceano text-white shadow-md sticky top-0 z-40">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
-      <div class="flex items-center gap-2 cursor-pointer" onclick="filtrarCategoria('Todas')">
-        <i class="fa-solid fa-location-dot text-amareloSol text-2xl"></i>
-        <div>
-          <h1 class="text-2xl font-bold tracking-tight leading-none">Aki<span class="text-amareloSol"> Tamoios</span></h1>
-          <p class="text-xs text-blue-100">Tudo em um só lugar</p>
+<header class="bg-oceano text-white shadow-md sticky top-0 z-40">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+    <div class="flex items-center gap-2 cursor-pointer" onclick="filtrarCategoria('Todas')">
+      <i class="fa-solid fa-location-dot text-amareloSol text-2xl"></i>
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight leading-none">Aki<span class="text-amareloSol"> Tamoios</span></h1>
+        <p class="text-xs text-blue-100">Tudo em um só lugar</p>
+      </div>
+    </div>
+
+    <div class="flex gap-2 w-full sm:w-auto">
+      <button type="button" onclick="abrirModalCadastro('Gratuito')" class="flex-1 sm:flex-none bg-white text-oceano hover:bg-gray-100 font-semibold px-4 py-2 rounded-lg text-sm transition shadow-sm">
+        <i class="fa-solid fa-plus mr-1"></i> Cadastrar Grátis
+      </button>
+      <button type="button" onclick="abrirModalCadastro('Destaque_Home')" class="flex-1 sm:flex-none bg-amareloSol hover:bg-yellow-500 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm transition shadow-sm animate-pulse">
+        <i class="fa-solid fa-rocket mr-1"></i> Destaque-se
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== BARRA DE BUSCA E FILTROS ==================== -->
+<section class="bg-oceanoEscuro text-white py-8 px-4 shadow-inner">
+  <div class="max-w-3xl mx-auto space-y-5">
+    <div class="space-y-1">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+        O que você procura <span class="text-amareloSol">Aki em Tamoios</span>?
+      </h1>
+      <p class="text-sm text-blue-100">
+        Encontre comércios, serviços, horários e contatos com um clique!
+      </p>
+    </div>
+
+    <div class="relative">
+      <input type="text" id="campoBusca" oninput="filtrarEmpresas()" placeholder="Buscar por nome, serviço, pizzaria, farmácia..." 
+             class="w-full pl-11 pr-4 py-3.5 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-amareloSol shadow-md text-sm sm:text-base">
+      <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+    </div>
+
+    <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none text-sm" id="containerCategorias">
+      <button type="button" onclick="filtrarCategoria('Todas')" class="btn-cat bg-amareloSol text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm">Home</button>
+      <button type="button" onclick="filtrarCategoria('Alimentação')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Alimentação</button>
+      <button type="button" onclick="filtrarCategoria('Automotivo')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Automotivo</button>
+      <button type="button" onclick="filtrarCategoria('Comércio')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Comércio</button>
+      <button type="button" onclick="filtrarCategoria('Construção')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Construção</button>
+      <button type="button" onclick="filtrarCategoria('Educação')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Educação</button>
+      <button type="button" onclick="filtrarCategoria('Pet Shop')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Pet Shop</button>
+      <button type="button" onclick="filtrarCategoria('Saúde e Beleza')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Saúde e Beleza</button>
+      <button type="button" onclick="filtrarCategoria('Serviços')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Serviços</button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== BANNERS EM DESTAQUE ==================== -->
+<section id="secaoBanners" class="max-w-6xl mx-auto px-4 mt-6 hidden">
+  <div id="containerBanners" class="w-full overflow-hidden rounded-2xl shadow-lg border border-yellow-200 bg-white">
+    <!-- Banners carregados via JS -->
+  </div>
+</section>
+
+<!-- ==================== UTILIDADES E LINKS ÚTEIS ==================== -->
+<section id="secaoHomeUtilidades" class="max-w-6xl mx-auto px-4 mt-6 space-y-6">
+  <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 shadow-sm">
+    <div class="flex items-center gap-2 mb-3">
+      <i class="fa-solid fa-phone-volume text-oceano text-xl"></i>
+      <h3 class="font-bold text-gray-900 text-base">Telefones e Serviços Úteis - Tamoios / Cabo Frio</h3>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+      <a href="tel:190" class="bg-white p-3 rounded-xl border border-gray-200 flex flex-col items-center text-center hover:shadow-md transition">
+        <i class="fa-solid fa-shield-halved text-red-600 text-lg mb-1"></i>
+        <span class="font-bold text-gray-800">Polícia Militar</span>
+        <span class="text-gray-500">190</span>
+      </a>
+
+      <a href="tel:192" class="bg-white p-3 rounded-xl border border-gray-200 flex flex-col items-center text-center hover:shadow-md transition">
+        <i class="fa-solid fa-truck-medical text-emerald-600 text-lg mb-1"></i>
+        <span class="font-bold text-gray-800">SAMU</span>
+        <span class="text-gray-500">192</span>
+      </a>
+
+      <a href="tel:193" class="bg-white p-3 rounded-xl border border-gray-200 flex flex-col items-center text-center hover:shadow-md transition">
+        <i class="fa-solid fa-fire-extinguisher text-amber-600 text-lg mb-1"></i>
+        <span class="font-bold text-gray-800">Bombeiros</span>
+        <span class="text-gray-500">193</span>
+      </a>
+
+      <!-- Ajustado o Href para bater com o número visual -->
+      <a href="tel:2226439610" class="bg-white p-3 rounded-xl border border-gray-200 flex flex-col items-center text-center hover:shadow-md transition">
+        <i class="fa-solid fa-building-columns text-blue-600 text-lg mb-1"></i>
+        <span class="font-bold text-gray-800">Cartório Tamoios</span>
+        <span class="text-gray-500">(22) 2643-9610</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SEÇÃO PÚBLICA DE SORTEIOS ==================== -->
+<!-- Adicionada a classe 'hidden' aqui para começar oculta -->
+<section id="secaoSorteios" class="max-w-6xl mx-auto px-4 py-8 hidden">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-2xl font-black text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-gift text-amber-500"></i> Sorteios & Prêmios
+      </h2>
+      <p class="text-sm text-gray-600">Participe dos sorteios ativos dos comércios locais de Tamoios</p>
+    </div>
+  </div>
+
+  <div id="gridSorteiosPublico" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Os cards de sorteio serão injetados via JavaScript -->
+  </div>
+</section>
+
+<!-- ==================== MODAL DE INSCRIÇÃO NO SORTEIO ==================== -->
+<div id="modalInscricao" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative animate-fade-in">
+    <button type="button" onclick="fecharModalInscricao()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-2 rounded-full transition">
+      <i class="fa-solid fa-xmark text-xl"></i>
+    </button>
+
+    <div class="text-center mb-6 pt-2">
+      <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+        <i class="fa-solid fa-ticket"></i>
+      </div>
+      <h3 id="modalSorteioTitulo" class="text-xl font-bold text-gray-900 leading-snug">
+        Título do Sorteio
+      </h3>
+      <p id="modalSorteioLoja" class="text-xs font-semibold text-amber-600 uppercase tracking-wide mt-1">
+        Oferecido por: Nome do Estabelecimento
+      </p>
+    </div>
+
+    <form id="formInscricao" onsubmit="event.preventDefault(); return false;" class="space-y-4">
+      <input type="hidden" id="modalSorteioId" name="idSorteio">
+
+      <div>
+        <label for="partNome" class="block text-xs font-bold text-gray-700 uppercase mb-1">
+          Seu Nome Completo *
+        </label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <i class="fa-solid fa-user text-sm"></i>
+          </span>
+          <input type="text" id="partNome" required placeholder="Ex: Maria da Silva" 
+                 class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-amber-500 focus:bg-white transition">
         </div>
       </div>
 
-      <div class="flex gap-2 w-full sm:w-auto">
-        <button onclick="abrirModalCadastro('Gratuito')" class="flex-1 sm:flex-none bg-white text-oceano hover:bg-gray-100 font-semibold px-4 py-2 rounded-lg text-sm transition shadow-sm">
-          <i class="fa-solid fa-plus mr-1"></i> Cadastrar Grátis
+      <div>
+        <label for="partWhatsapp" class="block text-xs font-bold text-gray-700 uppercase mb-1">
+          WhatsApp com DDD *
+        </label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <i class="fa-brands fa-whatsapp text-sm"></i>
+          </span>
+          <input type="tel" id="partWhatsapp" required placeholder="(22) 99999-9999" inputmode="numeric"
+                 class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-amber-500 focus:bg-white transition">
+        </div>
+      </div>
+
+      <div>
+        <label for="partBairro" class="block text-xs font-bold text-gray-700 uppercase mb-1">
+          Seu Bairro / Região em Tamoios *
+        </label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <i class="fa-solid fa-location-dot text-sm"></i>
+          </span>
+          <input type="text" id="partBairro" required placeholder="Ex: Unamar, Aquarius, Samburá..." 
+                 class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-amber-500 focus:bg-white transition">
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button type="button" id="btnEnviarInscricao" onclick="enviarInscricao(event)"
+                class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2 text-sm">
+          <i class="fa-solid fa-check-circle"></i> Confirmar Inscrição
         </button>
-        <button onclick="abrirModalCadastro('Destaque_Home')" class="flex-1 sm:flex-none bg-amareloSol hover:bg-yellow-500 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm transition shadow-sm animate-pulse">
-          <i class="fa-solid fa-rocket mr-1"></i> Destaque-se
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- ==================== BARRA DE BUSCA E FILTROS ==================== -->
-  <section class="bg-oceanoEscuro text-white py-8 px-4 shadow-inner">
-    <div class="max-w-3xl mx-auto space-y-5">
-      <div class="space-y-1">
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-          O que você procura <span class="text-amareloSol">Aki em Tamoios</span>?
-        </h1>
-        <p class="text-sm text-blue-100">
-          Encontre comércios, serviços, horários e contatos com um clique!
-        </p>
       </div>
 
-      <div class="relative">
-        <input type="text" id="campoBusca" oninput="filtrarEmpresas()" placeholder="Buscar por nome, serviço, pizzaria, farmácia..." 
-          class="w-full pl-11 pr-4 py-3.5 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-amareloSol shadow-md text-sm sm:text-base">
-        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
-      </div>
-
-      <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none text-sm" id="containerCategorias">
-  <button onclick="filtrarCategoria('Todas')" class="btn-cat bg-amareloSol text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm">Todas</button>
-  <button onclick="filtrarCategoria('Alimentação')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Alimentação</button>
-  <button onclick="filtrarCategoria('Automotivo')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Automotivo</button>
-  <button onclick="filtrarCategoria('Comércio')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Comércio</button>
-  <button onclick="filtrarCategoria('Construção')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Construção</button>
-  <button onclick="filtrarCategoria('Educação')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Educação</button>
-  <button onclick="filtrarCategoria('Pet Shop')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Pet Shop</button>
-  <button onclick="filtrarCategoria('Saúde e Beleza')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Saúde e Beleza</button>
-  <button onclick="filtrarCategoria('Serviços')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Serviços</button>
+      <p class="text-[11px] text-gray-400 text-center leading-tight">
+        Ao se inscrever, você concorda em ser contatado caso seja o ganhador do sorteio.
+      </p>
+    </form>
+  </div>
 </div>
 
-    </div>
-  </section>
+<!-- ==================== LISTA DE EMPRESAS ==================== -->
+<main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+      <i class="fa-solid fa-store text-oceano"></i> Guia Comercial
+    </h2>
+    <span id="contadorEmpresas" class="text-sm bg-blue-100 text-oceano font-semibold px-3 py-1 rounded-full">0 encontrados</span>
+  </div>
 
-  <!-- ==================== BANNERS EM DESTAQUE ==================== -->
-  <section id="secaoBanners" class="max-w-6xl mx-auto px-4 mt-6 hidden">
-    <div id="containerBanners" class="w-full overflow-hidden rounded-2xl shadow-lg border border-yellow-200 bg-white">
-      <!-- Banners carregados via JS -->
-    </div>
-  </section>
+  <div id="loading" class="text-center py-12">
+    <i class="fa-solid fa-spinner fa-spin text-oceano text-4xl mb-3"></i>
+    <p class="text-gray-500 font-medium">Carregando empresas de Tamoios...</p>
+  </div>
 
-  <!-- ==================== ÁREA DE PROMOÇÕES ==================== -->
-  <section id="secaoPromocoes" class="max-w-6xl mx-auto px-4 mt-8 hidden">
-    <div class="flex items-center gap-2 mb-4">
-      <i class="fa-solid fa-fire text-red-500 text-2xl"></i>
-      <h2 class="text-xl font-bold text-gray-800">Promoções do Bairro</h2>
-    </div>
-    <div id="containerPromocoes" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      <!-- Cards de Ofertas carregados via JS -->
-    </div>
-  </section>
+  <div id="gridEmpresas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Cards gerados via JS -->
+  </div>
 
-  <!-- ==================== LISTA DE EMPRESAS (CARTÕES) ==================== -->
-  <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-        <i class="fa-solid fa-store text-oceano"></i> Guia Comercial
-      </h2>
-      <span id="contadorEmpresas" class="text-sm bg-blue-100 text-oceano font-semibold px-3 py-1 rounded-full">0 encontrados</span>
-    </div>
+  <div id="semResultados" class="hidden text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
+    <i class="fa-solid fa-store-slash text-gray-300 text-5xl mb-3"></i>
+    <p class="text-gray-600 font-semibold text-lg">Nenhum negócio encontrado.</p>
+    <p class="text-gray-400 text-sm mt-1">Tente mudar o termo da busca ou selecione outra categoria.</p>
+  </div>
+</main>
 
-    <!-- State de Carregando -->
-    <div id="loading" class="text-center py-12">
-      <i class="fa-solid fa-spinner fa-spin text-oceano text-4xl mb-3"></i>
-      <p class="text-gray-500 font-medium">Carregando empresas de Tamoios...</p>
-    </div>
-
-    <!-- Grid de Empresas -->
-    <div id="gridEmpresas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Cards gerados via JS -->
-    </div>
-
-    <div id="semResultados" class="hidden text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
-      <i class="fa-solid fa-store-slash text-gray-300 text-5xl mb-3"></i>
-      <p class="text-gray-600 font-semibold text-lg">Nenhum negócio encontrado.</p>
-      <p class="text-gray-400 text-sm mt-1">Tente mudar o termo da busca ou selecione outra categoria.</p>
-    </div>
-  </main>
-
-  <!-- ==================== FOOTER ==================== -->
-  <footer class="bg-gray-900 text-gray-400 py-8 px-4 border-t border-gray-800 text-sm">
+<!-- ==================== FOOTER ==================== -->
+<footer class="bg-gray-900 text-gray-400 py-8 px-4 border-t border-gray-800 text-sm">
   <div class="max-w-6xl mx-auto flex flex-col gap-6">
-    <!-- Topo do Footer -->
     <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
       <div>
         <p class="font-bold text-white text-base">Aki Tamoios</p>
@@ -197,10 +311,9 @@
       <p>© 2026 Aki Tamoios. Todos os direitos reservados.</p>
     </div>
 
-    <!-- Divisória suave -->
     <div class="border-t border-gray-800/80 pt-4 text-center">
       <p class="text-xs text-gray-400">
-        Encontrou dados incorretos, quer revindicar sua empresa? 
+        Encontrou dados incorretos, quer reivindicar sua empresa? 
         <a href="https://wa.me/5522981166221?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20ou%20alterar%20dados%20no%20Aki%20Tamoios." 
            target="_blank" 
            class="text-amareloSol hover:underline font-semibold inline-flex items-center gap-1 ml-1">
@@ -211,116 +324,111 @@
   </div>
 </footer>
 
-  <!-- ==================== MODAL DE CADASTRO ==================== -->
-  <div id="modalCadastro" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-      <div class="bg-oceano text-white p-4 flex justify-between items-center">
-        <h3 id="modalTitulo" class="font-bold text-lg">Cadastrar Negócio</h3>
-        <button onclick="fecharModalCadastro()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+<!-- ==================== MODAL DE CADASTRO ==================== -->
+<div id="modalCadastro" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+  <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+    <div class="bg-oceano text-white p-4 flex justify-between items-center">
+      <h3 id="modalTitulo" class="font-bold text-lg">Cadastrar Negócio</h3>
+      <button type="button" onclick="fecharModalCadastro()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+    </div>
+
+    <form id="formCadastro" onsubmit="enviarFormulario(event)" class="p-6 overflow-y-auto space-y-4">
+      <input type="hidden" id="planoEscolhido" value="Gratuito">
+
+      <div id="seletorPlanoContainer" class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+        <label class="block text-xs font-bold text-amber-900 uppercase tracking-wide mb-2">Escolha o Tipo de Anúncio:</label>
+        <div class="space-y-2 text-sm">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="radioPlano" value="Gratuito" checked onclick="mudarPlano('Gratuito')" class="text-oceano focus:ring-oceano">
+            <span><strong>Grátis</strong> (Listagem padrão no guia)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="radioPlano" value="Destaque_Categoria" onclick="mudarPlano('Destaque_Categoria')" class="text-oceano focus:ring-oceano">
+            <span><strong>Destaque Categoria</strong> - R$ 29,90/mês</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="radioPlano" value="Destaque_Home" onclick="mudarPlano('Destaque_Home')" class="text-oceano focus:ring-oceano">
+            <span><strong>Destaque Categoria + Banner</strong> - R$ 49,90/mês</span>
+          </label>
+        </div>
       </div>
 
-      <form id="formCadastro" onsubmit="enviarFormulario(event)" class="p-6 overflow-y-auto space-y-4">
-        <input type="hidden" id="planoEscolhido" value="Gratuito">
+      <div>
+        <label for="nomeNegocio" class="block text-xs font-bold text-gray-700 uppercase mb-1">Nome da Empresa / Negócio *</label>
+        <input type="text" id="nomeNegocio" required placeholder="Ex: Padaria do Bairro" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
+      </div>
 
-        <!-- Seleção de Plano dentro do Modal -->
-        <div id="seletorPlanoContainer" class="bg-amber-50 border border-amber-200 rounded-xl p-3">
-          <label class="block text-xs font-bold text-amber-900 uppercase tracking-wide mb-2">Escolha o Tipo de Anúncio:</label>
-          <div class="space-y-2 text-sm">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="radioPlano" value="Gratuito" checked onclick="mudarPlano('Gratuito')" class="text-oceano focus:ring-oceano">
-              <span><strong>Grátis</strong> (Listagem padrão no guia)</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="radioPlano" value="Destaque_Categoria" onclick="mudarPlano('Destaque_Categoria')" class="text-oceano focus:ring-oceano">
-              <span><strong>Destaque Categoria</strong> - R$ 29,90/mês</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="radioPlano" value="Destaque_Home" onclick="mudarPlano('Destaque_Home')" class="text-oceano focus:ring-oceano">
-              <span><strong>Destaque Categoria + Banner</strong> - R$ 49,90/mês</span>
-            </label>
-          </div>
-        </div>
-
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nome da Empresa / Negócio *</label>
-          <input type="text" id="nomeNegocio" required placeholder="Ex: Padaria do Bairro" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
+          <label for="categoria" class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoria *</label>
+          <select id="categoria" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none bg-white">
+            <option value="Alimentação">Alimentação</option>
+            <option value="Automotivo">Automotivo</option>
+            <option value="Comércio">Comércio</option>
+            <option value="Construção">Construção</option>
+            <option value="Educação">Educação</option>
+            <option value="Pet Shop">Pet Shop</option>
+            <option value="Saúde e Beleza">Saúde e Beleza</option>
+            <option value="Serviços">Serviços</option>
+            <option value="Outros">Outros</option>
+          </select>
         </div>
-
-
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoria *</label>
-            <select id="categoria" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none bg-white">
-  <option value="Alimentação">Alimentação</option>
-  <option value="Automotivo">Automotivo</option>
-  <option value="Comércio">Comércio</option>
-  <option value="Construção">Construção</option>
-  <option value="Educação">Educação</option>
-  <option value="Pet Shop">Pet Shop</option>
-  <option value="Saúde e Beleza">Saúde e Beleza</option>
-  <option value="Serviços">Serviços</option>
-  <option value="Outros">Outros</option>
-</select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp (com DDD) *</label>
-            <input type="tel" id="whatsapp" required placeholder="22999999999" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
-          </div>
+        <div>
+          <label for="whatsapp" class="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp (com DDD) *</label>
+          <input type="tel" id="whatsapp" required placeholder="22999999999" inputmode="numeric" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
         </div>
+      </div>
 
-<div class="mb-4">
-  <label for="nomeResponsavel" class="block text-xs font-semibold text-gray-700 mb-1">Nome do Responsável:</label>
-  <input type="text" id="nomeResponsavel" required placeholder="Ex: João da Silva" 
-         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+      <div>
+        <label for="endereco" class="block text-xs font-bold text-gray-700 uppercase mb-1">Endereço / Bairro *</label>
+        <input type="text" id="endereco" required placeholder="Ex: Av. Independência, Unamar" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="nomeResponsavel" class="block text-xs font-bold text-gray-700 uppercase mb-1">Responsável *</label>
+          <input type="text" id="nomeResponsavel" required placeholder="Ex: João da Silva" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-oceano outline-none">
+        </div>
+        <div>
+          <label for="chaveSeguranca" class="block text-xs font-bold text-gray-700 uppercase mb-1">Senha do Anúncio *</label>
+          <input type="password" id="chaveSeguranca" required placeholder="Senha de edição" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-oceano outline-none">
+        </div>
+      </div>
+
+      <div>
+        <label for="descricao" class="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição Breve do Negócio</label>
+        <textarea id="descricao" rows="2" placeholder="Ex: Entregas em domicílio, aceitamos cartões e PIX..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none"></textarea>
+      </div>
+
+      <div>
+        <label for="fotoInput" class="block text-xs font-bold text-gray-700 uppercase mb-1">Logo ou Foto da Fachada</label>
+        <input type="file" id="fotoInput" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-oceano hover:file:bg-blue-100">
+      </div>
+
+      <div class="pt-2">
+        <button type="submit" id="btnSalvar" class="w-full bg-oceano hover:bg-oceanoEscuro text-white font-bold py-3 rounded-xl transition shadow flex items-center justify-center gap-2">
+          <span>Salvar e Finalizar</span>
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
-<div class="mb-4">
-  <label for="chaveSeguranca" class="block text-xs font-semibold text-gray-700 mb-1">Palavra-Chave de Segurança:</label>
-  <input type="password" id="chaveSeguranca" required placeholder="Crie uma senha para edições futuras" 
-         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
-  <p class="text-[10px] text-gray-400 mt-0.5">Guarde esta senha. Ela será exigida para alterar ou excluir este anúncio.</p>
+<!-- ==================== MODAL DE NOTIFICAÇÃO ==================== -->
+<div id="modalNotificacao" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm transition-opacity">
+  <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-6 text-center transform transition-all space-y-4">
+    <div id="notificacaoIconeContainer" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl">
+      <i id="notificacaoIcone" class="fa-solid fa-check"></i>
+    </div>
+    <div class="space-y-1">
+      <h3 id="notificacaoTitulo" class="font-bold text-gray-900 text-lg">Sucesso!</h3>
+      <p id="notificacaoMensagem" class="text-sm text-gray-600 leading-relaxed">Sua operação foi concluída.</p>
+    </div>
+    <button type="button" onclick="fecharNotificacao()" id="btnFecharNotificacao" class="w-full bg-oceano hover:bg-oceanoEscuro text-white font-bold py-2.5 rounded-xl transition shadow">
+      Entendi
+    </button>
+  </div>
 </div>
-
-        <div>
-          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Endereço / Bairro *</label>
-          <input type="text" id="endereco" required placeholder="Ex: Av. Independência, Barra de Tamoios" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição Breve do Negócio</label>
-          <textarea id="descricao" rows="2" placeholder="Ex: Entregas ao domicílio, aceitamos cartões e PIX..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oceano outline-none"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Logo ou Foto da Fachada</label>
-          <input type="file" id="fotoInput" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-oceano hover:file:bg-blue-100">
-        </div>
-
-        <div class="pt-2">
-          <button type="submit" id="btnSalvar" class="w-full bg-oceano hover:bg-oceanoEscuro text-white font-bold py-3 rounded-xl transition shadow flex items-center justify-center gap-2">
-            <span>Salvar e Finalizar</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ==================== MODAL DE NOTIFICAÇÃO ==================== -->
-  <div id="modalNotificacao" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm transition-opacity">
-    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-6 text-center transform transition-all space-y-4">
-      <div id="notificacaoIconeContainer" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl">
-        <i id="notificacaoIcone" class="fa-solid fa-check"></i>
-      </div>
-      <div class="space-y-1">
-        <h3 id="notificacaoTitulo" class="font-bold text-gray-900 text-lg">Sucesso!</h3>
-        <p id="notificacaoMensagem" class="text-sm text-gray-600 leading-relaxed">Sua operação foi concluída.</p>
-      </div>
-      <button onclick="fecharNotificacao()" id="btnFecharNotificacao" class="w-full bg-oceano hover:bg-oceanoEscuro text-white font-bold py-2.5 rounded-xl transition shadow">
-        Entendi
-      </button>
-    </div>
-  </div>
 
 <div id="modalValidarDono" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl relative animate-fade-in">
@@ -462,7 +570,7 @@
     
     document.getElementById('loading').classList.add('hidden');
     renderizarEmpresas();
-    renderizarPromocoes();
+    
     renderizarBanners(); // Agora executa com a nova lógica de carrossel rotativo
 
   } catch (err) {
@@ -480,7 +588,7 @@
 
       document.getElementById('loading').classList.add('hidden');
       renderizarEmpresas();
-      renderizarPromocoes();
+      
       renderizarBanners();
 
       // Alerta sutil no contador informando o modo offline
@@ -532,12 +640,43 @@
     }
 
 // Renderizar Cards de Empresas (Com Ordenação por Plano e Estilização de Destaque)
+// Variable global para controlar quantidade de empresas visíveis se necessário
 function renderizarEmpresas() {
   const grid = document.getElementById('gridEmpresas');
-  const termoBusca = document.getElementById('campoBusca').value.toLowerCase();
+  const termoBusca = document.getElementById('campoBusca').value.toLowerCase().trim();
+  const secaoHomeUtilidades = document.getElementById('secaoHomeUtilidades'); // Elemento novo da Home
+  
   grid.innerHTML = '';
 
-  // 1. Filtragem inicial (Categoria e Busca)
+  // 1. LÓGICA DA HOME vs CATEGORIAS ESPECÍFICAS
+  // Se o usuário estiver em "Todas" E NÃO digitou nada na busca -> Exibe Portal Home
+  if (categoriaAtual === 'Todas' && termoBusca === '') {
+    if (secaoHomeUtilidades) secaoHomeUtilidades.classList.remove('hidden');
+    
+    // Na Home "Todas", vamos renderizar APENAS as empresas de plano Destaque Home
+    let destaquesHome = (dadosGlobais.empresas || []).filter(emp => {
+      const plano = String(emp.Plano || '').toLowerCase();
+      return plano.includes('home') || plano.includes('promocao') || plano.includes('49');
+    });
+
+    document.getElementById('contadorEmpresas').innerText = `${destaquesHome.length} destaques`;
+
+    if (destaquesHome.length === 0) {
+      grid.innerHTML = `
+        <div class="col-span-full text-center py-6 text-gray-500 text-sm">
+          Selecione uma categoria acima para navegar pelos estabelecimentos.
+        </div>`;
+      return;
+    }
+
+    renderizarCardsNaGrid(destaquesHome, grid);
+    return;
+  }
+
+  // 2. SE ELE DIGITOU NA BUSCA OU SELECIONOU UMA CATEGORIA ESPECÍFICA:
+  // Esconde a área de utilidades/boas-vindas para focar nos resultados
+  if (secaoHomeUtilidades) secaoHomeUtilidades.classList.add('hidden');
+
   let filtradas = (dadosGlobais.empresas || []).filter(emp => {
     const bateCategoria = categoriaAtual === 'Todas' || emp.Categoria === categoriaAtual;
     const bateBusca = (emp.Nome_Negocio && emp.Nome_Negocio.toLowerCase().includes(termoBusca)) || 
@@ -546,15 +685,14 @@ function renderizarEmpresas() {
     return bateCategoria && bateBusca;
   });
 
-  // 2. ORDENAÇÃO PRIORITÁRIA (Destaques no Topo)
+  // Ordenação: Destaques da Categoria no Topo, depois Gratuito
   filtradas.sort((a, b) => {
     const getPeso = (emp) => {
       const plano = String(emp.Plano || '').toLowerCase();
-      if (plano.includes('home') || plano.includes('promocao') || plano.includes('49')) return 1; // Topo (R$ 49,90)
-      if (plano.includes('categoria') || plano.includes('29')) return 2;                          // Segundo Topo (R$ 29,90)
-      return 3;                                                                                  // Gratuito
+      if (plano.includes('home') || plano.includes('49')) return 1;
+      if (plano.includes('categoria') || plano.includes('29')) return 2;
+      return 3;
     };
-
     return getPeso(a) - getPeso(b);
   });
 
@@ -562,24 +700,23 @@ function renderizarEmpresas() {
 
   if (filtradas.length === 0) {
     document.getElementById('semResultados').classList.remove('hidden');
-    return;
   } else {
     document.getElementById('semResultados').classList.add('hidden');
+    renderizarCardsNaGrid(filtradas, grid);
   }
+}
 
-  // 3. Renderização dos Cards
-  filtradas.forEach(emp => {
-    // Identifica se é plano Pago/Destaque
+// Função auxiliar reutilizável para desenhar os Cards
+function renderizarCardsNaGrid(lista, container) {
+  lista.forEach(emp => {
     const planoStr = String(emp.Plano || '').toLowerCase();
     const ehDestaque = emp.Plano && planoStr !== 'gratuito' && planoStr !== '';
 
-    // LÓGICA DO AVATAR / LOGO
     const urlAvatarPadrao = `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.Nome_Negocio || 'Akitamoios')}&background=0284c7&color=ffffff&size=150&font-size=0.33`;
     const temLogoValida = emp.URL_Logo_LH3 && emp.URL_Logo_LH3.trim().length > 10;
     const imgLogo = temLogoValida ? emp.URL_Logo_LH3.trim() : urlAvatarPadrao;
 
-    // LÓGICA DE FORMATAÇÃO DO TELEFONE/WHATSAPP (Exiba em texto visível)
-    const numWhatsLimpo = String(emp.WhatsApp || '').replace(/\D/g, ''); // Apenas números
+    const numWhatsLimpo = String(emp.WhatsApp || '').replace(/\D/g, '');
     let whatsFormatado = emp.WhatsApp || 'Não informado';
 
     if (numWhatsLimpo.length === 11) {
@@ -590,18 +727,14 @@ function renderizarEmpresas() {
 
     const msgWhats = encodeURIComponent(`Olá! Vi seu anúncio no Aki Tamoios e gostaria de mais informações.`);
     const linkGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((emp.Endereco || '') + ', Tamoios, Cabo Frio')}`;
-
-    // ID do anúncio
     const idAnuncio = emp.ID_Cadastro || emp.id || emp.ID || '';
 
-    // Estilos dinâmicos do Card Destaque vs Card Normal
     const classeBordaEAnel = ehDestaque 
       ? 'border-2 border-amareloSol ring-4 ring-amareloSol/20 shadow-md scale-[1.01]' 
       : 'border border-gray-100 shadow-sm';
 
     const card = `
       <div class="bg-white rounded-2xl ${classeBordaEAnel} hover:shadow-lg p-5 flex flex-col justify-between transition-all duration-300 relative overflow-hidden">
-        
         ${ehDestaque ? `
           <div class="absolute top-0 right-0">
             <span class="bg-amareloSol text-gray-900 text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm flex items-center gap-1">
@@ -622,7 +755,6 @@ function renderizarEmpresas() {
             </div>
           </div>
           
-          <!-- Descrição sem limitações de linhas (Texto Completo) -->
           <p class="text-gray-600 text-sm mb-4 leading-relaxed whitespace-pre-line">${emp.Descricao || 'Atendimento de qualidade em Tamoios.'}</p>
         </div>
 
@@ -638,7 +770,6 @@ function renderizarEmpresas() {
             </div>
           </div>
 
-          <!-- Contato em texto visível (Funciona offline e para chamadas de voz) -->
           <div class="flex items-center justify-center gap-2 bg-gray-50 py-1.5 px-3 rounded-lg text-xs font-semibold text-gray-700 border border-gray-100">
             <i class="fa-solid fa-phone text-blue-600 text-xs"></i>
             <span>Tel: <a href="tel:${numWhatsLimpo}" class="hover:underline text-gray-900 font-bold">${whatsFormatado}</a></span>
@@ -658,74 +789,11 @@ function renderizarEmpresas() {
         </div>
       </div>
     `;
-    grid.innerHTML += card;
+    container.innerHTML += card;
   });
 }
-    // Lógica para o Mapa no Modal
-    function abrirMapaModal(nome, endereco) {
-      document.getElementById('modalMapa').classList.remove('hidden');
-      document.getElementById('mapaTitulo').innerHTML = `<i class="fa-solid fa-location-dot text-amareloSol"></i> ${nome}`;
-      document.getElementById('mapaEndereco').innerText = endereco ? `${endereco}, Tamoios - Cabo Frio` : 'Tamoios, Cabo Frio - RJ';
-      
-      const urlGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((endereco || '') + ', Tamoios, Cabo Frio')}`;
-      document.getElementById('btnGmapsExterno').href = urlGmaps;
-
-      const latPadrao = -22.6288;
-      const lngPadrao = -42.0225;
-
-      setTimeout(() => {
-        if (!leafletMap) {
-          leafletMap = L.map('mapaContainer').setView([latPadrao, lngPadrao], 14);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-          }).addTo(leafletMap);
-        } else {
-          leafletMap.invalidateSize();
-          leafletMap.setView([latPadrao, lngPadrao], 14);
-        }
-
-        if (leafletMarker) {
-          leafletMap.removeLayer(leafletMarker);
-        }
-
-        leafletMarker = L.marker([latPadrao, lngPadrao]).addTo(leafletMap)
-          .bindPopup(`<b>${nome}</b><br>${endereco || 'Tamoios'}`)
-          .openPopup();
-      }, 300);
-    }
-
-    function fecharModalMapa() {
-      document.getElementById('modalMapa').classList.add('hidden');
-    }
-
-    // Renderizar Promoções
-    function renderizarPromocoes() {
-      const container = document.getElementById('containerPromocoes');
-      const secao = document.getElementById('secaoPromocoes');
-      
-      if (!dadosGlobais.promocoes || dadosGlobais.promocoes.length === 0) {
-        secao.classList.add('hidden');
-        return;
-      }
-
-      secao.classList.remove('hidden');
-      container.innerHTML = '';
-
-      dadosGlobais.promocoes.forEach(p => {
-        const card = `
-          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-4 items-center">
-            <img src="${p.Foto_Oferta_LH3}" class="w-20 h-20 rounded-xl object-cover">
-            <div>
-              <span class="text-[10px] font-bold uppercase bg-red-500 text-white px-2 py-0.5 rounded-md">Oferta</span>
-              <h4 class="font-bold text-gray-900 text-sm mt-1">${p.Titulo_Oferta}</h4>
-              <p class="text-xs text-gray-600 mt-0.5">${p.Regras}</p>
-            </div>
-          </div>
-        `;
-        container.innerHTML += card;
-      });
-    }
-let bannerAtualIndex = 0;
+   
+    let bannerAtualIndex = 0;
 let intervaloBanner = null;
 
 // Renderizar Banners Rotativos
@@ -1169,6 +1237,208 @@ async function excluirAnuncioCliente() {
         .catch(err => console.error('Erro ao registrar Service Worker:', err));
     });
   }
+
+
+// ==========================================
+// FUNÇÕES DE SORTEIOS E INSCRIÇÃO (CORRIGIDO)
+// ==========================================
+
+/**
+ * Busca os sorteios ativos no backend e desenha na tela do HTML
+ */
+async function carregarSorteiosPublico() {
+  const container = document.getElementById('gridSorteiosPublico');
+  const secaoSorteios = document.getElementById('secaoSorteios'); // Captura a section pai
+  
+  if (!container) {
+    console.error("❌ ERRO: Elemento HTML '#gridSorteiosPublico' não foi encontrado no DOM!");
+    return;
+  }
+
+  const urlBusca = `${API_URL}?acao=buscarSorteiosPublicos`;
+  console.log("🔍 [Sorteios] Iniciando requisição para:", urlBusca);
+
+  try {
+    const res = await fetch(urlBusca);
+    if (!res.ok) throw new Error(`Erro HTTP: ${res.status}`);
+
+    const data = await res.json();
+    console.log("✅ [Sorteios] Dados recebidos:", data);
+
+    let listaSorteios = [];
+    
+    if (data.sorteioAtivo && Object.keys(data.sorteioAtivo).length > 0) {
+      listaSorteios = [data.sorteioAtivo];
+    } else if (Array.isArray(data.sorteios)) {
+      listaSorteios = data.sorteios;
+    } else if (Array.isArray(data)) {
+      listaSorteios = data;
+    }
+
+    const sorteiosAtivos = listaSorteios.filter(s => {
+      const status = String(s.Status || s.status || '').trim().toLowerCase();
+      return status === 'ativo';
+    });
+
+    // SE NÃO HOUVER SORTEIOS ATIVOS: Esconde a seção inteira e encerra
+    if (sorteiosAtivos.length === 0) {
+      if (secaoSorteios) secaoSorteios.classList.add('hidden');
+      return;
+    }
+
+    // SE HOUVER SORTEIOS ATIVOS: Garante que a seção fique visível
+    if (secaoSorteios) secaoSorteios.classList.remove('hidden');
+
+    let htmlSorteios = '';
+
+    sorteiosAtivos.forEach((sorteio, index) => {
+      const idSorteio = sorteio.ID_Sorteio || sorteio.id || index;
+      const titulo = sorteio.Titulo || sorteio.titulo || 'Sorteio Especial';
+      const loja = sorteio.Loja_Parceira || sorteio.Nome_Loja || sorteio.loja || 'Comércio de Tamoios';
+      const descricao = sorteio.Regras || sorteio.Descricao || sorteio.descricao || 'Participe e concorra a este prêmio incrível!';
+      
+      let foto = sorteio.URL_Foto_LH3 || sorteio.URL_Foto || sorteio.foto || 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=500&q=80';
+      if (foto.includes('drive.google.com/file/d/')) {
+        const fileId = foto.split('/d/')[1].split('/')[0];
+        foto = `https://lh3.googleusercontent.com/d/${fileId}`;
+      }
+
+      const dataSorteio = sorteio.Data_Sorteio || sorteio.dataSorteio || 'Em breve';
+
+      htmlSorteios += `
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col justify-between">
+          <div>
+            <div class="relative h-48 bg-gray-100">
+              <img src="${foto}" alt="${titulo}" class="w-full h-full object-cover">
+              <span class="absolute top-3 right-3 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow">
+                <i class="fa-solid fa-fire"></i> Ativo
+              </span>
+            </div>
+            
+            <div class="p-5">
+              <span class="text-xs font-bold text-amber-600 uppercase tracking-wide">${loja}</span>
+              <h3 class="font-black text-gray-900 text-lg leading-snug mt-1 mb-2">${titulo}</h3>
+              <p class="text-gray-600 text-xs line-clamp-3 leading-relaxed mb-4">${descricao}</p>
+            </div>
+          </div>
+
+          <div class="p-5 pt-0 space-y-3">
+            <div class="flex items-center justify-between text-xs text-gray-500 bg-amber-50/60 p-2.5 rounded-xl border border-amber-100">
+              <span class="font-medium flex items-center gap-1.5 text-amber-900">
+                <i class="fa-regular fa-calendar-days text-amber-600"></i> Data do Sorteio:
+              </span>
+              <strong class="text-amber-900">${dataSorteio}</strong>
+            </div>
+
+            <button type="button" onclick="abrirModalInscricao('${idSorteio}', '${titulo.replace(/'/g, "\\'")}', '${loja.replace(/'/g, "\\'")}')" 
+                    class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition text-sm">
+              <i class="fa-solid fa-ticket"></i> Quero Participar
+            </button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = htmlSorteios;
+
+  } catch (error) {
+    console.error("🚨 [Sorteios] Erro ao carregar:", error);
+    // Caso dê erro na API, esconde a seção para evitar poluição visual na tela
+    if (secaoSorteios) secaoSorteios.classList.add('hidden');
+  }
+}
+/**
+ * Abre o modal preenchendo os dados do sorteio selecionado
+ */
+function abrirModalInscricao(idSorteio, titulo, loja) {
+  document.getElementById('modalSorteioId').value = idSorteio;
+  document.getElementById('modalSorteioTitulo').innerText = titulo;
+  document.getElementById('modalSorteioLoja').innerText = `Oferecido por: ${loja}`;
+  
+  document.getElementById('partNome').value = '';
+  document.getElementById('partWhatsapp').value = '';
+  document.getElementById('partBairro').value = '';
+
+  document.getElementById('modalInscricao').classList.remove('hidden');
+}
+
+/**
+ * Fecha o modal de inscrição
+ */
+function fecharModalInscricao() {
+  document.getElementById('modalInscricao').classList.add('hidden');
+}
+
+/**
+ * Envia os dados do participante especificamente para o fluxo de sorteios
+ */
+async function enviarInscricao(event) {
+  // Previne qualquer submissão de formulários pais/globais
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const btn = document.getElementById('btnEnviarInscricao');
+  const idSorteio = document.getElementById('modalSorteioId').value;
+  const nome = document.getElementById('partNome').value.trim();
+  const whatsapp = document.getElementById('partWhatsapp').value.trim();
+  const bairro = document.getElementById('partBairro').value.trim();
+
+  if (!nome || !whatsapp || !bairro) {
+    alert("Por favor, preencha todos os campos obrigatórios (Nome, WhatsApp e Bairro).");
+    return;
+  }
+
+  // Trava o botão e ativa spinner
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Confirmando...`;
+  }
+
+  const payload = {
+    acao: "inscreverSorteio",
+    idSorteio: idSorteio,
+    nome: nome,
+    whatsapp: whatsapp,
+    bairro: bairro
+  };
+
+  try {
+    // Força o parâmetro da URL para o Apps Script capturar no e.parameter
+    const urlEndpoint = `${API_URL}?acao=inscreverSorteio`;
+
+    const res = await fetch(urlEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    console.log("📥 Resposta da Inscrição:", data);
+
+    if (data.status === "sucesso" || data.sucesso) {
+      alert("🎉 " + (data.mensagem || "Inscrição realizada com sucesso! Boa sorte!"));
+      fecharModalInscricao();
+    } else {
+      alert("⚠️ " + (data.mensagem || "Erro ao realizar inscrição. Tente novamente."));
+    }
+  } catch (error) {
+    console.error("🚨 Erro na inscrição:", error);
+    alert("❌ Ocorreu um erro ao enviar sua inscrição. Verifique sua conexão e tente novamente.");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-check-circle"></i> Confirmar Inscrição`;
+    }
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  carregarSorteiosPublico();
+});
+
+
 </script>
 
 </body>
