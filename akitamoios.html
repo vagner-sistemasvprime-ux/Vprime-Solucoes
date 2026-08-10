@@ -640,31 +640,43 @@
     }
 
 // Renderizar Cards de Empresas (Com Ordenação por Plano e Estilização de Destaque)
-// Variable global para controlar quantidade de empresas visíveis se necessário
 function renderizarEmpresas() {
   const grid = document.getElementById('gridEmpresas');
   const termoBusca = document.getElementById('campoBusca').value.toLowerCase().trim();
-  const secaoHomeUtilidades = document.getElementById('secaoHomeUtilidades'); // Elemento novo da Home
+  const secaoHomeUtilidades = document.getElementById('secaoHomeUtilidades');
+  const secaoSorteios = document.getElementById('secaoSorteios'); // Elemento dos Sorteios
+  const semResultados = document.getElementById('semResultados');
+
+  if (!grid) return;
   
   grid.innerHTML = '';
 
-  // 1. LÓGICA DA HOME vs CATEGORIAS ESPECÍFICAS
-  // Se o usuário estiver em "Todas" E NÃO digitou nada na busca -> Exibe Portal Home
+  // =========================================================
+  // 1. LÓGICA DA HOME PORTAL (Categoria "Todas" E Busca Vazia)
+  // =========================================================
   if (categoriaAtual === 'Todas' && termoBusca === '') {
+    // Exibe a seção de utilidades/telefones da Home
     if (secaoHomeUtilidades) secaoHomeUtilidades.classList.remove('hidden');
-    
-    // Na Home "Todas", vamos renderizar APENAS as empresas de plano Destaque Home
+
+    // Tenta carregar/exibir os sorteios (a função carregarSorteiosPublico decide se mostra ou oculta se houver dados)
+    if (typeof carregarSorteiosPublico === 'function') {
+      carregarSorteiosPublico();
+    }
+
+    // Na Home "Todas", renderizamos APENAS as empresas de plano Destaque Home / Promoção
     let destaquesHome = (dadosGlobais.empresas || []).filter(emp => {
       const plano = String(emp.Plano || '').toLowerCase();
       return plano.includes('home') || plano.includes('promocao') || plano.includes('49');
     });
 
+    if (semResultados) semResultados.classList.add('hidden');
     document.getElementById('contadorEmpresas').innerText = `${destaquesHome.length} destaques`;
 
     if (destaquesHome.length === 0) {
       grid.innerHTML = `
-        <div class="col-span-full text-center py-6 text-gray-500 text-sm">
-          Selecione uma categoria acima para navegar pelos estabelecimentos.
+        <div class="col-span-full text-center py-8 text-gray-500 text-sm bg-white rounded-2xl border border-dashed border-gray-200">
+          <i class="fa-solid fa-store text-2xl text-gray-300 mb-2"></i>
+          <p class="font-medium">Selecione uma categoria acima ou pesquise para ver todos os estabelecimentos.</p>
         </div>`;
       return;
     }
@@ -673,9 +685,12 @@ function renderizarEmpresas() {
     return;
   }
 
-  // 2. SE ELE DIGITOU NA BUSCA OU SELECIONOU UMA CATEGORIA ESPECÍFICA:
-  // Esconde a área de utilidades/boas-vindas para focar nos resultados
+  // =========================================================
+  // 2. SE ELE DIGITOU NA BUSCA OU SELECIONOU UMA CATEGORIA:
+  // =========================================================
+  // Esconde os blocos institucionais da Home para focar na busca do usuário
   if (secaoHomeUtilidades) secaoHomeUtilidades.classList.add('hidden');
+  if (secaoSorteios) secaoSorteios.classList.add('hidden'); // Esconde sorteios durante pesquisas
 
   let filtradas = (dadosGlobais.empresas || []).filter(emp => {
     const bateCategoria = categoriaAtual === 'Todas' || emp.Categoria === categoriaAtual;
@@ -685,7 +700,7 @@ function renderizarEmpresas() {
     return bateCategoria && bateBusca;
   });
 
-  // Ordenação: Destaques da Categoria no Topo, depois Gratuito
+  // Ordenação: Destaques da Categoria no Topo (1), Destaque Padrão (2), Gratuito (3)
   filtradas.sort((a, b) => {
     const getPeso = (emp) => {
       const plano = String(emp.Plano || '').toLowerCase();
@@ -699,9 +714,9 @@ function renderizarEmpresas() {
   document.getElementById('contadorEmpresas').innerText = `${filtradas.length} encontrados`;
 
   if (filtradas.length === 0) {
-    document.getElementById('semResultados').classList.remove('hidden');
+    if (semResultados) semResultados.classList.remove('hidden');
   } else {
-    document.getElementById('semResultados').classList.add('hidden');
+    if (semResultados) semResultados.classList.add('hidden');
     renderizarCardsNaGrid(filtradas, grid);
   }
 }
