@@ -284,6 +284,15 @@
     <span id="contadorEmpresas" class="text-sm bg-blue-100 text-oceano font-semibold px-3 py-1 rounded-full">0 encontrados</span>
   </div>
 
+  <!-- Botão "Ver Todos os Destaques" (Inicia oculto 'hidden' e só aparece via JS se houver + de 1 VIP) -->
+  <div id="containerBtnVerTodosVips" class="flex justify-center mb-6 hidden">
+    <button type="button" onclick="exibirTodosOsVips()" 
+            class="inline-flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold py-2.5 px-5 rounded-xl text-xs transition shadow-sm cursor-pointer">
+      <i class="fa-solid fa-crown text-amber-500 text-sm"></i>
+      Ver todos os <span id="qtdVipsBadge" class="bg-amber-500 text-white font-black px-2 py-0.5 rounded-full text-[10px]">0</span> Destaques
+    </button>
+  </div>
+
   <div id="loading" class="text-center py-12">
     <i class="fa-solid fa-spinner fa-spin text-oceano text-4xl mb-3"></i>
     <p class="text-gray-500 font-medium">Carregando empresas de Tamoios...</p>
@@ -299,7 +308,6 @@
     <p class="text-gray-400 text-sm mt-1">Tente mudar o termo da busca ou selecione outra categoria.</p>
   </div>
 </main>
-
 <!-- ==================== FOOTER ==================== -->
 <footer class="bg-gray-900 text-gray-400 py-8 px-4 border-t border-gray-800 text-sm">
   <div class="max-w-6xl mx-auto flex flex-col gap-6">
@@ -348,7 +356,7 @@
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="radio" name="radioPlano" value="Destaque_Home" onclick="mudarPlano('Destaque_Home')" class="text-oceano focus:ring-oceano">
-            <span><strong>Destaque Categoria + Banner</strong> - R$ 49,90/mês</span>
+            <span><strong>Destaque Principal + Categoria</strong> - R$ 49,90/mês</span>
           </label>
         </div>
       </div>
@@ -469,9 +477,21 @@
         <input type="text" id="editClienteNome" required class="w-full px-3 py-2 border rounded-lg text-sm">
       </div>
 
+      <!-- CAMPO DE CATEGORIA CONVERTIDO PARA SELECT -->
       <div>
         <label class="block text-xs font-semibold text-gray-700 mb-1">Categoria:</label>
-        <input type="text" id="editClienteCategoria" required class="w-full px-3 py-2 border rounded-lg text-sm">
+        <select id="editClienteCategoria" required class="w-full px-3 py-2 border rounded-lg text-sm bg-white cursor-pointer">
+          <option value="Alimentação">Alimentação</option>
+            <option value="Automotivo">Automotivo</option>
+            <option value="Comércio">Comércio</option>
+            <option value="Construção">Construção</option>
+            <option value="Educação">Educação</option>
+            <option value="Pet Shop">Pet Shop</option>
+            <option value="Saúde e Beleza">Saúde e Beleza</option>
+            <option value="Serviços">Serviços</option>
+            <option value="Outros">Outros</option>
+
+        </select>
       </div>
 
       <div>
@@ -489,7 +509,7 @@
         <textarea id="editClienteDescricao" rows="3" class="w-full px-3 py-2 border rounded-lg text-sm"></textarea>
       </div>
 
-      <!-- NOVO CAMPO: Alterar Foto / Logo -->
+      <!-- CAMPO: Alterar Foto / Logo -->
       <div>
         <label class="block text-xs font-semibold text-gray-700 mb-1">Foto / Logo do Negócio:</label>
         <div class="flex items-center gap-3 mb-2">
@@ -511,7 +531,6 @@
     </form>
   </div>
 </div>
-
 
   <!-- ==================== LOGICA JAVASCRIPT ==================== -->
   <script>
@@ -639,31 +658,112 @@
       document.getElementById('modalNotificacao').classList.add('hidden');
     }
 
-// Renderizar Cards de Empresas (Com Ordenação por Plano e Estilização de Destaque)
+// Variável global para guardar os destaques da Home
+let listaDestaquesGlobal = [];
+let intervaloDestaquesHome = null;
+
+// =========================================================
+// FUNÇÃO DE ROTAÇÃO/RODÍZIO DE 1 DESTAQUE POR VEZ
+// =========================================================
+function renderizarDestaquesComRotacao(listaDestaques, gridElement) {
+  listaDestaquesGlobal = listaDestaques; // Salva para o botão usar depois
+
+  const containerBtn = document.getElementById('containerBtnVerTodosVips');
+  const badgeQtd = document.getElementById('qtdVipsBadge');
+
+  // 1. Limpa temporizador anterior para evitar duplicação de processos
+  if (intervaloDestaquesHome) {
+    clearInterval(intervaloDestaquesHome);
+    intervaloDestaquesHome = null;
+  }
+
+  // 2. Exibe o botão se houver mais de 1 destaque (ou para testes)
+  if (containerBtn && badgeQtd && listaDestaques.length > 1) {
+    badgeQtd.innerText = listaDestaques.length;
+    containerBtn.classList.remove('hidden');
+  } else if (containerBtn) {
+    containerBtn.classList.add('hidden');
+  }
+
+  // Estiliza o container para centralizar 1 card
+  gridElement.className = "flex justify-center items-center w-full my-4";
+
+  // 3. Função interna para sorteio e renderização sem duplicar
+  const sortearEExibir = () => {
+    gridElement.innerHTML = ''; // LIMPA O GRID ANTES DE RENDERIZAR
+    const embaralhados = [...listaDestaques].sort(() => Math.random() - 0.5);
+    const selecionado = embaralhados.slice(0, 1);
+    renderizarCardsNaGrid(selecionado, gridElement);
+  };
+
+  // Renderiza o primeiro card imediatamente
+  sortearEExibir();
+
+  // 4. Inicia rotação a cada 7 segundos se houver mais de 1 destaque
+  if (listaDestaques.length > 1) {
+    intervaloDestaquesHome = setInterval(() => {
+      gridElement.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+
+      setTimeout(() => {
+        sortearEExibir();
+        gridElement.classList.remove('opacity-0');
+      }, 500);
+    }, 7000);
+  }
+}
+
+// =========================================================
+// FUNÇÃO DISPARADA AO CLICAR EM "VER TODOS OS DESTAQUES"
+// =========================================================
+function exibirTodosOsVips() {
+  const grid = document.getElementById('gridEmpresas');
+  const containerBtn = document.getElementById('containerBtnVerTodosVips');
+
+  // 1. Para a rotação imediatamente
+  if (intervaloDestaquesHome) {
+    clearInterval(intervaloDestaquesHome);
+    intervaloDestaquesHome = null;
+  }
+
+  // 2. Esconde o próprio botão
+  if (containerBtn) containerBtn.classList.add('hidden');
+
+  // 3. Volta as classes para o formato de Grid com várias colunas
+  grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 my-4";
+
+  // 4. LIMPA O GRID e renderiza a lista completa de VIPs (uma única vez)
+  grid.innerHTML = '';
+  renderizarCardsNaGrid(listaDestaquesGlobal, grid);
+}
+
+
+// =========================================================
+// RENDERIZAR EMPRESAS (ATUALIZADA COM CONTROLADOR DE HOME)
+// =========================================================
 function renderizarEmpresas() {
   const grid = document.getElementById('gridEmpresas');
   const termoBusca = document.getElementById('campoBusca').value.toLowerCase().trim();
   const secaoHomeUtilidades = document.getElementById('secaoHomeUtilidades');
-  const secaoSorteios = document.getElementById('secaoSorteios'); // Elemento dos Sorteios
+  const secaoSorteios = document.getElementById('secaoSorteios');
   const semResultados = document.getElementById('semResultados');
 
   if (!grid) return;
-  
+
   grid.innerHTML = '';
 
   // =========================================================
   // 1. LÓGICA DA HOME PORTAL (Categoria "Todas" E Busca Vazia)
   // =========================================================
   if (categoriaAtual === 'Todas' && termoBusca === '') {
-    // Exibe a seção de utilidades/telefones da Home
+    // Exibe a seção de utilidades da Home
     if (secaoHomeUtilidades) secaoHomeUtilidades.classList.remove('hidden');
 
-    // Tenta carregar/exibir os sorteios (a função carregarSorteiosPublico decide se mostra ou oculta se houver dados)
+    // Tenta carregar os sorteios (esconde ou exibe automaticamente)
     if (typeof carregarSorteiosPublico === 'function') {
       carregarSorteiosPublico();
     }
 
-    // Na Home "Todas", renderizamos APENAS as empresas de plano Destaque Home / Promoção
+    // Filtra empresas do Plano Destaque Home / Promoção
     let destaquesHome = (dadosGlobais.empresas || []).filter(emp => {
       const plano = String(emp.Plano || '').toLowerCase();
       return plano.includes('home') || plano.includes('promocao') || plano.includes('49');
@@ -673,24 +773,36 @@ function renderizarEmpresas() {
     document.getElementById('contadorEmpresas').innerText = `${destaquesHome.length} destaques`;
 
     if (destaquesHome.length === 0) {
+      // Se não houver nenhum destaque pago cadastrado
+      if (intervaloDestaquesHome) clearInterval(intervaloDestaquesHome);
       grid.innerHTML = `
         <div class="col-span-full text-center py-8 text-gray-500 text-sm bg-white rounded-2xl border border-dashed border-gray-200">
           <i class="fa-solid fa-store text-2xl text-gray-300 mb-2"></i>
-          <p class="font-medium">Selecione uma categoria acima ou pesquise para ver todos os estabelecimentos.</p>
+          <p class="font-medium">Selecione uma categoria acima ou pesquise para ver os estabelecimentos.</p>
         </div>`;
       return;
     }
 
-    renderizarCardsNaGrid(destaquesHome, grid);
+    // CHAMA A ROTAÇÃO AUTOMÁTICA DOS DESTAQUES
+    renderizarDestaquesComRotacao(destaquesHome, grid);
     return;
   }
 
   // =========================================================
-  // 2. SE ELE DIGITOU NA BUSCA OU SELECIONOU UMA CATEGORIA:
+  // 2. SE O USUÁRIO PESQUISOU OU SELECIONOU UMA CATEGORIA:
   // =========================================================
-  // Esconde os blocos institucionais da Home para focar na busca do usuário
+  // Para a rotação da Home
+  if (intervaloDestaquesHome) {
+    clearInterval(intervaloDestaquesHome);
+    intervaloDestaquesHome = null;
+  }
+
+  // RESTAURA O GRID PADRÃO (1 col no celular, 2 em tablet, 3 em PC)
+  grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+
+  // Esconde seções institucionais
   if (secaoHomeUtilidades) secaoHomeUtilidades.classList.add('hidden');
-  if (secaoSorteios) secaoSorteios.classList.add('hidden'); // Esconde sorteios durante pesquisas
+  if (secaoSorteios) secaoSorteios.classList.add('hidden');
 
   let filtradas = (dadosGlobais.empresas || []).filter(emp => {
     const bateCategoria = categoriaAtual === 'Todas' || emp.Categoria === categoriaAtual;
@@ -700,7 +812,7 @@ function renderizarEmpresas() {
     return bateCategoria && bateBusca;
   });
 
-  // Ordenação: Destaques da Categoria no Topo (1), Destaque Padrão (2), Gratuito (3)
+  // Ordenação: Destaque Home (1), Destaque Categoria (2), Gratuito (3)
   filtradas.sort((a, b) => {
     const getPeso = (emp) => {
       const plano = String(emp.Plano || '').toLowerCase();
@@ -720,6 +832,7 @@ function renderizarEmpresas() {
     renderizarCardsNaGrid(filtradas, grid);
   }
 }
+
 
 // Função auxiliar reutilizável para desenhar os Cards
 function renderizarCardsNaGrid(lista, container) {
@@ -1087,8 +1200,13 @@ function converterParaBase64(file) {
 // 1. Confirma se a senha bate e carrega os dados no modal
 async function confirmarChaveDono() {
   const id = document.getElementById('validarIdEmpresa').value;
-  const chave = document.getElementById('inputChaveValidacao').value.trim();
+  let chave = document.getElementById('inputChaveValidacao').value.trim();
   const btn = document.getElementById('btnValidarChave');
+
+  // Trata a senha: Se o primeiro dígito for '0', ignora/remove o zero
+  if (chave.startsWith('0')) {
+    chave = chave.substring(1);
+  }
 
   if (!chave) {
     notificar("Por favor, digite a palavra-chave.", "erro");
@@ -1109,17 +1227,54 @@ async function confirmarChaveDono() {
       document.getElementById('editClienteLinha').value = emp.linhaIndex;
       document.getElementById('editClienteId').value = emp.id;
       document.getElementById('editClienteNome').value = emp.nome || '';
-      document.getElementById('editClienteCategoria').value = emp.categoria || '';
+
+      // =========================================================================
+      // CARREGA E SELECIONA A CATEGORIA NO SELECT
+      // =========================================================================
+      const selectCat = document.getElementById('editClienteCategoria');
+      const categoriaBruta = emp.categoria || emp.Categoria || emp.CATEGORIA || '';
+      const categoriaDoBanco = categoriaBruta.toString().trim();
+
+      if (selectCat) {
+        // 1. Popula as opções do select usando as categorias globais do sistema (se existirem)
+        if (window.dadosGlobais && Array.isArray(window.dadosGlobais.categorias) && window.dadosGlobais.categorias.length > 0) {
+          selectCat.innerHTML = '<option value="" disabled>Selecione uma categoria...</option>' + 
+            window.dadosGlobais.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        // 2. Tenta selecionar a categoria vinda da planilha
+        selectCat.value = categoriaDoBanco;
+
+        // 3. Fallback: Se não encontrou por causa de maiúsculas/minúsculas/espaços
+        if (!selectCat.value && categoriaDoBanco) {
+          const opcoes = Array.from(selectCat.options);
+          const opcaoCorrespondente = opcoes.find(opt => 
+            opt.value.toLowerCase().trim() === categoriaDoBanco.toLowerCase() ||
+            opt.text.toLowerCase().trim() === categoriaDoBanco.toLowerCase()
+          );
+
+          if (opcaoCorrespondente) {
+            selectCat.value = opcaoCorrespondente.value;
+          } else {
+            // Se a categoria da planilha não existir no select, cria ela dinamicamente para não perder o dado
+            const novaOpt = document.createElement('option');
+            novaOpt.value = categoriaDoBanco;
+            novaOpt.text = categoriaDoBanco;
+            novaOpt.selected = true;
+            selectCat.appendChild(novaOpt);
+          }
+        }
+      }
+      // =========================================================================
+
       document.getElementById('editClienteWhatsapp').value = emp.whatsapp || '';
       document.getElementById('editClienteEndereco').value = emp.endereco || '';
       document.getElementById('editClienteDescricao').value = emp.descricao || '';
       
       // --- TRATAMENTO DA URL DA FOTO ---
-      // Pega a URL vinda do backend (aceita urlLogo, foto, logo ou imagem)
       let urlFoto = emp.urlLogo || emp.foto || emp.logo || emp.imagem || '';
 
       if (urlFoto) {
-        // Se for um link padrão do Google Drive, extrai o ID e converte para lh3
         if (urlFoto.includes("drive.google.com")) {
           const match = urlFoto.match(/\/d\/([^\/\?]+)/) || urlFoto.match(/id=([^&]+)/);
           if (match && match[1]) {
@@ -1133,7 +1288,6 @@ async function confirmarChaveDono() {
       // Atribui a URL tratada ao preview
       const imgElem = document.getElementById('editClientePreviewFoto');
       if (imgElem) {
-        // Garante que o navegador não envie o cabeçalho Referer
         imgElem.setAttribute('referrerpolicy', 'no-referrer');
         imgElem.src = urlFoto;
       }
@@ -1151,7 +1305,6 @@ async function confirmarChaveDono() {
     btn.innerHTML = `Validar Acesso`;
   }
 }
-
 // 2. Salva as edições do Cliente (Enviando foto se houver)
 async function salvarEdicaoCliente(e) {
   e.preventDefault();
