@@ -1,9 +1,9 @@
-const CACHE_NAME = 'akitamoios-v2';
+const CACHE_NAME = 'akitamoios-v2'; //EDITAR AQUI
 
 // Arquivos e bibliotecas estáticas necessárias para o app e a estilização
 const ASSETS_TO_CACHE = [
   '/',
-  '/akitamoios.html',
+  '/akitamoios.html', //EDITAR AQUI
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -65,7 +65,7 @@ self.addEventListener('fetch', (event) => {
           }
           // Caso específico: se for a navegação da página principal offline
           if (event.request.mode === 'navigate') {
-            return caches.match('/akitamoios.html');
+            return caches.match('/akitamoios.html'); //EDITAR AQUI
           }
         });
       })
