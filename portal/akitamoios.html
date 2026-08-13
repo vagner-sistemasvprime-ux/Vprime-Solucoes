@@ -228,13 +228,26 @@
 <!-- ================================================================= -->
 <!-- 1. HOME / CAPA PRINCIPAL (HUB DINÂMICO DE TAMOIOS)               -->
 <!-- ================================================================= -->
-<div id="secaoHeroHome" class="space-y-10 my-6">
+<div id="secaoHeroHome" class="space-y-8 my-6">
   
   <!-- BANNERS EM DESTAQUE / PROMOÇÕES (SLIDER OU CARROSEL) -->
   <section id="secaoBanners" class="max-w-6xl mx-auto px-4">
     <div id="containerBanners" class="w-full overflow-hidden rounded-2xl shadow-lg border border-yellow-200 bg-white min-h-[160px] flex items-center justify-center">
       <!-- Banners / Promoções Ativas carregados via JS -->
     </div>
+  </section>
+
+  <!-- 🌟 SEÇÃO EMPRESAS EM DESTAQUE HOME (BANNER ÚNICO COM ROTAÇÃO ALEATÓRIA) -->
+  <section id="secaoEmpresasDestaqueHome" class="max-w-6xl mx-auto px-4">
+    <div class="mb-3">
+      <h2 class="text-lg sm:text-xl font-black text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-star text-amber-500"></i> Destaques
+      </h2>
+      <p class="text-xs text-gray-500">Conheça os destaques do comércio de Tamoios</p>
+    </div>
+
+    <!-- Onde o JS vai injetar O BANNER ÚNICO ROTATIVO DA HOME -->
+    <div id="gridEmpresasDestaque"></div>
   </section>
 
   <!-- SEÇÃO 1: SORTEIOS E PRÊMIOS EM DESTAQUE -->
@@ -246,7 +259,7 @@
         </h2>
         <p class="text-xs sm:text-sm text-gray-600">Participe e concorra a prêmios do comércio local</p>
       </div>
-      <button type="button" onclick="navegarPara('secaoSorteios')" class="text-oceano hover:underline text-xs sm:text-sm font-bold flex items-center gap-1">
+      <button type="button" onclick="navegarPara('secaoSorteios')" class="text-sky-700 hover:underline text-xs sm:text-sm font-bold flex items-center gap-1">
         Ver Sorteios <i class="fa-solid fa-arrow-right text-xs"></i>
       </button>
     </div>
@@ -315,109 +328,25 @@
 
 </div>
 
-<!-- MODAL DE CADASTRO DE VAGA -->
-<div id="modalNovaVaga" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-  <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-    <!-- Cabeçalho -->
-    <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
-      <h3 class="text-lg font-black text-gray-900 flex items-center gap-2">
-        <i class="fa-solid fa-briefcase text-emerald-600"></i> Anunciar Vaga de Emprego
-      </h3>
-      <button onclick="fecharModalNovaVaga()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-
-    <!-- Formulário -->
-    <form id="formNovaVaga" onsubmit="salvarNovaVaga(event)" class="space-y-4">
-      <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">Título do Cargo *</label>
-        <input type="text" id="vagaTitulo" required placeholder="Ex: Operador de Caixa" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">Empresa / Contratante *</label>
-          <input type="text" id="vagaEmpresa" required placeholder="Ex: Mercado Central" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">Tipo de Contrato</label>
-          <select id="vagaTipoContrato" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-            <option value="CLT">CLT</option>
-            <option value="PJ">PJ</option>
-            <option value="Freelancer">Freelancer</option>
-            <option value="Estágio">Estágio</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">Bairro / Local *</label>
-          <input type="text" id="vagaBairro" required placeholder="Ex: Unamar, Aquarius..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">Salário</label>
-          <input type="text" id="vagaSalario" placeholder="Ex: R$ 1.412 ou A combinar" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">Meio de Contato *</label>
-          <select id="vagaTipoContato" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-            <option value="whatsapp">WhatsApp</option>
-            <option value="email">E-mail</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">Número WhatsApp ou E-mail *</label>
-          <input type="text" id="vagaContato" required placeholder="Ex: 22999998888 ou vaga@email.com" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">Descrição / Requisitos *</label>
-        <textarea id="vagaDescricao" rows="3" required placeholder="Descreva os requisitos, horário de trabalho e detalhes da vaga..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"></textarea>
-      </div>
-<!-- Campo para criar a senha de gerenciamento da vaga -->
-<div>
-  <label for="vagaSenha" class="block text-xs font-bold text-gray-700 mb-1">
-    Senha para Pausar/Excluir Vaga <span class="text-red-500">*</span>
-  </label>
-  <input type="password" id="vagaSenha" required placeholder="Ex: 1234" maxlength="10"
-    class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
-  <p class="text-[10px] text-gray-500 mt-1">Guarde esta senha para quando quiser remover a vaga do ar.</p>
-</div>
-
-      <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-md text-sm">
-        Publicar Vaga
-      </button>
-    </form>
-  </div>
-</div>
-
 
 <!-- ================================================================= -->
 <!-- 2. SEÇÃO: GUIA COMERCIAL COMPLETO                                 -->
 <!-- ================================================================= -->
 <section id="secaoGuiaComercial" class="hidden">
 
-  <div class="bg-oceanoEscuro text-white py-8 px-4 shadow-inner">
+  <div class="bg-slate-900 text-white py-8 px-4 shadow-inner">
     <div class="max-w-3xl mx-auto space-y-5">
       <div class="space-y-1">
         <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-          O que você procura <span class="text-amareloSol">Aki em Tamoios</span>?
+          O que você procura <span class="text-amber-400">Aki em Tamoios</span>?
         </h1>
         <p class="text-sm text-blue-100">
           Encontre comércios, serviços, horários e contatos com um clique!
         </p>
       </div>
-  
-  
 
       <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none text-sm" id="containerCategorias">
-        <button type="button" onclick="filtrarCategoria('Todas')" class="btn-cat bg-amareloSol text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm">Principais</button>
+        <button type="button" onclick="filtrarCategoria('Todas')" class="btn-cat bg-amber-400 text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm">Principais</button>
         <button type="button" onclick="filtrarCategoria('Alimentação')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Alimentação</button>
         <button type="button" onclick="filtrarCategoria('Automotivo')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Automotivo</button>
         <button type="button" onclick="filtrarCategoria('Comércio')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Comércio</button>
@@ -430,31 +359,30 @@
     </div>
   </div>
 
-  <!-- LISTA DE EMPRESAS -->
+  <!-- LISTA DE EMPRESAS EM DESTAQUE (GRID) -->
   <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-        <i class="fa-solid fa-store text-oceano"></i> Guia Comercial de Tamoios
+        <i class="fa-solid fa-store text-sky-600"></i> Guia Comercial de Tamoios
       </h2>
-      <span id="contadorEmpresas" class="text-sm bg-blue-100 text-oceano font-semibold px-3 py-1 rounded-full">0 encontrados</span>
+      <span id="contadorEmpresas" class="text-sm bg-blue-100 text-sky-800 font-semibold px-3 py-1 rounded-full">0 encontrados</span>
     </div>
 
-    <div id="containerBtnVerTodosVips" class="flex justify-center mb-6 hidden">
+    <div id="containerBtnVerTodosVipsGuia" class="flex justify-center mb-6 hidden">
       <button type="button" onclick="exibirTodosOsVips()" 
               class="inline-flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold py-2.5 px-5 rounded-xl text-xs transition shadow-sm cursor-pointer">
         <i class="fa-solid fa-crown text-amber-500 text-sm"></i>
-        Ver todos os <span id="qtdVipsBadge" class="bg-amber-500 text-white font-black px-2 py-0.5 rounded-full text-[10px]">0</span> Destaques
+        Ver todos os <span id="qtdVipsBadgeGuia" class="bg-amber-500 text-white font-black px-2 py-0.5 rounded-full text-[10px]">0</span> Destaques
       </button>
     </div>
 
     <div id="loading" class="text-center py-12">
-      <i class="fa-solid fa-spinner fa-spin text-oceano text-4xl mb-3"></i>
+      <i class="fa-solid fa-spinner fa-spin text-sky-600 text-4xl mb-3"></i>
       <p class="text-gray-500 font-medium">Carregando empresas de Tamoios...</p>
     </div>
 
-    <div id="gridEmpresas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Cards gerados via JS -->
-    </div>
+    <!-- Onde o JS vai injetar OS CARDS COMPLETOS EM GRID DA SEÇÃO GUIA -->
+    <div id="gridEmpresas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
     <div id="semResultados" class="hidden text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
       <i class="fa-solid fa-store-slash text-gray-300 text-5xl mb-3"></i>
@@ -464,7 +392,6 @@
   </main>
 
 </section>
-
 
 <!-- ================================================================= -->
 <!-- 3. SEÇÃO: BALCÃO DE EMPREGOS                                      -->
@@ -1509,6 +1436,15 @@ async function carregarDados() {
 
       // Renderiza a Home INSTANTANEAMENTE com os dados salvos
       renderizarBanners();
+      
+      // 🌟 NOVO: Renderiza os Destaques da Home e do Guia Comercial via Cache
+      if (typeof renderizarDestaquesComRotacao === 'function') {
+        renderizarDestaquesComRotacao(dadosGlobais.empresas);
+      }
+      if (typeof renderizarGuiaComercialGrid === 'function') {
+        renderizarGuiaComercialGrid(dadosGlobais.empresas);
+      }
+
       if (typeof renderizarHomeVagas === 'function') renderizarHomeVagas(listaVagasGlobal);
       if (typeof renderizarEventosHome === 'function') renderizarEventosHome(listaEventosGlobal);
       if (typeof renderizarAchadosHome === 'function') renderizarAchadosHome(listaAchadosGlobal);
@@ -1554,6 +1490,15 @@ async function carregarDados() {
 
     // Re-renderiza blocos da Home suavemente com as novidades da API
     renderizarBanners();
+
+    // 🌟 NOVO: Re-renderiza os Destaques com os dados atualizados da API
+    if (typeof renderizarDestaquesComRotacao === 'function') {
+      renderizarDestaquesComRotacao(dadosGlobais.empresas);
+    }
+    if (typeof renderizarGuiaComercialGrid === 'function') {
+      renderizarGuiaComercialGrid(dadosGlobais.empresas);
+    }
+
     if (typeof renderizarHomeVagas === 'function') renderizarHomeVagas(listaVagasGlobal);
     if (typeof renderizarEventosHome === 'function') renderizarEventosHome(listaEventosGlobal);
     if (typeof renderizarAchadosHome === 'function') renderizarAchadosHome(listaAchadosGlobal);
@@ -1583,7 +1528,6 @@ async function carregarDados() {
     }
   }
 }
-
 
     // Notificação Customizada
     function notificar(mensagem, tipo = 'sucesso', titulo = null) {
@@ -1616,128 +1560,276 @@ async function carregarDados() {
     }
 
 
-// Variáveis globais para controle dos destaques
-let listaDestaquesGlobal = [];
-let filaDestaques = []; // Fila sequencial para garantir que todos apareçam igualmente
-let indiceDestaqueAtual = 0;
-let ultimoExibidoId = null; // Evita repetição na virada de ciclo
+// ==========================================
+// VARIÁVEIS DE ESTADO DO SISTEMA
+// ==========================================
+let listaDestaquesHomeGlobal = [];
+let filaDestaquesHome = [];
+let indiceDestaqueHomeAtual = 0;
+let ultimoExibidoHomeId = null;
 let intervaloDestaquesHome = null;
 
-// =========================================================
-// 1. FUNÇÃO DA HOME (Vitrine Ouro - 1 Card Centralizado Rotativo)
-// =========================================================
-function renderizarDestaquesComRotacao(listaDestaques, gridElement) {
-  if (!gridElement) return;
+// Helper para verificar se a empresa é Destaque
+function ehEmpresaDestaque(emp) {
+  if (!emp) return false;
+  const plano = String(emp.plano || emp.Plano || emp.tipo_plano || '').toLowerCase();
+  const destaque = String(emp.destaque || emp.Destaque || '').toLowerCase();
+  const vip = String(emp.VIP || emp.vip || '').toLowerCase();
 
-  // Se não houver destaques VIP, limpa a área e para
-  if (!listaDestaques || listaDestaques.length === 0) {
-    gridElement.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Nenhum destaque no momento.</p>';
+  return (
+    plano.includes('destaque') ||
+    plano.includes('vip') ||
+    plano.includes('home') ||
+    destaque === 'true' || destaque === 'sim' ||
+    vip === 'true' || vip === 'sim' ||
+    emp.destaque === true || emp.VIP === true || emp.isDestaqueHome === true
+  );
+}
+
+// Helper para abrir o modal de detalhes da empresa
+function abrirModalDetalhesWrapper(idEmpresa) {
+  let emp = null;
+  
+  if (typeof dadosGlobais !== 'undefined' && dadosGlobais.empresas) {
+    emp = dadosGlobais.empresas.find(item => (item.ID_Cadastro || item.id || item.ID) == idEmpresa);
+  }
+
+  if (!emp && window.mapaEmpresas) {
+    emp = window.mapaEmpresas[idEmpresa];
+  }
+
+  if (emp && typeof abrirModalDetalhesEmpresa === 'function') {
+    abrirModalDetalhesEmpresa(emp);
+  } else if (emp && typeof abrirModalEmpresa === 'function') {
+    abrirModalEmpresa(emp);
+  } else {
+    console.warn("Função de abrir modal de empresa não encontrada.", emp);
+  }
+}
+
+// Helper específico para identificar se a empresa é DESTAQUE DA HOME
+function ehDestaqueHome(emp) {
+  if (!emp) return false;
+  
+  const plano = String(emp.plano || emp.Plano || emp.tipo_plano || '').toLowerCase();
+  const destaque = String(emp.destaque || emp.Destaque || '').toLowerCase();
+  const tipoDestaque = String(emp.tipo_destaque || emp.tipoDestaque || '').toLowerCase();
+
+  // Verifica se o valor contém explicitamente 'home' ou é o plano Destaque Home
+  return (
+    plano.includes('home') ||
+    plano.includes('destaque home') ||
+    destaque === 'home' ||
+    tipoDestaque === 'home' ||
+    emp.isDestaqueHome === true ||
+    emp.destaqueHome === true
+  );
+}
+
+// =================================================================
+// 1. SEÇÃO HOME: BANNER ÚNICO ROTATIVO (SÓ A IMAGEM DO ANÚNCIO)
+// =================================================================
+function renderizarDestaquesComRotacao(listaEmpresas, gridElement) {
+  const containerHome = gridElement || document.getElementById('gridEmpresasDestaque');
+  if (!containerHome) return;
+
+  const secaoHome = document.getElementById('secaoEmpresasDestaqueHome');
+
+  // Limpa intervalo de rotação anterior se existir
+  if (intervaloDestaquesHome) {
+    clearInterval(intervaloDestaquesHome);
+    intervaloDestaquesHome = null;
+  }
+
+  // Filtra APENAS empresas que são Destaque Home
+  const apenasDestaquesHome = (listaEmpresas || []).filter(ehDestaqueHome);
+
+  // Se não houver nenhum destaque home cadastrado, esconde a seção na capa
+  if (apenasDestaquesHome.length === 0) {
+    if (secaoHome) secaoHome.classList.add('hidden');
+    containerHome.innerHTML = '';
     return;
   }
 
-  // 1. Salva a lista global
-  listaDestaquesGlobal = listaDestaques;
+  if (secaoHome) secaoHome.classList.remove('hidden');
 
-  // Helper para embaralhar garantindo que o primeiro item do novo ciclo não seja o último do ciclo anterior
-  const embaralharSemRepetirUltimo = (array, ultimoId) => {
+  listaDestaquesHomeGlobal = apenasDestaquesHome;
+
+  // Função para embaralhar a fila de banners sem repetir o último que acabou de aparecer
+  const embaralharSemRepetir = (array, ultimoId) => {
     let copia = [...array].sort(() => Math.random() - 0.5);
-    
     if (copia.length > 1 && ultimoId) {
       const primeiroId = copia[0].ID_Cadastro || copia[0].id || copia[0].ID;
       if (primeiroId === ultimoId) {
-        // Move o primeiro item para o final da fila
-        const itemRepetido = copia.shift();
-        copia.push(itemRepetido);
+        copia.push(copia.shift());
       }
     }
     return copia;
   };
 
-  // 2. Inicializa a fila embaralhada e zera o índice
-  filaDestaques = embaralharSemRepetirUltimo(listaDestaques, ultimoExibidoId);
-  indiceDestaqueAtual = 0;
+  filaDestaquesHome = embaralharSemRepetir(apenasDestaquesHome, ultimoExibidoHomeId);
+  indiceDestaqueHomeAtual = 0;
 
-  const containerBtn = document.getElementById('containerBtnVerTodosVips');
-  const badgeQtd = document.getElementById('qtdVipsBadge');
+  containerHome.className = "flex justify-center items-center w-full my-2 transition-opacity duration-500";
 
-  // 3. Limpa temporizador anterior para evitar acelerar o tempo
-  if (intervaloDestaquesHome) {
-    clearInterval(intervaloDestaquesHome);
-    intervaloDestaquesHome = null;
-  }
+  // Exibe o banner de 1 empresa por vez
+  const exibirProximoBannerHome = () => {
+    containerHome.innerHTML = '';
 
-  // 4. Atualiza contador e exibe o botão
-  if (containerBtn && badgeQtd) {
-    if (listaDestaques.length > 1) {
-      badgeQtd.innerText = listaDestaques.length;
-      containerBtn.classList.remove('hidden');
-    } else {
-      containerBtn.classList.add('hidden');
-    }
-  }
-
-  // 5. Força a Home a ter 1 card único centralizado com efeito de fade
-  gridElement.className = "flex justify-center items-center w-full my-4 transition-opacity duration-500";
-
-  // 6. Exibe a próxima empresa mantendo a ordem da fila
-  const exibirProximoDestaque = () => {
-    gridElement.innerHTML = '';
-
-    // Quando a fila termina, reembaralha sem repetir a última empresa exibida
-    if (indiceDestaqueAtual >= filaDestaques.length) {
-      filaDestaques = embaralharSemRepetirUltimo(listaDestaquesGlobal, ultimoExibidoId);
-      indiceDestaqueAtual = 0;
+    if (indiceDestaqueHomeAtual >= filaDestaquesHome.length) {
+      filaDestaquesHome = embaralharSemRepetir(listaDestaquesHomeGlobal, ultimoExibidoHomeId);
+      indiceDestaqueHomeAtual = 0;
     }
 
-    const selecionadoObj = filaDestaques[indiceDestaqueAtual];
-    ultimoExibidoId = selecionadoObj.ID_Cadastro || selecionadoObj.id || selecionadoObj.ID;
-    
-    const selecionado = [selecionadoObj];
-    indiceDestaqueAtual++;
+    const emp = filaDestaquesHome[indiceDestaqueHomeAtual];
+    const idEmpresa = emp.ID_Cadastro || emp.id || emp.ID || '';
+    ultimoExibidoHomeId = idEmpresa;
+    indiceDestaqueHomeAtual++;
 
-    if (typeof renderizarCardsNaGrid === 'function') {
-      renderizarCardsNaGrid(selecionado, gridElement);
-    }
+    const nomeEmpresa = emp.Nome_Negocio || emp.nome || emp.Nome || 'Empresa em Destaque';
+    const urlAvatarFallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeEmpresa)}&background=0284c7&color=ffffff&size=500`;
+    const urlImagemBruta = emp.URL_Logo_LH3 || emp.Logo || emp.URL_Logo || emp.imagem || emp.Imagem || emp.foto || emp.banner || '';
+    const temImagemValida = String(urlImagemBruta).trim().length > 10;
+    const urlImagemFinal = temImagemValida ? String(urlImagemBruta).trim() : urlAvatarFallback;
+
+    if (!window.mapaEmpresas) window.mapaEmpresas = {};
+    window.mapaEmpresas[idEmpresa] = emp;
+
+    // CARD DE BANNER ÚNICO (SOMENTE IMAGEM DO ANÚNCIO)
+    containerHome.innerHTML = `
+      <div onclick="abrirModalDetalhesWrapper('${idEmpresa}')" 
+           class="w-full max-w-2xl bg-white rounded-2xl overflow-hidden shadow-lg border-2 border-amber-300 hover:border-amber-400 cursor-pointer transition transform active:scale-[0.98] sm:hover:scale-[1.01] relative group">
+        
+        <span class="absolute top-3 right-3 bg-amber-400 text-gray-900 text-xs font-black px-2.5 py-1 rounded-lg shadow-md z-10 flex items-center gap-1">
+          <i class="fa-solid fa-star text-xs"></i> DESTAQUE
+        </span>
+
+        <div class="w-full h-52 sm:h-72 bg-slate-100 overflow-hidden flex items-center justify-center">
+          <img src="${urlImagemFinal}" 
+               alt="${nomeEmpresa}" 
+               onerror="this.onerror=null; this.src='${urlAvatarFallback}';" 
+               class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+        </div>
+      </div>
+    `;
   };
 
-  exibirProximoDestaque(); // Exibe o 1º imediatamente
+  exibirProximoBannerHome();
 
-  // 7. Inicia a rotação a cada 7 segundos
-  if (listaDestaques.length > 1) {
+
+  // Troca de anúncio aleatório a cada 6 segundos
+  if (apenasDestaques.length > 1) {
     intervaloDestaquesHome = setInterval(() => {
-      gridElement.classList.add('opacity-0');
-
+      containerHome.classList.add('opacity-0');
       setTimeout(() => {
-        exibirProximoDestaque();
-        gridElement.classList.remove('opacity-0');
+        exibirProximoBannerHome();
+        containerHome.classList.remove('opacity-0');
       }, 500);
     }, 7000);
   }
 }
 
-// =========================================================
-// 2. FUNÇÃO DO GUIA COMERCIAL (Todos os VIPs juntos em GRID)
-// =========================================================
-function renderizarDestaquesGuiaGrid(listaDestaques, gridElement) {
-  if (!gridElement || !listaDestaques || listaDestaques.length === 0) return;
 
-  // Cancela o temporizador da Home caso o usuário tenha trocado de aba
+// =================================================================
+// 2. SEÇÃO GUIA COMERCIAL: CARDS COMPLETOS DOS DESTAQUES EM GRID
+// =================================================================
+function renderizarGuiaComercialGrid(listaEmpresas, gridElement) {
+  const containerGuia = gridElement || document.getElementById('gridEmpresas');
+  if (!containerGuia) return;
+
+  const loading = document.getElementById('loading');
+  const semResultados = document.getElementById('semResultados');
+
+  if (loading) loading.classList.add('hidden');
+
+  // Para o temporizador da Home se estiver no Guia Comercial
   if (intervaloDestaquesHome) {
     clearInterval(intervaloDestaquesHome);
     intervaloDestaquesHome = null;
   }
 
-  // Aplica o layout de GRID (3 colunas no PC, 1 no Mobile)
-  gridElement.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
+  // Filtra SOMENTE as empresas em Destaque
+  const apenasDestaques = (listaEmpresas || []).filter(ehEmpresaDestaque);
 
-  // Mostra TODOS os VIPs em ordem aleatória
-  const embaralhados = [...listaDestaques].sort(() => Math.random() - 0.5);
-  
-  if (typeof renderizarCardsNaGrid === 'function') {
-    renderizarCardsNaGrid(embaralhados, gridElement);
+  if (apenasDestaques.length === 0) {
+    containerGuia.innerHTML = '';
+    if (semResultados) semResultados.classList.remove('hidden');
+    return;
+  }
+
+  if (semResultados) semResultados.classList.add('hidden');
+
+  // Ordena para que o Destaque Home apareça PRIMEIRO e o Destaque Categoria venha DEPOIS
+  const destaquesOrdenados = apenasDestaques.sort((a, b) => {
+    const ehHomeA = ehDestaqueHome(a) ? 1 : 0;
+    const ehHomeB = ehDestaqueHome(b) ? 1 : 0;
+    return ehHomeB - ehHomeA;
+  });
+
+  containerGuia.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 my-4 w-full";
+
+  if (!window.mapaEmpresas) window.mapaEmpresas = {};
+
+  let htmlGrid = '';
+
+  destaquesOrdenados.forEach(emp => {
+    const idEmpresa = emp.ID_Cadastro || emp.id || emp.ID || '';
+    const nomeEmpresa = emp.Nome_Negocio || emp.nome || emp.Nome || 'Empresa em Destaque';
+    const categoria = emp.Categoria || emp.categoria || 'Guia Comercial';
+    const bairro = emp.Bairro || emp.bairro || 'Tamoios';
+
+    window.mapaEmpresas[idEmpresa] = emp;
+
+    const urlAvatarFallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeEmpresa)}&background=0284c7&color=ffffff&size=300`;
+    const urlImagemBruta = emp.URL_Logo_LH3 || emp.Logo || emp.URL_Logo || emp.imagem || emp.Imagem || emp.foto || '';
+    const temImagemValida = String(urlImagemBruta).trim().length > 10;
+    const urlImagemFinal = temImagemValida ? String(urlImagemBruta).trim() : urlAvatarFallback;
+
+    // Define visualmente se é DESTAQUE HOME (Amarelo) ou DESTAQUE CATEGORIA (Azul)
+    const ehHome = ehDestaqueHome(emp);
+    const bordaCard = ehHome ? 'border-2 border-amber-300 hover:border-amber-400' : 'border-2 border-sky-400 hover:border-sky-500';
+    const badgeBadge = ehHome 
+      ? '<span class="absolute top-3 right-3 bg-amber-400 text-gray-900 text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm z-10 flex items-center gap-1"><i class="fa-solid fa-crown text-[9px]"></i> DESTAQUE HOME</span>'
+      : '<span class="absolute top-3 right-3 bg-sky-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm z-10 flex items-center gap-1"><i class="fa-solid fa-star text-[9px]"></i> DESTAQUE</span>';
+
+    // CARDS COMPLETOS DO GUIA COMERCIAL (SOMENTE DESTAQUES EM GRID)
+    htmlGrid += `
+      <div onclick="abrirModalDetalhesWrapper('${idEmpresa}')" 
+           class="bg-white rounded-2xl p-4 shadow-sm ${bordaCard} cursor-pointer transition transform active:scale-[0.98] hover:-translate-y-0.5 relative flex flex-col justify-between group">
+        
+        ${badgeBadge}
+
+        <div>
+          <div class="w-full h-40 rounded-xl overflow-hidden bg-slate-100 mb-3 relative flex items-center justify-center">
+            <img src="${urlImagemFinal}" 
+                 alt="${nomeEmpresa}" 
+                 onerror="this.onerror=null; this.src='${urlAvatarFallback}';" 
+                 class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+          </div>
+
+          <h3 class="font-bold text-gray-900 text-base truncate pr-16">${nomeEmpresa}</h3>
+          <p class="text-xs text-sky-600 font-semibold truncate mt-0.5">${categoria}</p>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-semibold">
+          <span class="text-gray-500 truncate text-[11px]">
+            <i class="fa-solid fa-location-dot text-amber-500 mr-1"></i> ${bairro}
+          </span>
+          <span class="text-sky-700 bg-blue-50 group-hover:bg-blue-100 px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition">
+            Ver detalhes <i class="fa-solid fa-chevron-right text-[9px]"></i>
+          </span>
+        </div>
+      </div>
+    `;
+  });
+
+  containerGuia.innerHTML = htmlGrid;
+
+  const contador = document.getElementById('contadorEmpresas');
+  if (contador) {
+    contador.innerText = `${apenasDestaques.length} destaque(s)`;
   }
 }
-
 // =========================================================
 // FUNÇÃO DISPARADA AO CLICAR EM "VER TODOS OS DESTAQUES"
 // =========================================================
@@ -1810,7 +1902,7 @@ function renderizarEmpresas() {
     }
 
     // CHAMA A ROTAÇÃO AUTOMÁTICA DOS DESTAQUES
-    renderizarDestaquesComRotacao(destaquesHome, grid);
+   renderizarGuiaComercialGrid(dadosGlobais.empresas, grid);
     return;
   }
 
@@ -1869,7 +1961,35 @@ function renderizarCardsNaGrid(lista, container) {
   // Mapeia e gera todo o HTML de uma só vez para alta performance
   const htmlCards = lista.map(emp => {
     const planoStr = String(emp.Plano || '').toLowerCase();
-    const ehDestaque = emp.Plano && planoStr !== 'gratuito' && planoStr !== '';
+    
+    // Identificação dos tipos de destaques
+    const ehDestaqueHome = planoStr.includes('home') || planoStr.includes('49') || planoStr.includes('promocao');
+    const ehDestaqueCategoria = planoStr.includes('categoria') || planoStr.includes('29');
+    const ehDestaque = ehDestaqueHome || ehDestaqueCategoria;
+
+    // Definição de estilos conforme o nível de destaque
+    let classeBordaEAnel = 'border border-gray-100 shadow-sm';
+    let badgeHTML = '';
+
+    if (ehDestaqueHome) {
+      // Destaque VIP / Home (Dourado / Amarelo Sol)
+      classeBordaEAnel = 'border-2 border-amareloSol ring-4 ring-amareloSol/20 shadow-md scale-[1.01]';
+      badgeHTML = `
+        <div class="absolute top-0 right-0">
+          <span class="bg-amareloSol text-gray-900 text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm flex items-center gap-1">
+            <i class="fa-solid fa-star text-[9px]"></i> Destaque VIP
+          </span>
+        </div>`;
+    } else if (ehDestaqueCategoria) {
+      // Destaque Categoria (Azul Sol / Destaque Categoria)
+      classeBordaEAnel = 'border-2 border-blue-500 ring-4 ring-blue-500/15 shadow-md';
+      badgeHTML = `
+        <div class="absolute top-0 right-0">
+          <span class="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm flex items-center gap-1">
+            <i class="fa-solid fa-circle-check text-[9px]"></i> Destaque
+          </span>
+        </div>`;
+    }
 
     // 1. OTIMIZAÇÃO DE IMAGEM: Tratamento e compressão do Google Drive/LH3
     let imgLogo = (emp.URL_Logo_LH3 || emp.URL_Logo || emp.Logo || emp.logo || '').trim();
@@ -1897,19 +2017,9 @@ function renderizarCardsNaGrid(lista, container) {
     const linkGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((emp.Endereco || '') + ', Tamoios, Cabo Frio')}`;
     const idAnuncio = emp.ID_Cadastro || emp.id || emp.ID || '';
 
-    const classeBordaEAnel = ehDestaque 
-      ? 'border-2 border-amareloSol ring-4 ring-amareloSol/20 shadow-md scale-[1.01]' 
-      : 'border border-gray-100 shadow-sm';
-
     return `
       <div class="bg-white rounded-2xl ${classeBordaEAnel} hover:shadow-lg p-5 flex flex-col justify-between transition-all duration-300 relative overflow-hidden">
-        ${ehDestaque ? `
-          <div class="absolute top-0 right-0">
-            <span class="bg-amareloSol text-gray-900 text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm flex items-center gap-1">
-              <i class="fa-solid fa-star text-[9px]"></i> Destaque
-            </span>
-          </div>
-        ` : ''}
+        ${badgeHTML}
         
         <div class="${ehDestaque ? 'pt-1' : ''}">
           <div class="flex items-center gap-4 mb-4">
@@ -1965,7 +2075,6 @@ function renderizarCardsNaGrid(lista, container) {
   // Injeta tudo de uma única vez na DOM
   container.innerHTML = htmlCards;
 }
-
    
     let bannerAtualIndex = 0;
 let intervaloBanner = null;
@@ -2105,23 +2214,35 @@ function iniciarRotacaoAutomatica(total) {
 function reiniciarTemporizador(total) {
   if (intervaloBanner) clearInterval(intervaloBanner);
   iniciarRotacaoAutomatica(total);
-}    // Filtros e Buscas
-    function filtrarCategoria(cat) {
-      categoriaAtual = cat;
-      document.querySelectorAll('.btn-cat').forEach(btn => {
-        if(btn.innerText === cat) {
-          btn.className = "btn-cat bg-amareloSol text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm";
-        } else {
-          btn.className = "btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap";
-        }
-      });
-      renderizarEmpresas();
-    }
+}   
 
-    function filtrarEmpresas() {
-      renderizarEmpresas();
-    }
+// Filtros e Buscas
+  function filtrarCategoria(cat) {
+    categoriaAtual = cat;
 
+    // Limpa o campo de busca para permitir ver os destaques da Home
+    const campoBusca = document.getElementById('campoBusca');
+    if (campoBusca) campoBusca.value = '';
+
+    document.querySelectorAll('.btn-cat').forEach(btn => {
+      // Verifica se o texto do botão é igual à categoria OU se é o botão "Principais" clicando em 'Todas'
+      const textoBtn = btn.innerText.trim();
+      const ehAtivo = textoBtn === cat || (cat === 'Todas' && textoBtn === 'Principais');
+
+      if (ehAtivo) {
+        btn.className = "btn-cat bg-amareloSol text-gray-900 font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm";
+      } else {
+        btn.className = "btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap";
+      }
+    });
+
+    // Chama a renderização que exibe o grid de destaques
+    renderizarEmpresas();
+  }
+
+  function filtrarEmpresas() {
+    renderizarEmpresas();
+  }
     // Modais e Form
     function abrirModalCadastro(planoInicial = 'Gratuito') {
       document.getElementById('formCadastro').reset();
@@ -2749,22 +2870,44 @@ function exibirApenasSecao(idSecaoAtiva) {
   // Rola suavemente até o topo da tela
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-// 1. Exibe a Capa / Home Principal
+// ==========================================
+// FUNÇÕES DE NAVEGAÇÃO ENTRE AS TELAS
+// ==========================================
 function verHome() {
-  exibirApenasSecao('secaoHeroHome');
-}
-
-// 2. Exibe o Guia Comercial e aciona a renderização de empresas
-function verGuiaComercial() {
-  exibirApenasSecao('secaoGuiaComercial');
-
-  if (typeof filtrarEmpresas === 'function') {
-    filtrarEmpresas();
-  } else if (typeof renderizarEmpresas === 'function') {
-    renderizarEmpresas();
+  if (typeof exibirApenasSecao === 'function') {
+    exibirApenasSecao('secaoHeroHome');
+  } else {
+    document.getElementById('secaoHeroHome')?.classList.remove('hidden');
+    document.getElementById('secaoGuiaComercial')?.classList.add('hidden');
   }
+
+  const lista = (typeof dadosGlobais !== 'undefined' && dadosGlobais.empresas) 
+                ? dadosGlobais.empresas 
+                : (window.todasAsEmpresas || []);
+
+  renderizarDestaquesComRotacao(lista, document.getElementById('gridEmpresasDestaque'));
 }
 
+function verGuiaComercial() {
+  if (typeof exibirApenasSecao === 'function') {
+    exibirApenasSecao('secaoGuiaComercial');
+  } else {
+    document.getElementById('secaoHeroHome')?.classList.add('hidden');
+    document.getElementById('secaoGuiaComercial')?.classList.remove('hidden');
+  }
+
+  const lista = (typeof dadosGlobais !== 'undefined' && dadosGlobais.empresas) 
+                ? dadosGlobais.empresas 
+                : (window.todasAsEmpresas || []);
+
+  renderizarGuiaComercialGrid(lista, document.getElementById('gridEmpresas'));
+}
+
+// Expõe globalmente
+window.verHome = verHome;
+window.verGuiaComercial = verGuiaComercial;
+window.renderizarDestaquesComRotacao = renderizarDestaquesComRotacao;
+window.renderizarGuiaComercialGrid = renderizarGuiaComercialGrid;
 // ==========================================
 // NAVEGAÇÃO COM RENDERIZAÇÃO SOB DEMANDA (LAZY)
 // ==========================================
