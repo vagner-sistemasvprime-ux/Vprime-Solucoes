@@ -111,7 +111,6 @@
       <i class="fa-solid fa-store w-5 text-center text-blue-600"></i> Guia Comercial
     </a>
     
-    <!-- ADICIONADO: LINK SORTEIOS NO MOBILE -->
     <a href="javascript:void(0)" onclick="alternarMenuLateral(); navegarParaSecao('secaoSorteios');" class="flex items-center gap-3 p-2.5 hover:bg-amber-50 hover:text-amber-800 rounded-xl transition">
       <i class="fa-solid fa-gift w-5 text-center text-amber-500"></i> Sorteios & Prêmios
     </a>
@@ -128,7 +127,12 @@
 
     <hr class="my-3 border-gray-100">
 
-    <button type="button" onclick="alternarMenuLateral(); abrirModalCadastro('Gratuito');" class="w-full flex items-center justify-center gap-2 p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition">
+    <!-- 🌟 BOTÃO COMPARTILHAR NO MENU LATERAL -->
+    <button type="button" onclick="alternarMenuLateral(); compartilharAkitamoios();" class="w-full flex items-center gap-3 p-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold rounded-xl transition">
+      <i class="fa-brands fa-whatsapp text-lg text-emerald-600"></i> Compartilhar no Whats
+    </button>
+
+    <button type="button" onclick="alternarMenuLateral(); abrirModalCadastro('Gratuito');" class="w-full flex items-center justify-center gap-2 p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition mt-2">
       <i class="fa-solid fa-plus text-oceano"></i> Cadastrar Grátis
     </button>
     
@@ -140,11 +144,11 @@
 
 <!-- ==================== HEADER ==================== -->
 <header class="bg-oceano text-white shadow-md sticky top-0 z-40">
-  <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center gap-4">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center gap-2 sm:gap-4">
     
-    <!-- Lado Esquerdo: Botão Hambúrguer (Mobile) + Logo -->
-    <div class="flex items-center gap-3">
-      <!-- Botão Hambúrguer só no Mobile/Tablet (lg:hidden) -->
+    <!-- Lado Esquerdo: Botão Hambúrguer + Logo -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Botão Hambúrguer -->
       <button type="button" onclick="alternarMenuLateral()" class="lg:hidden text-white p-2 hover:bg-white/10 rounded-lg transition" title="Abrir Menu">
         <i class="fa-solid fa-bars text-2xl"></i>
       </button>
@@ -163,23 +167,35 @@
     <nav class="hidden lg:flex items-center gap-5 text-sm font-medium text-blue-100">
       <a href="javascript:void(0)" onclick="verHome()" class="hover:text-white transition">Início</a>
       <a href="javascript:void(0)" onclick="verGuiaComercial()" class="hover:text-white transition">Guia Comercial</a>
-      
-      <!-- ADICIONADO: LINK SORTEIOS NO DESKTOP -->
       <a href="javascript:void(0)" onclick="navegarParaSecao('secaoSorteios')" class="hover:text-amareloSol transition flex items-center gap-1"><i class="fa-solid fa-gift text-xs"></i> Sorteios</a>
-      
       <a href="javascript:void(0)" onclick="navegarParaSecao('secaoEmpregos')" class="hover:text-amareloSol transition flex items-center gap-1"><i class="fa-solid fa-briefcase text-xs"></i> Empregos</a>
       <a href="javascript:void(0)" onclick="navegarParaSecao('secaoEventos')" class="hover:text-amareloSol transition flex items-center gap-1"><i class="fa-solid fa-calendar-days text-xs"></i> Eventos</a>
       <a href="javascript:void(0)" onclick="navegarParaSecao('secaoAchados')" class="hover:text-amareloSol transition flex items-center gap-1"><i class="fa-solid fa-magnifying-glass-location text-xs"></i> Achados & Perdidos</a>
     </nav>
 
-    <!-- Lado Direito: Botões de Ação (Cadastrar e Destaque) -->
-    <div class="hidden sm:flex gap-2">
-      <button type="button" onclick="abrirModalCadastro('Gratuito')" class="bg-white text-oceano hover:bg-gray-100 font-semibold px-3.5 py-1.5 rounded-lg text-xs transition shadow-sm">
-        <i class="fa-solid fa-plus mr-1"></i> Cadastrar Grátis
+    <!-- Lado Direito: Botão Compartilhar (Mobile) e Ações (Desktop) -->
+    <div class="flex items-center gap-2">
+      
+      <!-- 🌟 BOTÃO COMPARTILHAR NO CANTO DIREITO (Mobile e Tablet - sm:hidden / lg:hidden) -->
+      <button type="button" onclick="compartilharAkitamoios()" class="sm:hidden p-2.5 bg-white/10 hover:bg-white/20 text-amareloSol rounded-xl transition flex items-center justify-center active:scale-95" title="Compartilhar Portal">
+        <i class="fa-solid fa-share-nodes text-lg"></i>
       </button>
-      <button type="button" onclick="abrirModalCadastro('Destaque_Home')" class="bg-amareloSol hover:bg-yellow-500 text-gray-900 font-bold px-3.5 py-1.5 rounded-lg text-xs transition shadow-sm">
-        <i class="fa-solid fa-rocket mr-1"></i> Destaque-se
-      </button>
+
+      <!-- Botões de Ação para Telas Maiores (Desktop e Tablet) -->
+      <div class="hidden sm:flex items-center gap-2">
+        <button type="button" onclick="compartilharAkitamoios()" class="bg-white/10 hover:bg-white/20 text-amareloSol font-semibold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5" title="Compartilhar Portal">
+          <i class="fa-solid fa-share-nodes text-sm"></i> Compartilhar
+        </button>
+
+        <button type="button" onclick="abrirModalCadastro('Gratuito')" class="bg-white text-oceano hover:bg-gray-100 font-semibold px-3.5 py-1.5 rounded-lg text-xs transition shadow-sm">
+          <i class="fa-solid fa-plus mr-1"></i> Cadastrar Grátis
+        </button>
+
+        <button type="button" onclick="abrirModalCadastro('Destaque_Home')" class="bg-amareloSol hover:bg-yellow-500 text-gray-900 font-bold px-3.5 py-1.5 rounded-lg text-xs transition shadow-sm">
+          <i class="fa-solid fa-rocket mr-1"></i> Destaque-se
+        </button>
+      </div>
+
     </div>
 
   </div>
@@ -188,7 +204,6 @@
   <div class="bg-oceano-dark/50 border-t border-white/10 py-2.5 px-4 backdrop-blur-sm">
     <div class="max-w-6xl mx-auto relative">
       
-      <!-- Campo de Entrada -->
       <div class="relative flex items-center">
         <i class="fa-solid fa-magnifying-glass absolute left-4 text-gray-400 text-base pointer-events-none"></i>
         
@@ -200,15 +215,12 @@
         </button>
       </div>
 
-      <!-- CAIXA FLUTUANTE DE RESULTADOS -->
       <div id="resultadosBuscaDropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 max-h-96 overflow-y-auto p-2">
-        <!-- Injetado via JS em tempo real -->
       </div>
 
     </div>
   </div>
 </header>
-
 
 <!-- ================================================================= -->
 <!-- 1. HOME / CAPA PRINCIPAL (HUB DINÂMICO DE TAMOIOS)               -->
@@ -3915,7 +3927,7 @@ function executarBuscaDropdown() {
     return;
   }
 
-  const imagemPadrao = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100&q=80";
+  const imagemPadrao = "https://lh3.googleusercontent.com/d/1f4VL6746snAGt-anxZZEJVX89Lx63zLr";
 
   // 3. RENDERIZA OS RESULTADOS (MOSTRAMOS SELO DE DESTAQUE QUANDO HOUVER)
   let html = resultados.slice(0, 6).map(({ emp, index }) => {
@@ -5391,6 +5403,24 @@ function renderizarHomeSorteios() {
   }).join("");
 }
 
+
+function compartilharAkitamoios() {
+  const dadosCompartilhamento = {
+    title: 'Aki Tamoios - Guia Comercial & Prêmios',
+    text: 'Acesse o Aki Tamoios! Encontre comércios, vagas de emprego, sorteios e eventos de Tamoios em um só lugar:',
+    url: window.location.origin || 'https://akitamoios.com.br' // Troque pela URL oficial se necessário
+  };
+
+  // 1. Tenta usar o compartilhamento nativo do celular (Web Share API)
+  if (navigator.share) {
+    navigator.share(dadosCompartilhamento)
+      .catch((err) => console.log('Compartilhamento cancelado ou não suportado', err));
+  } else {
+    // 2. Fallback caso esteja no Computador ou navegador antigo (Abre no WhatsApp)
+    const textoWhats = encodeURIComponent(`${dadosCompartilhamento.text}\n${dadosCompartilhamento.url}`);
+    window.open(`https://api.whatsapp.com/send?text=${textoWhats}`, '_blank');
+  }
+}
 
 
 </script>
