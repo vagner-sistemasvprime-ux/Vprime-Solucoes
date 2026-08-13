@@ -13,22 +13,23 @@
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://vprimesistemas.com.br/akitamoios.html">
 
-  <!-- Meta Tags para Compartilhamento (WhatsApp, Instagram, Facebook) -->
+<!-- Meta Tags para Compartilhamento (WhatsApp, Instagram, Facebook) -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://vprimesistemas.com.br/akitamoios.html">
+  <meta property="og:url" content="https://x.gd/PuxDQ">
   <meta property="og:title" content="Aki Tamoios - O Comércio Local em um só Lugar">
-  <meta property="og:description" content="Guia Comercial e de Serviços de Tamoios e Unamar. Encontre empresas, rotas e contatos no seu celular!">
-  <meta property="og:image" content="https://vprimesistemas.com.br/icon-512.png?v=2">
-  <meta property="og:image:secure_url" content="https://vprimesistemas.com.br/icon-512.png?v=2">
-  <meta property="og:image:type" content="image/png">
-  <meta property="og:image:width" content="512">
-  <meta property="og:image:height" content="512">
+  <meta property="og:description" content="Guia Comercial e de Serviços de Tamoios e Unamar. Encontre empresas, rotas, empregos, sorteios e contatos no seu celular!">
+  <meta property="og:image" content="https://lh3.googleusercontent.com/d/1f4VL6746snAGt-anxZZEJVX89Lx63zLr=w800-rw">
+  <meta property="og:image:secure_url" content="https://lh3.googleusercontent.com/d/1f4VL6746snAGt-anxZZEJVX89Lx63zLr=w800-rw">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="800">
+  <meta property="og:image:height" content="418">
 
-  <!-- Suporte para Twitter / X -->
+  <!-- Compatibilidade extra para Twitter / Cartões -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://x.gd/PuxDQ">
   <meta name="twitter:title" content="Aki Tamoios - O Comércio Local em um só Lugar">
-  <meta name="twitter:description" content="Guia Comercial e de Serviços de Tamoios e Unamar. Encontre empresas, rotas e contatos no seu celular!">
-  <meta name="twitter:image" content="https://vprimesistemas.com.br/icon-512.png?v=2">
+  <meta name="twitter:description" content="Guia Comercial e de Serviços de Tamoios e Unamar. Encontre empresas, rotas, empregos, sorteios e contatos no seu celular!">
+  <meta name="twitter:image" content="https://lh3.googleusercontent.com/d/1f4VL6746snAGt-anxZZEJVX89Lx63zLr=w800-rw">
 
   <!-- Localização Geográfica (SEO Geolocalizado) -->
   <meta name="geo.region" content="BR-RJ">
@@ -5405,23 +5406,19 @@ function renderizarHomeSorteios() {
 
 
 function compartilharAkitamoios() {
-  const dadosCompartilhamento = {
+  const dados = {
     title: 'Aki Tamoios - Guia Comercial & Prêmios',
-    text: 'Acesse o Aki Tamoios! Encontre comércios, vagas de emprego, sorteios e eventos de Tamoios em um só lugar:',
-    url: 'https://vprimesistemas.com.br/akitamoios.html' // Troque pela URL oficial se necessário
+    text: 'Acesse o Aki Tamoios! Encontre comércios, vagas de emprego, sorteios e eventos em Tamoios em um só lugar:',
+    url: 'https://x.gd/PuxDQ' // Link curto configurado
   };
 
-  // 1. Tenta usar o compartilhamento nativo do celular (Web Share API)
   if (navigator.share) {
-    navigator.share(dadosCompartilhamento)
-      .catch((err) => console.log('Compartilhamento cancelado ou não suportado', err));
+    navigator.share(dados).catch(() => {});
   } else {
-    // 2. Fallback caso esteja no Computador ou navegador antigo (Abre no WhatsApp)
-    const textoWhats = encodeURIComponent(`${dadosCompartilhamento.text}\n${dadosCompartilhamento.url}`);
-    window.open(`https://api.whatsapp.com/send?text=${textoWhats}`, '_blank');
+    const texto = encodeURIComponent(`${dados.text}\n${dados.url}`);
+    window.open(`https://api.whatsapp.com/send?text=${texto}`, '_blank');
   }
 }
-
 
 </script>
 
