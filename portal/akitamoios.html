@@ -1724,9 +1724,9 @@ function renderizarDestaquesComRotacao(listaEmpresas, gridElement) {
   const secaoHome = document.getElementById('secaoEmpresasDestaqueHome');
 
   // Limpa intervalo de rotação anterior se existir
-  if (intervaloDestaquesHome) {
-    clearInterval(intervaloDestaquesHome);
-    intervaloDestaquesHome = null;
+  if (window.intervaloDestaquesHome) {
+    clearInterval(window.intervaloDestaquesHome);
+    window.intervaloDestaquesHome = null;
   }
 
   // Filtra APENAS empresas que são Destaque Home
@@ -1741,39 +1741,33 @@ function renderizarDestaquesComRotacao(listaEmpresas, gridElement) {
 
   if (secaoHome) secaoHome.classList.remove('hidden');
 
-  listaDestaquesHomeGlobal = apenasDestaquesHome;
-
-  // Função para embaralhar a fila de banners sem repetir o último que acabou de aparecer
-  const embaralharSemRepetir = (array, ultimoId) => {
-    let copia = [...array].sort(() => Math.random() - 0.5);
-    if (copia.length > 1 && ultimoId) {
-      const primeiroId = copia[0].ID_Cadastro || copia[0].id || copia[0].ID;
-      if (primeiroId === ultimoId) {
-        copia.push(copia.shift());
-      }
+  // Algoritmo simples de embaralhar array
+  const embaralhar = (array) => {
+    let copia = [...array];
+    for (let i = copia.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copia[i], copia[j]] = [copia[j], copia[i]];
     }
     return copia;
   };
 
-  filaDestaquesHome = embaralharSemRepetir(apenasDestaquesHome, ultimoExibidoHomeId);
-  indiceDestaqueHomeAtual = 0;
+  // Fila circular simples
+  let filaAtiva = embaralhar(apenasDestaquesHome);
 
   containerHome.className = "flex justify-center items-center w-full my-2 transition-opacity duration-500";
 
-  // Exibe o banner de 1 empresa por vez
+  // Função que rende o banner na tela
   const exibirProximoBannerHome = () => {
-    containerHome.innerHTML = '';
-
-    if (indiceDestaqueHomeAtual >= filaDestaquesHome.length) {
-      filaDestaquesHome = embaralharSemRepetir(listaDestaquesHomeGlobal, ultimoExibidoHomeId);
-      indiceDestaqueHomeAtual = 0;
+    // Se a fila esvaziar, recarrega e reembaralha a lista completa
+    if (filaAtiva.length === 0) {
+      filaAtiva = embaralhar(apenasDestaquesHome);
     }
 
-    const emp = filaDestaquesHome[indiceDestaqueHomeAtual];
-    const idEmpresa = emp.ID_Cadastro || emp.id || emp.ID || '';
-    ultimoExibidoHomeId = idEmpresa;
-    indiceDestaqueHomeAtual++;
+    // Pega o próximo da fila
+    const emp = filaAtiva.shift();
+    if (!emp) return;
 
+    const idEmpresa = emp.ID_Cadastro || emp.id || emp.ID || '';
     const nomeEmpresa = emp.Nome_Negocio || emp.nome || emp.Nome || 'Empresa em Destaque';
     const urlAvatarFallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeEmpresa)}&background=0284c7&color=ffffff&size=500`;
     const urlImagemBruta = emp.URL_Logo_LH3 || emp.Logo || emp.URL_Logo || emp.imagem || emp.Imagem || emp.foto || emp.banner || '';
@@ -1783,7 +1777,7 @@ function renderizarDestaquesComRotacao(listaEmpresas, gridElement) {
     if (!window.mapaEmpresas) window.mapaEmpresas = {};
     window.mapaEmpresas[idEmpresa] = emp;
 
-    // CARD DE BANNER ÚNICO (SOMENTE IMAGEM DO ANÚNCIO)
+    // CARD DE BANNER ÚNICO
     containerHome.innerHTML = `
       <div onclick="abrirModalDetalhesWrapper('${idEmpresa}')" 
            class="w-full max-w-2xl bg-white rounded-2xl overflow-hidden shadow-lg border-2 border-amber-300 hover:border-amber-400 cursor-pointer transition transform active:scale-[0.98] sm:hover:scale-[1.01] relative group">
@@ -1802,20 +1796,20 @@ function renderizarDestaquesComRotacao(listaEmpresas, gridElement) {
     `;
   };
 
+  // Exibe o 1º banner imediatamente
   exibirProximoBannerHome();
 
-  // Troca de anúncio aleatório a cada 7 segundos (corrigido: apenasDestaquesHome)
+  // Inicia o timer infinito se houver mais de 1 banner
   if (apenasDestaquesHome.length > 1) {
-    intervaloDestaquesHome = setInterval(() => {
+    window.intervaloDestaquesHome = setInterval(() => {
       containerHome.classList.add('opacity-0');
       setTimeout(() => {
         exibirProximoBannerHome();
         containerHome.classList.remove('opacity-0');
       }, 500);
-    }, 7000);
+    }, 8000);
   }
 }
-
 // =================================================================
 // 2. SEÇÃO GUIA COMERCIAL: CARDS COMPLETOS DOS DESTAQUES EM GRID
 // =================================================================
