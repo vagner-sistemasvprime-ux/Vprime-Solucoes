@@ -230,12 +230,12 @@
 <!-- ================================================================= -->
 <div id="secaoHeroHome" class="space-y-8 my-6">
   
-  <!-- BANNERS EM DESTAQUE / PROMOÇÕES (SLIDER OU CARROSEL) -->
-  <section id="secaoBanners" class="max-w-6xl mx-auto px-4">
-    <div id="containerBanners" class="w-full overflow-hidden rounded-2xl shadow-lg border border-yellow-200 bg-white min-h-[160px] flex items-center justify-center">
-      <!-- Banners / Promoções Ativas carregados via JS -->
-    </div>
-  </section>
+  <!-- BANNERS EM DESTAQUE / PROMOÇÕES -->
+<section id="secaoBanners" class="max-w-6xl mx-auto px-4 my-4">
+  <div id="containerBanners" class="w-full rounded-2xl shadow-lg border border-yellow-200 bg-white overflow-hidden">
+    <!-- Os banners serão injetados via JS aqui -->
+  </div>
+</section>
 
   <!-- 🌟 SEÇÃO EMPRESAS EM DESTAQUE HOME (BANNER ÚNICO COM ROTAÇÃO ALEATÓRIA) -->
   <section id="secaoEmpresasDestaqueHome" class="max-w-6xl mx-auto px-4">
@@ -2187,16 +2187,15 @@ function renderizarBanners() {
     const link = b.Link_Destino || '#';
     let imagem = (b.Imagem_Banner_LH3 || b.URL_Logo_LH3 || b.Imagem || b.imagem || '').trim() || imgPlaceholder;
 
-    // 1. OTIMIZAÇÃO DE IMAGEM: Tratamento Google LH3 / Drive (Largura de até 1000px)
+    // 1. OTIMIZAÇÃO DE IMAGEM: Garante alta definição (1600px) e remove compressores que deixam fosco
     if (imagem.includes('drive.google.com/file/d/')) {
       const fileId = imagem.split('/d/')[1].split('/')[0];
-      imagem = `https://lh3.googleusercontent.com/d/${fileId}=w1000-rw`;
-    } else if (imagem.includes('lh3.googleusercontent.com') && !imagem.includes('=w1000')) {
-      imagem = imagem.split('=')[0] + '=w1000-rw';
+      imagem = `https://lh3.googleusercontent.com/d/${fileId}=w1600`;
+    } else if (imagem.includes('lh3.googleusercontent.com')) {
+      imagem = imagem.split('=')[0] + '=w1600';
     }
 
-    // 2. OTIMIZAÇÃO DE PERFORMANCED/LCP:
-    // O primeiro banner carrega imediatamente (eager/high), os demais sob demanda (lazy)
+    // 2. OTIMIZAÇÃO DE PERFORMANCE:
     const isPrimeiro = index === 0;
     const attrLoading = isPrimeiro ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"';
 
@@ -2207,7 +2206,7 @@ function renderizarBanners() {
                alt="${b.Nome_Anunciante || 'Banner Promocional'}" 
                ${attrLoading} 
                decoding="async" 
-               class="w-full h-32 sm:h-48 object-cover rounded-2xl"
+               class="w-full h-auto block object-contain rounded-2xl"
                onerror="this.onerror=null; this.src='${imgPlaceholder}';">
         </a>
       </div>
@@ -2250,6 +2249,7 @@ function renderizarBanners() {
     iniciarRotacaoAutomatica(listaBanners.length);
   }
 }
+
 
 // Alterna para um slide específico
 function irParaSlide(index) {
