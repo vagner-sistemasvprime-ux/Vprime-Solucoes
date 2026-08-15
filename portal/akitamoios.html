@@ -1986,7 +1986,7 @@ function renderizarEmpresas() {
     }
 
     // CHAMA A ROTAÇÃO AUTOMÁTICA DOS DESTAQUES
-   renderizarGuiaComercialGrid(dadosGlobais.empresas, grid);
+    renderizarGuiaComercialGrid(dadosGlobais.empresas, grid);
     return;
   }
 
@@ -2036,7 +2036,7 @@ function renderizarEmpresas() {
 }
 
 
-// Função auxiliar reutilizável para desenhar os Cards
+// Função auxiliar reutilizável para desenhar os Cards com Rastreio
 function renderizarCardsNaGrid(lista, container) {
   if (!container || !Array.isArray(lista)) return;
 
@@ -2075,7 +2075,7 @@ function renderizarCardsNaGrid(lista, container) {
         </div>`;
     }
 
-    // 1. OTIMIZAÇÃO DE IMAGEM: Tratamento e compressão do Google Drive/LH3
+    // OTIMIZAÇÃO DE IMAGEM: Tratamento e compressão do Google Drive/LH3
     let imgLogo = (emp.URL_Logo_LH3 || emp.URL_Logo || emp.Logo || emp.logo || '').trim();
 
     if (imgLogo.includes('drive.google.com/file/d/')) {
@@ -2107,7 +2107,6 @@ function renderizarCardsNaGrid(lista, container) {
         
         <div class="${ehDestaque ? 'pt-1' : ''}">
           <div class="flex items-center gap-4 mb-4">
-            <!-- 2. OTIMIZAÇÃO HTML: loading="lazy" e decoding="async" -->
             <img src="${imgLogo}" 
                  alt="${emp.Nome_Negocio || 'Comércio'}" 
                  loading="lazy" 
@@ -2129,7 +2128,9 @@ function renderizarCardsNaGrid(lista, container) {
               <i class="fa-solid fa-location-dot text-red-500"></i> ${emp.Endereco || 'Tamoios - Cabo Frio'}
             </p>
             <div class="flex gap-1">
-              <a href="${linkGmaps}" target="_blank" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold px-2 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
+              <a href="${linkGmaps}" target="_blank" 
+                 onclick="registrarClique('${idAnuncio}', 'categoria')" 
+                 class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold px-2 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
                 <i class="fa-solid fa-diamond-turn-right"></i> Rota
               </a>
             </div>
@@ -2137,11 +2138,12 @@ function renderizarCardsNaGrid(lista, container) {
 
           <div class="flex items-center justify-center gap-2 bg-gray-50 py-1.5 px-3 rounded-lg text-xs font-semibold text-gray-700 border border-gray-100">
             <i class="fa-solid fa-phone text-blue-600 text-xs"></i>
-            <span>Tel: <a href="tel:${numWhatsLimpo}" class="hover:underline text-gray-900 font-bold">${whatsFormatado}</a></span>
+            <span>Tel: <a href="tel:${numWhatsLimpo}" onclick="registrarClique('${idAnuncio}', 'categoria')" class="hover:underline text-gray-900 font-bold">${whatsFormatado}</a></span>
           </div>
 
           <a href="https://wa.me/55${numWhatsLimpo}?text=${msgWhats}" target="_blank" 
-            class="w-full bg-verdeWhats hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition text-sm">
+             onclick="registrarClique('${idAnuncio}', 'categoria')" 
+             class="w-full bg-verdeWhats hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition text-sm">
             <i class="fa-brands fa-whatsapp text-lg"></i> Conversar no WhatsApp
           </a>
 
@@ -2159,6 +2161,7 @@ function renderizarCardsNaGrid(lista, container) {
   // Injeta tudo de uma única vez na DOM
   container.innerHTML = htmlCards;
 }
+
    
     let bannerAtualIndex = 0;
 let intervaloBanner = null;
@@ -3053,11 +3056,10 @@ function alternarMenuLateral() {
   }
 }
 
-/// =========================================================
-// MÓDULO: BALCÃO DE EMPREGOS (ATUALIZADO COM LINK / SITE)
+// =========================================================
+// MÓDULO: BALCÃO DE EMPREGOS (COM EXTRAÇÃO EXPANDIDA DE ID)
 // =========================================================
 
-// Garante que a variável global exista no escopo
 if (typeof listaVagasGlobal === 'undefined') {
   var listaVagasGlobal = [];
 }
@@ -3069,7 +3071,6 @@ function renderizarVagas(lista = listaVagasGlobal) {
 
   container.innerHTML = '';
 
-  // Aceita tanto a lista vinda do banco quanto local
   if (!lista || lista.length === 0) {
     container.innerHTML = `
       <div class="col-span-full text-center py-8 text-gray-500 text-sm bg-white rounded-2xl border border-dashed border-gray-200">
@@ -3080,8 +3081,8 @@ function renderizarVagas(lista = listaVagasGlobal) {
   }
 
   lista.forEach(vaga => {
-    // Tratamento de ID, Senha e Data
-    const idVaga = vaga.ID || vaga.id || vaga.Id || '';
+    // Captura o ID exatamente pelo campo 'ID_Vaga' retornado da planilha
+    const idVaga = vaga.ID_Vaga || vaga.id_vaga || vaga.ID || vaga.id || '';
     const senhaVaga = encodeURIComponent(vaga.Senha || vaga.senha || vaga.senhaVaga || '');
     const dataCadastro = vaga.Data_Cadastro || vaga.dataCadastro || '';
     const textoTempo = typeof tempoDecorridoVaga === 'function' ? tempoDecorridoVaga(dataCadastro) : '';
@@ -3096,7 +3097,7 @@ function renderizarVagas(lista = listaVagasGlobal) {
     let contato = String(vaga.Contato || vaga.contato || '').trim();
     const descricao = vaga.Descricao || vaga.descricao || 'Sem descrição informada.';
 
-    // LÓGICA TRATANDO OS 3 TIPOS DE CONTATO (WhatsApp, E-mail e Site/Link)
+    // LÓGICA DOS 3 TIPOS DE CONTATO
     let linkAcao = '#';
     let textoBotao = 'Candidatar-se';
     let iconeBotao = 'fa-brands fa-whatsapp';
@@ -3108,7 +3109,6 @@ function renderizarVagas(lista = listaVagasGlobal) {
       iconeBotao = 'fa-solid fa-envelope';
       corBotao = 'bg-blue-600 hover:bg-blue-700';
     } else if (tipoContato === 'site' || tipoContato === 'link') {
-      // Garante que links externos comecem com http:// ou https://
       if (contato && !contato.startsWith('http://') && !contato.startsWith('https://')) {
         linkAcao = `https://${contato}`;
       } else {
@@ -3118,7 +3118,6 @@ function renderizarVagas(lista = listaVagasGlobal) {
       iconeBotao = 'fa-solid fa-globe';
       corBotao = 'bg-purple-600 hover:bg-purple-700';
     } else {
-      // Padrão: WhatsApp
       const numWhatsLimpo = contato.replace(/\D/g, '');
       const msgWhats = encodeURIComponent(`Olá! Vi a vaga de "${tituloCargo}" no portal Aki Tamoios e gostaria de enviar meu currículo.`);
       linkAcao = `https://wa.me/55${numWhatsLimpo}?text=${msgWhats}`;
@@ -3127,7 +3126,6 @@ function renderizarVagas(lista = listaVagasGlobal) {
       corBotao = 'bg-verdeWhats hover:bg-emerald-600';
     }
 
-    // Badges coloridas por tipo de contrato
     const badgesCor = {
       'CLT': 'bg-blue-100 text-blue-700 border-blue-200',
       'PJ': 'bg-purple-100 text-purple-700 border-purple-200',
@@ -3167,18 +3165,17 @@ function renderizarVagas(lista = listaVagasGlobal) {
         <div>
           <div class="pt-2 border-t border-gray-100">
             <a href="${linkAcao}" target="_blank" rel="noopener noreferrer"
+               onclick="registrarCliqueVaga('${idVaga}')"
                class="w-full ${corBotao} text-white font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-2 shadow-sm transition text-xs">
               <i class="${iconeBotao} text-sm"></i>
               ${textoBotao}
             </a>
           </div>
           <div class="pt-2 flex justify-between items-center text-[10px] text-gray-400">
-            <!-- Tempo de publicação -->
             <span class="flex items-center gap-1 font-medium text-gray-500">
               <i class="fa-regular fa-clock text-gray-400"></i> ${textoTempo}
             </span>
 
-            <!-- Botão Encerrar Vaga -->
             <button type="button" 
                     onclick="solicitarExclusaoVaga('${idVaga}', '${senhaVaga}')" 
                     class="hover:text-red-600 transition flex items-center gap-1">
@@ -3192,6 +3189,7 @@ function renderizarVagas(lista = listaVagasGlobal) {
     container.insertAdjacentHTML('beforeend', cardHTML);
   });
 }
+
 
 // Função robusta para tratar múltiplos formatos de data e retornar o tempo decorrido
 function tempoDecorridoVaga(dataCadastroInput) {
@@ -3377,15 +3375,13 @@ function renderizarHomeVagas(lista = listaVagasGlobal) {
     return;
   }
 
-  // Pega apenas as primeiras 3 vagas
   const ultimasVagas = lista.slice(0, 3);
 
   ultimasVagas.forEach(vaga => {
-    // Tratamento de ID e Senha
-    const idVaga = vaga.ID || vaga.id || vaga.Id || '';
+    // Captura o ID exatamente pelo campo 'ID_Vaga' retornado da planilha
+    const idVaga = vaga.ID_Vaga || vaga.id_vaga || vaga.ID || vaga.id || '';
     const senhaVaga = encodeURIComponent(vaga.Senha || vaga.senha || vaga.senhaVaga || '');
 
-    // Data de cadastro e cálculo do tempo decorrido
     const dataCadastro = vaga.Data_Cadastro || vaga.dataCadastro || '';
     const textoTempo = typeof tempoDecorridoVaga === 'function' ? tempoDecorridoVaga(dataCadastro) : '';
 
@@ -3397,7 +3393,6 @@ function renderizarHomeVagas(lista = listaVagasGlobal) {
     const tipoContato = String(vaga.Tipo_Contato || vaga.tipoContato || 'whatsapp').toLowerCase();
     let contato = String(vaga.Contato || vaga.contato || '').trim();
 
-    // LÓGICA DOS 3 TIPOS DE CONTATO (WhatsApp, E-mail e Site/Link)
     let linkAcao = '#';
     let textoBotao = 'Candidatar-se';
     let iconeBotao = 'fa-brands fa-whatsapp';
@@ -3418,7 +3413,6 @@ function renderizarHomeVagas(lista = listaVagasGlobal) {
       iconeBotao = 'fa-solid fa-globe';
       corBotao = 'bg-purple-600 hover:bg-purple-700';
     } else {
-      // Padrão: WhatsApp
       const numWhatsLimpo = contato.replace(/\D/g, '');
       const msgWhats = encodeURIComponent(`Olá! Vi a vaga de "${tituloCargo}" na Home do Aki Tamoios e gostaria de enviar meu currículo.`);
       linkAcao = `https://wa.me/55${numWhatsLimpo}?text=${msgWhats}`;
@@ -3464,13 +3458,13 @@ function renderizarHomeVagas(lista = listaVagasGlobal) {
         <div>
           <div class="pt-2 border-t border-gray-100">
             <a href="${linkAcao}" target="_blank" rel="noopener noreferrer"
+               onclick="registrarCliqueVaga('${idVaga}')"
                class="w-full ${corBotao} text-white font-bold py-1.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-sm transition text-xs">
               <i class="${iconeBotao} text-xs"></i>
               ${textoBotao}
             </a>
           </div>
 
-          <!-- Rodapé com Tempo Decorrido -->
           <div class="pt-2 flex justify-between items-center text-[10px] text-gray-400">
             <span class="flex items-center gap-1 font-medium text-gray-500">
               <i class="fa-regular fa-clock text-gray-400"></i> ${textoTempo}
@@ -4315,6 +4309,9 @@ function abrirModalDetalhesEmpresa(emp) {
   const planoStr = String(emp.Plano || '').toLowerCase();
   const ehDestaque = emp.Plano && planoStr !== 'gratuito' && planoStr !== '';
 
+  // DEFINE A ORIGEM COM BASE NO PLANO DO ANÚNCIO
+  const origemClique = ehDestaque ? 'destaque' : 'categoria';
+
   const urlAvatarPadrao = `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.Nome_Negocio || 'Akitamoios')}&background=0284c7&color=ffffff&size=150&font-size=0.33`;
   const temLogoValida = emp.URL_Logo_LH3 && emp.URL_Logo_LH3.trim().length > 10;
   const imgLogo = temLogoValida ? emp.URL_Logo_LH3.trim() : urlAvatarPadrao;
@@ -4332,7 +4329,7 @@ function abrirModalDetalhesEmpresa(emp) {
   const linkGmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((emp.Endereco || '') + ', Tamoios, Cabo Frio')}`;
   const idAnuncio = emp.ID_Cadastro || emp.id || emp.ID || '';
 
-  // Renderiza o mesmo conteúdo visual dos seus cards originais dentro do modal
+  // Renderiza o mesmo conteúdo visual com eventos onclick de rastreio
   container.innerHTML = `
     ${ehDestaque ? `
       <div class="mb-3">
@@ -4362,17 +4359,20 @@ function abrirModalDetalhesEmpresa(emp) {
         <p class="truncate flex items-center gap-1.5">
           <i class="fa-solid fa-location-dot text-red-500"></i> ${emp.Endereco || 'Tamoios - Cabo Frio'}
         </p>
-        <a href="${linkGmaps}" target="_blank" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold px-2.5 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
+        <a href="${linkGmaps}" target="_blank" 
+           onclick="registrarClique('${idAnuncio}', '${origemClique}')" 
+           class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold px-2.5 py-1 rounded-lg text-[11px] whitespace-nowrap flex items-center gap-1">
           <i class="fa-solid fa-diamond-turn-right"></i> Rota
         </a>
       </div>
 
       <div class="flex items-center justify-center gap-2 bg-gray-50 py-2 px-3 rounded-xl text-xs font-semibold text-gray-700 border border-gray-100">
         <i class="fa-solid fa-phone text-blue-600 text-xs"></i>
-        <span>Tel: <a href="tel:${numWhatsLimpo}" class="hover:underline text-gray-900 font-bold">${whatsFormatado}</a></span>
+        <span>Tel: <a href="tel:${numWhatsLimpo}" onclick="registrarClique('${idAnuncio}', '${origemClique}')" class="hover:underline text-gray-900 font-bold">${whatsFormatado}</a></span>
       </div>
 
       <a href="https://wa.me/55${numWhatsLimpo}?text=${msgWhats}" target="_blank" 
+         onclick="registrarClique('${idAnuncio}', '${origemClique}')" 
          class="w-full bg-verdeWhats hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition text-sm">
         <i class="fa-brands fa-whatsapp text-lg"></i> Conversar no WhatsApp
       </a>
@@ -4388,8 +4388,9 @@ function abrirModalDetalhesEmpresa(emp) {
 
   // Exibe o modal
   modal.classList.remove("hidden");
-  document.body.style.overflow = "hidden"; // Impede rolagem no fundo
+  document.body.style.overflow = "hidden";
 }
+
 
 // Fecha o modal
 function fecharModalEmpresa() {
@@ -5707,6 +5708,42 @@ function atualizarPlaceholderContato() {
   } else if (tipo === 'site') {
     inputContato.placeholder = 'Ex: https://empresa.com/vagas';
   }
+}
+
+// Função para registrar os cliques no JS
+function registrarClique(idEmpresa, origem) {
+  if (!idEmpresa) return;
+
+  const payload = {
+    acao: "registrarClique",
+    idEmpresa: String(idEmpresa),
+    origem: origem
+  };
+
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify(payload)
+  }).catch(err => console.error("Erro ao registrar clique:", err));
+}
+
+
+// Função para registrar cliques em candidaturas de Vagas de Emprego
+function registrarCliqueVaga(idVaga) {
+  if (!idVaga) return;
+
+  const payload = {
+    acao: "registrarCliqueVaga",
+    idVaga: String(idVaga)
+  };
+
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify(payload)
+  }).catch(() => {
+    // Falha silenciosa para não interromper a experiência do usuário
+  });
 }
 
 </script>
