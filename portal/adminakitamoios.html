@@ -114,29 +114,189 @@
     <header class="bg-white rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Gerenciador Guia Tamoios</h1>
-        <p class="text-sm text-gray-500">Aprove, edite ou remova cadastros em tempo real</p>
+        <p class="text-sm text-gray-500">Aprove, edite ou gerencie o conteúdo em tempo real</p>
       </div>
       <button onclick="carregarDados()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-xl text-sm flex items-center gap-2">
-        <i class="fa-solid fa-rotate"></i> Atualizar Lista
+        <i class="fa-solid fa-rotate"></i> Atualizar Dados
       </button>
     </header>
 
-    <!-- Abas -->
-    <div class="flex gap-2 border-b border-gray-200 pb-2">
+    <!-- NAVEGAÇÃO POR ABAS -->
+    <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
       <button id="btnAbaPendentes" onclick="trocarAba('pendentes')" class="px-4 py-2 font-bold rounded-xl bg-oceano text-white text-sm flex items-center gap-2">
         <i class="fa-solid fa-clock"></i> Pendentes <span id="badgePendentes" class="bg-amareloSol text-gray-900 px-2 py-0.5 rounded-full text-xs">0</span>
       </button>
       <button id="btnAbaAprovados" onclick="trocarAba('aprovados')" class="px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2">
         <i class="fa-solid fa-circle-check"></i> Aprovados
       </button>
+      <button id="btnAbaBanners" onclick="trocarAba('banners')" class="px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2">
+        <i class="fa-solid fa-image"></i> Banners Promocionais
+      </button>
+      <button id="btnAbaSorteios" onclick="trocarAba('sorteios')" class="px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2">
+        <i class="fa-solid fa-gift"></i> Sorteios & Participantes
+      </button>
     </div>
 
-    <!-- Lista em Cards -->
+    <!-- ABA 1 E 2: LISTA DE EMPRESAS EM CARDS -->
     <div id="gridAdmin" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+    <!-- ABA DE BANNERS PROMOCIONAIS -->
+    <section id="secao-banners" class="space-y-6 hidden">
+      <!-- FORMULÁRIO DE CADASTRO DE BANNER -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-4">
+        <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
+          <i class="fa-solid fa-rectangle-ad text-oceano"></i> Cadastrar Novo Banner
+        </h3>
+        <form id="formCadastrarBanner" onsubmit="event.preventDefault(); cadastrarNovoBanner();" class="space-y-4 text-sm">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Título / Nome do Anunciante</label>
+              <input type="text" id="bannerTitulo" placeholder="Ex: Promoção de Verão - Mercado X" required class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
+            </div>
+
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Link de Destino (Opcional)</label>
+              <input type="url" id="bannerLink" placeholder="https://wa.me/5512999999999 ou link do site" class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block font-semibold text-gray-700 mb-1">Imagem do Banner</label>
+              <input type="file" id="bannerImagem" accept="image/*" required class="w-full border rounded-xl p-2 focus:ring-2 focus:ring-oceano focus:outline-none bg-white">
+            </div>
+          </div>
+
+          <button type="submit" id="btnCadastrarBanner" class="bg-oceano hover:bg-blue-800 text-white font-bold px-5 py-2.5 rounded-xl transition flex items-center gap-2">
+            <i class="fa-solid fa-upload"></i> Publicar Banner
+          </button>
+        </form>
+      </div>
+
+      <!-- TABELA DE BANNERS CADASTRADOS -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-3">
+        <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
+          <i class="fa-solid fa-images text-oceano"></i> Banners Cadastrados
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="bg-oceano text-white rounded-xl">
+                <th class="p-3 rounded-l-xl">Prévia</th>
+                <th class="p-3">Título / Anunciante</th>
+                <th class="p-3">Link</th>
+                <th class="p-3">Status</th>
+                <th class="p-3 rounded-r-xl text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-banners-body" class="divide-y divide-gray-100">
+              <tr>
+                <td colspan="5" class="p-4 text-center text-gray-500">Carregando banners...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA 3: PAINEL DEDICADO DE SORTEIOS E PARTICIPANTES -->
+    <section id="secao-sorteios" class="space-y-6 hidden">
+      <!-- FORMULÁRIO DE CADASTRO DE SORTEIO -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-4">
+        <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
+          <i class="fa-solid fa-plus-circle text-emerald-600"></i> Cadastrar Novo Sorteio
+        </h3>
+        <form id="formCadastrarSorteio" onsubmit="event.preventDefault(); cadastrarNovoSorteio();" class="space-y-4 text-sm">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Título do Sorteio / Prêmio</label>
+              <input type="text" id="sorteioTitulo" placeholder="Ex: Cesta de Café da Manhã" required class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
+            </div>
+
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Loja / Empresa Parceira</label>
+              <input type="text" id="sorteioLoja" placeholder="Ex: Padaria Central" required class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none">
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block font-semibold text-gray-700 mb-1">Regras ou Descrição</label>
+              <textarea id="sorteioRegras" rows="3" placeholder="Ex: Válido para moradores do bairro. Retirada na loja." class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none resize-none"></textarea>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Data da Apuração / Sorteio</label>
+              <input type="date" id="sorteioData" class="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-oceano focus:outline-none bg-white">
+            </div>
+
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Foto do Prêmio / Banner</label>
+              <input type="file" id="sorteioImagem" accept="image/*" class="w-full border rounded-xl p-2 focus:ring-2 focus:ring-oceano focus:outline-none bg-white">
+            </div>
+
+          </div>
+
+          <button type="submit" id="btnCadastrarSorteio" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl transition flex items-center gap-2">
+            <i class="fa-solid fa-paper-plane"></i> Publicar Sorteio
+          </button>
+        </form>
+      </div>
+
+      <!-- TABELA DE SORTEIOS CADASTRADOS -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-3">
+        <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-oceano"></i> Sorteios Cadastrados
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="bg-oceano text-white rounded-xl">
+                <th class="p-3 rounded-l-xl">Foto</th>
+                <th class="p-3">Título</th>
+                <th class="p-3">Loja Parceira</th>
+                <th class="p-3">Data Apuração</th>
+                <th class="p-3">Status</th>
+                <th class="p-3 rounded-r-xl text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-sorteios-body" class="divide-y divide-gray-100">
+              <tr>
+                <td colspan="6" class="p-4 text-center text-gray-500">Carregando sorteios...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TABELA DE PARTICIPANTES INSCRITOS -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-3">
+        <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
+          <i class="fa-solid fa-users text-purple-600"></i> Participantes Inscritos nos Sorteios
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="bg-gray-800 text-white rounded-xl">
+                <th class="p-3 rounded-l-xl">Data Inscrição</th>
+                <th class="p-3">ID / Sorteio</th>
+                <th class="p-3">Nome do Morador</th>
+                <th class="p-3">WhatsApp</th>
+                <th class="p-3 rounded-r-xl">Bairro / Local</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-participantes-body" class="divide-y divide-gray-100">
+              <tr>
+                <td colspan="5" class="p-4 text-center text-gray-500">Carregando participantes...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </div>
 
   <script>
     let dadosEmpresas = [];
+    let dadosSorteios = [];
+    let dadosParticipantes = [];
+    let dadosBanners = [];
     let senhaSalva = "";
     let abaAtual = 'pendentes';
 
@@ -153,10 +313,17 @@
 
         if (res.sucesso) {
           document.getElementById('telaLogin').classList.add('hidden');
-          dadosEmpresas = res.empresas;
+          dadosEmpresas = res.empresas || [];
+          dadosSorteios = res.sorteios || [];
+          dadosParticipantes = res.participantes || [];
+          dadosBanners = res.banners || [];
+
+          renderizarTabelaBanners(dadosBanners);
+          renderizarTabelaSorteios(dadosSorteios);
+          renderizarTabelaParticipantes(dadosParticipantes);
           renderizarPainel();
         } else {
-          alert(res.mensagem || 'Erro ao autenticar');
+          alert(res.mensagem || 'Senha incorreta ou erro ao autenticar');
         }
       } catch (err) {
         alert("Erro na conexão com a API: " + err.message);
@@ -165,30 +332,48 @@
 
     function trocarAba(aba) {
       abaAtual = aba;
-      document.getElementById('btnAbaPendentes').className = aba === 'pendentes' 
-        ? 'px-4 py-2 font-bold rounded-xl bg-oceano text-white text-sm flex items-center gap-2'
-        : 'px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2';
-      
-      document.getElementById('btnAbaAprovados').className = aba === 'aprovados' 
-        ? 'px-4 py-2 font-bold rounded-xl bg-oceano text-white text-sm flex items-center gap-2'
-        : 'px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2';
+      const estiloAtivo = 'px-4 py-2 font-bold rounded-xl bg-oceano text-white text-sm flex items-center gap-2';
+      const estiloInativo = 'px-4 py-2 font-semibold text-gray-600 hover:bg-gray-200 rounded-xl text-sm flex items-center gap-2';
+
+      document.getElementById('btnAbaPendentes').className = aba === 'pendentes' ? estiloAtivo : estiloInativo;
+      document.getElementById('btnAbaAprovados').className = aba === 'aprovados' ? estiloAtivo : estiloInativo;
+      document.getElementById('btnAbaBanners').className = aba === 'banners' ? estiloAtivo : estiloInativo;
+      document.getElementById('btnAbaSorteios').className = aba === 'sorteios' ? estiloAtivo : estiloInativo;
 
       renderizarPainel();
     }
 
     function renderizarPainel() {
       const grid = document.getElementById('gridAdmin');
-      grid.innerHTML = '';
+      const secaoBanners = document.getElementById('secao-banners');
+      const secaoSorteios = document.getElementById('secao-sorteios');
 
       const pendentes = dadosEmpresas.filter(e => e.Status_Pagamento !== 'Aprovado');
       const aprovados = dadosEmpresas.filter(e => e.Status_Pagamento === 'Aprovado');
 
       document.getElementById('badgePendentes').innerText = pendentes.length;
 
+      // Reset visibilidade
+      grid.classList.add('hidden');
+      secaoBanners.classList.add('hidden');
+      secaoSorteios.classList.add('hidden');
+
+      if (abaAtual === 'banners') {
+        secaoBanners.classList.remove('hidden');
+        return;
+      }
+
+      if (abaAtual === 'sorteios') {
+        secaoSorteios.classList.remove('hidden');
+        return;
+      }
+
+      grid.classList.remove('hidden');
+      grid.innerHTML = '';
       const listaExibir = abaAtual === 'pendentes' ? pendentes : aprovados;
 
       if (listaExibir.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">Nenhum registro encontrado nesta aba.</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500 font-medium">Nenhum registro encontrado nesta aba.</div>`;
         return;
       }
 
@@ -201,14 +386,14 @@
               <div class="flex items-center gap-3 mb-3">
                 <img src="${imgLogo}" class="w-14 h-14 rounded-xl object-cover border">
                 <div>
-                  <h3 class="font-bold text-gray-900">${emp.Nome_Negocio}</h3>
-                  <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-medium">${emp.Categoria}</span>
-                  <span class="text-xs font-bold ${emp.Plano !== 'Gratuito' ? 'text-amber-600' : 'text-gray-400'} block">${emp.Plano}</span>
+                  <h3 class="font-bold text-gray-900">${emp.Nome_Negocio || ''}</h3>
+                  <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-medium">${emp.Categoria || ''}</span>
+                  <span class="text-xs font-bold ${emp.Plano !== 'Gratuito' ? 'text-amber-600' : 'text-gray-400'} block">${emp.Plano || 'Gratuito'}</span>
                 </div>
               </div>
               <p class="text-sm text-gray-600 line-clamp-2">${emp.Descricao || 'Sem descrição'}</p>
               <div class="text-xs text-gray-500 mt-2 space-y-1">
-                <p><i class="fa-brands fa-whatsapp text-green-500"></i> ${emp.WhatsApp}</p>
+                <p><i class="fa-brands fa-whatsapp text-green-500"></i> ${emp.WhatsApp || ''}</p>
                 <p><i class="fa-solid fa-location-dot"></i> ${emp.Endereco || 'Não informado'}</p>
               </div>
             </div>
@@ -220,12 +405,10 @@
                 </button>
               ` : ''}
               
-              <!-- Botão Editar -->
               <button onclick='abrirEdicao(${JSON.stringify(emp).replace(/'/g, "&apos;")})' class="bg-blue-50 hover:bg-blue-100 text-oceano font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1">
                 <i class="fa-solid fa-pen-to-square"></i> Editar
               </button>
 
-              <!-- Botão Excluir -->
               <button onclick="excluir(${emp.linhaIndex})" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-2 rounded-xl text-xs">
                 <i class="fa-solid fa-trash"></i>
               </button>
@@ -236,7 +419,321 @@
       });
     }
 
-    // Modal de Edição
+    /* CADASTRO E GERENCIAMENTO DE BANNERS */
+
+async function cadastrarNovoBanner(event) {
+  if (event) event.preventDefault(); // Impede o envio padrão do formulário HTML
+
+  const titulo = document.getElementById("bannerTitulo").value;
+  const link = document.getElementById("bannerLink").value;
+  const fileInput = document.getElementById("bannerImagem");
+
+  if (!titulo || !fileInput || !fileInput.files[0]) {
+    alert("Por favor, preencha o Título e selecione uma imagem.");
+    return;
+  }
+
+  const btn = document.getElementById('btnCadastrarBanner');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "Enviando...";
+  }
+
+  try {
+    const file = fileInput.files[0];
+    const imagemBase64 = await convertBase64(file);
+
+    // ATENÇÃO: É esta propriedade 'acao' que força a ir para a aba Banners_Destaque
+    const payload = {
+      acao: "cadastrarBanner",
+      senha: typeof senhaSalva !== "undefined" ? senhaSalva : "",
+      nomeAnunciante: titulo,
+      linkDestino: link,
+      arquivoBase64: imagemBase64,
+      nomeArquivo: file.name,
+      mimeType: file.type
+    };
+
+    const res = await fetch(URL_SCRIPT, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+
+    if (result.sucesso) {
+      alert("🎉 Banner cadastrado e publicado com sucesso!");
+      
+      // Limpa os campos após salvar
+      document.getElementById("bannerTitulo").value = "";
+      document.getElementById("bannerLink").value = "";
+      fileInput.value = "";
+
+      // Atualiza a tabela na tela
+      if (typeof carregarDados === "function") {
+        await carregarDados();
+      }
+    } else {
+      alert("❌ " + (result.erro || result.mensagem || "Erro ao cadastrar o banner."));
+    }
+  } catch (err) {
+    console.error("Erro no cadastro:", err);
+    alert("Erro na comunicação com o servidor.");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-upload"></i> Publicar Banner';
+    }
+  }
+}
+
+function renderizarTabelaBanners(banners) {
+  const tbody = document.getElementById("tabela-banners-body");
+  if (!banners || banners.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Nenhum banner cadastrado.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = banners.map(b => {
+    // Trata os nomes das colunas da planilha Banners_Destaque
+    const titulo = b.Nome_Anunciante || b.Titulo || '';
+    const foto = b.Imagem_Banner_LH3 || b.URL_Foto || '';
+    const link = b.Link_Destino || b.Link || '';
+    const status = b.Status || 'Inativo';
+
+    return `
+      <tr class="hover:bg-gray-50">
+        <td class="p-3">
+          ${foto ? `<img src="${foto}" class="w-20 h-10 object-cover rounded-lg border">` : '<span class="text-xs text-gray-400">Sem Foto</span>'}
+        </td>
+        <td class="p-3 font-semibold text-gray-800">${titulo}</td>
+        <td class="p-3 text-gray-600 text-xs truncate max-w-xs">
+          ${link ? `<a href="${link}" target="_blank" class="text-oceano hover:underline">${link}</a>` : '-'}
+        </td>
+        <td class="p-3">
+          <span class="px-2.5 py-1 rounded-full text-xs font-bold ${status === 'Ativo' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+            ${status}
+          </span>
+        </td>
+        <td class="p-3 text-center space-x-1">
+          ${status === 'Ativo' 
+            ? `<button onclick="alterarStatusBanner(${b.linhaIndex}, 'Inativo')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-semibold px-2.5 py-1 rounded-lg text-xs">Pausar</button>`
+            : `<button onclick="alterarStatusBanner(${b.linhaIndex}, 'Ativo')" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-semibold px-2.5 py-1 rounded-lg text-xs">Ativar</button>`
+          }
+          <button onclick="excluirBanner(${b.linhaIndex})" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-2.5 py-1 rounded-lg text-xs">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+
+    async function alterarStatusBanner(linhaIndex, novoStatus) {
+      const url = `${URL_SCRIPT}?acao=alterarStatusBanner&linha=${linhaIndex}&status=${encodeURIComponent(novoStatus)}&senha=${encodeURIComponent(senhaSalva)}`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.sucesso) carregarDados();
+        else alert("Erro: " + data.mensagem);
+      } catch (err) {
+        alert("Erro de conexão ao alterar status do banner.");
+      }
+    }
+
+    async function excluirBanner(linhaIndex) {
+      if (!confirm("Tem certeza que deseja excluir este banner?")) return;
+      const url = `${URL_SCRIPT}?acao=excluirBanner&linha=${linhaIndex}&senha=${encodeURIComponent(senhaSalva)}`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.sucesso) carregarDados();
+        else alert("Erro: " + data.mensagem);
+      } catch (err) {
+        alert("Erro de conexão ao excluir banner.");
+      }
+    }
+
+    /* CADASTRO E GERENCIAMENTO DE SORTEIOS */
+
+    async function cadastrarNovoSorteio() {
+      const titulo = document.getElementById("sorteioTitulo").value;
+      const loja = document.getElementById("sorteioLoja").value;
+      const regras = document.getElementById("sorteioRegras").value;
+      const dataSorteio = document.getElementById("sorteioData").value;
+      const fileInput = document.getElementById("sorteioImagem");
+
+      if (!titulo || !loja) {
+        alert("Por favor, preencha o Título e a Loja Parceira.");
+        return;
+      }
+
+      const btn = document.getElementById('btnCadastrarSorteio');
+      btn.disabled = true;
+      btn.innerText = "Enviando...";
+
+      let imagemBase64 = "";
+      let nomeImagem = "";
+
+      if (fileInput && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        nomeImagem = file.name;
+        imagemBase64 = await convertBase64(file);
+      }
+
+      const payload = {
+        acao: "cadastrarSorteio",
+        senha: senhaSalva,
+        titulo: titulo,
+        loja: loja,
+        regras: regras,
+        dataSorteio: dataSorteio,
+        imagemBase64: imagemBase64,
+        nomeImagem: nomeImagem
+      };
+
+      try {
+        const res = await fetch(URL_SCRIPT, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+
+        const textoResposta = await res.text();
+        let result;
+        
+        try {
+          result = JSON.parse(textoResposta);
+        } catch(e) {
+          result = { sucesso: false, mensagem: "Resposta inválida do servidor: " + textoResposta };
+        }
+
+        if (result.sucesso) {
+          alert("🎉 " + (result.mensagem || "Sorteio cadastrado com sucesso!"));
+          document.getElementById('formCadastrarSorteio').reset();
+          carregarDados();
+        } else {
+          alert("❌ " + (result.mensagem || "Erro ao cadastrar sorteio."));
+        }
+      } catch (err) {
+        console.error("Erro ao cadastrar sorteio:", err);
+        alert("Erro na comunicação com o servidor.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Publicar Sorteio';
+      }
+    }
+
+    function convertBase64(file) {
+      return new Promise((resolve, reject) => {
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(file);
+        fileReader.onload = () => resolve(fileReader.result);
+        fileReader.onerror = (error) => reject(error);
+      });
+    }
+
+    async function alterarStatusSorteio(linhaIndex, novoStatus) {
+      const url = `${URL_SCRIPT}?acao=alterarStatusSorteio&linha=${linhaIndex}&status=${encodeURIComponent(novoStatus)}&senha=${encodeURIComponent(senhaSalva)}`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.sucesso) {
+          carregarDados();
+        } else {
+          alert("Erro: " + data.mensagem);
+        }
+      } catch (err) {
+        alert("Erro de conexão ao alterar status.");
+      }
+    }
+
+    async function excluirSorteio(linhaIndex) {
+      if (!confirm("Tem certeza que deseja excluir este sorteio?")) return;
+      const url = `${URL_SCRIPT}?acao=excluirSorteio&linha=${linhaIndex}&senha=${encodeURIComponent(senhaSalva)}`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.sucesso) {
+          carregarDados();
+        } else {
+          alert("Erro: " + data.mensagem);
+        }
+      } catch (err) {
+        alert("Erro de conexão ao excluir sorteio.");
+      }
+    }
+
+    function formatarDataBR(dataBruta) {
+      if (!dataBruta) return '-';
+      
+      const partes = String(dataBruta).split('T')[0].split('-');
+      if (partes.length === 3) {
+        const [ano, mes, dia] = partes;
+        return `${dia}/${mes}/${ano}`;
+      }
+      
+      return dataBruta;
+    }
+
+    function renderizarTabelaSorteios(sorteios) {
+      const tbody = document.getElementById("tabela-sorteios-body");
+      if (!sorteios || sorteios.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhum sorteio cadastrado.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = sorteios.map(s => `
+        <tr class="hover:bg-gray-50">
+          <td class="p-3">
+            ${s.URL_Foto_LH3 ? `<img src="${s.URL_Foto_LH3}" class="w-12 h-12 object-cover rounded-lg border">` : '<span class="text-xs text-gray-400">Sem Foto</span>'}
+          </td>
+          <td class="p-3 font-semibold text-gray-800">${s.Titulo || ''}</td>
+          <td class="p-3 text-gray-600">${s.Loja_Parceira || ''}</td>
+          <td class="p-3 text-gray-600 font-medium">${formatarDataBR(s.Data_Sorteio)}</td>
+          <td class="p-3">
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${s.Status === 'Ativo' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+              ${s.Status || 'Inativo'}
+            </span>
+          </td>
+          <td class="p-3 text-center space-x-1">
+            ${s.Status === 'Ativo' 
+              ? `<button onclick="alterarStatusSorteio(${s.linhaIndex}, 'Inativo')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-semibold px-2.5 py-1 rounded-lg text-xs">Pausar</button>`
+              : `<button onclick="alterarStatusSorteio(${s.linhaIndex}, 'Ativo')" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-semibold px-2.5 py-1 rounded-lg text-xs">Ativar</button>`
+            }
+            <button onclick="excluirSorteio(${s.linhaIndex})" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-2.5 py-1 rounded-lg text-xs">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderizarTabelaParticipantes(participantes) {
+      const tbody = document.getElementById("tabela-participantes-body");
+      if (!participantes || participantes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Nenhum participante inscrito ainda.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = participantes.map(p => `
+        <tr class="hover:bg-gray-50">
+          <td class="p-3 text-gray-600">${p.Data_Inscricao || ''}</td>
+          <td class="p-3 text-gray-600 font-mono text-xs">${p.ID_Sorteio || ''}</td>
+          <td class="p-3 font-semibold text-gray-800">${p.Nome_Usuario || ''}</td>
+          <td class="p-3">
+            <a href="https://wa.me/55${String(p.WhatsApp || '').replace(/\D/g, '')}" target="_blank" class="text-emerald-600 hover:underline font-semibold flex items-center gap-1">
+              <i class="fa-brands fa-whatsapp"></i> ${p.WhatsApp || ''}
+            </a>
+          </td>
+          <td class="p-3 text-gray-600">${p.Bairro || ''}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Modal de Edição (Empresas)
     function abrirEdicao(emp) {
       document.getElementById('editLinhaIndex').value = emp.linhaIndex;
       document.getElementById('editNome').value = emp.Nome_Negocio || '';
@@ -264,7 +761,6 @@
       const nome = document.getElementById('editNome').value;
       const categoria = document.getElementById('editCategoria').value;
       const whatsapp = document.getElementById('editWhatsApp').value;
-      document.getElementById('editEndereco').value;
       const endereco = document.getElementById('editEndereco').value;
       const descricao = document.getElementById('editDescricao').value;
       const plano = document.getElementById('editPlano').value;
