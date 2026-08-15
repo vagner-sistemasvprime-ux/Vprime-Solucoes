@@ -355,6 +355,8 @@
         <button type="button" onclick="filtrarCategoria('Pet Shop')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Pet Shop</button>
         <button type="button" onclick="filtrarCategoria('Saúde e Beleza')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Saúde e Beleza</button>
         <button type="button" onclick="filtrarCategoria('Serviços')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Serviços</button>
+        <button type="button" onclick="filtrarCategoria('Transportes e Mudanças')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Transportes e Mudanças</button>
+        <button type="button" onclick="filtrarCategoria('Outros')" class="btn-cat bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full whitespace-nowrap">Outros</button>
       </div>
     </div>
   </div>
@@ -392,7 +394,6 @@
   </main>
 
 </section>
-
 <!-- ================================================================= -->
 <!-- 3. SEÇÃO: BALCÃO DE EMPREGOS                                      -->
 <!-- ================================================================= -->
@@ -892,6 +893,7 @@
             <option value="Pet Shop">Pet Shop</option>
             <option value="Saúde e Beleza">Saúde e Beleza</option>
             <option value="Serviços">Serviços</option>
+            <option value="Transportes e Mudanças">Transportes e Mudanças</option>
             <option value="Outros">Outros</option>
           </select>
         </div>
@@ -935,7 +937,6 @@
     </form>
   </div>
 </div>
-
 
 <!-- MODAL ESTILIZADO DE CONFIRMAÇÃO DE EXCLUSÃO DE VAGAS -->
 <div id="modalExcluirVaga" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -1183,15 +1184,16 @@
       <div>
         <label for="editClienteCategoria" class="block text-xs font-semibold text-gray-700 mb-1">Categoria:</label>
         <select id="editClienteCategoria" required class="w-full px-3 py-2 border rounded-lg text-sm bg-white cursor-pointer">
-          <option value="Alimentação">Alimentação</option>
-          <option value="Automotivo">Automotivo</option>
-          <option value="Comércio">Comércio</option>
-          <option value="Construção">Construção</option>
-          <option value="Educação">Educação</option>
-          <option value="Pet Shop">Pet Shop</option>
-          <option value="Saúde e Beleza">Saúde e Beleza</option>
-          <option value="Serviços">Serviços</option>
-          <option value="Outros">Outros</option>
+         <option value="Alimentação">Alimentação</option>
+            <option value="Automotivo">Automotivo</option>
+            <option value="Comércio">Comércio</option>
+            <option value="Construção">Construção</option>
+            <option value="Educação">Educação</option>
+            <option value="Pet Shop">Pet Shop</option>
+            <option value="Saúde e Beleza">Saúde e Beleza</option>
+            <option value="Serviços">Serviços</option>
+            <option value="Transportes e Mudanças">Transportes e Mudanças</option>
+            <option value="Outros">Outros</option>
         </select>
       </div>
 
