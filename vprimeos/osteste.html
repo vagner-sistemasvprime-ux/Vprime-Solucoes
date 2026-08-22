@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acompanhamento de OS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+
+  <div id="container" class="bg-white max-w-md w-full rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+    <!-- Cabeçalho -->
+    <div class="p-6 bg-blue-600 text-white text-center">
+      <h2 class="text-xl font-bold">Acompanhamento de Ordem de Serviço</h2>
+      <p class="text-blue-100 text-sm mt-1" id="lblOS">Carregando dados...</p>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="p-6 space-y-4" id="conteudoOS">
+      <div class="text-center py-8 text-slate-400">Buscando informações da ordem...</div>
+    </div>
+  </div>
+
+  <script>
+    // 1. INSIRA AQUI A URL DO SEU GOOGLE APPS SCRIPT (WEB APP)
+    const URL_WEBAPP_SCRIPT = 'https://script.google.com/macros/s/AKfycbxkWW0u-yArQdJpAQtxvMuAFuSbNHi08INtzWHa60AjYD1NEgXE9vR_74NstD73_sL2/exec';
+
+    // 2. Extrai o ID da OS da URL do seu domínio (ex: .../nomedologista.html?os=1001)
+    const urlParams = new URLSearchParams(window.location.search);
+    const idOS = urlParams.get('os');
+
+    window.onload = function() {
+      if (!idOS) {
+        document.getElementById('conteudoOS').innerHTML = `
+          <p class="text-center text-rose-500 font-semibold py-4">Nenhum número de OS foi informado na URL.</p>`;
+        return;
+      }
+      carregarDadosOS(idOS);
+    };
+
+    // 3. Busca os dados via chamada fetch HTTP
+    function carregarDadosOS(id) {
+      fetch(`${URL_WEBAPP_SCRIPT}?acao=buscar&os=${id}`)
+        .then(res => res.json())
+        .then(os => {
+          renderizarDadosCliente(os);
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('conteudoOS').innerHTML = `
+            <p class="text-center text-rose-500 font-semibold py-4">Erro ao conectar com o servidor da assistência.</p>`;
+        });
+    }
+
+    // 4. Renderiza a interface
+    function renderizarDadosCliente(os) {
+      if (!os || os.erro) {
+        document.getElementById('conteudoOS').innerHTML = `
+          <p class="text-center text-rose-500 font-semibold py-4">Ordem de Serviço #${idOS} não foi encontrada.</p>`;
+        return;
+      }
+
+      document.getElementById('lblOS').innerText = `OS #${os.id} • ${os.data}`;
+
+      let acoesOrcamento = '';
+      if (os.status === 'Aguardando Aprovação') {
+        acoesOrcamento = `
+          <div class="pt-4 border-t border-slate-100 space-y-2">
+            <p class="text-xs text-center font-semibold text-slate-500 uppercase">Aprovação de Orçamento</p>
+            <div class="grid grid-cols-2 gap-3">
+              <button onclick="responder(false)" class="w-full bg-rose-50 text-rose-600 border border-rose-200 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-100 transition-colors">Recusar</button>
+              <button onclick="responder(true)" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-emerald-700 shadow-sm transition-colors">Aprovar Orçamento</button>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('conteudoOS').innerHTML = `
+        <div class="space-y-3">
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase">Status Atual</span>
+            <div class="mt-1 inline-block px-3 py-1 rounded-full text-xs font-bold ${getCorStatus(os.status)}">
+              ${os.status}
+            </div>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase">Cliente</span>
+            <p class="text-slate-800 font-medium">${os.cliente}</p>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase">Equipamento / Serviço</span>
+            <p class="text-slate-800 font-medium">${os.servico}</p>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase">Diagnóstico / Observações</span>
+            <p class="text-slate-600 text-sm bg-slate-50 p-3 rounded-xl border border-slate-100">${os.defeito || 'Em análise técnica'}</p>
+          </div>
+          <div class="pt-2">
+            <span class="text-xs font-semibold text-slate-400 uppercase">Valor Orçado</span>
+            <p class="text-2xl font-bold text-slate-900">${os.valor}</p>
+          </div>
+        </div>
+        ${acoesOrcamento}
+      `;
+    }
+
+    // 5. Envia aprovação ou recusa do orçamento
+    function responder(aprovado) {
+      if (!confirm(aprovado ? "Confirma a APROVAÇÃO do orçamento?" : "Confirma a RECUSA do orçamento?")) return;
+
+      fetch(`${URL_WEBAPP_SCRIPT}?acao=responder&os=${idOS}&aprovado=${aprovado}`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.sucesso) {
+            alert("Sua resposta foi registrada com sucesso!");
+            carregarDadosOS(idOS);
+          } else {
+            alert("Erro ao salvar: " + (res.erro || "Falha na requisição"));
+          }
+        })
+        .catch(err => {
+          alert("Erro de comunicação com o servidor.");
+        });
+    }
+
+    function getCorStatus(status) {
+      if (status === 'Aberto' || status === 'Em Análise') return 'bg-amber-100 text-amber-800';
+      if (status === 'Aguardando Aprovação') return 'bg-purple-100 text-purple-800';
+      if (status === 'Aprovado') return 'bg-emerald-100 text-emerald-800';
+      if (status === 'Recusado') return 'bg-rose-100 text-rose-800';
+      if (status === 'Concluído') return 'bg-blue-100 text-blue-800';
+      return 'bg-slate-100 text-slate-800';
+    }
+  </script>
+</body>
+</html>
