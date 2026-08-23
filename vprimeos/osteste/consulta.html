@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Acompanhamento de OS</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
 
-  <div id="container" class="bg-white max-w-md w-full rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+  <div id="container" class="bg-white max-w-md w-full rounded-2xl shadow-xl overflow-hidden border border-slate-200 my-6">
     <!-- Cabeçalho -->
     <div class="p-6 bg-blue-600 text-white text-center">
       <h2 class="text-xl font-bold">Acompanhamento de Ordem de Serviço</h2>
@@ -17,28 +18,97 @@
 
     <!-- Conteúdo -->
     <div class="p-6 space-y-4" id="conteudoOS">
-      <div class="text-center py-8 text-slate-400">Buscando informações da ordem...</div>
+      <div class="text-center py-8 text-slate-400">
+        <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-blue-500 mb-2"></i>
+        Buscando informações da ordem...
+      </div>
     </div>
   </div>
 
   <script>
-    // 1. INSIRA AQUI A URL DO SEU GOOGLE APPS SCRIPT (WEB APP)
+    // 1. URL do Google Apps Script Web App
     const URL_WEBAPP_SCRIPT = 'https://script.google.com/macros/s/AKfycbxkWW0u-yArQdJpAQtxvMuAFuSbNHi08INtzWHa60AjYD1NEgXE9vR_74NstD73_sL2/exec';
 
-    // 2. Extrai o ID da OS da URL do seu domínio (ex: .../nomedologista.html?os=1001)
+    // 2. Extrai o ID da OS da URL (ex: ...?os=1001)
     const urlParams = new URLSearchParams(window.location.search);
     const idOS = urlParams.get('os');
 
+    // 3. Dicionário de Nichos
+    const DICIONARIO_NICHOS = {
+      'assistencia': {
+        lblEquip: 'Equipamento / Aparelho',
+        lblEstado: 'Estado Físico do Equipamento',
+        lblItens: 'Itens Deixados pelo Cliente',
+        lblDefeito: 'Defeito Relatado / Diagnóstico'
+      },
+      'oficina': {
+        lblEquip: 'Veículo / Placa / Modelo',
+        lblEstado: 'Avarias / Condição do Veículo',
+        lblItens: 'Pertences Deixados no Veículo',
+        lblDefeito: 'Relato do Cliente / Serviços Desejados'
+      },
+      'bike': {
+        lblEquip: 'Bicicleta / Modelo',
+        lblEstado: 'Condição da Bicicleta',
+        lblItens: 'Acessórios Entregues',
+        lblDefeito: 'Problema / Manutenção Solicitada'
+      },
+      'climatizacao': {
+        lblEquip: 'Aparelho / Equipamento',
+        lblEstado: 'Condição do Local / Aparelho',
+        lblItens: 'Acessórios / Materiais Fornecidos',
+        lblDefeito: 'Problema / Serviço Solicitado'
+      },
+      'eletrica_hidraulica': {
+        lblEquip: 'Local / Instalação / Ponto',
+        lblEstado: 'Condição Atual da Instalação',
+        lblItens: 'Materiais / Peças do Cliente',
+        lblDefeito: 'Problema Relatado / Escopo'
+      },
+      'marcenaria_estofados': {
+        lblEquip: 'Móvel / Peça',
+        lblEstado: 'Estado de Conservação',
+        lblItens: 'Acessórios / Puxadores Entregues',
+        lblDefeito: 'Reparo / Modificação Solicitada'
+      },
+      'generico': {
+        lblEquip: 'Item / Serviço',
+        lblEstado: 'Estado Físico / Condição',
+        lblItens: 'Itens Acompanhantes',
+        lblDefeito: 'Descrição da Solicitação'
+      }
+    };
+
+    function obterConfigNicho(nichoBruto) {
+      const raw = String(nichoBruto || '').toLowerCase().trim();
+
+      if (raw.includes('oficina') || raw.includes('mecanica') || raw.includes('auto')) return DICIONARIO_NICHOS['oficina'];
+      if (raw.includes('bike')) return DICIONARIO_NICHOS['bike'];
+      if (raw.includes('climatiza') || raw.includes('ar')) return DICIONARIO_NICHOS['climatizacao'];
+      if (raw.includes('eletrica') || raw.includes('hidraulica')) return DICIONARIO_NICHOS['eletrica_hidraulica'];
+      if (raw.includes('marcenaria') || raw.includes('estofado')) return DICIONARIO_NICHOS['marcenaria_estofados'];
+      if (raw.includes('assistencia') || raw.includes('celular') || raw.includes('informatica')) return DICIONARIO_NICHOS['assistencia'];
+
+      return DICIONARIO_NICHOS['generico'];
+    }
+
     window.onload = function() {
+      if (window.lucide) lucide.createIcons();
+
       if (!idOS) {
         document.getElementById('conteudoOS').innerHTML = `
-          <p class="text-center text-rose-500 font-semibold py-4">Nenhum número de OS foi informado na URL.</p>`;
+          <div class="text-center py-6 text-rose-500">
+            <i data-lucide="alert-circle" class="w-10 h-10 mx-auto mb-2"></i>
+            <p class="font-semibold">Nenhum número de OS informado</p>
+            <p class="text-xs text-slate-500 mt-1">Verifique o link enviado pela empresa.</p>
+          </div>`;
+        if (window.lucide) lucide.createIcons();
         return;
       }
       carregarDadosOS(idOS);
     };
 
-    // 3. Busca os dados via chamada fetch HTTP
+    // 4. Busca os dados via fetch HTTP
     function carregarDadosOS(id) {
       fetch(`${URL_WEBAPP_SCRIPT}?acao=buscar&os=${id}`)
         .then(res => res.json())
@@ -48,29 +118,94 @@
         .catch(err => {
           console.error(err);
           document.getElementById('conteudoOS').innerHTML = `
-            <p class="text-center text-rose-500 font-semibold py-4">Erro ao conectar com o servidor da assistência.</p>`;
+            <div class="text-center py-6 text-rose-500">
+              <i data-lucide="wifi-off" class="w-10 h-10 mx-auto mb-2"></i>
+              <p class="font-semibold">Erro de Conexão</p>
+              <p class="text-xs text-slate-500 mt-1">Não foi possível conectar ao servidor.</p>
+            </div>`;
+          if (window.lucide) lucide.createIcons();
         });
     }
 
-    // 4. Renderiza a interface
+    // 5. Renderiza a interface
     function renderizarDadosCliente(os) {
       if (!os || os.erro) {
         document.getElementById('conteudoOS').innerHTML = `
-          <p class="text-center text-rose-500 font-semibold py-4">Ordem de Serviço #${idOS} não foi encontrada.</p>`;
+          <div class="text-center py-6 text-slate-500">
+            <i data-lucide="search-x" class="w-10 h-10 mx-auto text-slate-400 mb-2"></i>
+            <p class="font-semibold text-slate-700">Ordem de Serviço #${idOS} não encontrada</p>
+            <p class="text-xs mt-1">Verifique o número ou entre em contato com a loja.</p>
+          </div>`;
+        if (window.lucide) lucide.createIcons();
         return;
       }
 
       document.getElementById('lblOS').innerText = `OS #${os.id} • ${os.data}`;
 
+      // Rótulos do nicho específico
+      const configNicho = obterConfigNicho(os.nicho);
+
+      // Botões de Aprovação
       let acoesOrcamento = '';
       if (os.status === 'Aguardando Aprovação') {
         acoesOrcamento = `
-          <div class="pt-4 border-t border-slate-100 space-y-2">
-            <p class="text-xs text-center font-semibold text-slate-500 uppercase">Aprovação de Orçamento</p>
+          <div class="pt-4 border-t border-slate-100 space-y-3">
+            <p class="text-xs text-center font-bold text-purple-700 uppercase tracking-wider bg-purple-50 py-1.5 rounded-lg border border-purple-100">
+              Aprovação de Orçamento
+            </p>
             <div class="grid grid-cols-2 gap-3">
-              <button onclick="responder(false)" class="w-full bg-rose-50 text-rose-600 border border-rose-200 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-100 transition-colors">Recusar</button>
-              <button onclick="responder(true)" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-emerald-700 shadow-sm transition-colors">Aprovar Orçamento</button>
+              <button id="btnRecusar" onclick="responder(false)" class="w-full bg-rose-50 text-rose-600 border border-rose-200 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-100 transition-colors flex items-center justify-center gap-1.5">
+                <i data-lucide="x-circle" class="w-4 h-4"></i> Recusar
+              </button>
+              <button id="btnAprovar" onclick="responder(true)" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-emerald-700 shadow-sm transition-colors flex items-center justify-center gap-1.5">
+                <i data-lucide="check-circle" class="w-4 h-4"></i> Aprovar Orçamento
+              </button>
             </div>
+          </div>
+        `;
+      }
+
+      // Validação das informações complementares
+      const temSenhaTexto = os.senhaTexto && os.senhaTexto.trim() !== '';
+      const temSenhaDesenho = os.senhaDesenho && os.senhaDesenho.trim() !== '';
+      const temItens = os.itensEntregues && os.itensEntregues.trim() !== '';
+      const temEstado = os.estadoEquipamento && os.estadoEquipamento.trim() !== '';
+
+      let blocoInformacoesComplementares = '';
+      if (temSenhaTexto || temSenhaDesenho || temItens || temEstado) {
+        blocoInformacoesComplementares = `
+          <div class="pt-3 border-t border-slate-100 space-y-3">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Informações Complementares</span>
+            
+            ${temEstado ? `
+              <div>
+                <span class="text-xs text-slate-500">${configNicho.lblEstado}:</span>
+                <p class="text-slate-700 text-xs bg-slate-50 p-2 rounded-lg border border-slate-100">${os.estadoEquipamento}</p>
+              </div>` : ''}
+
+            ${temItens ? `
+              <div>
+                <span class="text-xs text-slate-500">${configNicho.lblItens}:</span>
+                <p class="text-slate-700 text-xs bg-slate-50 p-2 rounded-lg border border-slate-100">${os.itensEntregues}</p>
+              </div>` : ''}
+
+            ${temSenhaTexto ? `
+              <div>
+                <span class="text-xs text-slate-500">PIN / Senha Cadastrada:</span>
+                <p class="text-slate-800 font-mono font-bold text-sm bg-slate-100 px-2.5 py-1 rounded inline-block">${os.senhaTexto}</p>
+              </div>` : ''}
+
+            ${temSenhaDesenho ? `
+              <div>
+                <span class="text-xs text-slate-500 mb-1 block">Padrão de Desenho:</span>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col items-center">
+                  <canvas id="canvasSenhaVisual" width="140" height="140" class="bg-slate-900 rounded-xl shadow-inner"></canvas>
+                  <div class="mt-2 text-[10px] text-slate-500 flex items-center gap-3">
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> 1º Toque</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Conexão</span>
+                  </div>
+                </div>
+              </div>` : ''}
           </div>
         `;
       }
@@ -78,48 +213,127 @@
       document.getElementById('conteudoOS').innerHTML = `
         <div class="space-y-3">
           <div>
-            <span class="text-xs font-semibold text-slate-400 uppercase">Status Atual</span>
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Status Atual</span>
             <div class="mt-1 inline-block px-3 py-1 rounded-full text-xs font-bold ${getCorStatus(os.status)}">
               ${os.status}
             </div>
           </div>
+
           <div>
-            <span class="text-xs font-semibold text-slate-400 uppercase">Cliente</span>
-            <p class="text-slate-800 font-medium">${os.cliente}</p>
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Cliente</span>
+            <p class="text-slate-800 font-medium">${os.cliente || '-'}</p>
           </div>
+
           <div>
-            <span class="text-xs font-semibold text-slate-400 uppercase">Equipamento / Serviço</span>
-            <p class="text-slate-800 font-medium">${os.servico}</p>
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">${configNicho.lblEquip}</span>
+            <p class="text-slate-800 font-medium">${os.servico || '-'}</p>
           </div>
+
           <div>
-            <span class="text-xs font-semibold text-slate-400 uppercase">Diagnóstico / Observações</span>
-            <p class="text-slate-600 text-sm bg-slate-50 p-3 rounded-xl border border-slate-100">${os.defeito || 'Em análise técnica'}</p>
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">${configNicho.lblDefeito}</span>
+            <p class="text-slate-600 text-sm bg-slate-50 p-3 rounded-xl border border-slate-100 mt-0.5">${os.defeito || 'Em análise'}</p>
           </div>
-          <div class="pt-2">
-            <span class="text-xs font-semibold text-slate-400 uppercase">Valor Orçado</span>
-            <p class="text-2xl font-bold text-slate-900">${os.valor}</p>
+
+          ${blocoInformacoesComplementares}
+
+          <div class="pt-2 border-t border-slate-100">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Valor Orçado</span>
+            <p class="text-2xl font-bold text-slate-900">${os.valor || 'R$ 0,00'}</p>
           </div>
         </div>
         ${acoesOrcamento}
       `;
+
+      if (temSenhaDesenho) {
+        setTimeout(() => renderizarDesenhoSenhaVisual(os.senhaDesenho), 50);
+      }
+
+      if (window.lucide) lucide.createIcons();
     }
 
-    // 5. Envia aprovação ou recusa do orçamento
+    // Desenha o padrão no Canvas
+    function renderizarDesenhoSenhaVisual(sequencia) {
+      const canvas = document.getElementById('canvasSenhaVisual');
+      if (!canvas || !sequencia) return;
+
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const posicoes = {
+        1: { x: 25, y: 25 },  2: { x: 70, y: 25 },  3: { x: 115, y: 25 },
+        4: { x: 25, y: 70 },  5: { x: 70, y: 70 },  6: { x: 115, y: 70 },
+        7: { x: 25, y: 115 }, 8: { x: 70, y: 115 }, 9: { x: 115, y: 115 }
+      };
+
+      const sequenciaPontos = sequencia.split('-').map(Number);
+
+      if (sequenciaPontos.length > 1) {
+        ctx.beginPath();
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        for (let i = 0; i < sequenciaPontos.length; i++) {
+          const pt = posicoes[sequenciaPontos[i]];
+          if (pt) {
+            if (i === 0) ctx.moveTo(pt.x, pt.y);
+            else ctx.lineTo(pt.x, pt.y);
+          }
+        }
+        ctx.stroke();
+      }
+
+      for (let i = 1; i <= 9; i++) {
+        const pt = posicoes[i];
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = '#475569';
+        ctx.fill();
+      }
+
+      sequenciaPontos.forEach((numPonto, index) => {
+        const pt = posicoes[numPonto];
+        if (!pt) return;
+
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = (index === 0) ? '#10b981' : '#3b82f6';
+        ctx.fill();
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+      });
+    }
+
+    // 6. Envia a resposta do cliente
     function responder(aprovado) {
-      if (!confirm(aprovado ? "Confirma a APROVAÇÃO do orçamento?" : "Confirma a RECUSA do orçamento?")) return;
+      const acaoTexto = aprovado ? "APROVAÇÃO" : "RECUSA";
+      if (!confirm(`Confirma a ${acaoTexto} do orçamento?`)) return;
+
+      const btnAprovar = document.getElementById('btnAprovar');
+      const btnRecusar = document.getElementById('btnRecusar');
+
+      if (btnAprovar) btnAprovar.disabled = true;
+      if (btnRecusar) btnRecusar.disabled = true;
 
       fetch(`${URL_WEBAPP_SCRIPT}?acao=responder&os=${idOS}&aprovado=${aprovado}`)
         .then(res => res.json())
         .then(res => {
           if (res.sucesso) {
-            alert("Sua resposta foi registrada com sucesso!");
+            alert(`Sua resposta (${acaoTexto}) foi gravada com sucesso!`);
             carregarDadosOS(idOS);
           } else {
             alert("Erro ao salvar: " + (res.erro || "Falha na requisição"));
+            if (btnAprovar) btnAprovar.disabled = false;
+            if (btnRecusar) btnRecusar.disabled = false;
           }
         })
         .catch(err => {
           alert("Erro de comunicação com o servidor.");
+          if (btnAprovar) btnAprovar.disabled = false;
+          if (btnRecusar) btnRecusar.disabled = false;
         });
     }
 
