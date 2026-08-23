@@ -189,23 +189,7 @@
                 <p class="text-slate-700 text-xs bg-slate-50 p-2 rounded-lg border border-slate-100">${os.itensEntregues}</p>
               </div>` : ''}
 
-            ${temSenhaTexto ? `
-              <div>
-                <span class="text-xs text-slate-500">PIN / Senha Cadastrada:</span>
-                <p class="text-slate-800 font-mono font-bold text-sm bg-slate-100 px-2.5 py-1 rounded inline-block">${os.senhaTexto}</p>
-              </div>` : ''}
-
-            ${temSenhaDesenho ? `
-              <div>
-                <span class="text-xs text-slate-500 mb-1 block">Padrão de Desenho:</span>
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col items-center">
-                  <canvas id="canvasSenhaVisual" width="140" height="140" class="bg-slate-900 rounded-xl shadow-inner"></canvas>
-                  <div class="mt-2 text-[10px] text-slate-500 flex items-center gap-3">
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> 1º Toque</span>
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Conexão</span>
-                  </div>
-                </div>
-              </div>` : ''}
+            
           </div>
         `;
       }
