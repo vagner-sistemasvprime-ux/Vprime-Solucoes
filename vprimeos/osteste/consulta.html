@@ -25,11 +25,26 @@
     </div>
   </div>
 
+  <!-- ESTILIZADO: MODAL DE NOTIFICAÇÃO E CONFIRMAÇÃO -->
+  <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-6 text-center shadow-2xl border border-slate-100 transform scale-95 transition-transform duration-300" id="modalBox">
+      <div id="modalIconContainer" class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+        <!-- Ícone Injetado Dinamicamente -->
+      </div>
+      <h3 id="modalTitle" class="text-base font-bold text-slate-800 mb-1">Título</h3>
+      <p id="modalMessage" class="text-xs text-slate-500 mb-5 leading-relaxed">Mensagem explicativa aqui...</p>
+      
+      <div id="modalActions" class="flex gap-2 justify-center">
+        <!-- Botões Injetados Dinamicamente -->
+      </div>
+    </div>
+  </div>
+
   <script>
     // 1. URL do Google Apps Script Web App
     const URL_WEBAPP_SCRIPT = 'https://script.google.com/macros/s/AKfycbxkWW0u-yArQdJpAQtxvMuAFuSbNHi08INtzWHa60AjYD1NEgXE9vR_74NstD73_sL2/exec';
 
-    // 2. Extrai o ID da OS da URL (ex: ...?os=1001)
+    // 2. Extrai o ID da OS da URL
     const urlParams = new URLSearchParams(window.location.search);
     const idOS = urlParams.get('os');
 
@@ -92,6 +107,77 @@
       return DICIONARIO_NICHOS['generico'];
     }
 
+    // --- SITEMA DE MODAL PERSONALIZADO ---
+    function exibirModal({ tipo, titulo, mensagem, textoConfirmar, textoCancelar, aoConfirmar }) {
+      const modal = document.getElementById('customModal');
+      const modalBox = document.getElementById('modalBox');
+      const iconContainer = document.getElementById('modalIconContainer');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalMessage = document.getElementById('modalMessage');
+      const modalActions = document.getElementById('modalActions');
+
+      modalTitle.innerText = titulo;
+      modalMessage.innerText = mensagem;
+
+      // Estilização por tipo
+      if (tipo === 'sucesso') {
+        iconContainer.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 bg-emerald-100 text-emerald-600';
+        iconContainer.innerHTML = '<i data-lucide="check-circle" class="w-6 h-6"></i>';
+      } else if (tipo === 'erro') {
+        iconContainer.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 bg-rose-100 text-rose-600';
+        iconContainer.innerHTML = '<i data-lucide="alert-triangle" class="w-6 h-6"></i>';
+      } else if (tipo === 'confirmacao') {
+        iconContainer.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 bg-blue-100 text-blue-600';
+        iconContainer.innerHTML = '<i data-lucide="help-circle" class="w-6 h-6"></i>';
+      }
+
+      // Configuração de Botões
+      if (tipo === 'confirmacao') {
+        modalActions.innerHTML = `
+          <button id="btnModalCancelar" class="w-1/2 bg-slate-100 text-slate-600 border border-slate-200 py-2 rounded-xl text-xs font-semibold hover:bg-slate-200 transition-colors">
+            ${textoCancelar || 'Cancelar'}
+          </button>
+          <button id="btnModalConfirmar" class="w-1/2 bg-blue-600 text-white py-2 rounded-xl text-xs font-semibold hover:bg-blue-700 shadow-sm transition-colors">
+            ${textoConfirmar || 'Confirmar'}
+          </button>
+        `;
+
+        document.getElementById('btnModalCancelar').onclick = fecharModal;
+        document.getElementById('btnModalConfirmar').onclick = () => {
+          fecharModal();
+          if (aoConfirmar) aoConfirmar();
+        };
+      } else {
+        modalActions.innerHTML = `
+          <button id="btnModalOK" class="w-full bg-slate-800 text-white py-2 rounded-xl text-xs font-semibold hover:bg-slate-900 transition-colors">
+            Entendido
+          </button>
+        `;
+        document.getElementById('btnModalOK').onclick = fecharModal;
+      }
+
+      if (window.lucide) lucide.createIcons();
+
+      // Animação de Entrada
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modalBox.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function fecharModal() {
+      const modal = document.getElementById('customModal');
+      const modalBox = document.getElementById('modalBox');
+
+      modal.classList.add('opacity-0');
+      modalBox.classList.add('scale-95');
+
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
     window.onload = function() {
       if (window.lucide) lucide.createIcons();
 
@@ -108,7 +194,6 @@
       carregarDadosOS(idOS);
     };
 
-    // 4. Busca os dados via fetch HTTP
     function carregarDadosOS(id) {
       fetch(`${URL_WEBAPP_SCRIPT}?acao=buscar&os=${id}`)
         .then(res => res.json())
@@ -127,7 +212,6 @@
         });
     }
 
-    // 5. Renderiza a interface
     function renderizarDadosCliente(os) {
       if (!os || os.erro) {
         document.getElementById('conteudoOS').innerHTML = `
@@ -142,10 +226,8 @@
 
       document.getElementById('lblOS').innerText = `OS #${os.id} • ${os.data}`;
 
-      // Rótulos do nicho específico
       const configNicho = obterConfigNicho(os.nicho);
 
-      // Botões de Aprovação
       let acoesOrcamento = '';
       if (os.status === 'Aguardando Aprovação') {
         acoesOrcamento = `
@@ -154,10 +236,10 @@
               Aprovação de Orçamento
             </p>
             <div class="grid grid-cols-2 gap-3">
-              <button id="btnRecusar" onclick="responder(false)" class="w-full bg-rose-50 text-rose-600 border border-rose-200 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-100 transition-colors flex items-center justify-center gap-1.5">
+              <button id="btnRecusar" onclick="confirmarResposta(false)" class="w-full bg-rose-50 text-rose-600 border border-rose-200 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-100 transition-colors flex items-center justify-center gap-1.5">
                 <i data-lucide="x-circle" class="w-4 h-4"></i> Recusar
               </button>
-              <button id="btnAprovar" onclick="responder(true)" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-emerald-700 shadow-sm transition-colors flex items-center justify-center gap-1.5">
+              <button id="btnAprovar" onclick="confirmarResposta(true)" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-emerald-700 shadow-sm transition-colors flex items-center justify-center gap-1.5">
                 <i data-lucide="check-circle" class="w-4 h-4"></i> Aprovar Orçamento
               </button>
             </div>
@@ -165,7 +247,6 @@
         `;
       }
 
-      // Validação das informações complementares
       const temSenhaTexto = os.senhaTexto && os.senhaTexto.trim() !== '';
       const temSenhaDesenho = os.senhaDesenho && os.senhaDesenho.trim() !== '';
       const temItens = os.itensEntregues && os.itensEntregues.trim() !== '';
@@ -189,7 +270,23 @@
                 <p class="text-slate-700 text-xs bg-slate-50 p-2 rounded-lg border border-slate-100">${os.itensEntregues}</p>
               </div>` : ''}
 
-            
+            ${temSenhaTexto ? `
+              <div>
+                <span class="text-xs text-slate-500">PIN / Senha Cadastrada:</span>
+                <p class="text-slate-800 font-mono font-bold text-sm bg-slate-100 px-2.5 py-1 rounded inline-block">${os.senhaTexto}</p>
+              </div>` : ''}
+
+            ${temSenhaDesenho ? `
+              <div>
+                <span class="text-xs text-slate-500 mb-1 block">Padrão de Desenho:</span>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col items-center">
+                  <canvas id="canvasSenhaVisual" width="140" height="140" class="bg-slate-900 rounded-xl shadow-inner"></canvas>
+                  <div class="mt-2 text-[10px] text-slate-500 flex items-center gap-3">
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> 1º Toque</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Conexão</span>
+                  </div>
+                </div>
+              </div>` : ''}
           </div>
         `;
       }
@@ -235,7 +332,6 @@
       if (window.lucide) lucide.createIcons();
     }
 
-    // Desenha o padrão no Canvas
     function renderizarDesenhoSenhaVisual(sequencia) {
       const canvas = document.getElementById('canvasSenhaVisual');
       if (!canvas || !sequencia) return;
@@ -291,11 +387,25 @@
       });
     }
 
-    // 6. Envia a resposta do cliente
-    function responder(aprovado) {
-      const acaoTexto = aprovado ? "APROVAÇÃO" : "RECUSA";
-      if (!confirm(`Confirma a ${acaoTexto} do orçamento?`)) return;
+    // Modal de Confirmação antes do Envio
+    function confirmarResposta(aprovado) {
+      const acaoTexto = aprovado ? "Aprovar" : "Recusar";
+      const mensagem = aprovado 
+        ? "Tem certeza que deseja APROVAR este orçamento? O serviço será iniciado em breve."
+        : "Tem certeza que deseja RECUSAR este orçamento? A equipe será notificada.";
 
+      exibirModal({
+        tipo: 'confirmacao',
+        titulo: `${acaoTexto} Orçamento?`,
+        mensagem: mensagem,
+        textoConfirmar: `Sim, ${acaoTexto}`,
+        textoCancelar: 'Voltar',
+        aoConfirmar: () => executarResposta(aprovado)
+      });
+    }
+
+    // Envio dos dados via Fetch HTTP
+    function executarResposta(aprovado) {
       const btnAprovar = document.getElementById('btnAprovar');
       const btnRecusar = document.getElementById('btnRecusar');
 
@@ -306,16 +416,28 @@
         .then(res => res.json())
         .then(res => {
           if (res.sucesso) {
-            alert(`Sua resposta (${acaoTexto}) foi gravada com sucesso!`);
+            exibirModal({
+              tipo: 'sucesso',
+              titulo: 'Sucesso!',
+              mensagem: aprovado ? 'Orçamento APROVADO com sucesso!' : 'Sua resposta de RECUSA foi registrada.'
+            });
             carregarDadosOS(idOS);
           } else {
-            alert("Erro ao salvar: " + (res.erro || "Falha na requisição"));
+            exibirModal({
+              tipo: 'erro',
+              titulo: 'Atenção',
+              mensagem: res.erro || "Falha ao registrar a resposta."
+            });
             if (btnAprovar) btnAprovar.disabled = false;
             if (btnRecusar) btnRecusar.disabled = false;
           }
         })
         .catch(err => {
-          alert("Erro de comunicação com o servidor.");
+          exibirModal({
+            tipo: 'erro',
+            titulo: 'Erro de Comunicação',
+            mensagem: 'Não foi possível conectar ao servidor.'
+          });
           if (btnAprovar) btnAprovar.disabled = false;
           if (btnRecusar) btnRecusar.disabled = false;
         });
