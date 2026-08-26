@@ -84,3 +84,7 @@ document.addEventListener('keydown', function(e) {
     fecharModal();
   }
 });
+
+
+window.abrirModal = abrirModal;
+window.fecharModal = fecharModal;
