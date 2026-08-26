@@ -1,473 +1,2681 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="scroll-smooth">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>VPrime OS | Sistema para Assistência Técnica</title>
-  <meta name="description" content="VPrime OS: sistema completo para assistência técnica de celulares, computadores e outros serviços. Gerencie ordens de serviço, orçamentos, financeiro e clientes.">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/178qz0UKWFv3W0BUD0QcRyS12aSSnKhWQ">
+  <meta
+    name="description"
+    content="VPrime OS: sistema completo para assistência técnica de celulares, computadores e eletrônicos. Gerencie ordens de serviço, clientes, orçamentos, aprovações e financeiro."
+  >
 
-  <!-- Tailwind CSS -->
+  <!-- FAVICON -->
+  <link
+    rel="icon"
+    type="image/png"
+    href="https://lh3.googleusercontent.com/d/178qz0UKWFv3W0BUD0QcRyS12aSSnKhWQ"
+  >
+
+  <!-- GOOGLE FONT -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- TAILWIND -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+
+      theme: {
+        extend: {
+
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          },
+
+          colors: {
+
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a'
+            },
+
+            navy: {
+              950: '#0b1220'
+            }
+
+          },
+
+          boxShadow: {
+
+            soft: '0 10px 35px rgba(15, 23, 42, 0.08)',
+
+            blue: '0 15px 45px rgba(37, 99, 235, 0.18)',
+
+            card: '0 8px 30px rgba(15, 23, 42, 0.07)'
+
+          }
+
+        }
+      }
+    }
+  </script>
+
+  <!-- FONT AWESOME -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  >
 
   <style>
+
     html {
       scroll-behavior: smooth;
     }
+
     body {
       overflow-x: hidden;
     }
+
+    .glass {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .hero-grid {
+      background-image:
+        linear-gradient(rgba(37, 99, 235, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 235, 0.055) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+
+    .hero-glow {
+      background:
+        radial-gradient(circle at center, rgba(59, 130, 246, 0.16), transparent 65%);
+    }
+
+    .gradient-text {
+      background: linear-gradient(
+        90deg,
+        #2563eb,
+        #4f46e5,
+        #2563eb
+      );
+
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .floating {
+      animation: floating 5s ease-in-out infinite;
+    }
+
+    @keyframes floating {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-7px);
+      }
+
+    }
+
+    .pulse-soft {
+      animation: pulseSoft 2.5s infinite;
+    }
+
+    @keyframes pulseSoft {
+
+      0% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.25);
+      }
+
+      70% {
+        box-shadow: 0 0 0 12px rgba(37, 99, 235, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+      }
+
+    }
+
+    .feature-card {
+      transition:
+        transform .25s ease,
+        box-shadow .25s ease,
+        border-color .25s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-6px);
+    }
+
+    .step-line {
+      background: linear-gradient(
+        90deg,
+        #2563eb,
+        #60a5fa,
+        #93c5fd
+      );
+    }
+
+    .price-highlight {
+      box-shadow:
+        0 20px 55px rgba(37, 99, 235, 0.16),
+        0 0 0 1px rgba(37, 99, 235, 0.15);
+    }
+
+    .screen-card {
+      transition: all .3s ease;
+    }
+
+    .screen-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 45px rgba(15, 23, 42, .13);
+    }
+
   </style>
+
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans">
 
-  <!-- NAVBAR -->
-  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="bg-blue-600 text-white p-2 rounded-lg font-bold text-xl">VP</div>
-        <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">VPrime OS</span>
+
+<body class="bg-slate-50 text-slate-800 font-sans transition-colors duration-300">
+
+
+<!-- =========================================================
+     NAVBAR
+========================================================= -->
+
+<header
+  class="sticky top-0 z-40 bg-white/85 border-b border-slate-200/80 glass shadow-sm"
+>
+
+  <div
+    class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between"
+  >
+
+    <!-- LOGO -->
+
+    <a href="#" class="flex items-center gap-3">
+
+      <div
+        class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-600 to-indigo-600 text-white flex items-center justify-center font-extrabold text-lg shadow-lg shadow-brand-600/20"
+      >
+        VP
       </div>
 
-      <nav class="hidden md:flex gap-8 text-sm font-semibold text-slate-600">
-        <a href="#recursos" class="hover:text-blue-600 transition">Recursos</a>
-        <a href="#demonstracao" class="hover:text-blue-600 transition">Sistema</a>
-        <a href="#planos" class="hover:text-blue-600 transition">Planos</a>
-        <a href="#faq" class="hover:text-blue-600 transition">FAQ</a>
-      </nav>
+      <div>
 
-      <a href="#contato" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition text-sm shadow-sm hover:shadow-md">
-        Testar 15 Dias Grátis
+        <div class="text-lg font-extrabold text-slate-900 leading-none">
+          VPrime <span class="text-brand-600">OS</span>
+        </div>
+
+        <div class="text-[10px] text-slate-500 font-semibold tracking-wider uppercase mt-1">
+          Gestão para Assistência Técnica
+        </div>
+
+      </div>
+
+    </a>
+
+
+    <!-- MENU -->
+
+    <nav
+      class="hidden lg:flex items-center gap-8 text-sm font-semibold text-slate-600"
+    >
+
+      <a href="#recursos" class="hover:text-brand-600 transition">
+        Recursos
       </a>
+
+      <a href="#como-funciona" class="hover:text-brand-600 transition">
+        Como funciona
+      </a>
+
+      <a href="#demonstracao" class="hover:text-brand-600 transition">
+        Sistema
+      </a>
+
+      <a href="#planos" class="hover:text-brand-600 transition">
+        Planos
+      </a>
+
+      <a href="#faq" class="hover:text-brand-600 transition">
+        FAQ
+      </a>
+
+    </nav>
+
+
+    <!-- CTA -->
+
+    <div class="flex items-center gap-3">
+
+      <a
+        href="#contato"
+        class="hidden sm:inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-brand-600/20 transition"
+      >
+
+        <i class="fa-solid fa-rocket text-sm"></i>
+
+        Testar 15 Dias
+
+      </a>
+
+
+      <button
+        id="mobileMenuBtn"
+        class="lg:hidden w-10 h-10 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 transition"
+      >
+
+        <i class="fa-solid fa-bars"></i>
+
+      </button>
+
     </div>
-  </header>
 
-  <!-- HERO SECTION -->
-  <section class="py-20 bg-gradient-to-b from-blue-50/50 to-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-      <span class="inline-block bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
-        Sistema para Assistência Técnica
-      </span>
-
-      <h1 class="mt-4 text-4xl sm:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
-        Organize sua assistência e <br class="hidden sm:inline">
-        <span class="text-blue-600">tenha controle do seu negócio</span>
-      </h1>
-
-      <p class="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
-        Abra Ordens de Serviço em poucos segundos, gerencie clientes, orçamentos, aprovações e acompanhe o financeiro em um só lugar.
-      </p>
-
-      <!-- DESTAQUE 15 DIAS -->
-      <div class="mt-8 inline-flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-700 px-5 py-3 rounded-xl">
-        <i class="fa-solid fa-circle-check text-emerald-500"></i>
-        <span class="font-bold">Teste grátis por 15 dias</span>
-        <span class="text-emerald-600 hidden sm:inline">• Sem necessidade de cartão de crédito</span>
-      </div>
-
-      <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-        <a href="#contato" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg hover:shadow-blue-500/25 transition">
-          Quero Testar por 15 Dias
-        </a>
-        <a href="#demonstracao" class="bg-white hover:bg-slate-100 border border-slate-300 font-semibold px-6 py-3 rounded-xl transition">
-          Conhecer o Sistema
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- RECURSOS -->
-  <section id="recursos" class="py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-16">
-        <span class="text-blue-600 text-sm font-bold uppercase tracking-wider">Recursos</span>
-        <h2 class="text-3xl font-bold text-slate-900 mt-2">Mais organização. Menos trabalho manual.</h2>
-        <p class="text-slate-600 mt-2">Ferramentas pensadas para facilitar a rotina da sua assistência técnica.</p>
-      </div>
-
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <!-- ABERTURA DE OS -->
-        <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
-          <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl mb-6">
-            <i class="fa-solid fa-bolt"></i>
-          </div>
-          <h3 class="text-xl font-bold mb-2">Abertura de OS Rápida</h3>
-          <p class="text-slate-600 text-sm">Cadastre ordens de serviço em poucos segundos, reduzindo a burocracia no balcão e agilizando o atendimento.</p>
-        </div>
-
-        <!-- CONSULTA ONLINE -->
-        <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
-          <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl mb-6">
-            <i class="fa-solid fa-magnifying-glass-location"></i>
-          </div>
-          <h3 class="text-xl font-bold mb-2">Consulta Online de OS</h3>
-          <p class="text-slate-600 text-sm">Seu cliente acompanha o andamento do serviço pelo celular, sem precisar ficar ligando ou enviando mensagens.</p>
-        </div>
-
-        <!-- APROVAÇÃO DE ORÇAMENTO -->
-        <div class="bg-white p-8 rounded-2xl border-2 border-blue-100 shadow-sm hover:shadow-md transition relative">
-          <span class="absolute top-4 right-4 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase px-2 py-1 rounded-full">Destaque</span>
-          <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl mb-6">
-            <i class="fa-solid fa-file-signature"></i>
-          </div>
-          <h3 class="text-xl font-bold mb-2">Aprovação de Orçamento Online</h3>
-          <p class="text-slate-600 text-sm">Envie o orçamento por e-mail através de um link exclusivo. O cliente analisa e aprova o serviço pelo próprio celular.</p>
-        </div>
-
-        <!-- PDF -->
-        <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
-          <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl mb-6">
-            <i class="fa-solid fa-file-pdf"></i>
-          </div>
-          <h3 class="text-xl font-bold mb-2">Comprovantes em PDF</h3>
-          <p class="text-slate-600 text-sm">Gere orçamentos, recibos e documentos em PDF e envie automaticamente por e-mail.</p>
-        </div>
-
-        <!-- SENHA VISUAL -->
-        <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
-          <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl mb-6">
-            <i class="fa-solid fa-lock"></i>
-          </div>
-          <h3 class="text-xl font-bold mb-2">Senha Visual Android</h3>
-          <p class="text-slate-600 text-sm">Registre visualmente o padrão de desbloqueio dos dispositivos diretamente na abertura da Ordem de Serviço.</p>
-        </div>
-
-        <!-- PERMISSÕES -->
-        <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
-          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl mb-6">
-            <i class="fa-solid fa-user-shield"></i>
-          </div>
-          <h3 class="text-xl font-bold mb-2">Controle de Permissões</h3>
-          <p class="text-slate-600 text-sm">Defina o que cada usuário pode visualizar e fazer, mantendo informações administrativas e financeiras protegidas.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- DEMONSTRAÇÃO DO SISTEMA -->
-  <section id="demonstracao" class="py-20 bg-slate-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-16">
-        <span class="bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">Interface Intuitiva</span>
-        <h2 class="text-3xl font-bold text-slate-900 mt-3">Conheça o VPrime OS por dentro</h2>
-        <p class="text-slate-600 mt-2">Clique em qualquer imagem para ampliar.</p>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-8">
-        <!-- PRINT 1 -->
-        <div class="group bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition cursor-pointer" onclick="abrirModal('https://lh3.googleusercontent.com/d/1ITvsYxB-TnV_dZUV5qR0qkUj-672vFdY', 'Painel Principal / Dashboard')">
-          <div class="relative overflow-hidden rounded-xl bg-slate-200 aspect-video flex items-center justify-center">
-            <img src="https://lh3.googleusercontent.com/d/1ITvsYxB-TnV_dZUV5qR0qkUj-672vFdY" alt="Painel Principal VPrime OS" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-            <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white font-semibold gap-2">
-              <i class="fa-solid fa-magnifying-glass-plus"></i> Ampliar
-            </div>
-          </div>
-          <h3 class="text-lg font-bold text-slate-800 mt-4 text-center">Painel Principal</h3>
-          <p class="text-slate-500 text-xs text-center mt-1">Visão geral do dia, atalhos rápidos e status das OS.</p>
-        </div>
-
-        <!-- PRINT 2 -->
-        <div class="group bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition cursor-pointer" onclick="abrirModal('https://lh3.googleusercontent.com/d/1itPiKb09xoe8wb2_WBE6i57tZQ6KucBU', 'Abertura Rápida de Ordem de Serviço')">
-          <div class="relative overflow-hidden rounded-xl bg-slate-200 aspect-video flex items-center justify-center">
-            <img src="https://lh3.googleusercontent.com/d/1itPiKb09xoe8wb2_WBE6i57tZQ6KucBU" alt="Abertura de OS VPrime OS" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-            <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white font-semibold gap-2">
-              <i class="fa-solid fa-magnifying-glass-plus"></i> Ampliar
-            </div>
-          </div>
-          <h3 class="text-lg font-bold text-slate-800 mt-4 text-center">Abertura Rápida de OS</h3>
-          <p class="text-slate-500 text-xs text-center mt-1">Cadastro ágil no balcão e senha visual interativa.</p>
-        </div>
-
-        <!-- PRINT 3 -->
-        <div class="group bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition cursor-pointer" onclick="abrirModal('https://lh3.googleusercontent.com/d/12-ZWw5F5h0f7aPUq_IeVX9Mcg_JBcxZ6', 'Módulo Financeiro e Relatórios')">
-          <div class="relative overflow-hidden rounded-xl bg-slate-200 aspect-video flex items-center justify-center">
-            <img src="https://lh3.googleusercontent.com/d/12-ZWw5F5h0f7aPUq_IeVX9Mcg_JBcxZ6" alt="Financeiro VPrime OS" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-            <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white font-semibold gap-2">
-              <i class="fa-solid fa-magnifying-glass-plus"></i> Ampliar
-            </div>
-          </div>
-          <h3 class="text-lg font-bold text-slate-800 mt-4 text-center">Módulo Financeiro</h3>
-          <p class="text-slate-500 text-xs text-center mt-1">Gestão de faturamento, recibos e dinheiro parado.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- MODAL DE ZOOM -->
-  <div id="modalZoom" class="fixed inset-0 z-50 bg-slate-950/90 hidden backdrop-blur-sm flex items-center justify-center p-4" onclick="fecharModal()">
-    <div class="relative max-w-5xl w-full bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl" onclick="event.stopPropagation()">
-      <div class="flex items-center justify-between p-4 border-b border-slate-800">
-        <h3 id="modalTitulo" class="text-white font-bold text-lg">Visualização da Tela</h3>
-        <button onclick="fecharModal()" class="text-slate-400 hover:text-white text-2xl px-2 transition">&times;</button>
-      </div>
-      <div class="p-2 bg-slate-950 flex items-center justify-center">
-        <img id="modalImg" src="" alt="Tela Ampliada" class="max-h-[80vh] w-auto object-contain rounded-lg">
-      </div>
-    </div>
   </div>
 
-  <!-- PLANOS -->
-  <section id="planos" class="py-20 bg-slate-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-slate-900">Plano Completo e Sem Complicação</h2>
-        <p class="text-slate-600 mt-2">Acesso ilimitado a todas as ferramentas. Escolha a melhor forma de pagamento.</p>
-      </div>
 
-      <div class="max-w-4xl mx-auto space-y-8">
-        
-        <!-- CARD DE RECURSOS (IGUAL PARA TODOS) -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-8 shadow-md">
-          <h3 class="text-xl font-bold text-slate-900 mb-6 text-center border-b pb-4">
-            Tudo o que está incluído no VPrime OS:
-          </h3>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-700">
-            <ul class="space-y-3">
-              <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> Abertura de OS rápida e descomplicada</li>
-              <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> Ordens de Serviço ilimitadas</li>
-              <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> <strong>Consulta de OS pelo cliente</strong></li>
-              <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> <strong>Aprovação de orçamento por link</strong></li>
-              <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> Módulo Financeiro & Relatórios</li>
-            </ul>
-            <ul class="space-y-3">
-              <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> Envio automático de e-mails com PDF</li>
-              <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> Desenho da Senha Visual</li>
-              <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> Controle avançado de permissões</li>
-              <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> Suporte técnico exclusivo</li>
-              <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> Atualizações e melhorias contínuas</li>
-            </ul>
-          </div>
-        </div>
+  <!-- MOBILE MENU -->
 
-        <!-- CARDS DE VALORES -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div
+    id="mobileMenu"
+    class="hidden lg:hidden bg-white border-t border-slate-200 px-4 py-5"
+  >
 
-          <!-- OPÇÃO MENSAL -->
-          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between text-center">
-            <div>
-              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pagamento Mensal</span>
-              <div class="my-4">
-                <span class="text-4xl font-extrabold text-slate-900">R$ 29,90</span>
-                <span class="text-slate-500 text-sm">/mês</span>
-              </div>
-              <p class="text-xs text-slate-500 mb-6">Cobrança recorrente mês a mês sem fidelidade.</p>
-            </div>
-            <button type="button" onclick="selecionarPlano('Mensal')" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition cursor-pointer">
-              Começar 15 Dias Grátis
-            </button>
-          </div>
+    <div class="space-y-2">
 
-          <!-- OPÇÃO ANUAL (DESTAQUE) -->
-          <div class="bg-white border-2 border-blue-600 rounded-2xl p-6 shadow-xl relative flex flex-col justify-between text-center">
-            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-0.5 rounded-full shadow">
-              Economize 33%
-            </div>
-            <div>
-              <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Pagamento Anual</span>
-              <div class="my-4">
-                <span class="text-4xl font-extrabold text-blue-600">R$ 19,90</span>
-                <span class="text-slate-500 text-sm">/mês*</span>
-              </div>
-              <p class="text-xs text-slate-500 mb-6">*Cobrado em parcela única de R$ 238,80 ao ano.</p>
-            </div>
-            <button type="button" onclick="selecionarPlano('Anual')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md cursor-pointer">
-              Assinar Plano Anual
-            </button>
-          </div>
+      <a href="#recursos" class="mobile-link">
+        Recursos
+      </a>
 
-        </div>
+      <a href="#como-funciona" class="mobile-link">
+        Como funciona
+      </a>
 
-      </div>
+      <a href="#demonstracao" class="mobile-link">
+        Sistema
+      </a>
+
+      <a href="#planos" class="mobile-link">
+        Planos
+      </a>
+
+      <a href="#faq" class="mobile-link">
+        FAQ
+      </a>
+
+      <a
+        href="#contato"
+        class="block text-center bg-brand-600 text-white font-bold py-3 rounded-xl mt-3"
+      >
+        Testar 15 Dias Grátis
+      </a>
+
     </div>
-  </section>
 
-  <!-- FAQ -->
-  <section id="faq" class="py-20 bg-slate-100">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6">
-      <div class="text-center mb-16">
-        <span class="bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">Tire suas dúvidas</span>
-        <h2 class="text-3xl font-bold text-slate-900 mt-3">Perguntas Frequentes</h2>
-        <p class="text-slate-600 mt-2">Tudo o que você precisa saber antes de começar o seu teste gratuito.</p>
+  </div>
+
+</header>
+
+
+<!-- =========================================================
+     HERO
+========================================================= -->
+
+<section
+  class="relative overflow-hidden bg-gradient-to-b from-blue-50 via-slate-50 to-white"
+>
+
+  <div class="absolute inset-0 hero-grid"></div>
+
+  <div class="absolute inset-0 hero-glow"></div>
+
+
+  <div
+    class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28"
+  >
+
+    <div class="max-w-5xl mx-auto text-center">
+
+
+      <!-- BADGE -->
+
+      <div
+        class="inline-flex items-center gap-2 bg-white border border-blue-200 text-brand-700 rounded-full px-4 py-2 text-xs sm:text-sm font-bold shadow-sm"
+      >
+
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+
+        Sistema completo para assistência técnica
+
       </div>
 
-      <div class="space-y-4">
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 class="font-bold text-lg text-slate-900 mb-2">1. Preciso cadastrar cartão de crédito para testar?</h3>
-          <p class="text-slate-600 text-sm">Não! O teste de 15 dias é 100% gratuito e sem compromisso. Você não precisa informar nenhum dado bancário para começar a usar.</p>
+
+      <!-- TITLE -->
+
+      <h1
+        class="mt-7 text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.08] text-slate-900"
+      >
+
+        Sua assistência técnica
+
+        <span class="gradient-text">
+          organizada de verdade.
+        </span>
+
+      </h1>
+
+
+      <!-- DESCRIPTION -->
+
+      <p
+        class="mt-7 max-w-3xl mx-auto text-lg sm:text-xl text-slate-600 leading-relaxed"
+      >
+
+        Controle Ordens de Serviço, clientes, equipamentos,
+        orçamentos, aprovações e financeiro em um único sistema.
+
+      </p>
+
+
+      <!-- TEST BADGE -->
+
+      <div class="mt-8 flex justify-center">
+
+        <div
+          class="inline-flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3 rounded-2xl shadow-sm"
+        >
+
+          <div
+            class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center"
+          >
+
+            <i class="fa-solid fa-check text-sm"></i>
+
+          </div>
+
+          <div class="text-left">
+
+            <div class="font-extrabold text-sm">
+              15 dias grátis
+            </div>
+
+            <div class="text-xs text-emerald-700">
+              Sem cartão de crédito e sem compromisso
+            </div>
+
+          </div>
+
         </div>
 
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 class="font-bold text-lg text-slate-900 mb-2">2. O que acontece após os 15 dias de teste?</h3>
-          <p class="text-slate-600 text-sm">Ao final do período de testes, você poderá escolher entre a assinatura Mensal (R$ 29,90/mês) ou Anual (R$ 19,90/mês). Se optar por não assinar, seu acesso é suspenso sem cobrança ou multa.</p>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 class="font-bold text-lg text-slate-900 mb-2">3. Preciso instalar algum programa no meu computador?</h3>
-          <p class="text-slate-600 text-sm">Não. O VPrime OS é um sistema 100% online (em nuvem). Você pode acessar de qualquer computador, notebook, tablet ou celular com internet.</p>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 class="font-bold text-lg text-slate-900 mb-2">4. Terei suporte durante o período de testes?</h3>
-          <p class="text-slate-600 text-sm">Sim! Você terá acesso total ao nosso suporte para ajudar na configuração e tirar dúvidas durante os seus 15 dias de teste.</p>
-        </div>
       </div>
+
+
+      <!-- BUTTONS -->
+
+      <div
+        class="mt-9 flex flex-col sm:flex-row justify-center gap-4"
+      >
+
+        <a
+          href="#contato"
+          class="inline-flex items-center justify-center gap-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold px-8 py-4 rounded-xl shadow-xl shadow-brand-600/25 transition hover:-translate-y-1"
+        >
+
+          Quero testar gratuitamente
+
+          <i class="fa-solid fa-arrow-right"></i>
+
+        </a>
+
+
+        <a
+          href="#demonstracao"
+          class="inline-flex items-center justify-center gap-3 bg-white border border-slate-300 hover:border-brand-400 text-slate-700 font-bold px-8 py-4 rounded-xl shadow-sm transition"
+        >
+
+          <i class="fa-solid fa-play"></i>
+
+          Conhecer o sistema
+
+        </a>
+
+      </div>
+
+
+      <!-- MINI BENEFITS -->
+
+      <div
+        class="mt-10 flex flex-wrap justify-center gap-x-7 gap-y-3 text-sm text-slate-500"
+      >
+
+        <span>
+          <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>
+          100% online
+        </span>
+
+        <span>
+          <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>
+          OS ilimitadas
+        </span>
+
+        <span>
+          <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>
+          Aprovação por link
+        </span>
+
+        <span>
+          <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>
+          Suporte incluso
+        </span>
+
+      </div>
+
     </div>
-  </section>
 
-  <!-- CONTATO / FORMULÁRIO -->
-  <section id="contato" class="py-20 bg-slate-900 text-white">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold">Comece seu teste de 15 dias grátis</h2>
-        <p class="text-slate-400 mt-2">Preencha os dados e entraremos em contato para liberar seu acesso imediatamente.</p>
+
+    <!-- DASHBOARD PREVIEW -->
+
+    <div
+      class="mt-16 max-w-6xl mx-auto relative floating"
+    >
+
+      <div
+        class="absolute -inset-5 bg-blue-500/10 blur-3xl rounded-full"
+      ></div>
+
+      <div
+        class="relative bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden"
+      >
+
+        <!-- BROWSER BAR -->
+
+        <div
+          class="h-12 bg-slate-100 border-b border-slate-200 flex items-center px-5 gap-2"
+        >
+
+          <span class="w-3 h-3 rounded-full bg-red-300"></span>
+          <span class="w-3 h-3 rounded-full bg-yellow-300"></span>
+          <span class="w-3 h-3 rounded-full bg-green-300"></span>
+
+          <div
+            class="ml-5 flex-1 max-w-md h-7 bg-white rounded-lg border border-slate-200 text-[10px] text-slate-400 flex items-center px-3"
+          >
+
+            app.vprimeos.com.br
+
+          </div>
+
+        </div>
+
+
+        <!-- MOCK DASHBOARD -->
+
+        <div class="p-5 sm:p-8 bg-slate-50">
+
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+
+              <div class="flex justify-between items-start">
+
+                <div>
+
+                  <div class="text-xs text-slate-500">
+                    Ordens de Serviço
+                  </div>
+
+                  <div class="text-3xl font-extrabold text-slate-900 mt-2">
+                    128
+                  </div>
+
+                </div>
+
+                <div class="w-10 h-10 bg-blue-100 text-brand-600 rounded-xl flex items-center justify-center">
+                  <i class="fa-solid fa-file-lines"></i>
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+
+              <div class="flex justify-between items-start">
+
+                <div>
+
+                  <div class="text-xs text-slate-500">
+                    Em andamento
+                  </div>
+
+                  <div class="text-3xl font-extrabold text-slate-900 mt-2">
+                    34
+                  </div>
+
+                </div>
+
+                <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center">
+                  <i class="fa-solid fa-screwdriver-wrench"></i>
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+
+              <div class="flex justify-between items-start">
+
+                <div>
+
+                  <div class="text-xs text-slate-500">
+                    Aguardando aprovação
+                  </div>
+
+                  <div class="text-3xl font-extrabold text-slate-900 mt-2">
+                    12
+                  </div>
+
+                </div>
+
+                <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
+                  <i class="fa-solid fa-file-signature"></i>
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+
+              <div class="flex justify-between items-start">
+
+                <div>
+
+                  <div class="text-xs text-slate-500">
+                    Faturamento
+                  </div>
+
+                  <div class="text-2xl font-extrabold text-slate-900 mt-3">
+                    R$ 8.420
+                  </div>
+
+                </div>
+
+                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
+                  <i class="fa-solid fa-chart-line"></i>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="mt-5 bg-white rounded-2xl border border-slate-200 p-5">
+
+            <div class="flex items-center justify-between mb-5">
+
+              <div class="font-bold text-slate-800">
+                Ordens de Serviço Recentes
+              </div>
+
+              <span class="text-xs text-brand-600 font-semibold">
+                Ver todas
+              </span>
+
+            </div>
+
+            <div class="space-y-3">
+
+              <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl">
+
+                <div class="flex items-center gap-3">
+
+                  <div class="w-9 h-9 rounded-lg bg-blue-100 text-brand-600 flex items-center justify-center text-sm">
+                    #1048
+                  </div>
+
+                  <div>
+
+                    <div class="text-sm font-bold text-slate-800">
+                      João da Silva
+                    </div>
+
+                    <div class="text-xs text-slate-500">
+                      iPhone 13 • Troca de tela
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <span class="text-xs font-bold bg-amber-100 text-amber-700 px-3 py-1 rounded-full">
+                  Em andamento
+                </span>
+
+              </div>
+
+
+              <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl">
+
+                <div class="flex items-center gap-3">
+
+                  <div class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
+                    #1047
+                  </div>
+
+                  <div>
+
+                    <div class="text-sm font-bold text-slate-800">
+                      Maria Oliveira
+                    </div>
+
+                    <div class="text-xs text-slate-500">
+                      Notebook Dell • Formatação
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <span class="text-xs font-bold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">
+                  Pronto
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
 
-      <form id="formContato" onsubmit="enviarMensagem(event)" class="space-y-6 bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl">
-        <div>
-          <label class="block text-sm font-semibold mb-2 text-slate-300">Seu Nome</label>
-          <input type="text" id="nome" required placeholder="Digite seu nome" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
-        </div>
+    </div>
 
-        <div class="grid md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-sm font-semibold mb-2 text-slate-300">Seu E-mail</label>
-            <input type="email" id="email" required placeholder="seu@email.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     TRUST BAR
+========================================================= -->
+
+<section class="bg-white border-y border-slate-200">
+
+  <div
+    class="max-w-6xl mx-auto px-4 py-6 flex flex-wrap justify-center gap-x-10 gap-y-4 text-sm font-semibold text-slate-500"
+  >
+
+    <span>
+      <i class="fa-solid fa-cloud text-brand-500 mr-2"></i>
+      Sistema em nuvem
+    </span>
+
+    <span>
+      <i class="fa-solid fa-mobile-screen-button text-brand-500 mr-2"></i>
+      Acesse de qualquer dispositivo
+    </span>
+
+    <span>
+      <i class="fa-solid fa-shield-halved text-brand-500 mr-2"></i>
+      Controle de usuários
+    </span>
+
+    <span>
+      <i class="fa-solid fa-headset text-brand-500 mr-2"></i>
+      Suporte incluso
+    </span>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     PROBLEMA
+========================================================= -->
+
+<section class="py-20 bg-slate-50">
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="grid lg:grid-cols-2 gap-14 items-center">
+
+      <div>
+
+        <span class="text-brand-600 text-xs font-extrabold uppercase tracking-widest">
+          Chega de improviso
+        </span>
+
+        <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900">
+          Sua assistência não precisa depender de papel, planilhas e mensagens espalhadas.
+        </h2>
+
+        <p class="mt-5 text-slate-600 leading-relaxed">
+          Quando a quantidade de clientes aumenta, fica cada vez mais difícil
+          controlar equipamentos, orçamentos, serviços e pagamentos manualmente.
+        </p>
+
+
+        <div class="mt-8 space-y-4">
+
+          <div class="flex gap-4">
+
+            <div class="w-10 h-10 rounded-xl bg-red-100 text-red-500 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-xmark"></i>
+            </div>
+
+            <div>
+
+              <div class="font-bold text-slate-800">
+                Informações espalhadas
+              </div>
+
+              <div class="text-sm text-slate-500 mt-1">
+                Clientes, serviços e orçamentos difíceis de localizar.
+              </div>
+
+            </div>
+
           </div>
-          <div>
-            <label class="block text-sm font-semibold mb-2 text-slate-300">WhatsApp / Telefone</label>
-            <input type="tel" id="whatsapp" required placeholder="(00) 00000-0000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+
+
+          <div class="flex gap-4">
+
+            <div class="w-10 h-10 rounded-xl bg-red-100 text-red-500 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-xmark"></i>
+            </div>
+
+            <div>
+
+              <div class="font-bold text-slate-800">
+                Clientes perguntando sobre o serviço
+              </div>
+
+              <div class="text-sm text-slate-500 mt-1">
+                Mais tempo respondendo mensagens e procurando informações.
+              </div>
+
+            </div>
+
           </div>
+
+
+          <div class="flex gap-4">
+
+            <div class="w-10 h-10 rounded-xl bg-red-100 text-red-500 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-xmark"></i>
+            </div>
+
+            <div>
+
+              <div class="font-bold text-slate-800">
+                Orçamentos demorados
+              </div>
+
+              <div class="text-sm text-slate-500 mt-1">
+                Mais dificuldade para acompanhar o que foi aprovado ou recusado.
+              </div>
+
+            </div>
+
+          </div>
+
         </div>
+
+      </div>
+
+
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-soft">
+
+        <div class="flex items-center gap-3 mb-6">
+
+          <div class="w-11 h-11 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+
+          <div>
+
+            <div class="font-extrabold text-slate-900">
+              Com o VPrime OS
+            </div>
+
+            <div class="text-xs text-slate-500">
+              Tudo centralizado em um só lugar
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="space-y-4">
+
+          <div class="p-4 rounded-2xl bg-blue-50 border border-blue-100">
+
+            <div class="flex gap-3">
+
+              <i class="fa-solid fa-check text-brand-600 mt-1"></i>
+
+              <div>
+
+                <div class="font-bold text-slate-800">
+                  Abra a OS rapidamente
+                </div>
+
+                <div class="text-sm text-slate-500 mt-1">
+                  Cadastre cliente, equipamento e serviço.
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+
+            <div class="flex gap-3">
+
+              <i class="fa-solid fa-check text-emerald-600 mt-1"></i>
+
+              <div>
+
+                <div class="font-bold text-slate-800">
+                  Envie o orçamento
+                </div>
+
+                <div class="text-sm text-slate-500 mt-1">
+                  Seu cliente recebe um link e pode aprovar online.
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="p-4 rounded-2xl bg-purple-50 border border-purple-100">
+
+            <div class="flex gap-3">
+
+              <i class="fa-solid fa-check text-purple-600 mt-1"></i>
+
+              <div>
+
+                <div class="font-bold text-slate-800">
+                  Acompanhe tudo
+                </div>
+
+                <div class="text-sm text-slate-500 mt-1">
+                  Status, financeiro, clientes e serviços.
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     RECURSOS
+========================================================= -->
+
+<section id="recursos" class="py-20 bg-white">
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-3xl mx-auto text-center">
+
+      <span class="text-brand-600 text-xs font-extrabold uppercase tracking-widest">
+        Recursos
+      </span>
+
+      <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900">
+        Tudo o que sua assistência precisa para trabalhar melhor
+      </h2>
+
+      <p class="mt-4 text-slate-600">
+        Uma plataforma simples para organizar sua operação sem complicação.
+      </p>
+
+    </div>
+
+
+    <div class="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+
+      <!-- CARD -->
+
+      <div class="feature-card bg-white border border-slate-200 rounded-3xl p-7 shadow-card">
+
+        <div class="w-12 h-12 rounded-2xl bg-blue-100 text-brand-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-file-circle-plus"></i>
+        </div>
+
+        <h3 class="mt-6 text-lg font-extrabold text-slate-900">
+          Ordens de Serviço
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Cadastre e acompanhe suas OS de forma rápida e organizada.
+        </p>
+
+      </div>
+
+
+      <div class="feature-card bg-white border border-slate-200 rounded-3xl p-7 shadow-card">
+
+        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-file-signature"></i>
+        </div>
+
+        <h3 class="mt-6 text-lg font-extrabold text-slate-900">
+          Aprovação de Orçamento
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Envie o orçamento por e-mail através de um link exclusivo para o cliente aprovar online.
+        </p>
+
+      </div>
+
+
+      <div class="feature-card bg-white border border-slate-200 rounded-3xl p-7 shadow-card">
+
+        <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-mobile-screen-button"></i>
+        </div>
+
+        <h3 class="mt-6 text-lg font-extrabold text-slate-900">
+          Consulta Online
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Seu cliente pode acompanhar o andamento do serviço pelo celular.
+        </p>
+
+      </div>
+
+
+      <div class="feature-card bg-white border border-slate-200 rounded-3xl p-7 shadow-card">
+
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+
+        <h3 class="mt-6 text-lg font-extrabold text-slate-900">
+          Financeiro
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Acompanhe faturamento, recebimentos e informações financeiras da assistência.
+        </p>
+
+      </div>
+
+
+      <div class="feature-card bg-white border border-slate-200 rounded-3xl p-7 shadow-card">
+
+        <div class="w-12 h-12 rounded-2xl bg-cyan-100 text-cyan-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-file-pdf"></i>
+        </div>
+
+        <h3 class="mt-6 text-lg font-extrabold text-slate-900">
+          Documentos em PDF
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Gere orçamentos, recibos e documentos profissionais.
+        </p>
+
+      </div>
+
+
+      <div class="feature-card bg-white border border-slate-200 rounded-3xl p-7 shadow-card">
+
+        <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+
+        <h3 class="mt-6 text-lg font-extrabold text-slate-900">
+          Permissões de Usuários
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Controle o acesso de administradores, técnicos e outros usuários.
+        </p>
+
+      </div>
+
+
+      <div class="feature-card bg-white border border-slate-200 rounded-3xl p-7 shadow-card">
+
+        <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+
+        <h3 class="mt-6 text-lg font-extrabold text-slate-900">
+          Senha Visual Android
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Registre visualmente o padrão de desbloqueio do aparelho diretamente na OS.
+        </p>
+
+      </div>
+
+
+      <div class="feature-card bg-white border border-slate-200 rounded-3xl p-7 shadow-card">
+
+        <div class="w-12 h-12 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-envelope"></i>
+        </div>
+
+        <h3 class="mt-6 text-lg font-extrabold text-slate-900">
+          E-mails Automáticos
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Envie documentos e informações para seus clientes diretamente pelo sistema.
+        </p>
+
+      </div>
+
+
+      <div class="feature-card bg-white border border-slate-200 rounded-3xl p-7 shadow-card">
+
+        <div class="w-12 h-12 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-headset"></i>
+        </div>
+
+        <h3 class="mt-6 text-lg font-extrabold text-slate-900">
+          Suporte Incluso
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Conte com suporte para tirar dúvidas e começar a utilizar o sistema.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     COMO FUNCIONA
+========================================================= -->
+
+<section id="como-funciona" class="py-20 bg-slate-50">
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="text-center max-w-3xl mx-auto">
+
+      <span class="text-brand-600 text-xs font-extrabold uppercase tracking-widest">
+        Como funciona
+      </span>
+
+      <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900">
+        Da entrada do aparelho até a entrega
+      </h2>
+
+      <p class="mt-4 text-slate-600">
+        Organize todo o processo da sua assistência em poucos passos.
+      </p>
+
+    </div>
+
+
+    <div class="mt-14 relative">
+
+      <!-- LINE -->
+
+      <div
+        class="hidden lg:block absolute top-10 left-[12%] right-[12%] h-1 step-line rounded-full opacity-30"
+      ></div>
+
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-8 relative">
+
+
+        <div class="text-center">
+
+          <div class="mx-auto w-20 h-20 rounded-3xl bg-white border border-slate-200 shadow-card flex items-center justify-center text-brand-600 text-2xl relative z-10">
+            <i class="fa-solid fa-user-plus"></i>
+          </div>
+
+          <div class="mt-5 font-extrabold text-slate-900">
+            1. Cliente
+          </div>
+
+          <p class="mt-2 text-sm text-slate-500">
+            Cadastre ou selecione o cliente.
+          </p>
+
+        </div>
+
+
+        <div class="text-center">
+
+          <div class="mx-auto w-20 h-20 rounded-3xl bg-white border border-slate-200 shadow-card flex items-center justify-center text-brand-600 text-2xl relative z-10">
+            <i class="fa-solid fa-file-circle-plus"></i>
+          </div>
+
+          <div class="mt-5 font-extrabold text-slate-900">
+            2. Abra a OS
+          </div>
+
+          <p class="mt-2 text-sm text-slate-500">
+            Registre aparelho e serviço.
+          </p>
+
+        </div>
+
+
+        <div class="text-center">
+
+          <div class="mx-auto w-20 h-20 rounded-3xl bg-white border border-slate-200 shadow-card flex items-center justify-center text-brand-600 text-2xl relative z-10">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+          </div>
+
+          <div class="mt-5 font-extrabold text-slate-900">
+            3. Orçamento
+          </div>
+
+          <p class="mt-2 text-sm text-slate-500">
+            Envie para aprovação.
+          </p>
+
+        </div>
+
+
+        <div class="text-center">
+
+          <div class="mx-auto w-20 h-20 rounded-3xl bg-white border border-slate-200 shadow-card flex items-center justify-center text-emerald-600 text-2xl relative z-10">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+
+          <div class="mt-5 font-extrabold text-slate-900">
+            4. Aprovação
+          </div>
+
+          <p class="mt-2 text-sm text-slate-500">
+            Cliente aprova pelo link.
+          </p>
+
+        </div>
+
+
+        <div class="text-center">
+
+          <div class="mx-auto w-20 h-20 rounded-3xl bg-white border border-slate-200 shadow-card flex items-center justify-center text-indigo-600 text-2xl relative z-10">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+          </div>
+
+          <div class="mt-5 font-extrabold text-slate-900">
+            5. Entrega
+          </div>
+
+          <p class="mt-2 text-sm text-slate-500">
+            Finalize e registre o pagamento.
+          </p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     DESTAQUE APROVAÇÃO
+========================================================= -->
+
+<section class="py-20 bg-white">
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div
+      class="rounded-[2rem] bg-gradient-to-br from-blue-600 via-brand-700 to-indigo-700 p-8 sm:p-12 text-white overflow-hidden relative"
+    >
+
+      <div
+        class="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-white/10 blur-2xl"
+      ></div>
+
+      <div
+        class="absolute -left-20 -bottom-20 w-72 h-72 rounded-full bg-cyan-300/10 blur-2xl"
+      ></div>
+
+
+      <div class="relative grid lg:grid-cols-2 gap-12 items-center">
 
         <div>
-          <label class="block text-sm font-semibold mb-2 text-slate-300">Nome da sua Empresa</label>
-          <input type="text" id="empresa" placeholder="Ex: TecFix Assistência Técnica" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+
+          <span class="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+            <i class="fa-solid fa-bolt"></i>
+            Um dos diferenciais do VPrime OS
+          </span>
+
+
+          <h2 class="mt-5 text-3xl sm:text-4xl font-extrabold">
+            Seu cliente aprova o orçamento sem precisar ir até a assistência.
+          </h2>
+
+
+          <p class="mt-5 text-blue-100 leading-relaxed">
+            Gere o orçamento, envie por e-mail e disponibilize um link exclusivo.
+            O cliente acessa pelo celular, visualiza os valores e pode aprovar o serviço.
+          </p>
+
+
+          <a
+            href="#contato"
+            class="mt-7 inline-flex items-center gap-2 bg-white text-brand-700 hover:bg-blue-50 font-extrabold px-6 py-3.5 rounded-xl transition"
+          >
+
+            Quero testar o VPrime OS
+
+            <i class="fa-solid fa-arrow-right"></i>
+
+          </a>
+
         </div>
+
+
+        <div class="bg-white/10 border border-white/15 rounded-3xl p-5 backdrop-blur-sm">
+
+          <div class="bg-white rounded-2xl p-5 text-slate-800 shadow-2xl">
+
+            <div class="flex items-center justify-between">
+
+              <div>
+
+                <div class="text-xs text-slate-400">
+                  ORÇAMENTO
+                </div>
+
+                <div class="font-extrabold text-lg">
+                  OS #1048
+                </div>
+
+              </div>
+
+              <div class="w-10 h-10 bg-blue-100 text-brand-600 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-file-signature"></i>
+              </div>
+
+            </div>
+
+
+            <div class="mt-6 border-t border-slate-100 pt-5">
+
+              <div class="text-sm text-slate-500">
+                Serviço
+              </div>
+
+              <div class="font-bold mt-1">
+                Troca de tela
+              </div>
+
+              <div class="text-sm text-slate-500 mt-4">
+                Valor total
+              </div>
+
+              <div class="text-2xl font-extrabold mt-1">
+                R$ 480,00
+              </div>
+
+            </div>
+
+
+            <div class="mt-6 grid grid-cols-2 gap-3">
+
+              <div class="bg-red-50 text-red-600 font-bold text-center py-3 rounded-xl text-sm">
+                Recusar
+              </div>
+
+              <div class="bg-emerald-500 text-white font-bold text-center py-3 rounded-xl text-sm">
+                Aprovar orçamento
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     DEMONSTRAÇÃO
+========================================================= -->
+
+<section id="demonstracao" class="py-20 bg-slate-50">
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="text-center max-w-3xl mx-auto">
+
+      <span class="text-brand-600 text-xs font-extrabold uppercase tracking-widest">
+        Conheça o sistema
+      </span>
+
+      <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900">
+        Simples de entender. Fácil de usar.
+      </h2>
+
+      <p class="mt-4 text-slate-600">
+        Veja alguns dos principais módulos do VPrime OS.
+      </p>
+
+    </div>
+
+
+    <div class="mt-14 grid md:grid-cols-3 gap-7">
+
+
+      <!-- PRINT 1 -->
+
+      <div
+        class="screen-card bg-white rounded-3xl p-4 border border-slate-200 cursor-pointer"
+        onclick="abrirModal(
+          'https://lh3.googleusercontent.com/d/1ITvsYxB-TnV_dZUV5qR0qkUj-672vFdY',
+          'Painel Principal / Dashboard'
+        )"
+      >
+
+        <div class="relative overflow-hidden rounded-2xl bg-slate-100 aspect-video">
+
+          <img
+            src="https://lh3.googleusercontent.com/d/1ITvsYxB-TnV_dZUV5qR0qkUj-672vFdY"
+            alt="Painel Principal VPrime OS"
+            class="w-full h-full object-cover"
+          >
+
+          <div
+            class="absolute inset-0 bg-slate-950/55 opacity-0 hover:opacity-100 transition flex items-center justify-center text-white font-bold"
+          >
+
+            <i class="fa-solid fa-magnifying-glass-plus mr-2"></i>
+            Ampliar
+
+          </div>
+
+        </div>
+
+
+        <h3 class="mt-5 text-lg font-extrabold text-slate-900">
+          Painel Principal
+        </h3>
+
+        <p class="mt-1 text-sm text-slate-500">
+          Visão geral da sua assistência.
+        </p>
+
+      </div>
+
+
+      <!-- PRINT 2 -->
+
+      <div
+        class="screen-card bg-white rounded-3xl p-4 border border-slate-200 cursor-pointer"
+        onclick="abrirModal(
+          'https://lh3.googleusercontent.com/d/1itPiKb09xoe8wb2_WBE6i57tZQ6KucBU',
+          'Abertura Rápida de Ordem de Serviço'
+        )"
+      >
+
+        <div class="relative overflow-hidden rounded-2xl bg-slate-100 aspect-video">
+
+          <img
+            src="https://lh3.googleusercontent.com/d/1itPiKb09xoe8wb2_WBE6i57tZQ6KucBU"
+            alt="Abertura de OS VPrime OS"
+            class="w-full h-full object-cover"
+          >
+
+          <div
+            class="absolute inset-0 bg-slate-950/55 opacity-0 hover:opacity-100 transition flex items-center justify-center text-white font-bold"
+          >
+
+            <i class="fa-solid fa-magnifying-glass-plus mr-2"></i>
+            Ampliar
+
+          </div>
+
+        </div>
+
+
+        <h3 class="mt-5 text-lg font-extrabold text-slate-900">
+          Abertura de OS
+        </h3>
+
+        <p class="mt-1 text-sm text-slate-500">
+          Cadastro rápido de clientes e equipamentos.
+        </p>
+
+      </div>
+
+
+      <!-- PRINT 3 -->
+
+      <div
+        class="screen-card bg-white rounded-3xl p-4 border border-slate-200 cursor-pointer"
+        onclick="abrirModal(
+          'https://lh3.googleusercontent.com/d/12-ZWw5F5h0f7aPUq_IeVX9Mcg_JBcxZ6',
+          'Módulo Financeiro'
+        )"
+      >
+
+        <div class="relative overflow-hidden rounded-2xl bg-slate-100 aspect-video">
+
+          <img
+            src="https://lh3.googleusercontent.com/d/12-ZWw5F5h0f7aPUq_IeVX9Mcg_JBcxZ6"
+            alt="Financeiro VPrime OS"
+            class="w-full h-full object-cover"
+          >
+
+          <div
+            class="absolute inset-0 bg-slate-950/55 opacity-0 hover:opacity-100 transition flex items-center justify-center text-white font-bold"
+          >
+
+            <i class="fa-solid fa-magnifying-glass-plus mr-2"></i>
+            Ampliar
+
+          </div>
+
+        </div>
+
+
+        <h3 class="mt-5 text-lg font-extrabold text-slate-900">
+          Módulo Financeiro
+        </h3>
+
+        <p class="mt-1 text-sm text-slate-500">
+          Acompanhe receitas e informações financeiras.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     MODAL
+========================================================= -->
+
+<div
+  id="modalZoom"
+  class="fixed inset-0 z-50 bg-slate-950/85 hidden backdrop-blur-md flex items-center justify-center p-4"
+  onclick="fecharModal()"
+>
+
+  <div
+    class="relative max-w-6xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl"
+    onclick="event.stopPropagation()"
+  >
+
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+
+      <h3
+        id="modalTitulo"
+        class="font-extrabold text-slate-900"
+      >
+        Visualização
+      </h3>
+
+      <button
+        onclick="fecharModal()"
+        class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 text-xl"
+      >
+        &times;
+      </button>
+
+    </div>
+
+
+    <div class="bg-slate-100 p-3 flex justify-center">
+
+      <img
+        id="modalImg"
+        src=""
+        alt="Tela ampliada"
+        class="max-h-[80vh] max-w-full object-contain rounded-xl"
+      >
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     PLANOS
+========================================================= -->
+
+<section id="planos" class="py-20 bg-white">
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+
+    <div class="text-center max-w-3xl mx-auto">
+
+      <span class="text-brand-600 text-xs font-extrabold uppercase tracking-widest">
+        Planos
+      </span>
+
+      <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900">
+        Comece grátis. Escolha depois.
+      </h2>
+
+      <p class="mt-4 text-slate-600">
+        Teste o VPrime OS durante 15 dias com acesso aos recursos do sistema.
+      </p>
+
+    </div>
+
+
+    <!-- RECURSOS -->
+
+    <div
+      class="mt-12 bg-slate-50 rounded-3xl border border-slate-200 p-6 sm:p-8"
+    >
+
+      <div class="text-center">
+
+        <h3 class="text-xl font-extrabold text-slate-900">
+          Tudo incluído no VPrime OS
+        </h3>
+
+        <p class="text-sm text-slate-500 mt-1">
+          Sem planos complicados ou recursos bloqueados.
+        </p>
+
+      </div>
+
+
+      <div class="mt-7 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div class="flex gap-3 text-sm">
+          <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+          Ordens de Serviço ilimitadas
+        </div>
+
+        <div class="flex gap-3 text-sm">
+          <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+          Consulta de OS pelo cliente
+        </div>
+
+        <div class="flex gap-3 text-sm font-semibold">
+          <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+          Aprovação de orçamento por link
+        </div>
+
+        <div class="flex gap-3 text-sm">
+          <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+          Financeiro e relatórios
+        </div>
+
+        <div class="flex gap-3 text-sm">
+          <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+          PDF e documentos
+        </div>
+
+        <div class="flex gap-3 text-sm">
+          <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+          Envio automático de e-mails
+        </div>
+
+        <div class="flex gap-3 text-sm">
+          <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+          Senha visual Android
+        </div>
+
+        <div class="flex gap-3 text-sm">
+          <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+          Controle de permissões
+        </div>
+
+        <div class="flex gap-3 text-sm">
+          <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+          Suporte técnico
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- PRICES -->
+
+    <div class="mt-8 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+
+
+      <!-- MENSAL -->
+
+      <div
+        class="bg-white border border-slate-200 rounded-3xl p-7 shadow-card flex flex-col"
+      >
 
         <div>
-          <label class="block text-sm font-semibold mb-2 text-slate-300">Mensagem</label>
-          <textarea id="mensagem" rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">Gostaria de solicitar meu teste gratuito de 15 dias do VPrime OS.</textarea>
+
+          <div class="text-xs uppercase tracking-widest font-extrabold text-slate-500">
+            Plano Mensal
+          </div>
+
+          <div class="mt-4 flex items-end gap-2">
+
+            <span class="text-5xl font-extrabold text-slate-900">
+              R$ 29,90
+            </span>
+
+            <span class="text-slate-500 mb-2">
+              /mês
+            </span>
+
+          </div>
+
+          <p class="mt-3 text-sm text-slate-500">
+            Menos de R$ 1 por dia para organizar sua assistência.
+          </p>
+
         </div>
 
-        <button type="submit" id="btnEnviar" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg cursor-pointer">
-          Solicitar Teste Gratuito de 15 Dias
+
+        <div class="mt-7 space-y-3 text-sm">
+
+          <div>
+            <i class="fa-solid fa-check text-emerald-500 mr-2"></i>
+            Cobrança mensal
+          </div>
+
+          <div>
+            <i class="fa-solid fa-check text-emerald-500 mr-2"></i>
+            Sem fidelidade
+          </div>
+
+          <div>
+            <i class="fa-solid fa-check text-emerald-500 mr-2"></i>
+            Todos os recursos
+          </div>
+
+          <div>
+            <i class="fa-solid fa-check text-emerald-500 mr-2"></i>
+            Suporte incluso
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          onclick="selecionarPlano('Mensal')"
+          class="mt-8 w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-4 rounded-xl transition"
+        >
+
+          Começar 15 Dias Grátis
+
         </button>
 
-        <div id="statusEnvio" class="hidden text-center text-sm font-semibold pt-2"></div>
-      </form>
+      </div>
+
+
+      <!-- ANUAL -->
+
+      <div
+        class="relative bg-gradient-to-b from-blue-50 to-white border-2 border-brand-500 rounded-3xl p-7 price-highlight flex flex-col"
+      >
+
+        <div
+          class="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-600 text-white px-5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider shadow-lg"
+        >
+          Mais econômico
+        </div>
+
+
+        <div>
+
+          <div class="text-xs uppercase tracking-widest font-extrabold text-brand-600">
+            Plano Anual
+          </div>
+
+          <div class="mt-4 flex items-end gap-2">
+
+            <span class="text-5xl font-extrabold text-brand-600">
+              R$ 19,90
+            </span>
+
+            <span class="text-slate-500 mb-2">
+              /mês*
+            </span>
+
+          </div>
+
+          <div class="mt-3 inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-extrabold">
+            <i class="fa-solid fa-piggy-bank"></i>
+            Economize R$ 120,00 por ano
+          </div>
+
+
+          <p class="mt-4 text-sm text-slate-500">
+            *Pagamento único de R$ 238,80 pelo período de 12 meses.
+          </p>
+
+        </div>
+
+
+        <div class="mt-7 space-y-3 text-sm">
+
+          <div>
+            <i class="fa-solid fa-check text-emerald-500 mr-2"></i>
+            12 meses de acesso
+          </div>
+
+          <div>
+            <i class="fa-solid fa-check text-emerald-500 mr-2"></i>
+            Todos os recursos
+          </div>
+
+          <div>
+            <i class="fa-solid fa-check text-emerald-500 mr-2"></i>
+            Suporte incluso
+          </div>
+
+          <div>
+            <i class="fa-solid fa-check text-emerald-500 mr-2"></i>
+            Melhor custo-benefício
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          onclick="selecionarPlano('Anual')"
+          class="mt-8 w-full bg-brand-600 hover:bg-brand-700 text-white font-extrabold py-4 rounded-xl transition shadow-lg shadow-brand-600/20"
+        >
+
+          Começar 15 Dias Grátis
+
+        </button>
+
+      </div>
+
     </div>
-  </section>
 
-  <!-- JAVASCRIPT EMBUTIDO DIRETO NO HTML -->
-  <script>
-    // Configuração do endpoint do Google Apps Script
-    const URL_WEB_APP = "https://script.google.com/macros/s/AKfycby6VCGYZAVTbuYEFHA26_Mnye1hp-_aRQb_64W1uQRBfhE94ReO9t9D-Qyux440wGgdYw/exec";
 
-    /**
-     * Envia os dados do formulário de contato via API (fetch)
-     */
-    async function enviarMensagem(e) {
-      e.preventDefault();
+    <p class="text-center text-xs text-slate-400 mt-7">
+      Você testa primeiro. A contratação só acontece depois dos 15 dias.
+    </p>
 
-      const btn = document.getElementById('btnEnviar');
-      const status = document.getElementById('statusEnvio');
+  </div>
 
-      btn.disabled = true;
-      btn.innerText = "Enviando...";
+</section>
 
-      const dados = {
-        nome: document.getElementById('nome').value,
-        email: document.getElementById('email').value,
-        whatsapp: document.getElementById('whatsapp').value,
-        empresa: document.getElementById('empresa').value,
-        mensagem: document.getElementById('mensagem').value
-      };
 
-      try {
-        const resposta = await fetch(URL_WEB_APP, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8',
-          },
-          body: JSON.stringify(dados)
-        });
+<!-- =========================================================
+     FAQ
+========================================================= -->
 
-        const res = await resposta.json();
+<section id="faq" class="py-20 bg-slate-50">
 
-        btn.disabled = false;
-        btn.innerText = "Solicitar Teste Gratuito de 15 Dias";
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
 
-        if (res && res.sucesso) {
-          status.classList.remove('hidden', 'text-red-400');
-          status.classList.add('text-emerald-400');
-          status.innerText = "✅ Solicitação enviada com sucesso! Entraremos em contato para liberar seus 15 dias de teste.";
-          document.getElementById('formContato').reset();
-        } else {
-          throw new Error(res ? res.erro : 'Erro ao processar');
-        }
-      } catch (err) {
-        btn.disabled = false;
-        btn.innerText = "Solicitar Teste Gratuito de 15 Dias";
+    <div class="text-center">
 
-        status.classList.remove('hidden', 'text-emerald-400');
-        status.classList.add('text-red-400');
-        status.innerText = "❌ Falha na comunicação com o servidor.";
-      }
+      <span class="text-brand-600 text-xs font-extrabold uppercase tracking-widest">
+        FAQ
+      </span>
+
+      <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900">
+        Perguntas frequentes
+      </h2>
+
+    </div>
+
+
+    <div class="mt-12 space-y-4">
+
+
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+
+        <h3 class="font-extrabold text-slate-900">
+          Preciso informar cartão para começar?
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Não. O período de 15 dias é gratuito e você não precisa cadastrar cartão de crédito para começar.
+        </p>
+
+      </div>
+
+
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+
+        <h3 class="font-extrabold text-slate-900">
+          O que acontece depois dos 15 dias?
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Você poderá escolher o plano mensal de R$ 29,90 ou o plano anual de R$ 238,80. Caso não queira continuar, o acesso será suspenso sem cobrança ou multa.
+        </p>
+
+      </div>
+
+
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+
+        <h3 class="font-extrabold text-slate-900">
+          Preciso instalar algum programa?
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Não. O VPrime OS funciona online e pode ser acessado através de computador, notebook, tablet ou celular com internet.
+        </p>
+
+      </div>
+
+
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+
+        <h3 class="font-extrabold text-slate-900">
+          Tenho suporte durante o teste?
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Sim. Você poderá contar com suporte para conhecer o sistema, tirar dúvidas e começar a utilizar os recursos.
+        </p>
+
+      </div>
+
+
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+
+        <h3 class="font-extrabold text-slate-900">
+          O sistema é somente para celulares?
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+          Não. O VPrime OS pode ser utilizado por assistências de celulares, computadores, notebooks, eletrônicos e outros equipamentos.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     CTA FINAL
+========================================================= -->
+
+<section
+  class="py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 text-white"
+>
+
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+
+    <div
+      class="mx-auto w-16 h-16 rounded-2xl bg-brand-500/20 border border-brand-400/30 flex items-center justify-center text-brand-300 text-2xl"
+    >
+
+      <i class="fa-solid fa-rocket"></i>
+
+    </div>
+
+
+    <h2 class="mt-7 text-3xl sm:text-5xl font-extrabold">
+      Pronto para organizar sua assistência?
+    </h2>
+
+
+    <p class="mt-5 text-slate-300 text-lg">
+      Experimente o VPrime OS por 15 dias gratuitamente.
+    </p>
+
+
+    <a
+      href="#contato"
+      class="mt-8 inline-flex items-center gap-3 bg-brand-500 hover:bg-brand-400 text-white font-extrabold px-8 py-4 rounded-xl shadow-xl shadow-blue-900/40 transition hover:-translate-y-1"
+    >
+
+      Começar meu teste grátis
+
+      <i class="fa-solid fa-arrow-right"></i>
+
+    </a>
+
+
+    <div class="mt-5 text-sm text-slate-400">
+
+      <i class="fa-solid fa-shield-halved mr-1"></i>
+      Sem cartão de crédito • Sem compromisso
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     CONTATO
+========================================================= -->
+
+<section id="contato" class="py-20 bg-white">
+
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+
+    <div class="text-center mb-10">
+
+      <span class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-brand-700 px-4 py-2 rounded-full text-xs font-extrabold uppercase tracking-wider">
+        <i class="fa-solid fa-gift"></i>
+        15 dias grátis
+      </span>
+
+
+      <h2 class="mt-5 text-3xl sm:text-4xl font-extrabold text-slate-900">
+        Comece seu teste gratuito
+      </h2>
+
+
+      <p class="mt-3 text-slate-500">
+        Preencha os dados abaixo e entraremos em contato para liberar seu acesso.
+      </p>
+
+    </div>
+
+
+    <form
+      id="formContato"
+      onsubmit="enviarMensagem(event)"
+      class="bg-slate-50 border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-soft"
+    >
+
+
+      <div>
+
+        <label class="block text-sm font-bold text-slate-700 mb-2">
+          Seu Nome
+        </label>
+
+        <input
+          type="text"
+          id="nome"
+          required
+          placeholder="Digite seu nome"
+          class="w-full bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"
+        >
+
+      </div>
+
+
+      <div class="grid md:grid-cols-2 gap-5 mt-5">
+
+        <div>
+
+          <label class="block text-sm font-bold text-slate-700 mb-2">
+            Seu E-mail
+          </label>
+
+          <input
+            type="email"
+            id="email"
+            required
+            placeholder="seu@email.com"
+            class="w-full bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"
+          >
+
+        </div>
+
+
+        <div>
+
+          <label class="block text-sm font-bold text-slate-700 mb-2">
+            WhatsApp / Telefone
+          </label>
+
+          <input
+            type="tel"
+            id="whatsapp"
+            required
+            placeholder="(00) 00000-0000"
+            class="w-full bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"
+          >
+
+        </div>
+
+      </div>
+
+
+      <div class="mt-5">
+
+        <label class="block text-sm font-bold text-slate-700 mb-2">
+          Nome da sua Empresa
+        </label>
+
+        <input
+          type="text"
+          id="empresa"
+          placeholder="Ex: TecFix Assistência Técnica"
+          class="w-full bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"
+        >
+
+      </div>
+
+
+      <div class="mt-5">
+
+        <label class="block text-sm font-bold text-slate-700 mb-2">
+          Mensagem
+        </label>
+
+        <textarea
+          id="mensagem"
+          rows="4"
+          class="w-full bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"
+        >Gostaria de solicitar meu teste gratuito de 15 dias do VPrime OS.</textarea>
+
+      </div>
+
+
+      <button
+        type="submit"
+        id="btnEnviar"
+        class="mt-6 w-full bg-brand-600 hover:bg-brand-700 text-white font-extrabold py-4 rounded-xl transition shadow-lg shadow-brand-600/20"
+      >
+
+        <i class="fa-solid fa-rocket mr-2"></i>
+
+        Solicitar Teste Gratuito
+
+      </button>
+
+
+      <div
+        id="statusEnvio"
+        class="hidden text-center text-sm font-bold pt-4"
+      ></div>
+
+
+      <div class="mt-5 text-center text-xs text-slate-400">
+
+        <i class="fa-solid fa-lock mr-1"></i>
+
+        Seus dados serão utilizados apenas para contato sobre o VPrime OS.
+
+      </div>
+
+    </form>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer class="bg-slate-950 text-slate-400">
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+
+    <div class="grid md:grid-cols-4 gap-10">
+
+
+      <div class="md:col-span-2">
+
+        <div class="flex items-center gap-3">
+
+          <div
+            class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-extrabold"
+          >
+            VP
+          </div>
+
+          <div class="text-xl font-extrabold text-white">
+            VPrime OS
+          </div>
+
+        </div>
+
+
+        <p class="mt-5 max-w-md text-sm leading-relaxed">
+          Sistema de gestão desenvolvido para facilitar a rotina de assistências técnicas de celulares, computadores e eletrônicos.
+        </p>
+
+      </div>
+
+
+      <div>
+
+        <h4 class="text-white font-bold mb-4">
+          Navegação
+        </h4>
+
+        <div class="space-y-3 text-sm">
+
+          <a href="#recursos" class="block hover:text-white transition">
+            Recursos
+          </a>
+
+          <a href="#como-funciona" class="block hover:text-white transition">
+            Como funciona
+          </a>
+
+          <a href="#demonstracao" class="block hover:text-white transition">
+            Sistema
+          </a>
+
+          <a href="#planos" class="block hover:text-white transition">
+            Planos
+          </a>
+
+          <a href="#faq" class="block hover:text-white transition">
+            FAQ
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <div>
+
+        <h4 class="text-white font-bold mb-4">
+          Atendimento
+        </h4>
+
+        <div class="space-y-3 text-sm">
+
+          <div>
+            <i class="fa-solid fa-clock mr-2"></i>
+            Segunda a Sexta
+          </div>
+
+          <div>
+            <i class="fa-solid fa-headset mr-2"></i>
+            Suporte técnico
+          </div>
+
+          <a
+            href="#contato"
+            class="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300"
+          >
+
+            Solicitar teste
+
+            <i class="fa-solid fa-arrow-right"></i>
+
+          </a>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="mt-12 pt-7 border-t border-slate-800 text-center text-xs">
+
+      © <span id="year"></span> VPrime OS. Todos os direitos reservados.
+
+    </div>
+
+  </div>
+
+</footer>
+
+
+<!-- =========================================================
+     COOKIES
+========================================================= -->
+
+<div
+  id="cookieBanner"
+  class="fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-md bg-slate-900 text-white p-5 rounded-2xl shadow-2xl z-50 border border-slate-700"
+>
+
+  <div class="flex items-start gap-4">
+
+    <div class="text-brand-400 text-xl">
+
+      <i class="fa-solid fa-cookie-bite"></i>
+
+    </div>
+
+
+    <div class="flex-1">
+
+      <h4 class="font-bold text-sm">
+        Respeitamos sua privacidade
+      </h4>
+
+      <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+        Utilizamos cookies para melhorar sua experiência e analisar o tráfego do site.
+      </p>
+
+
+      <div class="flex gap-4 mt-4">
+
+        <button
+          onclick="aceitarCookies()"
+          class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2 rounded-lg"
+        >
+          Aceitar
+        </button>
+
+        <button
+          onclick="recusarCookies()"
+          class="text-slate-400 hover:text-white text-xs"
+        >
+          Recusar
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+
+/* =========================================================
+   ANO
+========================================================= */
+
+document.getElementById('year').innerText =
+  new Date().getFullYear();
+
+
+
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+
+const mobileMenuBtn =
+  document.getElementById('mobileMenuBtn');
+
+const mobileMenu =
+  document.getElementById('mobileMenu');
+
+
+mobileMenuBtn.addEventListener('click', () => {
+
+  mobileMenu.classList.toggle('hidden');
+
+});
+
+
+document.querySelectorAll('.mobile-link').forEach(link => {
+
+  link.addEventListener('click', () => {
+
+    mobileMenu.classList.add('hidden');
+
+  });
+
+});
+
+
+
+/* =========================================================
+   URL GOOGLE APPS SCRIPT
+========================================================= */
+
+const URL_WEB_APP =
+  "https://script.google.com/macros/s/AKfycby6VCGYZAVTbuYEFHA26_Mnye1hp-_aRQb_64W1uQRBfhE94ReO9t9D-Qyux440wGgdYw/exec";
+
+
+
+/* =========================================================
+   ENVIO FORMULÁRIO
+========================================================= */
+
+async function enviarMensagem(e) {
+
+  e.preventDefault();
+
+
+  const btn =
+    document.getElementById('btnEnviar');
+
+  const status =
+    document.getElementById('statusEnvio');
+
+
+  btn.disabled = true;
+
+  btn.innerHTML =
+    '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Enviando...';
+
+
+  const dados = {
+
+    nome:
+      document.getElementById('nome').value,
+
+    email:
+      document.getElementById('email').value,
+
+    whatsapp:
+      document.getElementById('whatsapp').value,
+
+    empresa:
+      document.getElementById('empresa').value,
+
+    mensagem:
+      document.getElementById('mensagem').value
+
+  };
+
+
+  try {
+
+    const resposta =
+      await fetch(URL_WEB_APP, {
+
+        method: 'POST',
+
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        },
+
+        body:
+          JSON.stringify(dados)
+
+      });
+
+
+    const res =
+      await resposta.json();
+
+
+    btn.disabled = false;
+
+    btn.innerHTML =
+      '<i class="fa-solid fa-rocket mr-2"></i> Solicitar Teste Gratuito';
+
+
+    if (res && res.sucesso) {
+
+      status.classList.remove(
+        'hidden',
+        'text-red-500'
+      );
+
+      status.classList.add(
+        'text-emerald-600'
+      );
+
+      status.innerText =
+        '✅ Solicitação enviada com sucesso! Entraremos em contato para liberar seus 15 dias de teste.';
+
+
+      document
+        .getElementById('formContato')
+        .reset();
+
+    } else {
+
+      throw new Error(
+        res ? res.erro : 'Erro ao processar'
+      );
+
     }
 
-    /**
-     * Abre o modal de imagem com zoom
-     */
-    function abrirModal(urlImagem, titulo) {
-      const modal = document.getElementById('modalZoom');
-      const img = document.getElementById('modalImg');
-      const txtTitulo = document.getElementById('modalTitulo');
 
-      img.src = urlImagem;
-      txtTitulo.innerText = titulo;
+  } catch (err) {
 
-      modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    }
+    btn.disabled = false;
 
-    /**
-     * Fecha o modal de imagem
-     */
-    function fecharModal() {
-      const modal = document.getElementById('modalZoom');
-      modal.classList.add('hidden');
-      document.body.style.overflow = 'auto';
-    }
+    btn.innerHTML =
+      '<i class="fa-solid fa-rocket mr-2"></i> Solicitar Teste Gratuito';
 
-    // Evento para fechar o modal pressionando a tecla ESC
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        fecharModal();
-      }
-    });
 
-    /**
-     * Seleciona o plano e insere a mensagem pré-definida
-     */
-    function selecionarPlano(tipoPlano) {
-      const campoMensagem = document.getElementById("mensagem");
-      const secaoContato = document.getElementById("contato");
+    status.classList.remove(
+      'hidden',
+      'text-emerald-600'
+    );
 
-      if (tipoPlano === "Mensal") {
-        campoMensagem.value = "Gostaria de solicitar meu teste gratuito de 15 dias do VPrime OS no Plano Mensal (R$ 29,90/mês).";
-      } else if (tipoPlano === "Anual") {
-        campoMensagem.value = "Gostaria de solicitar meu teste gratuito de 15 dias do VPrime OS no Plano Anual (R$ 19,90/mês).";
-      }
+    status.classList.add(
+      'text-red-500'
+    );
 
-      // Rola a página suavemente até o formulário de contato
-      secaoContato.scrollIntoView({ behavior: "smooth" });
-    }
-  </script>
+    status.innerText =
+      '❌ Não foi possível enviar sua solicitação. Tente novamente.';
+
+  }
+
+}
+
+
+
+/* =========================================================
+   MODAL IMAGENS
+========================================================= */
+
+function abrirModal(urlImagem, titulo) {
+
+  const modal =
+    document.getElementById('modalZoom');
+
+  const img =
+    document.getElementById('modalImg');
+
+  const tituloModal =
+    document.getElementById('modalTitulo');
+
+
+  img.src = urlImagem;
+
+  tituloModal.innerText = titulo;
+
+  modal.classList.remove('hidden');
+
+  document.body.style.overflow = 'hidden';
+
+}
+
+
+
+function fecharModal() {
+
+  const modal =
+    document.getElementById('modalZoom');
+
+  modal.classList.add('hidden');
+
+  document.body.style.overflow = 'auto';
+
+}
+
+
+document.addEventListener('keydown', function(e) {
+
+  if (e.key === 'Escape') {
+
+    fecharModal();
+
+  }
+
+});
+
+
+
+/* =========================================================
+   SELEÇÃO DE PLANO
+========================================================= */
+
+function selecionarPlano(tipoPlano) {
+
+  const campoMensagem =
+    document.getElementById('mensagem');
+
+  const contato =
+    document.getElementById('contato');
+
+
+  if (tipoPlano === 'Mensal') {
+
+    campoMensagem.value =
+      'Gostaria de solicitar meu teste gratuito de 15 dias do VPrime OS no Plano Mensal de R$ 29,90/mês.';
+
+  }
+
+
+  if (tipoPlano === 'Anual') {
+
+    campoMensagem.value =
+      'Gostaria de solicitar meu teste gratuito de 15 dias do VPrime OS no Plano Anual de R$ 238,80 à vista (equivalente a R$ 19,90/mês).';
+
+  }
+
+
+  contato.scrollIntoView({
+
+    behavior: 'smooth'
+
+  });
+
+}
+
+
+
+/* =========================================================
+   COOKIES
+========================================================= */
+
+function checkCookies() {
+
+  if (
+    localStorage.getItem('lgpd_cookies')
+  ) {
+
+    document
+      .getElementById('cookieBanner')
+      .classList.add('hidden');
+
+  }
+
+}
+
+
+function aceitarCookies() {
+
+  localStorage.setItem(
+    'lgpd_cookies',
+    'accepted'
+  );
+
+  document
+    .getElementById('cookieBanner')
+    .classList.add('hidden');
+
+}
+
+
+function recusarCookies() {
+
+  localStorage.setItem(
+    'lgpd_cookies',
+    'rejected'
+  );
+
+  document
+    .getElementById('cookieBanner')
+    .classList.add('hidden');
+
+}
+
+
+checkCookies();
+
+
+</script>
+
+
 </body>
+
 </html>
