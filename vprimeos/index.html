@@ -452,24 +452,22 @@
       }
     });
 
-
+    /**
+     * Seleciona o plano e insere a mensagem pré-definida
+     */
     function selecionarPlano(tipoPlano) {
-  const campoMensagem = document.getElementById("mensagem");
-  const secaoContato = document.getElementById("contato");
+      const campoMensagem = document.getElementById("mensagem");
+      const secaoContato = document.getElementById("contato");
 
-  if (tipoPlano === "Mensal") {
-    campoMensagem.value = "Gostaria de solicitar meu teste gratuito de 15 dias do VPrime OS no Plano Mensal (R$ 29,90/mês).";
-  } else if (tipoPlano === "Anual") {
-    campoMensagem.value = "Gostaria de solicitar meu teste gratuito de 15 dias do VPrime OS no Plano Anual (R$ 19,90/mês).";
-  }
+      if (tipoPlano === "Mensal") {
+        campoMensagem.value = "Gostaria de solicitar meu teste gratuito de 15 dias do VPrime OS no Plano Mensal (R$ 29,90/mês).";
+      } else if (tipoPlano === "Anual") {
+        campoMensagem.value = "Gostaria de solicitar meu teste gratuito de 15 dias do VPrime OS no Plano Anual (R$ 19,90/mês).";
+      }
 
-  // Rola a página suavemente até o formulário de contato
-  secaoContato.scrollIntoView({ behavior: "smooth" });
-}
-
-
-
-    
+      // Rola a página suavemente até o formulário de contato
+      secaoContato.scrollIntoView({ behavior: "smooth" });
+    }
   </script>
 </body>
 </html>
