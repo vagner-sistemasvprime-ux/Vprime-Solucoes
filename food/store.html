@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Food Supplies - Produtos para Gastronomia & Delivery</title>
+    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1XQd9Cv5ut-yOHlXO09w07jJc4EH4mcCO">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --cor-fundo: #0F0F10;
+            --cor-card: #18181B;
+            --cor-laranja-principal: #FF5722;
+            --cor-laranja-hover: #F4511E;
+            --cor-amarelo-destaque: #FFC107;
+            --cor-texto-claro: #F4F4F5;
+            --cor-texto-mutado: #A1A1AA;
+            --fonte-titulo: 'Poppins', sans-serif;
+            --fonte-corpo: 'Montserrat', sans-serif;
+            --shadow-laranja: 0 4px 20px rgba(255, 87, 34, 0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto-claro);
+            font-family: var(--fonte-corpo);
+            line-height: 1.6;
+        }
+
+        a { text-decoration: none; color: inherit; transition: 0.3s ease; }
+
+        header {
+            background-color: #09090B;
+            border-bottom: 2px solid var(--cor-laranja-principal);
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        .container-header {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo-completo {
+            max-width: 160px;
+            height: auto;
+            display: block;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 0 10px rgba(255, 87, 34, 0.4));
+        }
+
+        header h1 {
+            font-family: var(--fonte-titulo);
+            color: var(--cor-texto-claro);
+            font-size: 1.1rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        header h1 span {
+            color: var(--cor-laranja-principal);
+        }
+
+        /* --- BARRA DE CONTROLE --- */
+        .barra-controle {
+            max-width: 1200px;
+            margin: 30px auto 20px auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn-menu-lateral {
+            background-color: var(--cor-card);
+            border: 1px solid var(--cor-laranja-principal);
+            color: var(--cor-texto-claro);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+
+        .btn-menu-lateral:hover {
+            background-color: var(--cor-laranja-principal);
+            color: #FFF;
+            box-shadow: var(--shadow-laranja);
+        }
+
+        .campo-pesquisa {
+            flex: 1;
+            max-width: 450px;
+            position: relative;
+        }
+
+        .campo-pesquisa input {
+            width: 100%;
+            background-color: var(--cor-card);
+            border: 1px solid #27272A;
+            border-radius: 8px;
+            padding: 12px 18px;
+            color: var(--cor-texto-claro);
+            font-family: var(--fonte-corpo);
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .campo-pesquisa input:focus {
+            border-color: var(--cor-laranja-principal);
+            box-shadow: 0 0 10px rgba(255, 87, 34, 0.3);
+        }
+
+        /* --- MENU LATERAL (GAVETA) --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -320px;
+            width: 300px;
+            height: 100%;
+            background-color: #121214;
+            border-right: 2px solid var(--cor-laranja-principal);
+            z-index: 1000;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.9);
+        }
+
+        .sidebar.ativa {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 22px;
+            border-bottom: 1px solid #27272A;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h3 {
+            font-family: var(--fonte-titulo);
+            color: var(--cor-laranja-principal);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .btn-fechar-sidebar {
+            background: none;
+            border: none;
+            color: var(--cor-texto-mutado);
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-fechar-sidebar:hover {
+            color: var(--cor-laranja-principal);
+        }
+
+        .sidebar-conteudo {
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-filtro-lateral {
+            background-color: transparent;
+            border: 1px solid #27272A;
+            color: var(--cor-texto-claro);
+            text-align: left;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .btn-filtro-lateral:hover, .btn-filtro-lateral.ativo {
+            background-color: var(--cor-laranja-principal);
+            border-color: var(--cor-laranja-principal);
+            color: #FFF;
+            padding-left: 22px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.75);
+            z-index: 999;
+            display: none;
+            backdrop-filter: blur(4px);
+        }
+
+        .overlay.ativo {
+            display: block;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 20px auto 50px auto;
+            padding: 0 20px;
+        }
+
+        .hero-text {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .hero-text h2 {
+            font-family: var(--fonte-titulo);
+            font-size: 2.2rem;
+            color: var(--cor-texto-claro);
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .hero-text h2 span {
+            color: var(--cor-laranja-principal);
+        }
+
+        .hero-text p {
+            color: var(--cor-texto-mutado);
+            font-size: 1.05rem;
+        }
+
+        .grid-produtos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .produto-card {
+            background-color: var(--cor-card);
+            border: 1px solid #27272A;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .produto-card:hover {
+            border-color: var(--cor-laranja-principal);
+            box-shadow: var(--shadow-laranja);
+            transform: translateY(-6px);
+        }
+
+        .tag-oferta {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background-color: var(--cor-laranja-principal);
+            color: #FFF;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            z-index: 2;
+            letter-spacing: 0.5px;
+        }
+
+        .produto-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            background-color: #09090B;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+
+        .produto-card h3 {
+            font-size: 1.05rem;
+            color: var(--cor-texto-claro);
+            margin-bottom: 12px;
+            min-height: 48px;
+            font-weight: 600;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .preco-de {
+            text-decoration: line-through;
+            color: var(--cor-texto-mutado);
+            font-size: 0.85rem;
+        }
+
+        .preco-por {
+            color: var(--cor-amarelo-destaque);
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+
+        .btn-afiliado {
+            display: block;
+            width: 100%;
+            background-color: var(--cor-laranja-principal);
+            color: #FFF;
+            padding: 12px 0;
+            border-radius: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: 0.3s;
+        }
+
+        .btn-afiliado:hover {
+            background-color: var(--cor-laranja-hover);
+            box-shadow: 0 4px 15px rgba(244, 81, 30, 0.4);
+        }
+
+        .spinner-container {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 0;
+            gap: 15px;
+        }
+
+        .spinner {
+            width: 45px;
+            height: 45px;
+            border: 4px solid rgba(255, 87, 34, 0.2);
+            border-top: 4px solid var(--cor-laranja-principal);
+            border-radius: 50%;
+            animation: girar 0.8s linear infinite;
+        }
+
+        @keyframes girar {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner-texto {
+            color: var(--cor-texto-mutado);
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        footer {
+            margin-top: 60px;
+            padding: 30px 20px;
+            border-top: 1px solid #27272A;
+            text-align: center;
+            color: var(--cor-texto-mutado);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .logo-completo { max-width: 130px; }
+            .hero-text h2 { font-size: 1.6rem; }
+            .hero-text p { font-size: 0.95rem; }
+            .barra-controle { flex-direction: column; align-items: stretch; }
+            .campo-pesquisa { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MENU LATERAL (GAVETA DE CATEGORIAS) -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Setores & Equipamentos</h3>
+            <button class="btn-fechar-sidebar" onclick="fecharMenu()">&times;</button>
+        </div>
+        <div class="sidebar-conteudo" id="sidebar-conteudo">
+            <button class="btn-filtro-lateral ativo" onclick="filtrarPorCategoria('todos', this)">🍽️ Todas as Ofertas</button>
+        </div>
+    </div>
+    
+    <div class="overlay" id="overlay" onclick="fecharMenu()"></div>
+
+    <header>
+        <div class="container-header">
+            <img src="https://lh3.googleusercontent.com/d/1XQd9Cv5ut-yOHlXO09w07jJc4EH4mcCO" alt="Prime Food Supplies" class="logo-completo">
+            <h1>Produtos e Equipamentos para <span>Gastronomia & Delivery</span></h1>
+        </div>
+    </header>
+
+    <!-- BARRA DE CONTROLE -->
+    <div class="barra-controle">
+        <button class="btn-menu-lateral" onclick="abrirMenu()">
+            ☰ Ver Categorias
+        </button>
+        <div class="campo-pesquisa">
+            <input type="text" id="input-pesquisa" placeholder="Buscar por chapa, forno, embalagem, fritadeira..." oninput="filtrarPesquisa()">
+        </div>
+    </div>
+
+    <main>
+        <div class="hero-text">
+            <h2>Otimize seu <span>Restaurante ou Delivery</span></h2>
+            <p>Seleção exclusiva de equipamentos e insumos recomendados pela nossa equipe especializada.</p>
+        </div>
+
+        <div class="grid-produtos" id="grid-produtos">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+                <span class="spinner-texto">Buscando as melhores ofertas...</span>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p><strong>Nota de Transparência:</strong> Os produtos listados são selecionados e recomendados por nossa equipe. Ao clicar em "Ver Preço Promocional", você será direcionado à loja parceira oficial.</p>
+        <p style="margin-top: 8px;">© Prime Food Supplies - Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        const urlPlanilha = 'https://script.google.com/macros/s/AKfycbwjpMD7giR1uOZUUpPjXcLCQh40Wim9p1oM-s_uzcGk6TcisdnuC0NYpVrBWXq9pyZU/exec'; 
+        let listaGlobalProdutos = [];
+        let categoriaAtual = 'todos';
+
+        function formatarMoeda(valor) {
+            if (!valor) return '';
+            let numero = parseFloat(String(valor).replace(/[^\d.,]/g, '').replace(',', '.'));
+            if (isNaN(numero)) return valor;
+            return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function abrirMenu() {
+            document.getElementById('sidebar').classList.add('ativa');
+            document.getElementById('overlay').classList.add('ativo');
+        }
+
+        function fecharMenu() {
+            document.getElementById('sidebar').classList.remove('ativa');
+            document.getElementById('overlay').classList.remove('ativo');
+        }
+
+        function carregarProdutos() {
+            const cacheSalvo = localStorage.getItem('cache_produtos_prime');
+            const tempoCache = localStorage.getItem('cache_tempo_prime');
+            const tempoExpiracao = 30 * 60 * 1000; 
+
+            if (cacheSalvo && tempoCache && (new Date().getTime() - tempoCache < tempoExpiracao)) {
+                listaGlobalProdutos = JSON.parse(cacheSalvo);
+                popularMenuCategorias(listaGlobalProdutos);
+                exibirProdutos(listaGlobalProdutos);
+                return;
+            }
+
+            fetch(urlPlanilha)
+                .then(response => response.json())
+                .then(produtos => {
+                    listaGlobalProdutos = produtos;
+                    localStorage.setItem('cache_produtos_prime', JSON.stringify(produtos));
+                    localStorage.setItem('cache_tempo_prime', new Date().getTime());
+
+                    popularMenuCategorias(produtos);
+                    exibirProdutos(produtos);
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    if (cacheSalvo) {
+                        listaGlobalProdutos = JSON.parse(cacheSalvo);
+                        popularMenuCategorias(listaGlobalProdutos);
+                        exibirProdutos(listaGlobalProdutos);
+                    } else {
+                        document.getElementById('grid-produtos').innerHTML = '<p style="text-align: center; color: #FF5722; grid-column: 1/-1;">Erro ao carregar as ofertas. Tente novamente mais tarde.</p>';
+                    }
+                });
+        }
+
+        function exibirProdutos(produtos) {
+            const grid = document.getElementById('grid-produtos');
+            grid.innerHTML = '';
+
+            if (produtos.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: var(--cor-texto-mutado); grid-column: 1/-1; padding: 40px 0;">Nenhum equipamento ou item encontrado.</p>';
+                return;
+            }
+
+            produtos.forEach(produto => {
+                const card = document.createElement('div');
+                card.className = 'produto-card';
+
+                const precoDeFormatado = formatarMoeda(produto.precoDe);
+                const precoPorFormatado = formatarMoeda(produto.precoPor);
+
+                card.innerHTML = `
+                    <span class="tag-oferta">Recomendado</span>
+                    <img src="${produto.imagem}" alt="${produto.titulo}">
+                    <h3>${produto.titulo}</h3>
+                    <div>
+                        <p class="preco-de">${precoDeFormatado}</p>
+                        <p class="preco-por">${precoPorFormatado}</p>
+                        <a href="${produto.link}" class="btn-afiliado" target="_blank" rel="noopener noreferrer">Ver Preço Promocional</a>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function popularMenuCategorias(produtos) {
+            const containerSidebar = document.getElementById('sidebar-conteudo');
+            containerSidebar.innerHTML = '<button class="btn-filtro-lateral ativo" onclick="filtrarPorCategoria(\'todos\', this)">🍽️ Todas as Ofertas</button>';
+            
+            const categorias = [...new Set(produtos.map(p => p.categoria).filter(Boolean))];
+
+            categorias.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-filtro-lateral';
+                btn.innerText = `📌 ${cat}`;
+                btn.onclick = () => filtrarPorCategoria(cat, btn);
+                containerSidebar.appendChild(btn);
+            });
+        }
+
+        function filtrarPorCategoria(categoria, elementoBotao) {
+            categoriaAtual = categoria;
+            document.querySelectorAll('.btn-filtro-lateral').forEach(b => b.classList.remove('ativo'));
+            if(elementoBotao) elementoBotao.classList.add('ativo');
+
+            fecharMenu();
+            aplicarFiltrosGlobais();
+        }
+
+        function filtrarPesquisa() {
+            aplicarFiltrosGlobais();
+        }
+
+        function aplicarFiltrosGlobais() {
+            const termo = document.getElementById('input-pesquisa').value.toLowerCase().trim();
+
+            let resultado = listaGlobalProdutos;
+
+            // Filtro por categoria
+            if (categoriaAtual !== 'todos') {
+                resultado = resultado.filter(p => p.categoria === categoriaAtual);
+            }
+
+            // Filtro por texto de pesquisa (título ou categoria)
+            if (termo !== '') {
+                resultado = resultado.filter(p => {
+                    const tituloMatch = p.titulo && p.titulo.toLowerCase().includes(termo);
+                    const categoriaMatch = p.categoria && p.categoria.toLowerCase().includes(termo);
+                    return tituloMatch || categoriaMatch;
+                });
+            }
+
+            exibirProdutos(resultado);
+        }
+
+        carregarProdutos();
+    </script>
+</body>
+</html>
