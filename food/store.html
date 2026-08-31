@@ -469,7 +469,7 @@
         function carregarProdutos() {
             const cacheSalvo = localStorage.getItem('cache_produtos_prime');
             const tempoCache = localStorage.getItem('cache_tempo_prime');
-            const tempoExpiracao = 30 * 60 * 1000; 
+            const tempoExpiracao = 5 * 60 * 1000; 
 
             if (cacheSalvo && tempoCache && (new Date().getTime() - tempoCache < tempoExpiracao)) {
                 listaGlobalProdutos = JSON.parse(cacheSalvo);
