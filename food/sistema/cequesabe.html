@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cê Que Sabe</title>
+  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1A8Lp4yRRPfSMFlLakMxi5x-Ih8Jurfl5">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%; /* Ajustei para 100% para não sobrar espaço */
+      width: 100%;
+      overflow: hidden; /* Evita barras de rolagem duplas */
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="sistemaIframe" src="" allow="clipboard-read; clipboard-write" title="Emanuel Burguer"></iframe>
+
+  <script>
+    (function() {
+      // 1. Sua URL atualizada do Google Apps Script
+      const urlBase = "https://script.google.com/macros/s/AKfycbxt6Q6_OLvX7vxs3tmMIRzMITJKWQYf1qy6vIC74N66DYVQqB8f07eYu8JXVm7buR-pNg/exec";
+
+      // 2. Pega os parâmetros da URL (ex: ?mesa=1)
+      const queryParams = window.location.search;
+
+      // 3. Monta a URL final (Base + parâmetros)
+      const urlFinal = urlBase + queryParams;
+
+      // 4. Carrega o sistema no Iframe
+      document.getElementById('sistemaIframe').src = urlFinal;
+    })();
+  </script>
+</body>
+</html>
