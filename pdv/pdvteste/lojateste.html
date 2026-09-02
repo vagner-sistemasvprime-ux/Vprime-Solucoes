@@ -8,7 +8,9 @@
   <!-- Configurações PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- Padrão moderno recomendado -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/869/869636.png">
   
@@ -328,24 +330,24 @@
 
   // Função auxiliar para fazer requisições POST ao Google Apps Script
   async function chamarGoogleScript(acao, dados = {}) {
-    try {
-      const response = await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ acao: acao, ...dados }),
-        redirect: "follow"
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Erro HTTP: ${response.status}`);
-      }
+  try {
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ acao: acao, ...dados }),
+      redirect: "follow"
+    });
 
-      return await response.json();
-    } catch (erro) {
-      console.error("Erro na comunicação:", erro);
-      return { sucesso: false, mensagem: "Erro de conexão com o servidor." };
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
     }
+
+    return await response.json();
+  } catch (erro) {
+    console.error("Erro na comunicação:", erro);
+    return { sucesso: false, mensagem: "Erro de conexão com o servidor." };
   }
+}
 
   // --- CARREGAMENTO DE CONFIGURAÇÕES DINÂMICAS ---
   async function carregarConfiguracoes() {
