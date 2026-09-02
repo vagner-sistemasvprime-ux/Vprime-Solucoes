@@ -328,26 +328,26 @@
     recursos: {}
   };
 
-  // Função auxiliar para fazer requisições POST ao Google Apps Script
+  // Função auxiliar para fazer requisições POST ao Google Apps Script (Tratamento CORS e erros)
   async function chamarGoogleScript(acao, dados = {}) {
-  try {
-    const response = await fetch(GOOGLE_SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ acao: acao, ...dados }),
-      redirect: "follow"
-    });
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" }, // text/plain evita requisições preflight (CORS)
+        body: JSON.stringify({ acao: acao, ...dados }),
+        redirect: "follow"
+      });
 
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (erro) {
+      console.error("Erro na comunicação:", erro);
+      return { sucesso: false, mensagem: "Erro de conexão com o servidor." };
     }
-
-    return await response.json();
-  } catch (erro) {
-    console.error("Erro na comunicação:", erro);
-    return { sucesso: false, mensagem: "Erro de conexão com o servidor." };
   }
-}
 
   // --- CARREGAMENTO DE CONFIGURAÇÕES DINÂMICAS ---
   async function carregarConfiguracoes() {
@@ -506,6 +506,9 @@
       return;
     }
 
+    // Chama o acionamento de tela cheia diretamente da interação do clique do usuário
+    entrarTelaCheia();
+
     mostrarProcessando("Autenticando...");
     const passHash = await gerarHash(pass);
 
@@ -524,7 +527,6 @@
         btnMenu.classList.add('d-none');
       }
 
-      entrarTelaCheia();
       manterFocoBusca();
     } else {
       errorDiv.innerText = res ? res.mensagem : "Erro na autenticação.";
@@ -542,7 +544,8 @@
     setTimeout(() => {
       const activeModal = document.querySelector('.modal.show');
       if (!activeModal) {
-        document.getElementById('search-input').focus();
+        const inputBusca = document.getElementById('search-input');
+        if (inputBusca) inputBusca.focus();
       }
     }, 150);
   }
@@ -848,7 +851,7 @@
   // --- INICIALIZAÇÃO DA PÁGINA ---
   document.addEventListener('DOMContentLoaded', () => {
     atualizarRelogio();
-    carregarConfiguracoes(); // Dispara o carregamento dinâmico das configurações da loja
+    carregarConfiguracoes();
   });
 
   // Registro do Service Worker para PWA
