@@ -496,43 +496,43 @@
   }
 
   async function efetuarLogin() {
-    const user = document.getElementById('login-user').value.trim();
-    const pass = document.getElementById('login-pass').value.trim();
-    const errorDiv = document.getElementById('login-error');
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const errorDiv = document.getElementById('login-error');
 
-    if (!user || !pass) {
-      errorDiv.innerText = "Informe o usuário e a senha.";
-      errorDiv.classList.remove('d-none');
-      return;
-    }
-
-    // Chama o acionamento de tela cheia diretamente da interação do clique do usuário
-    entrarTelaCheia();
-
-    mostrarProcessando("Autenticando...");
-    const passHash = await gerarHash(pass);
-
-    const res = await chamarGoogleScript('autenticarUsuario', { user, passHash });
-    esconderProcessando();
-
-    if (res && res.sucesso) {
-      usuarioLogado = res.usuario;
-      document.getElementById('login-screen').classList.add('d-none');
-      document.getElementById('user-display').innerText = res.usuario.nome;
-
-      const btnMenu = document.getElementById('btn-menu');
-      if (res.usuario.perfil === 'admin') {
-        btnMenu.classList.remove('d-none');
-      } else {
-        btnMenu.classList.add('d-none');
-      }
-
-      manterFocoBusca();
-    } else {
-      errorDiv.innerText = res ? res.mensagem : "Erro na autenticação.";
-      errorDiv.classList.remove('d-none');
-    }
+  if (!user || !pass) {
+    errorDiv.innerText = "Informe o usuário e a senha.";
+    errorDiv.classList.remove('d-none');
+    return;
   }
+
+  // REMOVA OU COMENTE A LINHA ABAIXO PARA NÃO ENTRAR EM TELA CHEIA
+  // entrarTelaCheia();
+
+  mostrarProcessando("Autenticando...");
+  const passHash = await gerarHash(pass);
+
+  const res = await chamarGoogleScript('autenticarUsuario', { user, passHash });
+  esconderProcessando();
+
+  if (res && res.sucesso) {
+    usuarioLogado = res.usuario;
+    document.getElementById('login-screen').classList.add('d-none');
+    document.getElementById('user-display').innerText = res.usuario.nome;
+
+    const btnMenu = document.getElementById('btn-menu');
+    if (res.usuario.perfil === 'admin') {
+      btnMenu.classList.remove('d-none');
+    } else {
+      btnMenu.classList.add('d-none');
+    }
+
+    manterFocoBusca();
+  } else {
+    errorDiv.innerText = res ? res.mensagem : "Erro na autenticação.";
+    errorDiv.classList.remove('d-none');
+  }
+}
 
   function logout() {
     usuarioLogado = null;
