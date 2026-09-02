@@ -540,16 +540,30 @@
     location.reload();
   }
 
-  function manterFocoBusca() {
-    setTimeout(() => {
-      const activeModal = document.querySelector('.modal.show');
-      if (!activeModal) {
-        const inputBusca = document.getElementById('search-input');
-        if (inputBusca) inputBusca.focus();
+ function manterFocoBusca() {
+  setTimeout(() => {
+    // Verifica se não há nenhum modal visível no momento
+    const activeModal = document.querySelector('.modal.show');
+    if (!activeModal) {
+      const inputBusca = document.getElementById('search-input');
+      if (inputBusca) {
+        inputBusca.focus();
+        inputBusca.select(); // Seleciona o texto atual se houver, para facilitar a digitação
       }
-    }, 150);
-  }
+    }
+  }, 200); // 200ms garante que a transição do modal terminou
+}
 
+    document.addEventListener('DOMContentLoaded', () => {
+  atualizarRelogio();
+  carregarConfiguracoes();
+
+  // DEVOLVER O FOCO SEMPRE QUE QUALQUER MODAL FOR FECHADO
+  document.addEventListener('hidden.bs.modal', () => {
+    manterFocoBusca();
+  });
+});
+    
   // --- EVENTOS DE TECLADO ---
   document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
