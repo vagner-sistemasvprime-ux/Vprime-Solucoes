@@ -831,52 +831,98 @@
     document.getElementById('pay-change').innerText = troco > 0 ? troco.toFixed(2).replace('.', ',') : '0,00';
   }
 
-  async function confirmarVenda() {
-    const total = carrinho.reduce((sum, item) => sum + item.subtotal, 0);
-    const formaPagamento = document.getElementById('pay-method').value;
+async function confirmarVenda() {
+  const total = carrinho.reduce((sum, item) => sum + item.subtotal, 0);
+  const formaPagamento = document.getElementById('pay-method').value;
 
-    const dadosVenda = {
-      operador: usuarioLogado ? usuarioLogado.nome : "Operador",
-      cliente: clienteSelecionado ? clienteSelecionado.nome : "Não Identificado",
-      formaPagamento: formaPagamento,
-      total: total,
-      itens: carrinho
-    };
+  const dadosVenda = {
+    operador: usuarioLogado ? usuarioLogado.nome : "Operador",
+    cliente: clienteSelecionado ? clienteSelecionado.nome : "Não Identificado",
+    formaPagamento: formaPagamento,
+    total: total,
+    itens: carrinho,
+    dataVenda: new Date().toISOString()
+  };
 
-    mostrarProcessando("Finalizando compra...");
+  mostrarProcessando("Finalizando compra...");
 
-    const res = await chamarGoogleScript('registrarVenda', { dadosVenda });
-    esconderProcessando();
+  // 1. TENTA ENVIAR ONLINE SE HOUVER CONEXÃO
+  if (navigator.onLine) {
+    try {
+      const res = await chamarGoogleScript('registrarVenda', { dadosVenda });
+      esconderProcessando();
 
-    if (res && res.sucesso) {
-      mostrarAviso(`Venda registrada com sucesso!\nCódigo: ${res.idVenda}`, "Sucesso", "success");
-      carrinho = [];
-      clienteSelecionado = null;
-      renderizarCarrinho();
-      const modalEl = document.getElementById('modalPagamento');
-      const bsModal = bootstrap.Modal.getInstance(modalEl);
-      if (bsModal) bsModal.hide();
-      limpaBackdrops();
-      manterFocoBusca();
-    } else {
-      mostrarAviso("Erro ao registrar venda: " + (res ? res.mensagem : "Erro desconhecido"), "Erro", "danger");
+      if (res && res.sucesso) {
+        mostrarAviso(`Venda registrada com sucesso!\nCódigo: ${res.idVenda}`, "Sucesso", "success");
+        finalizarFluxoVenda();
+      } else {
+        // Se o servidor do Google responder com erro, salva no IndexedDB por segurança
+        mostrarAviso("Erro ao registrar no servidor. Venda gravada offline.", "Aviso", "warning");
+        await salvarVendaPendente(dadosVenda);
+        finalizarFluxoVenda();
+      }
+    } catch (erro) {
+      // Se a conexão falhar no meio da requisição
+      esconderProcessando();
+      await salvarVendaPendente(dadosVenda);
+      mostrarAviso("Conexão instável. Venda gravada no armazenamento offline.", "Aviso", "warning");
+      finalizarFluxoVenda();
     }
+  } else {
+    // 2. MODO OFFLINE (Sem conexão com a internet)
+    await salvarVendaPendente(dadosVenda);
+    esconderProcessando();
+    mostrarAviso("Venda salva OFFLINE com sucesso!\nSerá sincronizada assim que a internet voltar.", "Modo Offline", "success");
+    finalizarFluxoVenda();
+  }
+}
+
+// Função auxiliar para resetar telas, fechar modais e devolver o foco ao campo de busca
+function finalizarFluxoVenda() {
+  carrinho = [];
+  clienteSelecionado = null;
+  renderizarCarrinho();
+
+  const modalEl = document.getElementById('modalPagamento');
+  if (modalEl) {
+    const bsModal = bootstrap.Modal.getInstance(modalEl);
+    if (bsModal) bsModal.hide();
   }
 
-  // --- INICIALIZAÇÃO DA PÁGINA ---
-  document.addEventListener('DOMContentLoaded', () => {
-    atualizarRelogio();
-    carregarConfiguracoes();
+  limpaBackdrops();
+  manterFocoBusca();
+}
+
+// --- INICIALIZAÇÃO DA PÁGINA E EVENTOS DE REDE ---
+document.addEventListener('DOMContentLoaded', () => {
+  atualizarRelogio();
+  carregarConfiguracoes();
+
+  // Garante o foco no campo de busca sempre que QUALQUER modal for fechado
+  document.addEventListener('hidden.bs.modal', () => {
+    manterFocoBusca();
   });
 
-  // Registro do Service Worker para PWA
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('Service Worker registrado com sucesso:', reg.scope))
-        .catch(err => console.error('Erro ao registrar Service Worker:', err));
-    });
+  // Tenta sincronizar pendências logo ao abrir a página caso já esteja online
+  if (navigator.onLine) {
+    sincronizarVendasPendentes();
   }
+});
+
+// Monitora o evento automático de retorno da internet
+window.addEventListener('online', async () => {
+  console.log("Conexão restabelecida. Iniciando sincronização...");
+  await sincronizarVendasPendentes();
+});
+
+// Registro do Service Worker para PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker registrado com sucesso:', reg.scope))
+      .catch(err => console.error('Erro ao registrar Service Worker:', err));
+  });
+}
 
     // Monitora quando a internet volta
 window.addEventListener('online', async () => {
