@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PDV - Material de Construção</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body, html { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; }
+    .fullscreen-wrapper { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+    
+    #login-screen { 
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); z-index: 10000; 
+    }
+    .login-card { width: 400px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+
+    .navbar-pdv { background-color: #0f172a; color: white; padding: 0.75rem 1.5rem; }
+    .clock-display { font-size: 1.25rem; font-weight: 700; color: #38bdf8; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 6px; }
+    
+    .pdv-content { flex: 1; display: flex; padding: 15px; gap: 15px; overflow: hidden; }
+    .pdv-left { flex: 0 0 320px; display: flex; flex-direction: column; justify-content: space-between; }
+    .pdv-right { flex: 1; display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
+
+    .logo-container { background: white; border-radius: 10px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; }
+    .total-card { background: #0f172a; color: #22c55e; border-radius: 10px; padding: 20px; text-align: right; }
+    .total-title { color: #94a3b8; font-size: 0.9rem; text-transform: uppercase; font-weight: bold; }
+    .total-amount { font-size: 3rem; font-weight: 800; line-height: 1; }
+
+    .cart-container { flex: 1; background: white; border-radius: 10px; border: 1px solid #cbd5e1; overflow-y: auto; position: relative; }
+    .cart-table { margin-bottom: 0; }
+    .cart-table th { background-color: #1e293b; color: white; padding: 12px 16px; font-size: 1.1rem; }
+    .cart-table td { padding: 14px 16px; font-size: 1.25rem; font-weight: 600; color: #334155; vertical-align: middle; }
+
+    .price-modal-val { font-size: 3.5rem; font-weight: 900; color: #2563eb; }
+    .price-modal-title { font-size: 1.8rem; font-weight: 700; color: #1e293b; }
+
+    .empty-cart-msg {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      text-align: center; color: #64748b;
+    }
+
+    .banner-orcamento {
+      background-color: #d97706; color: white; padding: 6px 15px;
+      font-weight: bold; font-size: 1.1rem; border-radius: 6px; text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="fullscreen-wrapper">
+
+  <!-- 1. TELA DE LOGIN -->
+  <div id="login-screen" class="d-flex justify-content-center align-items-center">
+    <div class="card login-card p-4 bg-white">
+      <div class="text-center mb-4">
+        <i class="bi bi-building-fill text-primary display-4"></i>
+        <h3 class="fw-bold text-dark mt-2">Acesso ao PDV</h3>
+        <p class="text-muted">Materiais de Construção</p>
+      </div>
+      <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Usuário</label>
+        <input type="text" id="login-user" class="form-control form-control-lg" placeholder="Digite seu usuário" autofocus>
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-semibold">Senha</label>
+        <input type="password" id="login-pass" class="form-control form-control-lg" placeholder="Digite sua senha" onkeypress="tratarEnterLogin(event)">
+      </div>
+      <button onclick="efetuarLogin()" class="btn btn-primary btn-lg w-100 fw-bold py-2">ENTRAR</button>
+    </div>
+  </div>
+
+  <!-- BANNER MODO ORÇAMENTO -->
+  <div id="banner-orcamento" class="banner-orcamento d-none">
+    <i class="bi bi-file-earmark-text-fill me-2"></i> MODO ORÇAMENTO ATIVO (Pressione F4 para voltar ao modo Venda)
+  </div>
+
+  <!-- 2. BARRA SUPERIOR -->
+  <nav class="navbar navbar-pdv">
+    <div class="container-fluid p-0 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <button id="btn-menu" class="btn btn-outline-light border-2 d-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuAdmin" title="Menu Administrativo">
+          <i class="bi bi-list fs-4"></i>
+        </button>
+        <span class="fs-4 fw-bold tracking-wide"><i class="bi bi-tools text-warning me-2"></i> ConstruMais PDV</span>
+      </div>
+
+      <div class="d-flex align-items-center gap-4">
+        <div class="clock-display"><i class="bi bi-clock me-2"></i><span id="live-clock">00:00:00</span></div>
+        <span class="fs-5 fw-medium"><i class="bi bi-person-circle text-info me-1"></i> <span id="user-display">Operador</span></span>
+        <button onclick="logout()" class="btn btn-outline-danger text-white border-0 fw-bold"><i class="bi bi-power fs-5 me-1"></i> Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 3. TELA PRINCIPAL -->
+  <div id="pdv-screen" class="pdv-content">
+    <div class="pdv-left">
+      <div class="logo-container shadow-sm">
+        <img src="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ" alt="Logo Loja" class="img-fluid rounded mb-2">
+        <h5 class="fw-bold text-secondary m-0">Materiais de Construção</h5>
+      </div>
+
+      <div class="total-card shadow-sm">
+        <div class="total-title" id="total-card-title">Total da Compra</div>
+        <div class="total-amount">R$ <span id="cart-total">0,00</span></div>
+      </div>
+    </div>
+
+    <div class="pdv-right">
+      <div class="input-group input-group-lg shadow-sm">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-barcode-scan text-muted fs-4"></i></span>
+        <input type="text" id="search-input" class="form-control border-start-0 fs-4" placeholder="Qtd * Código/Nome (Ex: 3*1001) e Pressione Enter..." onkeypress="tratarBusca(event)">
+      </div>
+
+      <div class="cart-container shadow-sm">
+        <div id="empty-cart-message" class="empty-cart-msg">
+          <i class="bi bi-cart-check display-1 text-muted opacity-50"></i>
+          <h3 class="fw-bold mt-2">PRÓXIMO CLIENTE</h3>
+          <p class="text-muted fs-5">Passe o leitor ou digite o código do produto para iniciar.</p>
+        </div>
+        <table class="table table-hover cart-table d-none" id="cart-table">
+          <thead>
+            <tr>
+              <th style="width: 15%;">Código</th>
+              <th style="width: 10%;">Qtd</th>
+              <th style="width: 40%;">Produto</th>
+              <th style="width: 17.5%; text-align: right;">Unitário</th>
+              <th style="width: 17.5%; text-align: right;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="cart-items"></tbody>
+        </table>
+      </div>
+
+      <div class="d-flex gap-3">
+        <button class="btn btn-warning btn-lg fs-4 fw-bold flex-grow-1 py-3 text-dark shadow-sm" onclick="abrirModalConsulta()"><i class="bi bi-tag-fill me-2"></i> Consultar Preço (F2)</button>
+        <button id="btn-finalizar" class="btn btn-success btn-lg fs-3 fw-bold flex-grow-2 py-3 shadow-sm" style="flex: 2;" onclick="acaoFinalizar()"><i class="bi bi-check-circle-fill me-2"></i> Finalizar Compra (F8)</button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- MENU LATERAL (ADMIN) -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="menuAdmin">
+  <div class="offcanvas-header bg-dark text-white">
+    <h5 class="offcanvas-title"><i class="bi bi-gear-fill me-2"></i> Painel Administrativo</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="list-group list-group-flush fs-5">
+      <a href="#" class="list-group-item list-group-item-action py-3"><i class="bi bi-box-seam me-3 text-primary"></i> Cadastro de Produtos</a>
+      <a href="#" class="list-group-item list-group-item-action py-3"><i class="bi bi-people me-3 text-primary"></i> Gerenciamento de Usuários</a>
+      <a href="#" class="list-group-item list-group-item-action py-3"><i class="bi bi-bar-chart-line me-3 text-primary"></i> Dashboards & Vendas</a>
+      <a href="#" class="list-group-item list-group-item-action py-3"><i class="bi bi-cash-stack me-3 text-primary"></i> Financeiro</a>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONSULTA DE PREÇO -->
+<div class="modal fade" id="modalConsulta" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content text-center p-4 shadow-lg border-0">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title w-100 text-uppercase fw-bold text-muted">Consulta de Preço</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body py-3">
+        <input type="text" id="consult-input" class="form-control form-control-lg text-center fs-3 mb-3 border-primary" placeholder="Passe o leitor ou digite o código/nome..." onkeypress="executarConsultaPreco(event)">
+        
+        <div id="consult-result-container" class="d-none">
+          <div class="mb-2"><span id="modal-product-code" class="badge bg-secondary fs-5">---</span></div>
+          <div id="modal-product-name" class="price-modal-title mb-2">---</div>
+          <div id="modal-product-price" class="price-modal-val mb-3">R$ 0,00</div>
+          <div class="alert alert-info fs-5 py-2 m-0" id="consult-instructions">
+            Pressione <strong>ENTER</strong> para adicionar ao carrinho ou <strong>ESC</strong> para fechar.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PERGUNTA IDENTIFICAÇÃO CLIENTE -->
+<div class="modal fade" id="modalPerguntaCliente" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg text-center p-4">
+      <div class="display-3 mb-2 text-primary"><i class="bi bi-person-lines-fill"></i></div>
+      <h4 class="fw-bold mb-2">Identificar Cliente?</h4>
+      <p class="fs-5 text-muted mb-4">Deseja vincular um cliente a esta operação?</p>
+      <div class="d-flex gap-3 justify-content-center">
+        <button type="button" class="btn btn-outline-secondary btn-lg fw-bold px-4" data-bs-dismiss="modal" onclick="manterFocoBusca()">Não</button>
+        <button type="button" class="btn btn-primary btn-lg fw-bold px-4" onclick="confirmarIdentificarCliente()">Sim</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONSULTA / CADASTRO DE CLIENTE -->
+<div class="modal fade" id="modalCliente" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg p-4">
+      <div class="modal-header border-0 pb-0">
+        <h4 class="modal-title fw-bold text-primary"><i class="bi bi-person-badge-fill me-2"></i> Identificação do Cliente</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body py-3">
+        <div class="input-group input-group-lg mb-3">
+          <input type="text" id="client-search-input" class="form-control" placeholder="Buscar por CPF/CNPJ ou Nome...">
+          <button class="btn btn-primary fw-bold" onclick="buscarCliente()"><i class="bi bi-search"></i> Buscar</button>
+        </div>
+        <div id="client-info-display" class="alert alert-success d-none fs-5">
+          <strong>Cliente Selecionado:</strong> <span id="client-selected-name">---</span>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary btn-lg fw-bold" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success btn-lg fw-bold" onclick="salvarClienteOperacao()">Confirmar Cliente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TELA DE PAGAMENTO -->
+<div class="modal fade" id="modalPagamento" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h4 class="modal-title fw-bold"><i class="bi bi-credit-card-fill me-2"></i> Finalizar Pagamento</h4>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="row g-4">
+          <div class="col-md-6 border-end">
+            <h5 class="text-muted fw-bold">RESUMO DA COMPRA</h5>
+            <div class="my-3">
+              <span class="fs-6 text-muted">Total a Pagar</span>
+              <h1 class="text-success fw-bold display-5 m-0">R$ <span id="payment-modal-total">0,00</span></h1>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">Forma de Pagamento</label>
+              <select class="form-select form-select-lg fs-5" id="pay-method">
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                <option value="Cartão de Débito">Cartão de Débito</option>
+                <option value="PIX">PIX</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-6 d-flex flex-column justify-content-between">
+            <div>
+              <h5 class="text-muted fw-bold">RECEBIMENTO</h5>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Valor Recebido (R$)</label>
+                <input type="number" id="pay-amount" class="form-control form-control-lg fs-4" placeholder="0.00" oninput="calcularTroco()">
+              </div>
+
+              <div class="alert alert-secondary p-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="fw-bold fs-5">Troco:</span>
+                  <span class="fw-bold fs-4 text-primary">R$ <span id="pay-change">0,00</span></span>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-success btn-lg w-100 fw-bold fs-4 py-3 mt-3" onclick="confirmarVenda()"><i class="bi bi-check2-circle me-2"></i> CONFIRMAR VENDA</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE MENSAGENS -->
+<div class="modal fade" id="modalAviso" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg text-center p-4">
+      <div id="aviso-icon" class="display-3 mb-2 text-warning"><i class="bi bi-exclamation-triangle-fill"></i></div>
+      <h4 id="aviso-titulo" class="fw-bold mb-2">Atenção</h4>
+      <p id="aviso-mensagem" class="fs-5 text-muted mb-4">Mensagem de aviso...</p>
+      <button type="button" class="btn btn-primary btn-lg fw-bold px-5" data-bs-dismiss="modal">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- INDICADOR DE PROCESSAMENTO -->
+<div class="modal fade" id="modalLoading" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content border-0 shadow-lg text-center p-4">
+      <div class="spinner-border text-primary my-3" style="width: 3rem; height: 3rem;" role="status"></div>
+      <h5 id="loading-message" class="fw-bold text-dark">Processando...</h5>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  // ATENÇÃO: Substitua pelo URL da sua Web App implantada no Apps Script
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0RLrifY77YiJNdS9qLyJu59P_y0QCxgzLjcrcs0k4HGm3r14FWcr-IDhLHrwI3m-T/exec";
+
+  let carrinho = [];
+  let usuarioLogado = null;
+  let produtoConsultadoAtual = null;
+  let clienteSelecionado = null;
+  let bsLoadingModal = null;
+  let modoOrcamento = false;
+
+  // Função auxiliar para fazer requisições POST ao Google Apps Script
+  async function chamarGoogleScript(acao, dados = {}) {
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ acao: acao, ...dados })
+      });
+      return await response.json();
+    } catch (erro) {
+      console.error("Erro na comunicação:", erro);
+      return { sucesso: false, mensagem: "Erro de conexão com o servidor." };
+    }
+  }
+
+  function atualizarRelogio() {
+    const agora = new Date();
+    const horas = String(agora.getHours()).padStart(2, '0');
+    const minutos = String(agora.getMinutes()).padStart(2, '0');
+    const segundos = String(agora.getSeconds()).padStart(2, '0');
+    document.getElementById('live-clock').innerText = `${horas}:${minutos}:${segundos}`;
+  }
+  setInterval(atualizarRelogio, 1000);
+  atualizarRelogio();
+
+  function limpaBackdrops() {
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('padding-right');
+    document.body.style.removeProperty('overflow');
+  }
+
+  function mostrarProcessando(mensagem = "Processando...") {
+    limpaBackdrops();
+    document.getElementById('loading-message').innerText = mensagem;
+    const modalEl = document.getElementById('modalLoading');
+    bsLoadingModal = new bootstrap.Modal(modalEl);
+    bsLoadingModal.show();
+  }
+
+  function esconderProcessando() {
+    if (bsLoadingModal) {
+      bsLoadingModal.hide();
+      bsLoadingModal = null;
+    }
+    limpaBackdrops();
+  }
+
+  function entrarTelaCheia() {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen().catch(() => {});
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    }
+  }
+
+  function sairTelaCheia() {
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  }
+
+  function mostrarAviso(mensagem, titulo = 'Atenção', tipo = 'warning') {
+    limpaBackdrops();
+    const iconEl = document.getElementById('aviso-icon');
+    document.getElementById('aviso-titulo').innerText = titulo;
+    document.getElementById('aviso-mensagem').innerText = mensagem;
+
+    if (tipo === 'success') {
+      iconEl.className = 'display-3 mb-2 text-success';
+      iconEl.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+    } else if (tipo === 'danger') {
+      iconEl.className = 'display-3 mb-2 text-danger';
+      iconEl.innerHTML = '<i class="bi bi-x-circle-fill"></i>';
+    } else {
+      iconEl.className = 'display-3 mb-2 text-warning';
+      iconEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i>';
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('modalAviso'));
+    modal.show();
+  }
+
+  async function gerarHash(texto) {
+    const msgBuffer = new TextEncoder().encode(texto);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function tratarEnterLogin(e) {
+    if (e.key === 'Enter') efetuarLogin();
+  }
+
+  async function efetuarLogin() {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
+    const errorDiv = document.getElementById('login-error');
+
+    if (!user || !pass) {
+      errorDiv.innerText = "Informe o usuário e a senha.";
+      errorDiv.classList.remove('d-none');
+      return;
+    }
+
+    mostrarProcessando("Autenticando...");
+    const passHash = await gerarHash(pass);
+
+    const res = await chamarGoogleScript('autenticarUsuario', { user, passHash });
+    esconderProcessando();
+
+    if (res && res.sucesso) {
+      usuarioLogado = res.usuario;
+      document.getElementById('login-screen').classList.add('d-none');
+      document.getElementById('user-display').innerText = res.usuario.nome;
+
+      const btnMenu = document.getElementById('btn-menu');
+      if (res.usuario.perfil === 'admin') {
+        btnMenu.classList.remove('d-none');
+      } else {
+        btnMenu.classList.add('d-none');
+      }
+
+      entrarTelaCheia();
+      manterFocoBusca();
+    } else {
+      errorDiv.innerText = res ? res.mensagem : "Erro na autenticação.";
+      errorDiv.classList.remove('d-none');
+    }
+  }
+
+  function logout() {
+    usuarioLogado = null;
+    sairTelaCheia();
+    location.reload();
+  }
+
+  function manterFocoBusca() {
+    setTimeout(() => {
+      const activeModal = document.querySelector('.modal.show');
+      if (!activeModal) {
+        document.getElementById('search-input').focus();
+      }
+    }, 150);
+  }
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      const modais = document.querySelectorAll('.modal.show');
+      modais.forEach(modalEl => {
+        if (modalEl.id !== 'modalLoading') {
+          const modalInstance = bootstrap.Modal.getInstance(modalEl);
+          if (modalInstance) modalInstance.hide();
+        }
+      });
+      limpaBackdrops();
+      manterFocoBusca();
+    }
+
+    if (event.key === 'F2') {
+      event.preventDefault();
+      abrirModalConsulta();
+    }
+
+    if (event.key === 'F3') {
+      event.preventDefault();
+      ativarModoOrcamento();
+    }
+
+    if (event.key === 'F4') {
+      event.preventDefault();
+      ativarModoVenda();
+    }
+
+    if (event.key === 'F8') {
+      event.preventDefault();
+      acaoFinalizar();
+    }
+  });
+
+  function ativarModoOrcamento() {
+    modoOrcamento = true;
+    document.getElementById('banner-orcamento').classList.remove('d-none');
+    document.getElementById('total-card-title').innerText = 'Total do Orçamento';
+    const btn = document.getElementById('btn-finalizar');
+    btn.className = 'btn btn-warning btn-lg fs-3 fw-bold flex-grow-2 py-3 shadow-sm text-dark';
+    btn.innerHTML = '<i class="bi bi-printer-fill me-2"></i> Imprimir Orçamento (F8)';
+  }
+
+  function ativarModoVenda() {
+    modoOrcamento = false;
+    document.getElementById('banner-orcamento').classList.add('d-none');
+    document.getElementById('total-card-title').innerText = 'Total da Compra';
+    const btn = document.getElementById('btn-finalizar');
+    btn.className = 'btn btn-success btn-lg fs-3 fw-bold flex-grow-2 py-3 shadow-sm';
+    btn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i> Finalizar Compra (F8)';
+  }
+
+  function acaoFinalizar() {
+    if (modoOrcamento) {
+      imprimirOrcamento();
+    } else {
+      abrirModalPagamento();
+    }
+  }
+
+  function imprimirOrcamento() {
+    if (carrinho.length === 0) {
+      mostrarAviso("O carrinho está vazio para gerar orçamento!", "Atenção", "warning");
+      return;
+    }
+    mostrarAviso("Orçamento gerado e enviado para impressão!", "Orçamento", "success");
+    carrinho = [];
+    clienteSelecionado = null;
+    renderizarCarrinho();
+  }
+
+  async function tratarBusca(event) {
+    if (event.key === 'Enter') {
+      const termo = document.getElementById('search-input').value;
+      if (!termo) return;
+
+      mostrarProcessando("Buscando produto...");
+
+      const produto = await chamarGoogleScript('buscarProduto', { termo });
+      esconderProcessando();
+
+      if (produto && produto.codigo) {
+        const ePrimeiroProduto = carrinho.length === 0;
+        adicionarAoCarrinho(produto, produto.qtdAdicionada || 1);
+        document.getElementById('search-input').value = '';
+
+        if (ePrimeiroProduto && !clienteSelecionado) {
+          const modalPerg = new bootstrap.Modal(document.getElementById('modalPerguntaCliente'));
+          modalPerg.show();
+        }
+      } else {
+        mostrarAviso('Produto não encontrado!', 'Busca de Produto', 'danger');
+      }
+      manterFocoBusca();
+    }
+  }
+
+  function confirmarIdentificarCliente() {
+    const modalPerg = bootstrap.Modal.getInstance(document.getElementById('modalPerguntaCliente'));
+    if (modalPerg) modalPerg.hide();
+    
+    limpaBackdrops();
+    const modalCli = new bootstrap.Modal(document.getElementById('modalCliente'));
+    modalCli.show();
+  }
+
+  async function buscarCliente() {
+    const termo = document.getElementById('client-search-input').value.trim();
+    if (!termo) return;
+
+    mostrarProcessando("Buscando cliente...");
+    
+    const cliente = await chamarGoogleScript('buscarCliente', { termo });
+    esconderProcessando();
+
+    if (cliente && cliente.nome) {
+      clienteSelecionado = cliente;
+      document.getElementById('client-selected-name').innerText = `${cliente.nome} (${cliente.documento})`;
+      document.getElementById('client-info-display').classList.remove('d-none');
+    } else {
+      mostrarAviso('Cliente não encontrado!', 'Busca', 'danger');
+    }
+  }
+
+  function salvarClienteOperacao() {
+    const modalCli = bootstrap.Modal.getInstance(document.getElementById('modalCliente'));
+    if (modalCli) modalCli.hide();
+    limpaBackdrops();
+    manterFocoBusca();
+  }
+
+  function adicionarAoCarrinho(produto, quantidade = 1) {
+    const itemExistente = carrinho.find(item => String(item.codigo) === String(produto.codigo));
+    if (itemExistente) {
+      itemExistente.qtd += quantidade;
+      itemExistente.subtotal = itemExistente.qtd * itemExistente.preco;
+    } else {
+      carrinho.push({
+        codigo: produto.codigo,
+        nome: produto.nome,
+        preco: produto.preco,
+        qtd: quantidade,
+        subtotal: produto.preco * quantidade
+      });
+    }
+    renderizarCarrinho();
+  }
+
+  function renderizarCarrinho() {
+    const tbody = document.getElementById('cart-items');
+    const tableEl = document.getElementById('cart-table');
+    const emptyMsgEl = document.getElementById('empty-cart-message');
+
+    tbody.innerHTML = '';
+    let total = 0;
+
+    if (carrinho.length === 0) {
+      tableEl.classList.add('d-none');
+      emptyMsgEl.classList.remove('d-none');
+    } else {
+      tableEl.classList.remove('d-none');
+      emptyMsgEl.classList.add('d-none');
+
+      carrinho.forEach(item => {
+        total += item.subtotal;
+        tbody.innerHTML += `
+          <tr>
+            <td><span class="badge bg-secondary fs-6">${item.codigo}</span></td>
+            <td><span class="badge bg-primary fs-6">${item.qtd}x</span></td>
+            <td>${item.nome}</td>
+            <td style="text-align: right;">R$ ${item.preco.toFixed(2).replace('.', ',')}</td>
+            <td style="text-align: right;">R$ ${item.subtotal.toFixed(2).replace('.', ',')}</td>
+          </tr>
+        `;
+      });
+    }
+
+    document.getElementById('cart-total').innerText = total.toFixed(2).replace('.', ',');
+    document.getElementById('payment-modal-total').innerText = total.toFixed(2).replace('.', ',');
+  }
+
+  function abrirModalConsulta() {
+    limpaBackdrops();
+    produtoConsultadoAtual = null;
+    document.getElementById('consult-input').value = '';
+    document.getElementById('consult-result-container').classList.add('d-none');
+    
+    const modalEl = document.getElementById('modalConsulta');
+    const bsModal = new bootstrap.Modal(modalEl);
+    bsModal.show();
+
+    modalEl.addEventListener('shown.bs.modal', () => {
+      document.getElementById('consult-input').focus();
+    }, { once: true });
+  }
+
+  async function executarConsultaPreco(event) {
+    if (event.key === 'Enter') {
+      const termo = document.getElementById('consult-input').value.trim();
+
+      if (produtoConsultadoAtual) {
+        const ePrimeiroProduto = carrinho.length === 0;
+        adicionarAoCarrinho(produtoConsultadoAtual, produtoConsultadoAtual.qtdAdicionada || 1);
+
+        const modalEl = document.getElementById('modalConsulta');
+        const bsModal = bootstrap.Modal.getInstance(modalEl);
+        if (bsModal) bsModal.hide();
+        limpaBackdrops();
+
+        if (ePrimeiroProduto && !clienteSelecionado) {
+          const modalPerg = new bootstrap.Modal(document.getElementById('modalPerguntaCliente'));
+          modalPerg.show();
+        } else {
+          manterFocoBusca();
+        }
+        produtoConsultadoAtual = null;
+        return;
+      }
+
+      if (!termo) return;
+
+      mostrarProcessando("Consultando...");
+
+      const produto = await chamarGoogleScript('buscarProduto', { termo });
+      esconderProcessando();
+
+      const resultContainer = document.getElementById('consult-result-container');
+      resultContainer.classList.remove('d-none');
+
+      if (produto && produto.codigo) {
+        produtoConsultadoAtual = produto;
+        document.getElementById('modal-product-code').innerText = `CÓD: ${produto.codigo}`;
+        document.getElementById('modal-product-name').innerText = produto.nome;
+        document.getElementById('modal-product-price').innerText = `R$ ${produto.preco.toFixed(2).replace('.', ',')}`;
+        document.getElementById('consult-input').value = '';
+      } else {
+        produtoConsultadoAtual = null;
+        document.getElementById('modal-product-code').innerText = "---";
+        document.getElementById('modal-product-name').innerText = "Produto Não Encontrado";
+        document.getElementById('modal-product-price').innerText = "R$ 0,00";
+      }
+    }
+  }
+
+  function abrirModalPagamento() {
+    if (carrinho.length === 0) {
+      mostrarAviso("O carrinho está vazio para finalizar a compra!", "Atenção", "warning");
+      return;
+    }
+    limpaBackdrops();
+    const modalEl = document.getElementById('modalPagamento');
+    const bsModal = new bootstrap.Modal(modalEl);
+    document.getElementById('pay-amount').value = '';
+    document.getElementById('pay-change').innerText = '0,00';
+    bsModal.show();
+  }
+
+  function calcularTroco() {
+    const total = carrinho.reduce((sum, item) => sum + item.subtotal, 0);
+    const pago = parseFloat(document.getElementById('pay-amount').value) || 0;
+    const troco = pago - total;
+    document.getElementById('pay-change').innerText = troco > 0 ? troco.toFixed(2).replace('.', ',') : '0,00';
+  }
+
+  async function confirmarVenda() {
+    const total = carrinho.reduce((sum, item) => sum + item.subtotal, 0);
+    const formaPagamento = document.getElementById('pay-method').value;
+
+    const dadosVenda = {
+      operador: usuarioLogado ? usuarioLogado.nome : "Operador",
+      cliente: clienteSelecionado ? clienteSelecionado.nome : "Não Identificado",
+      formaPagamento: formaPagamento,
+      total: total,
+      itens: carrinho
+    };
+
+    mostrarProcessando("Finalizando compra...");
+
+    const res = await chamarGoogleScript('registrarVenda', { dadosVenda });
+    esconderProcessando();
+
+    if (res && res.sucesso) {
+      mostrarAviso(`Venda registrada com sucesso!\nCódigo: ${res.idVenda}`, "Sucesso", "success");
+      carrinho = [];
+      clienteSelecionado = null;
+      renderizarCarrinho();
+      const modalEl = document.getElementById('modalPagamento');
+      const bsModal = bootstrap.Modal.getInstance(modalEl);
+      if (bsModal) bsModal.hide();
+      limpaBackdrops();
+      manterFocoBusca();
+    } else {
+      mostrarAviso("Erro ao registrar venda: " + (res ? res.mensagem : "Erro desconhecido"), "Erro", "danger");
+    }
+  }
+</script>
+
+</body>
+</html>
