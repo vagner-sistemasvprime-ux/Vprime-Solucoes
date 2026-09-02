@@ -67,8 +67,8 @@ self.addEventListener('fetch', (event) => {
           }
           // Se for uma navegação de página, tenta entregar o HTML principal
           if (event.request.mode === 'navigate') {
-            return caches.match('./lojateste.html');
-          }
+  return caches.match('./index.html');
+}
         });
       })
   );
