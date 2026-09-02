@@ -627,15 +627,16 @@
   }
 
   function imprimirOrcamento() {
-    if (carrinho.length === 0) {
-      mostrarAviso("O carrinho está vazio para gerar orçamento!", "Atenção", "warning");
-      return;
-    }
-    mostrarAviso("Orçamento gerado e enviado para impressão!", "Orçamento", "success");
-    carrinho = [];
-    clienteSelecionado = null;
-    renderizarCarrinho();
+  if (carrinho.length === 0) {
+    mostrarAviso("O carrinho está vazio para gerar orçamento!", "Atenção", "warning");
+    return;
   }
+  mostrarAviso("Orçamento gerado e enviado para impressão!", "Orçamento", "success");
+  carrinho = [];
+  clienteSelecionado = null;
+  renderizarCarrinho();
+  manterFocoBusca(); // <-- Devolve o foco aqui
+}
 
   async function tratarBusca(event) {
     if (event.key === 'Enter') {
