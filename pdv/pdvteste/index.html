@@ -877,6 +877,31 @@
         .catch(err => console.error('Erro ao registrar Service Worker:', err));
     });
   }
+
+    // Monitora quando a internet volta
+window.addEventListener('online', async () => {
+  console.log("Conexão restabelecida. Iniciando sincronização...");
+  await sincronizarVendasPendentes();
+});
+
+async function sincronizarVendasPendentes() {
+  const vendas = await obterVendasPendentes();
+  if (vendas.length === 0) return;
+
+  mostrarProcessando(`Sincronizando ${vendas.length} venda(s) realizada(s) offline...`);
+
+  try {
+    const res = await chamarGoogleScript('sincronizarLoteVendas', { vendas });
+    if (res && res.sucesso) {
+      await limparVendasPendentes();
+      mostrarAviso(`${vendas.length} venda(s) offline sincronizada(s) com sucesso!`, "Sincronização", "success");
+    }
+  } catch (erro) {
+    console.error("Erro ao sincronizar vendas:", erro);
+  } finally {
+    esconderProcessando();
+  }
+}
 </script>
 
 </body>
