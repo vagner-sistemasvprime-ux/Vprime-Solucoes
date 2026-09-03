@@ -1166,10 +1166,20 @@ async function confirmarVenda() {
   }
 }
 
-   function removerItemCarrinho(index) {
+  function removerItemCarrinho(index) {
   if (index >= 0 && index < carrinho.length) {
     carrinho.splice(index, 1);
     renderizarCarrinho();
+
+    // Se o carrinho ficar vazio ao remover o item, reseta o cliente para Consumidor Final
+    if (carrinho.length === 0) {
+      window.clienteSelecionado = null;
+      const elClienteDisplay = document.getElementById('cliente-display-name');
+      if (elClienteDisplay) {
+        elClienteDisplay.innerText = "Consumidor Final";
+      }
+    }
+
     manterFocoBusca();
   }
 }
@@ -1177,8 +1187,14 @@ async function confirmarVenda() {
 // Função auxiliar para resetar telas, fechar modais e devolver o foco ao campo de busca
 function finalizarFluxoVenda() {
   carrinho = [];
-  clienteSelecionado = null;
+  window.clienteSelecionado = null;
   renderizarCarrinho();
+
+  // Reseta obrigatoriamente a label visual do cliente na tela
+  const elClienteDisplay = document.getElementById('cliente-display-name');
+  if (elClienteDisplay) {
+    elClienteDisplay.innerText = "Consumidor Final";
+  }
 
   const modalEl = document.getElementById('modalPagamento');
   if (modalEl) {
