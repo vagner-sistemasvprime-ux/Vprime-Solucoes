@@ -49,15 +49,16 @@ async function salvarProdutosLocal(produtos) {
     const tx = db.transaction('produtos', 'readwrite');
     const store = tx.objectStore('produtos');
     
-    store.clear(); // Limpa o catálogo antigo
+    store.clear();
 
     produtos.forEach(prod => {
-      // Normaliza propriedades (codigo, Codigo, etc) e garante chave como String
-      const codLimpo = String(prod.codigo || prod.Codigo || prod.id || '').trim();
+      const codigoOriginal = prod.codigo || prod.Codigo || prod.id || '';
+      const codLimpo = String(codigoOriginal).trim(); // Força para String
+
       if (codLimpo) {
         store.put({
           ...prod,
-          codigo: codLimpo,
+          codigo: codLimpo, // Salva estritamente como String
           nome: String(prod.nome || prod.Nome || '').trim(),
           preco: Number(prod.preco || prod.Preco || 0)
         });
@@ -116,54 +117,42 @@ async function buscarProdutoLocal(termo) {
       }
     }
 
-    // 1. Tenta buscar direto pela chave primária (Código exato)
-    const reqCodigo = store.get(termoLimpo);
+    // Usa um cursor para verificar tanto a igualdade exata do código (convertido para string) quanto a busca por nome
+    const requestCursor = store.openCursor();
+    let encontrado = null;
 
-    reqCodigo.onsuccess = () => {
-      if (reqCodigo.result) {
-        console.timeEnd("⏱️ Tempo Total Busca Local");
-        resolve({ ...reqCodigo.result, qtdAdicionada: qtd });
-      } else {
-        // 2. Se não achar por código exato, usa o índice 'nome' para busca otimizada
-        if (!store.indexNames.contains('nome')) {
+    requestCursor.onsuccess = (event) => {
+      const cursor = event.target.result;
+      if (cursor) {
+        const produto = cursor.value;
+        const codigoProd = String(produto.codigo || '').trim().toLowerCase();
+        const nomeProd = String(produto.nome || '').trim().toLowerCase();
+
+        // 1. Prioridade máxima: Código exato
+        if (codigoProd === termoLimpo) {
+          encontrado = produto;
           console.timeEnd("⏱️ Tempo Total Busca Local");
-          return resolve(null);
+          resolve({ ...encontrado, qtdAdicionada: qtd });
+          return;
         }
 
-        const indexNome = store.index('nome');
-        const requestCursor = indexNome.openCursor();
-        let encontrado = null;
+        // 2. Segunda prioridade: Nome contém o termo digitado
+        if (!encontrado && nomeProd.includes(termoLimpo)) {
+          encontrado = produto;
+        }
 
-        requestCursor.onsuccess = (event) => {
-          const cursor = event.target.result;
-          if (cursor) {
-            const produto = cursor.value;
-            const nomeProd = String(produto.nome || '').toLowerCase();
-            const codigoProd = String(produto.codigo || '').toLowerCase();
-
-            // Verifica se o termo bate parcialmente com o nome ou com o código
-            if (nomeProd.includes(termoLimpo) || codigoProd.includes(termoLimpo)) {
-              encontrado = produto;
-              // Para na primeira ocorrência relevante
-              console.timeEnd("⏱️ Tempo Total Busca Local");
-              resolve({ ...encontrado, qtdAdicionada: qtd });
-              return;
-            }
-            cursor.continue();
-          } else {
-            console.timeEnd("⏱️ Tempo Total Busca Local");
-            resolve(null); // Terminou o cursor e não achou
-          }
-        };
-
-        requestCursor.onerror = () => {
-          console.timeEnd("⏱️ Tempo Total Busca Local");
+        cursor.continue();
+      } else {
+        console.timeEnd("⏱️ Tempo Total Busca Local");
+        if (encontrado) {
+          resolve({ ...encontrado, qtdAdicionada: qtd });
+        } else {
           resolve(null);
-        };
+        }
       }
     };
 
-    reqCodigo.onerror = () => {
+    requestCursor.onerror = () => {
       console.timeEnd("⏱️ Tempo Total Busca Local");
       resolve(null);
     };
