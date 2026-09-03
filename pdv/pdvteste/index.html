@@ -262,9 +262,9 @@
       <h4 class="fw-bold mb-2">Identificar Cliente?</h4>
       <p class="fs-5 text-muted mb-4">Deseja vincular um cliente a esta operação?</p>
       <div class="d-flex gap-3 justify-content-center">
-  <button type="button" class="btn btn-outline-secondary btn-lg fw-bold px-4" onclick="recusarIdentificarCliente()">Não</button>
-  <button type="button" class="btn btn-primary btn-lg fw-bold px-4" onclick="confirmarIdentificarCliente()">Sim</button>
-</div>
+        <button type="button" class="btn btn-outline-secondary btn-lg fw-bold px-4" onclick="recusarIdentificarCliente()">Não</button>
+        <button type="button" class="btn btn-primary btn-lg fw-bold px-4" onclick="confirmarIdentificarCliente()">Sim</button>
+      </div>
     </div>
   </div>
 </div>
@@ -936,33 +936,7 @@ function tratarEnterLogin(event) {
     }
   }
 
-   // Configura a navegação por setas e Enter no modal de pergunta do cliente
-document.getElementById('modalPerguntaCliente').addEventListener('shown.bs.modal', function () {
-  const btnNao = document.querySelector('#modalPerguntaCliente .btn-outline-secondary');
-  const btnSim = document.querySelector('#modalPerguntaCliente .btn-primary');
   
-  // Foca no botão "Sim" por padrão ao abrir o modal
-  btnSim.focus();
-
-  // Remove ouvintes antigos para evitar duplicação e adiciona o novo
-  const handleKeydown = function(e) {
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-      e.preventDefault();
-      if (document.activeElement === btnSim) {
-        btnNao.focus();
-      } else {
-        btnSim.focus();
-      }
-    }
-  };
-
-  this.addEventListener('keydown', handleKeydown);
-
-  // Limpa o evento quando o modal for fechado
-  this.addEventListener('hidden.bs.modal', function () {
-    this.removeEventListener('keydown', handleKeydown);
-  }, { once: true });
-});
 function alternarModoOrcamentoVenda() {
   if (modoOrcamento) {
     ativarModoVenda();
@@ -1094,13 +1068,37 @@ function atualizarDisplayCliente(nomeCliente, documentoCliente) {
   }
 }
    
-// Instância global para gerenciar o modal de pergunta com segurança
+
+
+async function buscarCliente() {
+  const termo = document.getElementById('client-search-input').value.trim();
+  if (!termo) return;
+
+  // Busca direta no banco local (ultra rápido)
+  const cliente = await buscarClienteLocal(termo);
+
+  if (cliente && cliente.nome) {
+    clienteSelecionado = cliente;
+    
+    // Atualiza o card dentro do modal
+    document.getElementById('client-selected-name').innerText = `${cliente.nome} (${cliente.documento})`;
+    document.getElementById('client-info-display').classList.remove('d-none');
+    
+    // ATUALIZA O DISPLAY NA TELA PRINCIPAL IMEDIATAMENTE
+    atualizarDisplayCliente(cliente.nome, cliente.documento);
+    
+  } else {
+    mostrarAviso('Cliente não encontrado localmente!', 'Busca', 'danger');
+  }
+}
+
+   // Instância global única para gerenciar o modal de pergunta com segurança
 let modalPerguntaClienteObj = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('modalPerguntaCliente');
   if (el) {
-    modalPerguntaClienteObj = new bootstrap.Modal(el);
+    modalPerguntaClienteObj = new bootstrap.Modal(el, { backdrop: 'static' });
   }
 });
 
@@ -1129,30 +1127,26 @@ document.getElementById('modalPerguntaCliente')?.addEventListener('shown.bs.moda
   }, { once: true });
 });
 
-   function recusarIdentificarCliente() {
+// Ação ao clicar em "NÃO"
+function recusarIdentificarCliente() {
   if (modalPerguntaClienteObj) {
     modalPerguntaClienteObj.hide();
   }
   
-  // Limpeza de segurança para garantir que nenhum overlay escuro fique preso na tela
+  // Limpeza imediata de resíduos e devolução do foco para a busca
   setTimeout(() => {
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
+    limpaBackdrops();
     manterFocoBusca();
-  }, 200);
+  }, 150);
 }
 
+// Ação ao clicar em "SIM"
 function confirmarIdentificarCliente() {
-  const modalPergEl = document.getElementById('modalPerguntaCliente');
-  
-  // Fecha o modal atual de forma segura usando a instância
   if (modalPerguntaClienteObj) {
     modalPerguntaClienteObj.hide();
   }
 
-  // Limpa os campos de cliente
+  // Limpa os campos de cliente preventivamente
   const inputBuscaCli = document.getElementById('input-busca-cliente');
   if (inputBuscaCli) inputBuscaCli.value = '';
 
@@ -1168,17 +1162,13 @@ function confirmarIdentificarCliente() {
   const clientSelectedName = document.getElementById('client-selected-name');
   if (clientSelectedName) clientSelectedName.innerText = '';
 
-  // Aguarda a transição terminar antes de abrir o próximo modal e limpar resíduos de backdrop
+  // Aguarda a transição de fechamento para abrir o modal de cliente de forma limpa
   setTimeout(() => {
-    // Remove qualquer resíduo de backdrop travado no DOM
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
+    limpaBackdrops();
 
     const modalCliEl = document.getElementById('modalCliente');
     if (modalCliEl) {
-      const modalCli = new bootstrap.Modal(modalCliEl);
+      const modalCli = new bootstrap.Modal(modalCliEl, { backdrop: 'static' });
       modalCli.show();
 
       modalCliEl.addEventListener('shown.bs.modal', function () {
@@ -1189,28 +1179,7 @@ function confirmarIdentificarCliente() {
         }
       }, { once: true });
     }
-  }, 200); // 200ms é o tempo exato da animação de fade do Bootstrap
-}
-async function buscarCliente() {
-  const termo = document.getElementById('client-search-input').value.trim();
-  if (!termo) return;
-
-  // Busca direta no banco local (ultra rápido)
-  const cliente = await buscarClienteLocal(termo);
-
-  if (cliente && cliente.nome) {
-    clienteSelecionado = cliente;
-    
-    // Atualiza o card dentro do modal
-    document.getElementById('client-selected-name').innerText = `${cliente.nome} (${cliente.documento})`;
-    document.getElementById('client-info-display').classList.remove('d-none');
-    
-    // ATUALIZA O DISPLAY NA TELA PRINCIPAL IMEDIATAMENTE
-    atualizarDisplayCliente(cliente.nome, cliente.documento);
-    
-  } else {
-    mostrarAviso('Cliente não encontrado localmente!', 'Busca', 'danger');
-  }
+  }, 200);
 }
 
 function salvarClienteOperacao() {
