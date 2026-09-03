@@ -668,24 +668,37 @@ function aplicarConfiguracoesGerais() {
 
 async function tratarBusca(event) {
   if (event.key === 'Enter') {
-    const termo = document.getElementById('search-input').value;
+    event.preventDefault(); // Evita comportamento padrão de submissão de formulário se houver
+    
+    const inputEl = document.getElementById('search-input');
+    if (!inputEl) return;
+
+    // Remove espaços e garante quebra de linhas acidentais do leitor de código de barras
+    const termo = inputEl.value.trim();
     if (!termo) return;
+
+    console.log(`[BUSCA PDV] Termo capturado no input: "${termo}"`);
 
     // Busca direta no banco local (ultra rápido)
     const produto = await buscarProdutoLocal(termo);
 
     if (produto && produto.codigo) {
+      console.log("[BUSCA PDV] Produto encontrado com sucesso:", produto);
       const ePrimeiroProduto = carrinho.length === 0;
+      
       adicionarAoCarrinho(produto, produto.qtdAdicionada || 1);
-      document.getElementById('search-input').value = '';
+      inputEl.value = ''; // Limpa o campo para a próxima venda
 
       if (ePrimeiroProduto && !clienteSelecionado) {
         const modalPerg = new bootstrap.Modal(document.getElementById('modalPerguntaCliente'));
         modalPerg.show();
       }
     } else {
+      console.warn(`[BUSCA PDV] ❌ Nenhum produto correspondente a "${termo}" foi localizado no IndexedDB.`);
       mostrarAviso('Produto não encontrado localmente!', 'Busca de Produto', 'danger');
+      inputEl.select(); // Seleciona o texto para facilitar a correção pelo operador
     }
+    
     manterFocoBusca();
   }
 }
