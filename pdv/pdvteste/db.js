@@ -104,7 +104,9 @@ async function buscarProdutoLocal(termo) {
     const tx = db.transaction('produtos', 'readonly');
     const store = tx.objectStore('produtos');
 
-    let termoLimpo = String(termo).trim().toLowerCase();
+    let termoLimpo = String(termo).trim().toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove acentos do termo digitado
+    
     let qtd = 1;
 
     // Trata multiplicador no caixa (Ex: 3*1001)
@@ -117,7 +119,6 @@ async function buscarProdutoLocal(termo) {
       }
     }
 
-    // Usa um cursor para verificar tanto a igualdade exata do código (convertido para string) quanto a busca por nome
     const requestCursor = store.openCursor();
     let encontrado = null;
 
@@ -125,10 +126,13 @@ async function buscarProdutoLocal(termo) {
       const cursor = event.target.result;
       if (cursor) {
         const produto = cursor.value;
+        
+        // Normaliza código e nome do banco para remover acentos e padronizar
         const codigoProd = String(produto.codigo || '').trim().toLowerCase();
-        const nomeProd = String(produto.nome || '').trim().toLowerCase();
+        const nomeProd = String(produto.nome || '').trim().toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-        // 1. Prioridade máxima: Código exato
+        // 1. Tenta correspondência exata do código
         if (codigoProd === termoLimpo) {
           encontrado = produto;
           console.timeEnd("⏱️ Tempo Total Busca Local");
@@ -136,9 +140,13 @@ async function buscarProdutoLocal(termo) {
           return;
         }
 
-        // 2. Segunda prioridade: Nome contém o termo digitado
-        if (!encontrado && nomeProd.includes(termoLimpo)) {
+        // 2. Tenta correspondência parcial no nome ou no código (já normalizados)
+        if (!encontrado && (nomeProd.includes(termoLimpo) || codigoProd.includes(termoLimpo))) {
           encontrado = produto;
+          // Continua ou para na primeira ocorrência relevante
+          console.timeEnd("⏱️ Tempo Total Busca Local");
+          resolve({ ...encontrado, qtdAdicionada: qtd });
+          return;
         }
 
         cursor.continue();
@@ -158,7 +166,6 @@ async function buscarProdutoLocal(termo) {
     };
   });
 }
-
 // Busca cliente por Documento ou Nome
 async function buscarClienteLocal(termo) {
   const db = await abrirBanco();
