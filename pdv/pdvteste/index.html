@@ -1558,27 +1558,43 @@ let caixaBloqueado = false;
 let temporizadorLimpezaPreco = null;
 let modalDesbloqueioObj = null;
 
-// Inicializa a instância do modal de forma segura assim que a página carregar
 document.addEventListener('DOMContentLoaded', () => {
   const modalEl = document.getElementById('modalSenhaDesbloqueio');
   if (modalEl) {
     modalDesbloqueioObj = new bootstrap.Modal(modalEl, { backdrop: 'static' });
+    console.log("🟢 [LOG] Instância do modal de desbloqueio criada com sucesso.");
+  } else {
+    console.error("❌ [LOG ERRO] Elemento #modalSenhaDesbloqueio não foi encontrado no HTML!");
   }
 });
 
-// --- OUVINTE GLOBAL DE TECLADO CORRIGIDO ---
+// --- OUVINTE GLOBAL COM LOGS DE RASTREIO ---
 document.addEventListener('keydown', (e) => {
-  // Se o caixa estiver bloqueado
+  console.log(`⌨️ [LOG TECLA] Tecla pressionada: "${e.key}" | Caixa bloqueado? ${caixaBloqueado}`);
+
+  if (e.key === 'F5') {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!caixaBloqueado) {
+      console.log("🔒 [LOG] Executando bloqueio de caixa...");
+      bloquearCaixa();
+    } else {
+      console.log("🔓 [LOG] Caixa já está bloqueado. Tentando abrir modal de senha...");
+      abrirModalDesbloqueio();
+    }
+    return;
+  }
+
   if (caixaBloqueado) {
-    // Se apertar F5 ou ESC, abre o modal de senha para desbloquear
-    if (e.key === 'F5' || e.key === 'Escape' || e.key === 'Esc') {
+    if (e.key === 'Escape' || e.key === 'Esc') {
       e.preventDefault();
       e.stopPropagation();
+      console.log("🔓 [LOG] Tecla ESC acionada no bloqueio. Abrindo modal de senha...");
       abrirModalDesbloqueio();
       return;
     }
 
-    // Se NÃO for tecla de navegação/especial, joga o foco para o input do leitor (mas sem loop travado)
     const inputBlq = document.getElementById('input-bloqueio-consulta');
     const modalEl = document.getElementById('modalSenhaDesbloqueio');
     const modalEstaAberto = modalEl && modalEl.classList.contains('show');
@@ -1589,7 +1605,6 @@ document.addEventListener('keydown', (e) => {
       }
     }
   } else {
-    // Se o caixa estiver normal, o F5 bloqueia a tela
     if (e.key === 'F5') {
       e.preventDefault();
       bloquearCaixa();
@@ -1602,6 +1617,7 @@ function bloquearCaixa() {
   const telaBloqueio = document.getElementById('tela-bloqueio');
   if (telaBloqueio) {
     telaBloqueio.classList.remove('d-none');
+    console.log("👁️ [LOG] Tela de bloqueio exibida.");
     
     const resDiv = document.getElementById('resultado-bloqueio');
     if (resDiv) resDiv.classList.add('d-none');
@@ -1610,7 +1626,10 @@ function bloquearCaixa() {
     if (inputBlq) {
       inputBlq.value = '';
       inputBlq.focus();
+      console.log("🎯 [LOG] Foco direcionado para o input de consulta oculto.");
     }
+  } else {
+    console.error("❌ [LOG ERRO] Elemento #tela-bloqueio não encontrado!");
   }
 }
 
@@ -1622,19 +1641,25 @@ function abrirModalDesbloqueio() {
   if (errorDiv) errorDiv.classList.add('d-none');
 
   if (modalDesbloqueioObj) {
+    console.log("modalDesbloqueioObj.show() chamado.");
     modalDesbloqueioObj.show();
     setTimeout(() => {
-      if (inputSenha) inputSenha.focus();
+      if (inputSenha) {
+        inputSenha.focus();
+        console.log("🎯 [LOG] Foco direcionado para o input de senha.");
+      }
     }, 150);
+  } else {
+    console.error("❌ [LOG ERRO] modalDesbloqueioObj é nulo!");
   }
 }
 
 function fecharModalDesbloqueio() {
+  console.log("🔒 [LOG] Fechando modal de desbloqueio.");
   if (modalDesbloqueioObj) {
     modalDesbloqueioObj.hide();
   }
   
-  // Retorna o foco para o input de consulta da tela de bloqueio
   const inputBlq = document.getElementById('input-bloqueio-consulta');
   if (inputBlq) inputBlq.focus();
 }
@@ -1643,16 +1668,20 @@ async function validarSenhaDesbloqueio() {
   const senhaDigitada = document.getElementById('input-senha-desbloqueio').value.trim();
   const errorDiv = document.getElementById('desbloqueio-error');
 
+  console.log("🔑 [LOG] Validando senha digitada...");
+
   if (!senhaDigitada) return;
 
   const passHash = await gerarHash(senhaDigitada);
 
   if (usuarioLogado && (usuarioLogado.passHash === passHash || usuarioLogado.senha === senhaDigitada)) {
+    console.log("✅ [LOG] Senha correta! Desbloqueando caixa...");
     if (modalDesbloqueioObj) {
       modalDesbloqueioObj.hide();
     }
     desbloquearCaixa();
   } else {
+    console.warn("⚠️ [LOG] Senha incorreta.");
     if (errorDiv) errorDiv.classList.remove('d-none');
   }
 }
@@ -1662,15 +1691,16 @@ function desbloquearCaixa() {
   const telaBloqueio = document.getElementById('tela-bloqueio');
   if (telaBloqueio) {
     telaBloqueio.classList.add('d-none');
+    console.log("🎉 [LOG] Caixa desbloqueado com sucesso, retornando à tela de vendas.");
   }
   manterFocoBusca();
 }
 
-// Ouve o bipe ou código digitado e exibe as informações por 5 segundos na frente da logo
 document.getElementById('input-bloqueio-consulta')?.addEventListener('keypress', async (e) => {
   if (e.key === 'Enter') {
     const termo = e.target.value.trim();
     e.target.value = '';
+    console.log(`📦 [LOG] Consulta rápida acionada para o termo: "${termo}"`);
     
     if (!termo) return;
 
@@ -1685,16 +1715,17 @@ document.getElementById('input-bloqueio-consulta')?.addEventListener('keypress',
     const precoEl = document.getElementById('blq-prod-preco');
 
     if (produto && produto.codigo) {
+      console.log("✅ [LOG] Produto encontrado:", produto.nome);
       nomeEl.innerText = produto.nome;
       codEl.innerText = `CÓD: ${produto.codigo}`;
       precoEl.innerText = `R$ ${Number(produto.preco).toFixed(2).replace('.', ',')}`;
     } else {
+      console.warn("⚠️ [LOG] Produto não encontrado para o termo:", termo);
       nomeEl.innerText = "Produto Não Encontrado";
       codEl.innerText = "---";
       precoEl.innerText = "R$ 0,00";
     }
 
-    // Exibe o card de consulta sobre a logo
     resDiv.classList.remove('d-none');
 
     if (temporizadorLimpezaPreco) {
@@ -1703,10 +1734,10 @@ document.getElementById('input-bloqueio-consulta')?.addEventListener('keypress',
 
     temporizadorLimpezaPreco = setTimeout(() => {
       resDiv.classList.add('d-none');
+      console.log("⏳ [LOG] Escondendo card de preço após 5 segundos.");
     }, 5000);
   }
 });
-
 
 
 
