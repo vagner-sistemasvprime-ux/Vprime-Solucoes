@@ -705,6 +705,34 @@ function tratarEnterLogin(event) {
     }
   }
 
+   // Configura a navegação por setas e Enter no modal de pergunta do cliente
+document.getElementById('modalPerguntaCliente').addEventListener('shown.bs.modal', function () {
+  const btnNao = document.querySelector('#modalPerguntaCliente .btn-outline-secondary');
+  const btnSim = document.querySelector('#modalPerguntaCliente .btn-primary');
+  
+  // Foca no botão "Sim" por padrão ao abrir o modal
+  btnSim.focus();
+
+  // Remove ouvintes antigos para evitar duplicação e adiciona o novo
+  const handleKeydown = function(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (document.activeElement === btnSim) {
+        btnNao.focus();
+      } else {
+        btnSim.focus();
+      }
+    }
+  };
+
+  this.addEventListener('keydown', handleKeydown);
+
+  // Limpa o evento quando o modal for fechado
+  this.addEventListener('hidden.bs.modal', function () {
+    this.removeEventListener('keydown', handleKeydown);
+  }, { once: true });
+});
+
   function imprimirOrcamento() {
   if (carrinho.length === 0) {
     mostrarAviso("O carrinho está vazio para gerar orçamento!", "Atenção", "warning");
