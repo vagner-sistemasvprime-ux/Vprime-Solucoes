@@ -484,19 +484,36 @@ async function carregarConfiguracoes() {
 
     // Tenta buscar online se tiver rede
     if (navigator.onLine) {
-      dados = await chamarGoogleScript('buscarConfiguracoes');
+      try {
+        dados = await chamarGoogleScript('buscarConfiguracoes');
+      } catch (err) {
+        console.warn("⚠️ Servidor indisponível para carregar configurações. Buscando cache local...");
+      }
     }
 
     if (dados && dados.sucesso) {
       CONFIG_LOJA = dados;
+      // Salva no IndexedDB para uso offline futuro (opcional, mas recomendado)
+      if (typeof salvarConfiguracoesLocal === 'function') {
+        await salvarConfiguracoesLocal(dados);
+      }
     } else {
-      // Fallback: Se estiver offline ou a chamada falhar, tenta usar a padrão/local
-      console.warn("Utilizando configurações locais/padrão.");
+      // Fallback: Tenta buscar as configurações salvas no IndexedDB local
+      if (typeof buscarConfiguracoesLocal === 'function') {
+        const dadosLocais = await buscarConfiguracoesLocal();
+        if (dadosLocais) {
+          CONFIG_LOJA = dadosLocais;
+          console.log("✅ Configurações carregadas do banco local (IndexedDB).");
+        } else {
+          console.warn("⚠️ Utilizando configurações padrão do sistema.");
+        }
+      }
     }
 
     aplicarConfiguracoesGerais();
   } catch (erro) {
-    console.error("Falha ao carregar configurações:", erro);
+    console.error("Falha crítica ao carregar configurações:", erro);
+    aplicarConfiguracoesGerais(); // Aplica o padrão para não travar a tela
   }
 }
 
@@ -653,27 +670,47 @@ function aplicarConfiguracoesGerais() {
 
   try {
     const passHash = await gerarHash(pass);
-    const res = await chamarGoogleScript('autenticarUsuario', { user, passHash });
+    let res = null;
 
+    // Tenta autenticar na nuvem (Google Apps Script) se houver conexão
+    if (navigator.onLine) {
+      try {
+        res = await chamarGoogleScript('autenticarUsuario', { user, passHash });
+      } catch (networkError) {
+        console.warn("⚠️ Falha na rede ou erro 404/Servidor ao autenticar. Tentando modo offline...", networkError);
+      }
+    }
+
+    // Se obteve resposta da nuvem com sucesso
     if (res && res.sucesso) {
       usuarioLogado = res.usuario;
-      document.getElementById('login-screen').classList.add('d-none');
-      document.getElementById('user-display').innerText = res.usuario.nome;
-
-      const btnMenu = document.getElementById('btn-menu');
-      if (res.usuario.perfil === 'admin') {
-        btnMenu.classList.remove('d-none');
-      } else {
-        btnMenu.classList.add('d-none');
+      
+      // Salva o usuário no IndexedDB local para permitir login offline futuro
+      if (typeof salvarUsuarioLocal === 'function') {
+        await salvarUsuarioLocal({ ...res.usuario, passHash });
       }
 
-      manterFocoBusca();
-    } else {
-      errorDiv.innerText = res ? res.mensagem : "Erro na autenticação.";
-      errorDiv.classList.remove('d-none');
+      concluirLoginComSucesso(res.usuario);
+      return;
     }
+
+    // FALLBACK OFFLINE: Se falhou na nuvem ou está sem internet, valida no IndexedDB
+    console.log("🔄 Verificando credenciais no banco local (IndexedDB)...");
+    const usuarioLocal = await buscarUsuarioLocal(user);
+
+    if (usuarioLocal && usuarioLocal.passHash === passHash) {
+      usuarioLogado = usuarioLocal;
+      console.log("✅ Login realizado com sucesso usando o banco local (Offline)!");
+      concluirLoginComSucesso(usuarioLocal);
+      return;
+    }
+
+    // Se nem nuvem nem local funcionaram
+    errorDiv.innerText = res ? res.mensagem : "Usuário ou senha inválidos (ou sem dados locais para login offline).";
+    errorDiv.classList.remove('d-none');
+
   } catch (erro) {
-    errorDiv.innerText = "Erro ao tentar conectar com o servidor.";
+    errorDiv.innerText = "Erro ao tentar conectar com o servidor e nenhum registro local foi encontrado.";
     errorDiv.classList.remove('d-none');
   } finally {
     // Restaura o botão caso ocorra erro ou falha na autenticação
@@ -682,6 +719,23 @@ function aplicarConfiguracoesGerais() {
       btnLogin.innerHTML = btnLogin.dataset.originalText || "ENTRAR";
     }
   }
+}
+
+// Função auxiliar para organizar a transição de tela após login bem-sucedido
+function concluirLoginComSucesso(dadosUsuario) {
+  document.getElementById('login-screen').classList.add('d-none');
+  document.getElementById('user-display').innerText = dadosUsuario.nome;
+
+  const btnMenu = document.getElementById('btn-menu');
+  if (btnMenu) {
+    if (dadosUsuario.perfil === 'admin') {
+      btnMenu.classList.remove('d-none');
+    } else {
+      btnMenu.classList.add('d-none');
+    }
+  }
+
+  manterFocoBusca();
 }
 
    // Alterna entre mostrar e ocultar os caracteres da senha
