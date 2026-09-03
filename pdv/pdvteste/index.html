@@ -1192,6 +1192,61 @@ function confirmarIdentificarCliente() {
   }, 200);
 }
 
+
+   // 3. Configura a busca por Enter e o fluxo de confirmação rápida no modal de cliente
+document.getElementById('client-search-input')?.addEventListener('keydown', async (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    await buscarCliente();
+  }
+});
+
+document.getElementById('modalCliente')?.addEventListener('shown.bs.modal', function () {
+  const clientSearchInput = document.getElementById('client-search-input');
+  if (clientSearchInput) {
+    clientSearchInput.value = '';
+    clientSearchInput.focus();
+  }
+
+  const clientInfoDisplay = document.getElementById('client-info-display');
+  if (clientInfoDisplay) clientInfoDisplay.classList.add('d-none');
+
+  const handleClientKeydown = function(e) {
+    const infoDisplayVisivel = clientInfoDisplay && !clientInfoDisplay.classList.contains('d-none');
+
+    if (e.key === 'Enter' && infoDisplayVisivel) {
+      e.preventDefault();
+      salvarClienteOperacao();
+    } else if (e.key === 'Escape' || e.key === 'Esc') {
+      e.preventDefault();
+      fecharModalCliente();
+    }
+  };
+
+  this.addEventListener('keydown', handleClientKeydown);
+
+  this.addEventListener('hidden.bs.modal', function () {
+    this.removeEventListener('keydown', handleClientKeydown);
+  }, { once: true });
+});
+
+// Função centralizada para fechar o modal de cliente sem deixar resíduos
+function fecharModalCliente() {
+  const elCli = document.getElementById('modalCliente');
+  if (elCli) {
+    let instanciaCli = bootstrap.Modal.getInstance(elCli);
+    if (!instanciaCli) {
+      instanciaCli = new bootstrap.Modal(elCli);
+    }
+    instanciaCli.hide();
+  }
+
+  setTimeout(() => {
+    limpaBackdrops();
+    manterFocoBusca();
+  }, 150);
+}
+   
 function salvarClienteOperacao() {
   // Garante que se houver um cliente selecionado, ele atualiza a tela principal antes de fechar
   if (window.clienteSelecionado && window.clienteSelecionado.nome) {
