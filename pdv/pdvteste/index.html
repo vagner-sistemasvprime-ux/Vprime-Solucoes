@@ -314,42 +314,52 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-  // ATENÇÃO: Substitua pelo URL da sua Web App implantada no Apps Script
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0RLrifY77YiJNdS9qLyJu59P_y0QCxgzLjcrcs0k4HGm3r14FWcr-IDhLHrwI3m-T/exec";
+ // ATENÇÃO: Substitua pelo URL da sua Nova Implantação no Apps Script
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0RLrifY77YiJNdS9qLyJu59P_y0QCxgzLjcrcs0k4HGm3r14FWcr-IDhLHrwI3m-T/exec";
 
-  let carrinho = [];
-  let usuarioLogado = null;
-  let produtoConsultadoAtual = null;
-  let clienteSelecionado = null;
-  let bsLoadingModal = null;
-  let modoOrcamento = false;
+let carrinho = [];
+let usuarioLogado = null;
+let produtoConsultadoAtual = null;
+let clienteSelecionado = null;
+let bsLoadingModal = null;
+let modoOrcamento = false;
 
-  // Objeto global para armazenar as configurações vindo da planilha
-  let CONFIG_LOJA = {
-    recursos: {}
-  };
+// Objeto global para armazenar as configurações vindas da planilha
+let CONFIG_LOJA = {
+  recursos: {}
+};
 
-  // Função auxiliar para fazer requisições POST ao Google Apps Script (Tratamento CORS e erros)
-  async function chamarGoogleScript(acao, dados = {}) {
-    try {
-      const response = await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" }, // text/plain evita requisições preflight (CORS)
-        body: JSON.stringify({ acao: acao, ...dados }),
-        redirect: "follow"
-      });
+// Função auxiliar para fazer requisições POST ao Google Apps Script (Tratamento CORS e erros)
+async function chamarGoogleScript(acao, dados = {}) {
+  try {
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" }, // text/plain evita preflight (CORS)
+      body: JSON.stringify({ acao: acao, ...dados }),
+      redirect: "follow"
+    });
 
-      if (!response.ok) {
-        throw new Error(`Erro HTTP: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (erro) {
-      console.error("Erro na comunicação:", erro);
-      return { sucesso: false, mensagem: "Erro de conexão com o servidor." };
+    if (!response.ok) {
+      console.warn(`Servidor retornou status ${response.status}. Usando contingência local.`);
+      return { sucesso: false, mensagem: `Erro HTTP: ${response.status}` };
     }
-  }
 
+    const textoResposta = await response.text();
+    
+    // Tenta converter o texto recebido em JSON com segurança
+    try {
+      return JSON.parse(textoResposta);
+    } catch (e) {
+      console.error("Resposta do servidor não é um JSON válido:", textoResposta);
+      return { sucesso: false, mensagem: "Resposta inválida do servidor." };
+    }
+
+  } catch (erro) {
+    console.error("Erro na comunicação:", erro);
+    return { sucesso: false, mensagem: "Erro de conexão com o servidor." };
+  }
+}
   // --- CARREGAMENTO DE CONFIGURAÇÕES DINÂMICAS ---
   async function carregarConfiguracoes() {
     try {
