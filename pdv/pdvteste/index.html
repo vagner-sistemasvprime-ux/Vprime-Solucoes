@@ -82,10 +82,10 @@
   </div>
 </div>
 
-<!-- Modal de Senha para Desbloqueio (Acionado ao apertar F5 novamente) -->
-<div class="modal fade" id="modalSenhaDesbloqueio" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+<!-- Modal de Senha para Desbloqueio (Com z-index forçado acima da tela de bloqueio) -->
+<div class="modal fade" id="modalSenhaDesbloqueio" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" style="z-index: 10050 !important;">
   <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content shadow">
+    <div class="modal-content shadow-lg">
       <div class="modal-header bg-dark text-white">
         <h5 class="modal-title fw-bold fs-6">Desbloquear Caixa</h5>
       </div>
