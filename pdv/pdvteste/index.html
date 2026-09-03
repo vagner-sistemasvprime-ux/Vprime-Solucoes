@@ -897,6 +897,11 @@ function tratarEnterLogin(event) {
 
   }
 
+    if (event.key === 'F6') {
+  event.preventDefault();
+  focarOuNavegarCarrinho();
+}
+
 
 
     if (event.key === 'F8') {
@@ -1296,42 +1301,38 @@ function salvarClienteOperacao() {
 }
 
   async function renderizarCarrinho() {
-    const tbody = document.getElementById('cart-items');
-    const tableEl = document.getElementById('cart-table');
-    const emptyMsgEl = document.getElementById('empty-cart-message');
+  const tbody = document.getElementById('cart-items');
+  const tableEl = document.getElementById('cart-table');
+  const emptyMsgEl = document.getElementById('empty-cart-message');
 
-    tbody.innerHTML = '';
-    let total = 0;
+  tbody.innerHTML = '';
+  let total = 0;
 
-    if (carrinho.length === 0) {
-      tableEl.classList.add('d-none');
-      emptyMsgEl.classList.remove('d-none');
-    } else {
-      tableEl.classList.remove('d-none');
-      emptyMsgEl.classList.add('d-none');
+  if (carrinho.length === 0) {
+    tableEl.classList.add('d-none');
+    emptyMsgEl.classList.remove('d-none');
+  } else {
+    tableEl.classList.remove('d-none');
+    emptyMsgEl.classList.add('d-none');
 
-      carrinho.forEach((item, index) => {
-        total += item.subtotal;
-        tbody.innerHTML += `
-          <tr>
-            <td><span class="badge bg-secondary fs-6">${item.codigo}</span></td>
-            <td><span class="badge bg-primary fs-6">${item.qtd}x</span></td>
-            <td>${item.nome}</td>
-            <td style="text-align: right;">R$ ${item.preco.toFixed(2).replace('.', ',')}</td>
-            <td style="text-align: right;">R$ ${item.subtotal.toFixed(2).replace('.', ',')}</td>
-            <td style="text-align: center;">
-              <button class="btn btn-outline-danger btn-sm" onclick="removerItemCarrinho(${index})" title="Remover item">
-                <i class="bi bi-trash"></i> ❌
-              </button>
-            </td>
-          </tr>
-        `;
-      });
-    }
-
-    document.getElementById('cart-total').innerText = total.toFixed(2).replace('.', ',');
-    document.getElementById('payment-modal-total').innerText = total.toFixed(2).replace('.', ',');
+    carrinho.forEach((item, index) => {
+      total += item.subtotal;
+      // Adicionamos um atributo data-index para facilitar a seleção via teclado/mouse
+      tbody.innerHTML += `
+        <tr class="item-carrinho-row" tabindex="0" data-index="${index}" style="cursor: pointer;">
+          <td><span class="badge bg-secondary fs-6">${item.codigo}</span></td>
+          <td><span class="badge bg-primary fs-6">${item.qtd}x</span></td>
+          <td>${item.nome}</td>
+          <td style="text-align: right;">R$ ${item.preco.toFixed(2).replace('.', ',')}</td>
+          <td style="text-align: right;">R$ ${item.subtotal.toFixed(2).replace('.', ',')}</td>
+        </tr>
+      `;
+    });
   }
+
+  document.getElementById('cart-total').innerText = total.toFixed(2).replace('.', ',');
+  document.getElementById('payment-modal-total').innerText = total.toFixed(2).replace('.', ',');
+}
    
   function abrirModalConsulta() {
     limpaBackdrops();
@@ -1462,6 +1463,93 @@ async function confirmarVenda() {
     mostrarAviso("Venda salva OFFLINE com sucesso!\nSerá sincronizada assim que a internet voltar.", "Modo Offline", "success");
     finalizarFluxoVenda();
   }
+}
+
+   let indiceItemSelecionado = 0;
+
+// Função acionada pelo F6 para entrar no carrinho
+function focarOuNavegarCarrinho() {
+  if (carrinho.length === 0) {
+    mostrarAviso("O carrinho está vazio.", "Atenção", "warning");
+    return;
+  }
+
+  const linhas = document.querySelectorAll('.item-carrinho-row');
+  if (linhas.length > 0) {
+    indiceItemSelecionado = 0;
+    linhas[indiceItemSelecionado].focus();
+    linhas[indiceItemSelecionado].classList.add('table-active'); // Destaque visual do Bootstrap
+
+    // Adiciona o ouvinte de navegação enquanto focado nos itens
+    ativarNavegacaoCarrinho(linhas);
+  }
+}
+
+function ativarNavegacaoCarrinho(linhas) {
+  linhas.forEach((linha, idx) => {
+    // Suporte ao clique do mouse para selecionar o item direto
+    linha.onclick = () => {
+      indiceItemSelecionado = idx;
+      perguntarRemoverItem(indiceItemSelecionado);
+    };
+
+    linha.onkeydown = (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        linhas[indiceItemSelecionado].classList.remove('table-active');
+        indiceItemSelecionado = (indiceItemSelecionado + 1) % linhas.length;
+        linhas[indiceItemSelecionado].focus();
+        linhas[indiceItemSelecionado].classList.add('table-active');
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        linhas[indiceItemSelecionado].classList.remove('table-active');
+        indiceItemSelecionado = (indiceItemSelecionado - 1 + linhas.length) % linhas.length;
+        linhas[indiceItemSelecionado].focus();
+        linhas[indiceItemSelecionado].classList.add('table-active');
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        perguntarRemoverItem(indiceItemSelecionado);
+      } else if (e.key === 'Escape' || e.key === 'Esc') {
+        e.preventDefault();
+        linhas[indiceItemSelecionado].classList.remove('table-active');
+        manterFocoBusca();
+      }
+    };
+  });
+}
+
+// Abre o modal de confirmação para remover o item
+function perguntarRemoverItem(index) {
+  const item = carrinho[index];
+  if (!item) return;
+
+  // Você pode reutilizar um modal de aviso/confirmação ou criar um específico #modalRemoverItem
+  // Vamos assumir que você tem um modal de confirmação genérico ou o modalPerguntaRemover
+  const modalEl = document.getElementById('modalRemoverItem') || criarModalRemoverDinamico();
+  
+  // Guarda o índice que vai ser removido se confirmar
+  window.itemParaRemoverIndex = index;
+  
+  const modalObj = new bootstrap.Modal(modalEl, { backdrop: 'static' });
+  modalObj.show();
+}
+
+function confirmarRemocaoItem() {
+  if (window.itemParaRemoverIndex !== undefined) {
+    removerItemCarrinho(window.itemParaRemoverIndex);
+    window.itemParaRemoverIndex = undefined;
+  }
+  fecharModalRemover();
+}
+
+function fecharModalRemover() {
+  const modalEl = document.getElementById('modalRemoverItem');
+  if (modalEl) {
+    const instancia = bootstrap.Modal.getInstance(modalEl);
+    if (instancia) instancia.hide();
+  }
+  limpaBackdrops();
+  manterFocoBusca();
 }
 
   function removerItemCarrinho(index) {
