@@ -743,7 +743,7 @@ async function buscarCliente() {
     renderizarCarrinho();
   }
 
-  function renderizarCarrinho() {
+  async function renderizarCarrinho() {
     const tbody = document.getElementById('cart-items');
     const tableEl = document.getElementById('cart-table');
     const emptyMsgEl = document.getElementById('empty-cart-message');
@@ -758,7 +758,7 @@ async function buscarCliente() {
       tableEl.classList.remove('d-none');
       emptyMsgEl.classList.add('d-none');
 
-      carrinho.forEach(item => {
+      carrinho.forEach((item, index) => {
         total += item.subtotal;
         tbody.innerHTML += `
           <tr>
@@ -767,6 +767,11 @@ async function buscarCliente() {
             <td>${item.nome}</td>
             <td style="text-align: right;">R$ ${item.preco.toFixed(2).replace('.', ',')}</td>
             <td style="text-align: right;">R$ ${item.subtotal.toFixed(2).replace('.', ',')}</td>
+            <td style="text-align: center;">
+              <button class="btn btn-outline-danger btn-sm" onclick="removerItemCarrinho(${index})" title="Remover item">
+                <i class="bi bi-trash"></i> ❌
+              </button>
+            </td>
           </tr>
         `;
       });
@@ -775,7 +780,7 @@ async function buscarCliente() {
     document.getElementById('cart-total').innerText = total.toFixed(2).replace('.', ',');
     document.getElementById('payment-modal-total').innerText = total.toFixed(2).replace('.', ',');
   }
-
+   
   function abrirModalConsulta() {
     limpaBackdrops();
     produtoConsultadoAtual = null;
@@ -908,6 +913,14 @@ async function confirmarVenda() {
     esconderProcessando();
     mostrarAviso("Venda salva OFFLINE com sucesso!\nSerá sincronizada assim que a internet voltar.", "Modo Offline", "success");
     finalizarFluxoVenda();
+  }
+}
+
+   function removerItemCarrinho(index) {
+  if (index >= 0 && index < carrinho.length) {
+    carrinho.splice(index, 1);
+    renderizarCarrinho();
+    manterFocoBusca();
   }
 }
 
