@@ -105,11 +105,10 @@ async function buscarProdutoLocal(termo) {
     const store = tx.objectStore('produtos');
 
     let termoLimpo = String(termo).trim().toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove acentos do termo digitado
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     
     let qtd = 1;
 
-    // Trata multiplicador no caixa (Ex: 3*1001)
     if (termoLimpo.includes('*')) {
       const partes = termoLimpo.split('*');
       const q = parseFloat(partes[0].replace(',', '.'));
@@ -121,30 +120,36 @@ async function buscarProdutoLocal(termo) {
 
     const requestCursor = store.openCursor();
     let encontrado = null;
+    let contadorRegistros = 0;
 
     requestCursor.onsuccess = (event) => {
       const cursor = event.target.result;
       if (cursor) {
+        contadorRegistros++;
         const produto = cursor.value;
         
-        // Normaliza código e nome do banco para remover acentos e padronizar
-        const codigoProd = String(produto.codigo || '').trim().toLowerCase();
-        const nomeProd = String(produto.nome || '').trim().toLowerCase()
+        // Log para inspecionar o primeiro produto e entender as propriedades reais do objeto
+        if (contadorRegistros === 1) {
+          console.log("[DEBUG IDB] Exemplo de estrutura do produto no banco:", produto);
+        }
+
+        // Verifica múltiplas variações possíveis para a chave do código e do nome
+        const codProd = String(produto.codigo || produto.Codigo || produto.id || produto.ID || '').trim().toLowerCase();
+        const nomeProd = String(produto.nome || produto.Nome || '').trim().toLowerCase()
           .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-        // 1. Tenta correspondência exata do código
-        if (codigoProd === termoLimpo) {
+        if (codProd === termoLimpo || codProd.includes(termoLimpo)) {
           encontrado = produto;
           console.timeEnd("⏱️ Tempo Total Busca Local");
+          console.log(`[BUSCA PDV] ✅ Encontrado por código/ID na varredura:`, produto);
           resolve({ ...encontrado, qtdAdicionada: qtd });
           return;
         }
 
-        // 2. Tenta correspondência parcial no nome ou no código (já normalizados)
-        if (!encontrado && (nomeProd.includes(termoLimpo) || codigoProd.includes(termoLimpo))) {
+        if (!encontrado && nomeProd.includes(termoLimpo)) {
           encontrado = produto;
-          // Continua ou para na primeira ocorrência relevante
           console.timeEnd("⏱️ Tempo Total Busca Local");
+          console.log(`[BUSCA PDV] ✅ Encontrado por nome na varredura:`, produto);
           resolve({ ...encontrado, qtdAdicionada: qtd });
           return;
         }
@@ -152,11 +157,8 @@ async function buscarProdutoLocal(termo) {
         cursor.continue();
       } else {
         console.timeEnd("⏱️ Tempo Total Busca Local");
-        if (encontrado) {
-          resolve({ ...encontrado, qtdAdicionada: qtd });
-        } else {
-          resolve(null);
-        }
+        console.warn(`[BUSCA PDV] ⚠️ Fim da varredura. Total de registros analisados na tabela: ${contadorRegistros}`);
+        resolve(null);
       }
     };
 
@@ -166,6 +168,8 @@ async function buscarProdutoLocal(termo) {
     };
   });
 }
+
+
 // Busca cliente por Documento ou Nome
 async function buscarClienteLocal(termo) {
   const db = await abrirBanco();
