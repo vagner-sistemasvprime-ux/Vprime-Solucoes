@@ -840,41 +840,57 @@ function tratarEnterLogin(event) {
   }
 });
     
-  // --- EVENTOS DE TECLADO ---
-  document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      const modais = document.querySelectorAll('.modal.show');
-      modais.forEach(modalEl => {
-        if (modalEl.id !== 'modalLoading') {
-          const modalInstance = bootstrap.Modal.getInstance(modalEl);
-          if (modalInstance) modalInstance.hide();
-        }
-      });
-      limpaBackdrops();
-      manterFocoBusca();
+ // --- EVENTOS DE TECLADO ---
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    
+    // Se o caixa estiver bloqueado, o Escape abre o modal de senha de desbloqueio
+    if (caixaBloqueado) {
+      abrirModalDesbloqueio();
+      return;
     }
 
-    if (event.key === 'F2') {
-      event.preventDefault();
-      abrirModalConsulta();
-    }
+    const modais = document.querySelectorAll('.modal.show');
+    modais.forEach(modalEl => {
+      if (modalEl.id !== 'modalLoading') {
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+      }
+    });
+    limpaBackdrops();
+    manterFocoBusca();
+  }
 
-   if (event.key === 'F3') {
-  event.preventDefault();
-  alternarModoOrcamentoVenda();
-}
-    if (event.key === 'F4') {
+  if (event.key === 'F5') {
+    event.preventDefault();
+    if (!caixaBloqueado) {
+      bloquearCaixa();
+    } else {
+      abrirModalDesbloqueio();
+    }
+  }
+
+  if (event.key === 'F2') {
+    event.preventDefault();
+    abrirModalConsulta();
+  }
+
+  if (event.key === 'F3') {
+    event.preventDefault();
+    alternarModoOrcamentoVenda();
+  }
+
+  if (event.key === 'F4') {
     event.preventDefault();
     abrirCadastroCliente();
   }
 
-    if (event.key === 'F8') {
-      event.preventDefault();
-      acaoFinalizar();
-    }
-  });
-
+  if (event.key === 'F8') {
+    event.preventDefault();
+    acaoFinalizar();
+  }
+});
   function ativarModoOrcamento() {
     modoOrcamento = true;
     document.getElementById('banner-orcamento').classList.remove('d-none');
