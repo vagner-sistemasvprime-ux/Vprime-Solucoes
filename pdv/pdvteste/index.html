@@ -928,19 +928,33 @@ function confirmarIdentificarCliente() {
   
   limpaBackdrops();
 
-  // Limpa o campo de busca de cliente e a listagem anterior para abrir limpo
+  // Limpa o campo de busca de cliente, a listagem e o card de cliente selecionado anterior
   const inputBuscaCli = document.getElementById('input-busca-cliente');
   if (inputBuscaCli) inputBuscaCli.value = '';
 
   const listaResultadosCli = document.getElementById('lista-clientes-resultados');
   if (listaResultadosCli) listaResultadosCli.innerHTML = '';
 
+  // REPASSE ESSA LIMPEZA PARA OS IDS REAIS DO SEU HTML DE BUSCA:
+  const clientSearchInput = document.getElementById('client-search-input');
+  if (clientSearchInput) clientSearchInput.value = '';
+
+  const clientInfoDisplay = document.getElementById('client-info-display');
+  if (clientInfoDisplay) clientInfoDisplay.classList.add('d-none');
+
+  const clientSelectedName = document.getElementById('client-selected-name');
+  if (clientSelectedName) clientSelectedName.innerText = '';
+
   const modalCli = new bootstrap.Modal(document.getElementById('modalCliente'));
   modalCli.show();
 
   // Foca no input de busca do modal assim que ele abrir
   document.getElementById('modalCliente').addEventListener('shown.bs.modal', function () {
-    if (inputBuscaCli) inputBuscaCli.focus();
+    if (clientSearchInput) {
+      clientSearchInput.focus();
+    } else if (inputBuscaCli) {
+      inputBuscaCli.focus();
+    }
   }, { once: true });
 }
 
