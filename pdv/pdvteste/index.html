@@ -360,6 +360,57 @@
   </div>
 </div>
 
+  <!-- Modal Menu Caixa (F9) -->
+<div class="modal fade" id="modalMenuCaixa" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-menu-button-wide-fill me-2"></i> Menu Caixa (F9)</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="list-group list-group-flush" id="lista-menu-caixa">
+          <button type="button" class="list-group-item list-group-item-action py-3 px-4 d-flex align-items-center gap-3 active" data-acao="devolucao">
+            <i class="bi bi-arrow-return-left fs-4 text-warning"></i>
+            <div>
+              <h6 class="mb-0 fw-bold">Devolução / Troca</h6>
+              <small class="text-muted">Gerenciar itens devolvidos ou trocados</small>
+            </div>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action py-3 px-4 d-flex align-items-center gap-3" data-acao="sangria">
+            <i class="bi bi-dash-circle fs-4 text-danger"></i>
+            <div>
+              <h6 class="mb-0 fw-bold">Sangria</h6>
+              <small class="text-muted">Retirada parcial de dinheiro do caixa</small>
+            </div>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action py-3 px-4 d-flex align-items-center gap-3" data-acao="abrir-caixa">
+            <i class="bi bi-unlock fs-4 text-success"></i>
+            <div>
+              <h6 class="mb-0 fw-bold">Abrir Caixa</h6>
+              <small class="text-muted">Iniciar o turno com fundo de troco</small>
+            </div>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action py-3 px-4 d-flex align-items-center gap-3" data-acao="fechar-caixa">
+            <i class="bi bi-lock fs-4 text-secondary"></i>
+            <div>
+              <h6 class="mb-0 fw-bold">Fechar Caixa</h6>
+              <small class="text-muted">Conferência e encerramento do turno</small>
+            </div>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action py-3 px-4 d-flex align-items-center gap-3" data-acao="pagamento">
+            <i class="bi bi-cash-stack fs-4 text-primary"></i>
+            <div>
+              <h6 class="mb-0 fw-bold">Pagamento / Suprimento</h6>
+              <small class="text-muted">Entrada de dinheiro ou despesas</small>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- INDICADOR DE PROCESSAMENTO -->
 <div class="modal fade" id="modalLoading" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -1266,6 +1317,119 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('Erro ao registrar Service Worker:', err));
   });
 }
+
+
+
+
+let indiceItemAtivoMenuCaixa = 0;
+
+// Ouve a tecla F9 globalmente para abrir o menu
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'F9') {
+    e.preventDefault();
+    abrirMenuCaixa();
+  }
+});
+
+function abrirMenuCaixa() {
+  const modalEl = document.getElementById('modalMenuCaixa');
+  if (!modalEl) return;
+  
+  indiceItemAtivoMenuCaixa = 0;
+  atualizarSelecaoMenuCaixa();
+
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+
+  // Adiciona o ouvinte de navegação por setas e enter enquanto o modal estiver aberto
+  modalEl.addEventListener('keydown', lidarComTeclasMenuCaixa);
+}
+
+function atualizarSelecaoMenuCaixa() {
+  const itens = document.querySelectorAll('#lista-menu-caixa button');
+  itens.forEach((item, index) => {
+    if (index === indiceItemAtivoMenuCaixa) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+}
+
+function lidarComTeclasMenuCaixa(e) {
+  const itens = document.querySelectorAll('#lista-menu-caixa button');
+  if (itens.length === 0) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    indiceItemAtivoMenuCaixa = (indiceItemAtivoMenuCaixa + 1) % itens.length;
+    atualizarSelecaoMenuCaixa();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    indiceItemAtivoMenuCaixa = (indiceItemAtivoMenuCaixa - 1 + itens.length) % itens.length;
+    atualizarSelecaoMenuCaixa();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    itens[indiceItemAtivoMenuCaixa].click();
+  }
+}
+
+// Suporte para seleção via Mouse (atualiza o índice ativo ao passar o mouse)
+document.querySelectorAll('#lista-menu-caixa button').forEach((btn, index) => {
+  btn.addEventListener('mouseenter', () => {
+    indiceItemAtivoMenuCaixa = index;
+    atualizarSelecaoMenuCaixa();
+  });
+  
+  btn.addEventListener('click', () => {
+    const acao = btn.getAttribute('data-acao');
+    executarAcaoMenuCaixa(acao);
+  });
+});
+
+function executarAcaoMenuCaixa(acao) {
+  const modalEl = document.getElementById('modalMenuCaixa');
+  const bsModal = bootstrap.Modal.getInstance(modalEl);
+  if (bsModal) bsModal.hide();
+  limpaBackdrops();
+
+  // Roteador de ações do menu caixa
+  switch (acao) {
+    case 'devolucao':
+      console.log('Abrir fluxo de Devolução/Troca');
+      // Exemplo: abrirModalDevolucao();
+      break;
+    case 'sangria':
+      console.log('Abrir fluxo de Sangria');
+      // Exemplo: abrirModalSangria();
+      break;
+    case 'abrir-caixa':
+      console.log('Abrir fluxo de Abertura de Caixa');
+      // Exemplo: abrirModalAberturaCaixa();
+      break;
+    case 'fechar-caixa':
+      console.log('Abrir fluxo de Fechamento de Caixa');
+      // Exemplo: abrirModalFechamentoCaixa();
+      break;
+    case 'pagamento':
+      console.log('Abrir fluxo de Pagamento/Suprimento');
+      // Exemplo: abrirModalPagamento();
+      break;
+  }
+  
+  manterFocoBusca();
+}
+
+
+
+
+
+
+
+
+
+
+   
 
     // Monitora quando a internet volta
 window.addEventListener('online', async () => {
