@@ -936,22 +936,36 @@ async function buscarCliente() {
     manterFocoBusca();
   }
 
-  function adicionarAoCarrinho(produto, quantidade = 1) {
-    const itemExistente = carrinho.find(item => String(item.codigo) === String(produto.codigo));
-    if (itemExistente) {
-      itemExistente.qtd += quantidade;
-      itemExistente.subtotal = itemExistente.qtd * itemExistente.preco;
-    } else {
-      carrinho.push({
-        codigo: produto.codigo,
-        nome: produto.nome,
-        preco: produto.preco,
-        qtd: quantidade,
-        subtotal: produto.preco * quantidade
-      });
-    }
-    renderizarCarrinho();
+ function adicionarAoCarrinho(produto, quantidade = 1) {
+  // Verifica se o carrinho estava vazio ANTES de adicionar o item
+  const ePrimeiroProduto = carrinho.length === 0;
+
+  const itemExistente = carrinho.find(item => String(item.codigo) === String(produto.codigo));
+  if (itemExistente) {
+    itemExistente.qtd += quantidade;
+    itemExistente.subtotal = itemExistente.qtd * itemExistente.preco;
+  } else {
+    carrinho.push({
+      codigo: produto.codigo,
+      nome: produto.nome,
+      preco: produto.preco,
+      qtd: quantidade,
+      subtotal: produto.preco * quantidade
+    });
   }
+  
+  renderizarCarrinho();
+
+  // SE FOR O PRIMEIRO PRODUTO E NENHUM CLIENTE FOI SELECIONADO AINDA
+  if (ePrimeiroProduto && (!window.clienteSelecionado || window.clienteSelecionado.nome === "Não Identificado")) {
+    // Abre o modal de pergunta se ele existir na tela
+    const elModalPerg = document.getElementById('modalPerguntaCliente');
+    if (elModalPerg) {
+      const modalPerg = new bootstrap.Modal(elModalPerg);
+      modalPerg.show();
+    }
+  }
+}
 
   async function renderizarCarrinho() {
     const tbody = document.getElementById('cart-items');
@@ -1012,7 +1026,6 @@ async function buscarCliente() {
 
     // Se o produto já foi consultado e exibido, o segundo Enter adiciona direto ao carrinho
     if (produtoConsultadoAtual) {
-      const ePrimeiroProduto = carrinho.length === 0;
       adicionarAoCarrinho(produtoConsultadoAtual, produtoConsultadoAtual.qtdAdicionada || 1);
 
       const modalEl = document.getElementById('modalConsulta');
@@ -1020,12 +1033,9 @@ async function buscarCliente() {
       if (bsModal) bsModal.hide();
       limpaBackdrops();
 
-      if (ePrimeiroProduto && !clienteSelecionado) {
-        const modalPerg = new bootstrap.Modal(document.getElementById('modalPerguntaCliente'));
-        modalPerg.show();
-      } else {
-        manterFocoBusca();
-      }
+      // O adicionarAoCarrinho já vai abrir o modal de pergunta automaticamente se for o 1º item!
+      manterFocoBusca();
+      
       produtoConsultadoAtual = null;
       return;
     }
