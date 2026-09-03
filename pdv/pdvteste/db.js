@@ -1,6 +1,6 @@
 // db.js - Gerenciador do Banco de Dados Local (IndexedDB)
 const DB_NAME = 'PDV_Offline_DB';
-const DB_VERSION = 2; // Incrementado para recriar as estruturas necessárias (clientes)
+const DB_VERSION = 3; // Incrementado para recriar as estruturas necessárias (clientes)
 
 function abrirBanco() {
   return new Promise((resolve, reject) => {
@@ -80,28 +80,29 @@ async function salvarProdutosLocal(produtos) {
     };
   });
 }
-// Salva a lista de clientes
-async function salvarClientesLocal(clientes) {
+// Salva ou atualiza um único cliente no IndexedDB local
+async function salvarClienteLocal(cliente) {
   const db = await abrirBanco();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('clientes', 'readwrite');
     const store = tx.objectStore('clientes');
 
-    store.clear();
+    // Garante que o documento (chave primária) e o nome estejam limpos e padronizados
+    const docLimpo = String(cliente.documento || cliente.Documento || cliente.cpf || '').trim();
+    
+    const clienteFormatado = {
+      ...cliente,
+      documento: docLimpo || "Nao Informado",
+      nome: String(cliente.nome || cliente.Nome || '').trim()
+    };
 
-    clientes.forEach(cli => {
-      const docLimpo = String(cli.documento || cli.Documento || cli.cpf || cli.id || '').trim();
-      if (docLimpo) {
-        store.put({
-          ...cli,
-          documento: docLimpo,
-          nome: String(cli.nome || cli.Nome || '').trim()
-        });
-      }
-    });
+    const request = store.put(clienteFormatado);
 
-    tx.oncomplete = () => resolve(true);
-    tx.onerror = () => reject(tx.error);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => {
+      console.error("[IDB] Erro ao salvar cliente individual:", tx.error);
+      reject(tx.error);
+    };
   });
 }
 
