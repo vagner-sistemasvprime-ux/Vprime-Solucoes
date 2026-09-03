@@ -1106,38 +1106,78 @@ function atualizarDisplayCliente(nomeCliente, documentoCliente) {
   }
 }
    
+// Instância global para gerenciar o modal de pergunta com segurança
+let modalPerguntaClienteObj = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('modalPerguntaCliente');
+  if (el) {
+    modalPerguntaClienteObj = new bootstrap.Modal(el);
+  }
+});
+
+// Configura a navegação por setas e Enter no modal de pergunta do cliente
+document.getElementById('modalPerguntaCliente')?.addEventListener('shown.bs.modal', function () {
+  const btnNao = this.querySelector('.btn-outline-secondary');
+  const btnSim = this.querySelector('.btn-primary');
+  
+  if (btnSim) btnSim.focus();
+
+  const handleKeydown = function(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Tab') {
+      e.preventDefault();
+      if (document.activeElement === btnSim) {
+        if (btnNao) btnNao.focus();
+      } else {
+        if (btnSim) btnSim.focus();
+      }
+    }
+  };
+
+  this.addEventListener('keydown', handleKeydown);
+
+  this.addEventListener('hidden.bs.modal', function () {
+    this.removeEventListener('keydown', handleKeydown);
+  }, { once: true });
+});
+
 function confirmarIdentificarCliente() {
   const modalPergEl = document.getElementById('modalPerguntaCliente');
-  const modalPerg = bootstrap.Modal.getInstance(modalPergEl);
   
-  if (modalPerg) {
-    // Ouve o evento de término do fechamento para abrir o próximo modal com segurança
-    modalPergEl.addEventListener('hidden.bs.modal', function handler() {
-      // Remove o listener para não acumular execuções futuras
-      modalPergEl.removeEventListener('hidden.bs.modal', handler);
+  // Fecha o modal atual de forma segura usando a instância
+  if (modalPerguntaClienteObj) {
+    modalPerguntaClienteObj.hide();
+  }
 
-      // Limpa os campos necessários
-      const inputBuscaCli = document.getElementById('input-busca-cliente');
-      if (inputBuscaCli) inputBuscaCli.value = '';
+  // Limpa os campos de cliente
+  const inputBuscaCli = document.getElementById('input-busca-cliente');
+  if (inputBuscaCli) inputBuscaCli.value = '';
 
-      const listaResultadosCli = document.getElementById('lista-clientes-resultados');
-      if (listaResultadosCli) listaResultadosCli.innerHTML = '';
+  const listaResultadosCli = document.getElementById('lista-clientes-resultados');
+  if (listaResultadosCli) listaResultadosCli.innerHTML = '';
 
-      const clientSearchInput = document.getElementById('client-search-input');
-      if (clientSearchInput) clientSearchInput.value = '';
+  const clientSearchInput = document.getElementById('client-search-input');
+  if (clientSearchInput) clientSearchInput.value = '';
 
-      const clientInfoDisplay = document.getElementById('client-info-display');
-      if (clientInfoDisplay) clientInfoDisplay.classList.add('d-none');
+  const clientInfoDisplay = document.getElementById('client-info-display');
+  if (clientInfoDisplay) clientInfoDisplay.classList.add('d-none');
 
-      const clientSelectedName = document.getElementById('client-selected-name');
-      if (clientSelectedName) clientSelectedName.innerText = '';
+  const clientSelectedName = document.getElementById('client-selected-name');
+  if (clientSelectedName) clientSelectedName.innerText = '';
 
-      // Abre o próximo modal de forma limpa
-      const modalCliEl = document.getElementById('modalCliente');
+  // Aguarda a transição terminar antes de abrir o próximo modal e limpar resíduos de backdrop
+  setTimeout(() => {
+    // Remove qualquer resíduo de backdrop travado no DOM
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+
+    const modalCliEl = document.getElementById('modalCliente');
+    if (modalCliEl) {
       const modalCli = new bootstrap.Modal(modalCliEl);
       modalCli.show();
 
-      // Foca no input de busca após a abertura
       modalCliEl.addEventListener('shown.bs.modal', function () {
         if (clientSearchInput) {
           clientSearchInput.focus();
@@ -1145,12 +1185,8 @@ function confirmarIdentificarCliente() {
           inputBuscaCli.focus();
         }
       }, { once: true });
-
-    });
-
-    // Dispara o fechamento do primeiro modal
-    modalPerg.hide();
-  }
+    }
+  }, 200); // 200ms é o tempo exato da animação de fade do Bootstrap
 }
 async function buscarCliente() {
   const termo = document.getElementById('client-search-input').value.trim();
