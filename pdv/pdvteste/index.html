@@ -333,27 +333,19 @@ let CONFIG_LOJA = {
 async function chamarGoogleScript(acao, dados = {}) {
   try {
     const response = await fetch(GOOGLE_SCRIPT_URL, {
-      method: "POST",
+      method: "POST", // Garante estritamente POST para evitar bloqueio de CORS
       mode: "cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" }, // text/plain evita preflight (CORS)
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ acao: acao, ...dados }),
       redirect: "follow"
     });
 
     if (!response.ok) {
-      console.warn(`Servidor retornou status ${response.status}. Usando contingência local.`);
-      return { sucesso: false, mensagem: `Erro HTTP: ${response.status}` };
+      throw new Error(`Erro HTTP: ${response.status}`);
     }
 
     const textoResposta = await response.text();
-    
-    // Tenta converter o texto recebido em JSON com segurança
-    try {
-      return JSON.parse(textoResposta);
-    } catch (e) {
-      console.error("Resposta do servidor não é um JSON válido:", textoResposta);
-      return { sucesso: false, mensagem: "Resposta inválida do servidor." };
-    }
+    return JSON.parse(textoResposta);
 
   } catch (erro) {
     console.error("Erro na comunicação:", erro);
