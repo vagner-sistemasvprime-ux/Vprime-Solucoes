@@ -791,7 +791,7 @@ async function buscarCliente() {
     }, { once: true });
   }
 
-  async function executarConsultaPreco(event) {
+ async function executarConsultaPreco(event) {
   if (event.key === 'Enter') {
     const termo = document.getElementById('consult-input').value.trim();
 
@@ -817,6 +817,10 @@ async function buscarCliente() {
 
     if (!termo) return;
 
+    // Limpa o estado anterior e esconde o container de resultado enquanto busca
+    const resultContainer = document.getElementById('consult-result-container');
+    resultContainer.classList.add('d-none');
+    
     mostrarProcessando("Consultando...");
 
     // 1. Busca primeiro no IndexedDB local (Instantâneo e sem CORS)
@@ -829,7 +833,6 @@ async function buscarCliente() {
 
     esconderProcessando();
 
-    const resultContainer = document.getElementById('consult-result-container');
     resultContainer.classList.remove('d-none');
 
     if (produto && produto.codigo) {
