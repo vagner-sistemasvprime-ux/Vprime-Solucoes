@@ -60,7 +60,29 @@
 </head>
 <body>
 
+  
+
 <div class="fullscreen-wrapper">
+
+  <!-- Tela de Bloqueio / Protetor de Caixa (F5) -->
+<div id="tela-bloqueio" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-white d-flex flex-column justify-content-center align-items-center" style="z-index: 9999;">
+  <div class="text-center p-4">
+    <!-- Logo em destaque na tela cheia -->
+    <img src="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ" alt="Logo Loja" class="img-fluid mb-4" style="max-height: 250px; object-fit: contain;">
+    <h2 class="fw-bold text-secondary mb-2">CAIXA BLOQUEADO</h2>
+    <p class="text-muted fs-5 mb-4">Pressione <strong>F5</strong> novamente ou insira sua senha para desbloquear.</p>
+    
+    <!-- Input invisível ou flutuante para capturar o bip/código durante o bloqueio -->
+    <input type="text" id="input-bloqueio-consulta" class="form-control form-control-lg text-center mx-auto" style="max-width: 400px;" placeholder="Bipe o produto para consulta rápida..." autofocus>
+    
+    <!-- Container que exibe o resultado temporário por 3 segundos -->
+    <div id="resultado-bloqueio" class="mt-4 p-3 rounded shadow-sm bg-light d-none" style="max-width: 500px; margin: 0 auto;">
+      <h4 id="blq-prod-nome" class="fw-bold text-dark m-0">Nome do Produto</h4>
+      <p id="blq-prod-codigo" class="text-muted small mb-1">CÓD: 0000</p>
+      <h3 id="blq-prod-preco" class="text-success fw-bold m-0">R$ 0,00</h3>
+    </div>
+  </div>
+</div>
 
   <!-- 1. TELA DE LOGIN -->
 <div id="login-screen" class="d-flex justify-content-center align-items-center">
@@ -1102,6 +1124,11 @@ function salvarClienteOperacao() {
 }
 
  function adicionarAoCarrinho(produto, quantidade = 1) {
+   // BLOQUEIO DE SEGURANÇA: Se o caixa estiver bloqueado, ignora a adição
+  if (caixaBloqueado) {
+    console.warn("Tentativa de adicionar item com o caixa bloqueado.");
+    return;
+  }
   // Verifica se o carrinho estava vazio ANTES de adicionar o item
   const ePrimeiroProduto = carrinho.length === 0;
 
@@ -1474,7 +1501,95 @@ function executarAcaoMenuCaixa(acao) {
   manterFocoBusca();
 }
 
+let caixaBloqueado = false;
+let temporizadorLimpezaPreco = null;
 
+// Ouve a tecla F5 globalmente
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'F5') {
+    e.preventDefault(); // Evita atualizar a página do navegador
+    
+    if (!caixaBloqueado) {
+      bloquearCaixa();
+    } else {
+      desbloquearCaixa();
+    }
+  }
+});
+
+function bloquearCaixa() {
+  caixaBloqueado = true;
+  const telaBloqueio = document.getElementById('tela-bloqueio');
+  if (telaBloqueio) {
+    telaBloqueio.classList.remove('d-none');
+    
+    // Limpa qualquer resultado anterior e foca no input de consulta
+    const resDiv = document.getElementById('resultado-bloqueio');
+    if (resDiv) resDiv.classList.add('d-none');
+    
+    const inputBlq = document.getElementById('input-bloqueio-consulta');
+    if (inputBlq) {
+      inputBlq.value = '';
+      inputBlq.focus();
+    }
+  }
+}
+
+function desbloquearCaixa() {
+  caixaBloqueado = false;
+  const telaBloqueio = document.getElementById('tela-bloqueio');
+  if (telaBloqueio) {
+    telaBloqueio.classList.add('d-none');
+  }
+  manterFocoBusca();
+}
+
+// Ouve a digitação ou bipe na tela de bloqueio
+document.getElementById('input-bloqueio-consulta')?.addEventListener('keypress', async (e) => {
+  if (e.key === 'Enter') {
+    const termo = e.target.value.trim();
+    e.target.value = ''; // Limpa o campo imediatamente para o próximo bipe
+    
+    if (!termo) return;
+
+    // Busca o produto localmente (ou via fallback se necessário)
+    let produto = await buscarProdutoLocal(termo);
+    if (!produto && navigator.onLine && typeof chamarGoogleScript === 'function') {
+      produto = await chamarGoogleScript('buscarProduto', { termo });
+    }
+
+    const resDiv = document.getElementById('resultado-bloqueio');
+    const nomeEl = document.getElementById('blq-prod-nome');
+    const codEl = document.getElementById('blq-prod-codigo');
+    const precoEl = document.getElementById('blq-prod-preco');
+
+    if (produto && produto.codigo) {
+      nomeEl.innerText = produto.nome;
+      codEl.innerText = `CÓD: ${produto.codigo}`;
+      precoEl.innerText = `R$ ${Number(produto.preco).toFixed(2).replace('.', ',')}`;
+    } else {
+      nomeEl.innerText = "Produto Não Encontrado";
+      codEl.innerText = "---";
+      precoEl.innerText = "R$ 0,00";
+    }
+
+    // Exibe o card com o resultado na frente da logo
+    resDiv.classList.remove('d-none');
+
+    // Reseta o temporizador anterior se houver, para somar 3 segundos limpos a partir do último bipe
+    if (temporizadorLimpezaPreco) {
+      clearTimeout(temporizadorLimpezaPreco);
+    }
+
+    // Some com os dados do produto após 3 segundos, mantendo apenas a logo em tela cheia
+    temporizadorLimpezaPreco = setTimeout(() => {
+      resDiv.classList.add('d-none');
+    }, 3000);
+  }
+});
+
+
+   
 
 
 
