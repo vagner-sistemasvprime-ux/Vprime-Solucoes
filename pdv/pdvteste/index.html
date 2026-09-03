@@ -1633,6 +1633,22 @@ function bloquearCaixa() {
   }
 }
 
+   // 1. Ouve a tecla Enter especificamente dentro do input de senha do modal
+document.getElementById('input-senha-desbloqueio')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    validarSenhaDesbloqueio();
+  }
+});
+
+// 2. Garante que o foco vá para o input assim que o modal terminar de abrir na tela
+document.getElementById('modalSenhaDesbloqueio')?.addEventListener('shown.bs.modal', function () {
+  const inputSenha = document.getElementById('input-senha-desbloqueio');
+  if (inputSenha) {
+    inputSenha.focus();
+  }
+});
+
 function abrirModalDesbloqueio() {
   const inputSenha = document.getElementById('input-senha-desbloqueio');
   if (inputSenha) inputSenha.value = '';
