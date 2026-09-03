@@ -1556,22 +1556,43 @@ function executarAcaoMenuCaixa(acao) {
 
 let caixaBloqueado = false;
 let temporizadorLimpezaPreco = null;
+let modalDesbloqueioObj = null;
 
-// Ouve a tecla F5 globalmente
+// Inicializa a instância do modal de forma segura assim que a página carregar
+document.addEventListener('DOMContentLoaded', () => {
+  const modalEl = document.getElementById('modalSenhaDesbloqueio');
+  if (modalEl) {
+    modalDesbloqueioObj = new bootstrap.Modal(modalEl, { backdrop: 'static' });
+  }
+});
+
+// --- OUVINTE GLOBAL DE TECLADO CORRIGIDO ---
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'F5') {
-    e.preventDefault();
-    
-    if (!caixaBloqueado) {
-      bloquearCaixa();
-    } else {
+  // Se o caixa estiver bloqueado
+  if (caixaBloqueado) {
+    // Se apertar F5 ou ESC, abre o modal de senha para desbloquear
+    if (e.key === 'F5' || e.key === 'Escape' || e.key === 'Esc') {
+      e.preventDefault();
+      e.stopPropagation();
       abrirModalDesbloqueio();
+      return;
     }
-  } else if (caixaBloqueado) {
-    // Garante que qualquer tecla digitada com o caixa bloqueado vá direto para o input invisível de captura
+
+    // Se NÃO for tecla de navegação/especial, joga o foco para o input do leitor (mas sem loop travado)
     const inputBlq = document.getElementById('input-bloqueio-consulta');
-    if (inputBlq && document.activeElement !== inputBlq) {
-      inputBlq.focus();
+    const modalEl = document.getElementById('modalSenhaDesbloqueio');
+    const modalEstaAberto = modalEl && modalEl.classList.contains('show');
+
+    if (inputBlq && !modalEstaAberto && document.activeElement !== inputBlq) {
+      if (e.key.length === 1 || e.key === 'Enter') {
+        inputBlq.focus();
+      }
+    }
+  } else {
+    // Se o caixa estiver normal, o F5 bloqueia a tela
+    if (e.key === 'F5') {
+      e.preventDefault();
+      bloquearCaixa();
     }
   }
 });
@@ -1600,21 +1621,20 @@ function abrirModalDesbloqueio() {
   const errorDiv = document.getElementById('desbloqueio-error');
   if (errorDiv) errorDiv.classList.add('d-none');
 
-  const modalEl = document.getElementById('modalSenhaDesbloqueio');
-  const modal = new bootstrap.Modal(modalEl);
-  modal.show();
-
-  modalEl.addEventListener('shown.bs.modal', function () {
-    if (inputSenha) inputSenha.focus();
-  }, { once: true });
+  if (modalDesbloqueioObj) {
+    modalDesbloqueioObj.show();
+    setTimeout(() => {
+      if (inputSenha) inputSenha.focus();
+    }, 150);
+  }
 }
 
 function fecharModalDesbloqueio() {
-  const modalEl = document.getElementById('modalSenhaDesbloqueio');
-  const bsModal = bootstrap.Modal.getInstance(modalEl);
-  if (bsModal) bsModal.hide();
+  if (modalDesbloqueioObj) {
+    modalDesbloqueioObj.hide();
+  }
   
-  // Retorna o foco para o input invisível da tela de bloqueio para continuar capturando leituras
+  // Retorna o foco para o input de consulta da tela de bloqueio
   const inputBlq = document.getElementById('input-bloqueio-consulta');
   if (inputBlq) inputBlq.focus();
 }
@@ -1628,10 +1648,9 @@ async function validarSenhaDesbloqueio() {
   const passHash = await gerarHash(senhaDigitada);
 
   if (usuarioLogado && (usuarioLogado.passHash === passHash || usuarioLogado.senha === senhaDigitada)) {
-    const modalEl = document.getElementById('modalSenhaDesbloqueio');
-    const bsModal = bootstrap.Modal.getInstance(modalEl);
-    if (bsModal) bsModal.hide();
-
+    if (modalDesbloqueioObj) {
+      modalDesbloqueioObj.hide();
+    }
     desbloquearCaixa();
   } else {
     if (errorDiv) errorDiv.classList.remove('d-none');
@@ -1647,7 +1666,7 @@ function desbloquearCaixa() {
   manterFocoBusca();
 }
 
-// Ouve o bipe ou código digitado e exibe as informações por 3 segundos na frente da logo
+// Ouve o bipe ou código digitado e exibe as informações por 5 segundos na frente da logo
 document.getElementById('input-bloqueio-consulta')?.addEventListener('keypress', async (e) => {
   if (e.key === 'Enter') {
     const termo = e.target.value.trim();
@@ -1682,13 +1701,11 @@ document.getElementById('input-bloqueio-consulta')?.addEventListener('keypress',
       clearTimeout(temporizadorLimpezaPreco);
     }
 
-    // Some com os dados após 3 segundos, voltando a exibir apenas a logo limpa em tela cheia
     temporizadorLimpezaPreco = setTimeout(() => {
       resDiv.classList.add('d-none');
-    }, 3000);
+    }, 5000);
   }
 });
-
 
 
 
