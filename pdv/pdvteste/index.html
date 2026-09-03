@@ -133,6 +133,23 @@
         <input type="text" id="search-input" class="form-control border-start-0 fs-4" placeholder="Qtd * Código/Nome (Ex: 3*1001) e Pressione Enter..." onkeypress="tratarBusca(event)">
       </div>
 
+      <!-- Label do Cliente Identificado / Consumidor Final -->
+      <div id="cliente-badge-container" class="card border-0 shadow-sm bg-light mb-3 px-3 py-2 d-flex flex-row justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-person-fill-check text-primary fs-5"></i>
+          <span class="text-muted small fw-semibold">Cliente:</span>
+          <span id="cliente-display-name" class="fw-bold text-dark">Consumidor Final</span>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary py-0 px-2 fw-semibold" onclick="abrirCadastroCliente()" title="Alterar/Cadastrar Cliente (F4)">
+          <i class="bi bi-pencil-square"></i> Alterar (F4)
+        </button>
+      </div>
+
+      <div class="input-group input-group-lg shadow-sm">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-barcode-scan text-muted fs-4"></i></span>
+        <input type="text" id="search-input" class="form-control border-start-0 fs-4" placeholder="Qtd * Código/Nome (Ex: 3*1001) e Pressione Enter..." onkeypress="tratarBusca(event)">
+      </div>
+
       <div class="cart-container shadow-sm">
         <div id="empty-cart-message" class="empty-cart-msg">
           <i class="bi bi-cart-check display-1 text-muted opacity-50"></i>
@@ -904,14 +921,34 @@ async function tratarBusca(event) {
     manterFocoBusca();
   }
 }
-
+   
+function atualizarDisplayCliente(nomeCliente) {
+  const el = document.getElementById('cliente-display-name');
+  if (el) {
+    el.innerText = nomeCliente || "Consumidor Final";
+  }
+}
+   
 function confirmarIdentificarCliente() {
   const modalPerg = bootstrap.Modal.getInstance(document.getElementById('modalPerguntaCliente'));
   if (modalPerg) modalPerg.hide();
   
   limpaBackdrops();
+
+  // Limpa o campo de busca de cliente e a listagem anterior para abrir limpo
+  const inputBuscaCli = document.getElementById('input-busca-cliente');
+  if (inputBuscaCli) inputBuscaCli.value = '';
+
+  const listaResultadosCli = document.getElementById('lista-clientes-resultados');
+  if (listaResultadosCli) listaResultadosCli.innerHTML = '';
+
   const modalCli = new bootstrap.Modal(document.getElementById('modalCliente'));
   modalCli.show();
+
+  // Foca no input de busca do modal assim que ele abrir
+  document.getElementById('modalCliente').addEventListener('shown.bs.modal', function () {
+    if (inputBuscaCli) inputBuscaCli.focus();
+  }, { once: true });
 }
 
 async function buscarCliente() {
