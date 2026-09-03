@@ -915,10 +915,14 @@ async function tratarBusca(event) {
   }
 }
    
-function atualizarDisplayCliente(nomeCliente) {
+function atualizarDisplayCliente(nomeCliente, documentoCliente) {
   const el = document.getElementById('cliente-display-name');
   if (el) {
-    el.innerText = nomeCliente || "Consumidor Final";
+    if (nomeCliente && nomeCliente !== "Consumidor Final") {
+      el.innerText = documentoCliente ? `${nomeCliente} (${documentoCliente})` : nomeCliente;
+    } else {
+      el.innerText = "Consumidor Final";
+    }
   }
 }
    
@@ -967,18 +971,30 @@ async function buscarCliente() {
 
   if (cliente && cliente.nome) {
     clienteSelecionado = cliente;
+    
+    // Atualiza o card dentro do modal
     document.getElementById('client-selected-name').innerText = `${cliente.nome} (${cliente.documento})`;
     document.getElementById('client-info-display').classList.remove('d-none');
+    
+    // ATUALIZA O DISPLAY NA TELA PRINCIPAL IMEDIATAMENTE
+    atualizarDisplayCliente(cliente.nome, cliente.documento);
+    
   } else {
     mostrarAviso('Cliente não encontrado localmente!', 'Busca', 'danger');
   }
 }
-  function salvarClienteOperacao() {
-    const modalCli = bootstrap.Modal.getInstance(document.getElementById('modalCliente'));
-    if (modalCli) modalCli.hide();
-    limpaBackdrops();
-    manterFocoBusca();
+
+function salvarClienteOperacao() {
+  // Garante que se houver um cliente selecionado, ele atualiza a tela principal antes de fechar
+  if (window.clienteSelecionado && window.clienteSelecionado.nome) {
+    atualizarDisplayCliente(window.clienteSelecionado.nome, window.clienteSelecionado.documento);
   }
+
+  const modalCli = bootstrap.Modal.getInstance(document.getElementById('modalCliente'));
+  if (modalCli) modalCli.hide();
+  limpaBackdrops();
+  manterFocoBusca();
+}
 
  function adicionarAoCarrinho(produto, quantidade = 1) {
   // Verifica se o carrinho estava vazio ANTES de adicionar o item
