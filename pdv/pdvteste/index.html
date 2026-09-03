@@ -1563,7 +1563,6 @@ function executarAcaoMenuCaixa(acao) {
   
   manterFocoBusca();
 }
-
 let caixaBloqueado = false;
 let temporizadorLimpezaPreco = null;
 let modalDesbloqueioObj = null;
@@ -1572,25 +1571,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalEl = document.getElementById('modalSenhaDesbloqueio');
   if (modalEl) {
     modalDesbloqueioObj = new bootstrap.Modal(modalEl, { backdrop: 'static' });
-    console.log("🟢 [LOG] Instância do modal de desbloqueio criada com sucesso.");
-  } else {
-    console.error("❌ [LOG ERRO] Elemento #modalSenhaDesbloqueio não foi encontrado no HTML!");
   }
 });
 
-// --- OUVINTE GLOBAL COM LOGS DE RASTREIO ---
+// --- OUVINTE GLOBAL ---
 document.addEventListener('keydown', (e) => {
-  console.log(`⌨️ [LOG TECLA] Tecla pressionada: "${e.key}" | Caixa bloqueado? ${caixaBloqueado}`);
-
   if (e.key === 'F5') {
     e.preventDefault();
     e.stopPropagation();
     
     if (!caixaBloqueado) {
-      console.log("🔒 [LOG] Executando bloqueio de caixa...");
       bloquearCaixa();
     } else {
-      console.log("🔓 [LOG] Caixa já está bloqueado. Tentando abrir modal de senha...");
       abrirModalDesbloqueio();
     }
     return;
@@ -1600,7 +1592,6 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' || e.key === 'Esc') {
       e.preventDefault();
       e.stopPropagation();
-      console.log("🔓 [LOG] Tecla ESC acionada no bloqueio. Abrindo modal de senha...");
       abrirModalDesbloqueio();
       return;
     }
