@@ -321,8 +321,7 @@
   <!-- RODAPÉ COM ATALHOS DO SISTEMA -->
 <footer id="footer-atalhos" class="bg-dark text-white py-2 px-3 fixed-bottom border-top border-secondary">
   <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center text-center small gap-2">
-    <div><span class="badge bg-secondary me-1">F2</span> Consulta</div>
-    <div><span class="badge bg-secondary me-1">F3</span> Modo Orçamento</div>
+    <div><span class="badge bg-secondary me-1">F3</span> Modo Orçamento / Venda</div>
     <div><span class="badge bg-secondary me-1">F4</span> Modo Venda</div>
     <div><span class="badge bg-secondary me-1">F6</span> Cliente</div>
     <div><span class="badge bg-secondary me-1">F8</span> Finalizar Venda</div>
@@ -663,15 +662,10 @@ function tratarEnterLogin(event) {
       abrirModalConsulta();
     }
 
-    if (event.key === 'F3') {
-      event.preventDefault();
-      ativarModoOrcamento();
-    }
-
-    if (event.key === 'F4') {
-      event.preventDefault();
-      ativarModoVenda();
-    }
+   if (event.key === 'F3') {
+  event.preventDefault();
+  alternarModoOrcamentoVenda();
+}
 
     if (event.key === 'F8') {
       event.preventDefault();
@@ -732,7 +726,13 @@ document.getElementById('modalPerguntaCliente').addEventListener('shown.bs.modal
     this.removeEventListener('keydown', handleKeydown);
   }, { once: true });
 });
-
+function alternarModoOrcamentoVenda() {
+  if (modoOrcamento) {
+    ativarModoVenda();
+  } else {
+    ativarModoOrcamento();
+  }
+}
   function imprimirOrcamento() {
   if (carrinho.length === 0) {
     mostrarAviso("O carrinho está vazio para gerar orçamento!", "Atenção", "warning");
