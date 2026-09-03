@@ -817,21 +817,16 @@ async function buscarCliente() {
 
     if (!termo) return;
 
-    // Limpa o estado anterior e esconde o container de resultado enquanto busca
     const resultContainer = document.getElementById('consult-result-container');
     resultContainer.classList.add('d-none');
-    
-    mostrarProcessando("Consultando...");
 
-    // 1. Busca primeiro no IndexedDB local (Instantâneo e sem CORS)
+    // Busca instantânea no IndexedDB local
     let produto = await buscarProdutoLocal(termo);
 
-    // 2. Fallback: Se não achar localmente e houver internet, tenta buscar na planilha
+    // Fallback opcional caso não ache localmente e tenha internet
     if (!produto && navigator.onLine) {
       produto = await chamarGoogleScript('buscarProduto', { termo });
     }
-
-    esconderProcessando();
 
     resultContainer.classList.remove('d-none');
 
