@@ -401,6 +401,21 @@
   </div>
 </div>
 
+  <!-- ADICIONE ESTE HTML NO SEU ARQUIVO ONDE FICAM OS MODAIS -->
+<div class="modal fade" id="modalRemoverItem" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg text-center p-4">
+      <div class="display-3 mb-2 text-danger"><i class="bi bi-trash-fill"></i></div>
+      <h4 class="fw-bold mb-2">Remover Item?</h4>
+      <p class="fs-5 text-muted mb-4">Deseja realmente remover este item do carrinho?</p>
+      <div class="d-flex gap-3 justify-content-center">
+        <button type="button" class="btn btn-outline-secondary btn-lg fw-bold px-4" onclick="fecharModalRemover()">Não</button>
+        <button type="button" class="btn btn-danger btn-lg fw-bold px-4" onclick="confirmarRemocaoItem()">Sim</button>
+      </div>
+    </div>
+  </div>
+</div>
+
   <!-- Modal Menu Caixa (F9) -->
 <div class="modal fade" id="modalMenuCaixa" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -1465,9 +1480,17 @@ async function confirmarVenda() {
   }
 }
 
-   let indiceItemSelecionado = 0;
+ let indiceItemSelecionado = 0;
+let modalRemoverObj = null;
 
-// Função acionada pelo F6 para entrar no carrinho
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('modalRemoverItem');
+  if (el) {
+    modalRemoverObj = new bootstrap.Modal(el, { backdrop: 'static' });
+  }
+});
+
+// Função acionada pelo F6 para entrar no modo de exclusão do carrinho
 function focarOuNavegarCarrinho() {
   if (carrinho.length === 0) {
     mostrarAviso("O carrinho está vazio.", "Atenção", "warning");
@@ -1478,16 +1501,28 @@ function focarOuNavegarCarrinho() {
   if (linhas.length > 0) {
     indiceItemSelecionado = 0;
     linhas[indiceItemSelecionado].focus();
-    linhas[indiceItemSelecionado].classList.add('table-active'); // Destaque visual do Bootstrap
-
-    // Adiciona o ouvinte de navegação enquanto focado nos itens
+    linhas[indiceItemSelecionado].classList.add('table-active');
+    
+    // Adiciona destaque visual de alerta (borda/fundo vermelho) no container do carrinho
+    alternarVisualExclusaoCarrinho(true);
     ativarNavegacaoCarrinho(linhas);
+  }
+}
+
+function ativarVisualExclusaoCarrinho(ativo) {
+  // Pega o card contenedor da tabela ou a própria tabela para dar o destaque vermelho
+  const containerCarrinho = document.getElementById('cart-table')?.closest('.card') || document.getElementById('cart-table');
+  if (containerCarrinho) {
+    if (ativo) {
+      containerCarrinho.classList.add('border', 'border-danger', 'border-3');
+    } else {
+      containerCarrinho.classList.remove('border', 'border-danger', 'border-3');
+    }
   }
 }
 
 function ativarNavegacaoCarrinho(linhas) {
   linhas.forEach((linha, idx) => {
-    // Suporte ao clique do mouse para selecionar o item direto
     linha.onclick = () => {
       indiceItemSelecionado = idx;
       perguntarRemoverItem(indiceItemSelecionado);
@@ -1512,26 +1547,21 @@ function ativarNavegacaoCarrinho(linhas) {
       } else if (e.key === 'Escape' || e.key === 'Esc') {
         e.preventDefault();
         linhas[indiceItemSelecionado].classList.remove('table-active');
+        alternarVisualExclusaoCarrinho(false);
         manterFocoBusca();
       }
     };
   });
 }
 
-// Abre o modal de confirmação para remover o item
 function perguntarRemoverItem(index) {
   const item = carrinho[index];
   if (!item) return;
 
-  // Você pode reutilizar um modal de aviso/confirmação ou criar um específico #modalRemoverItem
-  // Vamos assumir que você tem um modal de confirmação genérico ou o modalPerguntaRemover
-  const modalEl = document.getElementById('modalRemoverItem') || criarModalRemoverDinamico();
-  
-  // Guarda o índice que vai ser removido se confirmar
   window.itemParaRemoverIndex = index;
-  
-  const modalObj = new bootstrap.Modal(modalEl, { backdrop: 'static' });
-  modalObj.show();
+  if (modalRemoverObj) {
+    modalRemoverObj.show();
+  }
 }
 
 function confirmarRemocaoItem() {
@@ -1543,13 +1573,15 @@ function confirmarRemocaoItem() {
 }
 
 function fecharModalRemover() {
-  const modalEl = document.getElementById('modalRemoverItem');
-  if (modalEl) {
-    const instancia = bootstrap.Modal.getInstance(modalEl);
-    if (instancia) instancia.hide();
+  if (modalRemoverObj) {
+    modalRemoverObj.hide();
   }
-  limpaBackdrops();
-  manterFocoBusca();
+  
+  setTimeout(() => {
+    limpaBackdrops();
+    alternarVisualExclusaoCarrinho(false);
+    manterFocoBusca();
+  }, 150);
 }
 
   function removerItemCarrinho(index) {
