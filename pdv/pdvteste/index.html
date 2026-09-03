@@ -1509,6 +1509,18 @@ function focarOuNavegarCarrinho() {
   }
 }
 
+
+   function alternarVisualExclusaoCarrinho(ativo) {
+  const containerCarrinho = document.getElementById('cart-table')?.closest('.card') || document.getElementById('cart-table');
+  if (containerCarrinho) {
+    if (ativo) {
+      containerCarrinho.classList.add('border', 'border-danger', 'border-3');
+    } else {
+      containerCarrinho.classList.remove('border', 'border-danger', 'border-3');
+    }
+  }
+}
+   
 function ativarVisualExclusaoCarrinho(ativo) {
   // Pega o card contenedor da tabela ou a própria tabela para dar o destaque vermelho
   const containerCarrinho = document.getElementById('cart-table')?.closest('.card') || document.getElementById('cart-table');
