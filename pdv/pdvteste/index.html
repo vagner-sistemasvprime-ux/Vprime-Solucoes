@@ -1537,11 +1537,15 @@ function executarAcaoMenuCaixa(acao) {
 
 let caixaBloqueado = false;
 let temporizadorLimpezaPreco = null;
+let modalDesbloqueioInstance = null;
 
-// Ouve as teclas globalmente para bloqueio e desbloqueio
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'F5') {
-    e.preventDefault();
+// --- ÚNICO OUVINTE DE TECLADO CENTRALIZADO (EVITA CONFLITOS) ---
+document.addEventListener('keydown', function(event) {
+  // 1. Tecla F5: Alterna entre bloquear o caixa ou abrir a senha de desbloqueio
+  if (event.key === 'F5') {
+    event.preventDefault();
+    event.stopPropagation();
+    
     if (!caixaBloqueado) {
       bloquearCaixa();
     } else {
@@ -1550,20 +1554,60 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  // Se o caixa estiver bloqueado, tratamos teclas específicas ou mantemos o foco no input
+  // 2. Se o caixa estiver bloqueado
   if (caixaBloqueado) {
-    // Se apertar ESC, também abre o modal de senha para facilitar
-    if (e.key === 'Escape' || e.key === 'Esc') {
-      e.preventDefault();
+    // ESC abre o modal de senha para desbloquear
+    if (event.key === 'Escape' || event.key === 'Esc') {
+      event.preventDefault();
+      event.stopPropagation();
       abrirModalDesbloqueio();
       return;
     }
 
-    // Garante que qualquer outra tecla digitada vá direto para o input invisível de captura do leitor
+    // Mantém o foco no input oculto para o leitor de código de barras
     const inputBlq = document.getElementById('input-bloqueio-consulta');
     if (inputBlq && document.activeElement !== inputBlq) {
-      inputBlq.focus();
+      const modalAberto = document.querySelector('.modal.show');
+      // Só foca se nenhum modal (como o de senha) estiver aberto na tela
+      if (!modalAberto) {
+        inputBlq.focus();
+      }
     }
+    return;
+  }
+
+  // 3. Atalhos normais do PDV (só funcionam se o caixa NÃO estiver bloqueado)
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    const modais = document.querySelectorAll('.modal.show');
+    modais.forEach(modalEl => {
+      if (modalEl.id !== 'modalLoading') {
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+      }
+    });
+    limpaBackdrops();
+    manterFocoBusca();
+  }
+
+  if (event.key === 'F2') {
+    event.preventDefault();
+    abrirModalConsulta();
+  }
+
+  if (event.key === 'F3') {
+    event.preventDefault();
+    alternarModoOrcamentoVenda();
+  }
+
+  if (event.key === 'F4') {
+    event.preventDefault();
+    abrirCadastroCliente();
+  }
+
+  if (event.key === 'F8') {
+    event.preventDefault();
+    acaoFinalizar();
   }
 });
 
@@ -1592,20 +1636,26 @@ function abrirModalDesbloqueio() {
   if (errorDiv) errorDiv.classList.add('d-none');
 
   const modalEl = document.getElementById('modalSenhaDesbloqueio');
-  const modal = new bootstrap.Modal(modalEl);
-  modal.show();
+  if (!modalEl) return;
 
-  modalEl.addEventListener('shown.bs.modal', function () {
+  // Usa o gerenciador seguro de instâncias do Bootstrap para evitar falhas
+  if (!modalDesbloqueioInstance) {
+    modalDesbloqueioInstance = new bootstrap.Modal(modalEl, { backdrop: 'static' });
+  }
+  modalDesbloqueioInstance.show();
+
+  // Garante o foco no input de senha após a abertura completa do modal
+  setTimeout(() => {
     if (inputSenha) inputSenha.focus();
-  }, { once: true });
+  }, 150);
 }
 
 function fecharModalDesbloqueio() {
-  const modalEl = document.getElementById('modalSenhaDesbloqueio');
-  const bsModal = bootstrap.Modal.getInstance(modalEl);
-  if (bsModal) bsModal.hide();
+  if (modalDesbloqueioInstance) {
+    modalDesbloqueioInstance.hide();
+  }
   
-  // Retorna o foco para o input invisível da tela de bloqueio para continuar capturando leituras
+  // Retorna o foco para o input invisível da tela de bloqueio
   const inputBlq = document.getElementById('input-bloqueio-consulta');
   if (inputBlq) inputBlq.focus();
 }
@@ -1619,10 +1669,9 @@ async function validarSenhaDesbloqueio() {
   const passHash = await gerarHash(senhaDigitada);
 
   if (usuarioLogado && (usuarioLogado.passHash === passHash || usuarioLogado.senha === senhaDigitada)) {
-    const modalEl = document.getElementById('modalSenhaDesbloqueio');
-    const bsModal = bootstrap.Modal.getInstance(modalEl);
-    if (bsModal) bsModal.hide();
-
+    if (modalDesbloqueioInstance) {
+      modalDesbloqueioInstance.hide();
+    }
     desbloquearCaixa();
   } else {
     if (errorDiv) errorDiv.classList.remove('d-none');
@@ -1638,7 +1687,7 @@ function desbloquearCaixa() {
   manterFocoBusca();
 }
 
-// Ouve o bipe ou código digitado e exibe as informações por 3 segundos na frente da logo
+// Ouve o bipe ou código digitado e exibe as informações por 5 segundos na frente da logo
 document.getElementById('input-bloqueio-consulta')?.addEventListener('keypress', async (e) => {
   if (e.key === 'Enter') {
     const termo = e.target.value.trim();
@@ -1666,14 +1715,12 @@ document.getElementById('input-bloqueio-consulta')?.addEventListener('keypress',
       precoEl.innerText = "R$ 0,00";
     }
 
-    // Exibe o card de consulta sobre a logo
     resDiv.classList.remove('d-none');
 
     if (temporizadorLimpezaPreco) {
       clearTimeout(temporizadorLimpezaPreco);
     }
 
-    // Some com os dados após 3 segundos, voltando a exibir apenas a logo limpa em tela cheia
     temporizadorLimpezaPreco = setTimeout(() => {
       resDiv.classList.add('d-none');
     }, 5000);
