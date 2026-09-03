@@ -1129,11 +1129,16 @@ document.getElementById('modalPerguntaCliente')?.addEventListener('shown.bs.moda
 
 // Ação ao clicar em "NÃO"
 function recusarIdentificarCliente() {
-  if (modalPerguntaClienteObj) {
-    modalPerguntaClienteObj.hide();
+  const el = document.getElementById('modalPerguntaCliente');
+  if (el) {
+    let instancia = bootstrap.Modal.getInstance(el);
+    if (!instancia) {
+      instancia = new bootstrap.Modal(el);
+    }
+    instancia.hide();
   }
   
-  // Limpeza imediata de resíduos e devolução do foco para a busca
+  // Limpeza rigorosa de resíduos e foco
   setTimeout(() => {
     limpaBackdrops();
     manterFocoBusca();
@@ -1142,8 +1147,13 @@ function recusarIdentificarCliente() {
 
 // Ação ao clicar em "SIM"
 function confirmarIdentificarCliente() {
-  if (modalPerguntaClienteObj) {
-    modalPerguntaClienteObj.hide();
+  const elPerg = document.getElementById('modalPerguntaCliente');
+  if (elPerg) {
+    let instanciaPerg = bootstrap.Modal.getInstance(elPerg);
+    if (!instanciaPerg) {
+      instanciaPerg = new bootstrap.Modal(elPerg);
+    }
+    instanciaPerg.hide();
   }
 
   // Limpa os campos de cliente preventivamente
