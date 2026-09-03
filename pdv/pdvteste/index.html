@@ -723,17 +723,17 @@ function aplicarConfiguracoesGerais() {
     }
 
     // Se obteve resposta da nuvem com sucesso
-    if (res && res.sucesso) {
-      usuarioLogado = res.usuario;
-      
-      // Salva o usuário no IndexedDB local para permitir login offline futuro
-      if (typeof salvarUsuarioLocal === 'function') {
-        await salvarUsuarioLocal({ ...res.usuario, passHash });
-      }
+if (res && res.sucesso) {
+  usuarioLogado = { ...res.usuario, passHash }; // <--- Garante que o passHash vai junto para a sessão
+  
+  // Salva o usuário no IndexedDB local para permitir login offline futuro
+  if (typeof salvarUsuarioLocal === 'function') {
+    await salvarUsuarioLocal({ ...res.usuario, passHash });
+  }
 
-      concluirLoginComSucesso(res.usuario);
-      return;
-    }
+  concluirLoginComSucesso(res.usuario);
+  return;
+}
 
     // FALLBACK OFFLINE: Se falhou na nuvem ou está sem internet, valida no IndexedDB
     console.log("🔄 Verificando credenciais no banco local (IndexedDB)...");
