@@ -99,3 +99,80 @@ async function limparVendasPendentes() {
   await store.clear();
   return tx.complete;
 }
+
+// Salva a lista de produtos no IndexedDB
+async function salvarProdutosLocal(produtos) {
+  const db = await abrirBanco();
+  const tx = db.transaction('produtos', 'readwrite');
+  const store = tx.objectStore('produtos');
+  await store.clear(); // Limpa a lista antiga
+  produtos.forEach(prod => store.put(prod));
+  return tx.complete;
+}
+
+// Salva a lista de clientes no IndexedDB
+async function salvarClientesLocal(clientes) {
+  const db = await abrirBanco();
+  const tx = db.transaction('clientes', 'readwrite');
+  const store = tx.objectStore('clientes');
+  await store.clear();
+  clientes.forEach(cli => store.put(cli));
+  return tx.complete;
+}
+
+// Busca produto no IndexedDB por Código ou Nome
+async function buscarProdutoLocal(termo) {
+  const db = await abrirBanco();
+  const tx = db.transaction('produtos', 'readonly');
+  const store = tx.objectStore('produtos');
+
+  return new Promise((resolve) => {
+    let termoLimpo = String(termo).trim().toLowerCase();
+    let qtd = 1;
+
+    // Trata o multiplicador (Ex: 3*1001)
+    if (termoLimpo.includes('*')) {
+      const partes = termoLimpo.split('*');
+      const q = parseFloat(partes[0].replace(',', '.'));
+      if (!isNaN(q) && q > 0) {
+        qtd = q;
+        termoLimpo = partes.slice(1).join('*').trim();
+      }
+    }
+
+    const req = store.getAll();
+    req.onsuccess = () => {
+      const produtos = req.result || [];
+      const achado = produtos.find(p => 
+        String(p.codigo).toLowerCase() === termoLimpo || 
+        String(p.nome).toLowerCase().includes(termoLimpo)
+      );
+
+      if (achado) {
+        resolve({ ...achado, qtdAdicionada: qtd });
+      } else {
+        resolve(null);
+      }
+    };
+  });
+}
+
+// Busca cliente no IndexedDB por Documento ou Nome
+async function buscarClienteLocal(termo) {
+  const db = await abrirBanco();
+  const tx = db.transaction('clientes', 'readonly');
+  const store = tx.objectStore('clientes');
+
+  return new Promise((resolve) => {
+    const termoLimpo = String(termo).trim().toLowerCase();
+    const req = store.getAll();
+    req.onsuccess = () => {
+      const clientes = req.result || [];
+      const achado = clientes.find(c => 
+        String(c.documento).toLowerCase() === termoLimpo || 
+        String(c.nome).toLowerCase().includes(termoLimpo)
+      );
+      resolve(achado || null);
+    };
+  });
+}
