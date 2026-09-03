@@ -307,6 +307,35 @@
   </div>
 </div>
 
+  <!-- MODAL CADASTRO DE CLIENTE -->
+<div class="modal fade" id="modalCadastroCliente" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold text-dark m-0"><i class="bi bi-person-plus-fill me-2 text-primary"></i>Novo Cliente</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="manterFocoBusca()"></button>
+      </div>
+      <div id="cliente-error" class="alert alert-danger d-none" role="alert"></div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Nome Completo</label>
+        <input type="text" id="cliente-nome" class="form-control form-control-lg" placeholder="Nome do cliente">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">CPF / CNPJ</label>
+        <input type="text" id="cliente-doc" class="form-control form-control-lg" placeholder="000.000.000-00">
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-semibold">Telefone / WhatsApp</label>
+        <input type="text" id="cliente-fone" class="form-control form-control-lg" placeholder="(00) 00000-0000">
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-secondary btn-lg w-50 fw-bold" data-bs-dismiss="modal" onclick="manterFocoBusca()">Cancelar</button>
+        <button type="button" class="btn btn-primary btn-lg w-50 fw-bold" onclick="salvarNovoCliente()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- INDICADOR DE PROCESSAMENTO -->
 <div class="modal fade" id="modalLoading" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -322,7 +351,7 @@
 <footer id="footer-atalhos" class="bg-dark text-white py-2 px-3 fixed-bottom border-top border-secondary">
   <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center text-center small gap-2">
     <div><span class="badge bg-secondary me-1">F3</span> Modo Orçamento / Venda</div>
-    <div><span class="badge bg-secondary me-1">F4</span> Modo Venda</div>
+    <div><span class="badge bg-secondary me-1">F4</span> Novo Cliente</div>
     <div><span class="badge bg-secondary me-1">F6</span> Cliente</div>
     <div><span class="badge bg-secondary me-1">F8</span> Finalizar Venda</div>
     <div><span class="badge bg-secondary me-1">F9</span> Menu</div>
@@ -666,6 +695,10 @@ function tratarEnterLogin(event) {
   event.preventDefault();
   alternarModoOrcamentoVenda();
 }
+    if (event.key === 'F4') {
+    event.preventDefault();
+    abrirCadastroCliente();
+  }
 
     if (event.key === 'F8') {
       event.preventDefault();
@@ -745,6 +778,73 @@ function alternarModoOrcamentoVenda() {
   manterFocoBusca(); // <-- Devolve o foco aqui
 }
 
+
+   // Abre o modal de cadastro de cliente (acionado por F4)
+function abrirCadastroCliente() {
+  const modalEl = document.getElementById('modalCadastroCliente');
+  const modal = new bootstrap.Modal(modalEl);
+  
+  // Limpa campos e erros anteriores
+  document.getElementById('cliente-nome').value = '';
+  document.getElementById('cliente-doc').value = '';
+  document.getElementById('cliente-fone').value = '';
+  document.getElementById('cliente-error').classList.add('d-none');
+  
+  modal.show();
+  
+  // Foca no primeiro input assim que o modal abrir completamente
+  modalEl.addEventListener('shown.bs.modal', function () {
+    document.getElementById('cliente-nome').focus();
+  }, { once: true });
+}
+
+// Lógica para salvar o novo cliente (integrada ao IndexedDB)
+async function salvarNovoCliente() {
+  const nome = document.getElementById('cliente-nome').value.trim();
+  const documento = document.getElementById('cliente-doc').value.trim();
+  const telefone = document.getElementById('cliente-fone').value.trim();
+  const errorDiv = document.getElementById('cliente-error');
+
+  if (!nome) {
+    errorDiv.innerText = "O nome do cliente é obrigatório.";
+    errorDiv.classList.remove('d-none');
+    return;
+  }
+
+  const novoCliente = {
+    codigo: "CLI-" + new Date().getTime(),
+    nome: nome,
+    documento: documento,
+    telefone: telefone
+  };
+
+  try {
+    // Salva localmente no IndexedDB
+    await salvarClienteLocal(novoCliente); 
+    
+    // Vincula automaticamente à venda atual
+    clienteSelecionado = novoCliente;
+    
+    // Atualiza o display do cliente na interface principal (se houver)
+    const elClienteDisplay = document.getElementById('cliente-display-name');
+    if (elClienteDisplay) elClienteDisplay.innerText = nome;
+
+    // Fecha o modal
+    const modalEl = document.getElementById('modalCadastroCliente');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide();
+
+    // Sincroniza com o GAS em segundo plano se houver conexão
+    if (navigator.onLine) {
+      chamarGoogleScript('cadastrarCliente', { cliente: novoCliente }).catch(err => console.error("Erro ao sincronizar cliente na nuvem:", err));
+    }
+
+    manterFocoBusca();
+  } catch (erro) {
+    errorDiv.innerText = "Erro ao salvar cliente no armazenamento local.";
+    errorDiv.classList.remove('d-none');
+  }
+}
 async function tratarBusca(event) {
   if (event.key === 'Enter') {
     event.preventDefault(); // Evita comportamento padrão de submissão de formulário se houver
