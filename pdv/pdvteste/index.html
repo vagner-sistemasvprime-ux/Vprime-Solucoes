@@ -262,9 +262,9 @@
       <h4 class="fw-bold mb-2">Identificar Cliente?</h4>
       <p class="fs-5 text-muted mb-4">Deseja vincular um cliente a esta operação?</p>
       <div class="d-flex gap-3 justify-content-center">
-        <button type="button" class="btn btn-outline-secondary btn-lg fw-bold px-4" data-bs-dismiss="modal" onclick="manterFocoBusca()">Não</button>
-        <button type="button" class="btn btn-primary btn-lg fw-bold px-4" onclick="confirmarIdentificarCliente()">Sim</button>
-      </div>
+  <button type="button" class="btn btn-outline-secondary btn-lg fw-bold px-4" onclick="recusarIdentificarCliente()">Não</button>
+  <button type="button" class="btn btn-primary btn-lg fw-bold px-4" onclick="confirmarIdentificarCliente()">Sim</button>
+</div>
     </div>
   </div>
 </div>
@@ -1140,6 +1140,21 @@ document.getElementById('modalPerguntaCliente')?.addEventListener('shown.bs.moda
     this.removeEventListener('keydown', handleKeydown);
   }, { once: true });
 });
+
+   function recusarIdentificarCliente() {
+  if (modalPerguntaClienteObj) {
+    modalPerguntaClienteObj.hide();
+  }
+  
+  // Limpeza de segurança para garantir que nenhum overlay escuro fique preso na tela
+  setTimeout(() => {
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    manterFocoBusca();
+  }, 200);
+}
 
 function confirmarIdentificarCliente() {
   const modalPergEl = document.getElementById('modalPerguntaCliente');
