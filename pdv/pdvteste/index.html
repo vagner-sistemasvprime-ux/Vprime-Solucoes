@@ -63,25 +63,32 @@
 <div class="fullscreen-wrapper">
 
   <!-- 1. TELA DE LOGIN -->
-  <div id="login-screen" class="d-flex justify-content-center align-items-center">
-    <div class="card login-card p-4 bg-white">
-      <div class="text-center mb-4">
-        <i class="bi bi-building-fill text-primary display-4"></i>
-        <h3 class="fw-bold text-dark mt-2">Acesso ao PDV</h3>
-        <p class="text-muted">Materiais de Construção</p>
-      </div>
-      <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Usuário</label>
-        <input type="text" id="login-user" class="form-control form-control-lg" placeholder="Digite seu usuário" autofocus>
-      </div>
-      <div class="mb-4">
-        <label class="form-label fw-semibold">Senha</label>
-        <input type="password" id="login-pass" class="form-control form-control-lg" placeholder="Digite sua senha" onkeypress="tratarEnterLogin(event)">
-      </div>
-      <button onclick="efetuarLogin()" class="btn btn-primary btn-lg w-100 fw-bold py-2">ENTRAR</button>
+<div id="login-screen" class="d-flex justify-content-center align-items-center">
+  <div class="card login-card p-4 bg-white shadow-sm" style="width: 100%; max-width: 400px;">
+    <div class="text-center mb-4">
+      <i class="bi bi-building-fill text-primary display-4"></i>
+      <h3 class="fw-bold text-dark mt-2">Acesso ao PDV</h3>
+      <p class="text-muted">Materiais de Construção</p>
     </div>
+    <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Usuário</label>
+      <input type="text" id="login-user" class="form-control form-control-lg" placeholder="Digite seu usuário" autofocus>
+    </div>
+    <div class="mb-4">
+      <label class="form-label fw-semibold">Senha</label>
+      <div class="input-group">
+        <input type="password" id="login-pass" class="form-control form-control-lg" placeholder="Digite sua senha" onkeypress="tratarEnterLogin(event)">
+        <button class="btn btn-outline-secondary" type="button" id="toggle-password" onclick="alternarVisibilidadeSenha()" title="Mostrar/Ocultar senha">
+          <i class="bi bi-eye" id="toggle-password-icon"></i>
+        </button>
+      </div>
+    </div>
+    <button id="btn-login" onclick="efetuarLogin()" class="btn btn-primary btn-lg w-100 fw-bold py-2">
+      <span id="btn-login-text">ENTRAR</span>
+    </button>
   </div>
+</div>
 
   <!-- BANNER MODO ORÇAMENTO -->
   <div id="banner-orcamento" class="banner-orcamento d-none" style="display: none;">
@@ -510,6 +517,9 @@ function aplicarConfiguracoesGerais() {
   const user = document.getElementById('login-user').value.trim();
   const pass = document.getElementById('login-pass').value.trim();
   const errorDiv = document.getElementById('login-error');
+  const btnLogin = document.querySelector('button[onclick="efetuarLogin()"]');
+
+  errorDiv.classList.add('d-none');
 
   if (!user || !pass) {
     errorDiv.innerText = "Informe o usuário e a senha.";
@@ -517,31 +527,66 @@ function aplicarConfiguracoesGerais() {
     return;
   }
 
-  // REMOVA OU COMENTE A LINHA ABAIXO PARA NÃO ENTRAR EM TELA CHEIA
-  // entrarTelaCheia();
+  // Ativa o feedback visual de carregamento no botão
+  if (btnLogin) {
+    btnLogin.disabled = true;
+    btnLogin.dataset.originalText = btnLogin.innerHTML;
+    btnLogin.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Entrando...`;
+  }
 
-  mostrarProcessando("Autenticando...");
-  const passHash = await gerarHash(pass);
+  try {
+    const passHash = await gerarHash(pass);
+    const res = await chamarGoogleScript('autenticarUsuario', { user, passHash });
 
-  const res = await chamarGoogleScript('autenticarUsuario', { user, passHash });
-  esconderProcessando();
+    if (res && res.sucesso) {
+      usuarioLogado = res.usuario;
+      document.getElementById('login-screen').classList.add('d-none');
+      document.getElementById('user-display').innerText = res.usuario.nome;
 
-  if (res && res.sucesso) {
-    usuarioLogado = res.usuario;
-    document.getElementById('login-screen').classList.add('d-none');
-    document.getElementById('user-display').innerText = res.usuario.nome;
+      const btnMenu = document.getElementById('btn-menu');
+      if (res.usuario.perfil === 'admin') {
+        btnMenu.classList.remove('d-none');
+      } else {
+        btnMenu.classList.add('d-none');
+      }
 
-    const btnMenu = document.getElementById('btn-menu');
-    if (res.usuario.perfil === 'admin') {
-      btnMenu.classList.remove('d-none');
+      manterFocoBusca();
     } else {
-      btnMenu.classList.add('d-none');
+      errorDiv.innerText = res ? res.mensagem : "Erro na autenticação.";
+      errorDiv.classList.remove('d-none');
     }
-
-    manterFocoBusca();
-  } else {
-    errorDiv.innerText = res ? res.mensagem : "Erro na autenticação.";
+  } catch (erro) {
+    errorDiv.innerText = "Erro ao tentar conectar com o servidor.";
     errorDiv.classList.remove('d-none');
+  } finally {
+    // Restaura o botão caso ocorra erro ou falha na autenticação
+    if (btnLogin) {
+      btnLogin.disabled = false;
+      btnLogin.innerHTML = btnLogin.dataset.originalText || "ENTRAR";
+    }
+  }
+}
+
+   // Alterna entre mostrar e ocultar os caracteres da senha
+function alternarVisibilidadeSenha() {
+  const inputPass = document.getElementById('login-pass');
+  const icone = document.getElementById('toggle-password-icon');
+  
+  if (inputPass.type === 'password') {
+    inputPass.type = 'text';
+    icone.classList.remove('bi-eye');
+    icone.classList.add('bi-eye-slash');
+  } else {
+    inputPass.type = 'password';
+    icone.classList.remove('bi-eye-slash');
+    icone.classList.add('bi-eye');
+  }
+}
+
+// Atalho de Enter na senha
+function tratarEnterLogin(event) {
+  if (event.key === 'Enter') {
+    efetuarLogin();
   }
 }
 
