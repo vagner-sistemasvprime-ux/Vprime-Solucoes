@@ -769,52 +769,60 @@ async function buscarCliente() {
   }
 
   async function executarConsultaPreco(event) {
-    if (event.key === 'Enter') {
-      const termo = document.getElementById('consult-input').value.trim();
+  if (event.key === 'Enter') {
+    const termo = document.getElementById('consult-input').value.trim();
 
-      if (produtoConsultadoAtual) {
-        const ePrimeiroProduto = carrinho.length === 0;
-        adicionarAoCarrinho(produtoConsultadoAtual, produtoConsultadoAtual.qtdAdicionada || 1);
+    // Se o produto já foi consultado e exibido, o segundo Enter adiciona direto ao carrinho
+    if (produtoConsultadoAtual) {
+      const ePrimeiroProduto = carrinho.length === 0;
+      adicionarAoCarrinho(produtoConsultadoAtual, produtoConsultadoAtual.qtdAdicionada || 1);
 
-        const modalEl = document.getElementById('modalConsulta');
-        const bsModal = bootstrap.Modal.getInstance(modalEl);
-        if (bsModal) bsModal.hide();
-        limpaBackdrops();
+      const modalEl = document.getElementById('modalConsulta');
+      const bsModal = bootstrap.Modal.getInstance(modalEl);
+      if (bsModal) bsModal.hide();
+      limpaBackdrops();
 
-        if (ePrimeiroProduto && !clienteSelecionado) {
-          const modalPerg = new bootstrap.Modal(document.getElementById('modalPerguntaCliente'));
-          modalPerg.show();
-        } else {
-          manterFocoBusca();
-        }
-        produtoConsultadoAtual = null;
-        return;
-      }
-
-      if (!termo) return;
-
-      mostrarProcessando("Consultando...");
-
-      const produto = await chamarGoogleScript('buscarProduto', { termo });
-      esconderProcessando();
-
-      const resultContainer = document.getElementById('consult-result-container');
-      resultContainer.classList.remove('d-none');
-
-      if (produto && produto.codigo) {
-        produtoConsultadoAtual = produto;
-        document.getElementById('modal-product-code').innerText = `CÓD: ${produto.codigo}`;
-        document.getElementById('modal-product-name').innerText = produto.nome;
-        document.getElementById('modal-product-price').innerText = `R$ ${produto.preco.toFixed(2).replace('.', ',')}`;
-        document.getElementById('consult-input').value = '';
+      if (ePrimeiroProduto && !clienteSelecionado) {
+        const modalPerg = new bootstrap.Modal(document.getElementById('modalPerguntaCliente'));
+        modalPerg.show();
       } else {
-        produtoConsultadoAtual = null;
-        document.getElementById('modal-product-code').innerText = "---";
-        document.getElementById('modal-product-name').innerText = "Produto Não Encontrado";
-        document.getElementById('modal-product-price').innerText = "R$ 0,00";
+        manterFocoBusca();
       }
+      produtoConsultadoAtual = null;
+      return;
+    }
+
+    if (!termo) return;
+
+    mostrarProcessando("Consultando...");
+
+    // 1. Busca primeiro no IndexedDB local (Instantâneo e sem CORS)
+    let produto = await buscarProdutoLocal(termo);
+
+    // 2. Fallback: Se não achar localmente e houver internet, tenta buscar na planilha
+    if (!produto && navigator.onLine) {
+      produto = await chamarGoogleScript('buscarProduto', { termo });
+    }
+
+    esconderProcessando();
+
+    const resultContainer = document.getElementById('consult-result-container');
+    resultContainer.classList.remove('d-none');
+
+    if (produto && produto.codigo) {
+      produtoConsultadoAtual = produto;
+      document.getElementById('modal-product-code').innerText = `CÓD: ${produto.codigo}`;
+      document.getElementById('modal-product-name').innerText = produto.nome;
+      document.getElementById('modal-product-price').innerText = `R$ ${Number(produto.preco).toFixed(2).replace('.', ',')}`;
+      document.getElementById('consult-input').value = '';
+    } else {
+      produtoConsultadoAtual = null;
+      document.getElementById('modal-product-code').innerText = "---";
+      document.getElementById('modal-product-name').innerText = "Produto Não Encontrado";
+      document.getElementById('modal-product-price').innerText = "R$ 0,00";
     }
   }
+}
 
   function abrirModalPagamento() {
     if (carrinho.length === 0) {
