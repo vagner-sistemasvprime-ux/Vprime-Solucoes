@@ -42,34 +42,44 @@ function abrirBanco() {
   });
 }
 
-// Salva a lista inteira de produtos
 async function salvarProdutosLocal(produtos) {
+  console.log(`[IDB] 📥 Recebidos ${produtos.length} produtos para salvar localmente.`);
   const db = await abrirBanco();
+  
   return new Promise((resolve, reject) => {
     const tx = db.transaction('produtos', 'readwrite');
     const store = tx.objectStore('produtos');
     
-    store.clear();
+    // Limpa a base antiga antes de popular a nova
+    const clearReq = store.clear();
+    
+    clearReq.onsuccess = () => {
+      console.log("[IDB] 🗑️ Tabela 'produtos' limpa com sucesso. Inserindo novos registros...");
+      
+      produtos.forEach((prod, index) => {
+        const codLimpo = String(prod.codigo || prod.Codigo || prod.id || '').trim();
+        if (codLimpo) {
+          store.put({
+            ...prod,
+            codigo: codLimpo,
+            nome: String(prod.nome || prod.Nome || '').trim(),
+            preco: Number(prod.preco || prod.Preco || 0)
+          });
+        }
+      });
+    };
 
-    produtos.forEach(prod => {
-      const codigoOriginal = prod.codigo || prod.Codigo || prod.id || '';
-      const codLimpo = String(codigoOriginal).trim(); // Força para String
+    tx.oncomplete = () => {
+      console.log("[IDB] ✅ Transação de salvamento de produtos concluída e commitada com sucesso!");
+      resolve(true);
+    };
 
-      if (codLimpo) {
-        store.put({
-          ...prod,
-          codigo: codLimpo, // Salva estritamente como String
-          nome: String(prod.nome || prod.Nome || '').trim(),
-          preco: Number(prod.preco || prod.Preco || 0)
-        });
-      }
-    });
-
-    tx.oncomplete = () => resolve(true);
-    tx.onerror = () => reject(tx.error);
+    tx.onerror = (err) => {
+      console.error("[IDB] ❌ Erro na transação ao salvar produtos:", err);
+      reject(err);
+    };
   });
 }
-
 // Salva a lista de clientes
 async function salvarClientesLocal(clientes) {
   const db = await abrirBanco();
