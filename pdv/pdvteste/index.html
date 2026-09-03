@@ -1510,6 +1510,35 @@ function focarOuNavegarCarrinho() {
 }
 
 
+   // Configura a navegação por setas e Enter no modal de remoção de item
+document.getElementById('modalRemoverItem')?.addEventListener('shown.bs.modal', function () {
+  const btnNao = this.querySelector('.btn-outline-secondary');
+  const btnSim = this.querySelector('.btn-danger'); // Botão "Sim" que é vermelho/danger
+  
+  // Foca no botão "Não" por padrão ao abrir (por segurança para evitar exclusões acidentais)
+  if (btnNao) btnNao.focus();
+
+  const handleKeydown = function(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Tab') {
+      e.preventDefault();
+      if (document.activeElement === btnSim) {
+        if (btnNao) btnNao.focus();
+      } else {
+        if (btnSim) btnSim.focus();
+      }
+    } else if (e.key === 'Escape' || e.key === 'Esc') {
+      e.preventDefault();
+      fecharModalRemover();
+    }
+  };
+
+  this.addEventListener('keydown', handleKeydown);
+
+  this.addEventListener('hidden.bs.modal', function () {
+    this.removeEventListener('keydown', handleKeydown);
+  }, { once: true });
+});
+
    function alternarVisualExclusaoCarrinho(ativo) {
   const containerCarrinho = document.getElementById('cart-table')?.closest('.card') || document.getElementById('cart-table');
   if (containerCarrinho) {
