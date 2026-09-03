@@ -324,9 +324,23 @@
         <label class="form-label fw-semibold">CPF / CNPJ</label>
         <input type="text" id="cliente-doc" class="form-control form-control-lg" placeholder="000.000.000-00">
       </div>
-      <div class="mb-4">
+      <div class="mb-3">
         <label class="form-label fw-semibold">Telefone / WhatsApp</label>
         <input type="text" id="cliente-fone" class="form-control form-control-lg" placeholder="(00) 00000-0000">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Endereço (Rua e Nº)</label>
+        <input type="text" id="cliente-endereco" class="form-control form-control-lg" placeholder="Ex: Rua das Flores, 123">
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-semibold">Bairro</label>
+          <input type="text" id="cliente-bairro" class="form-control form-control-lg" placeholder="Bairro">
+        </div>
+        <div class="col-md-6 mb-4">
+          <label class="form-label fw-semibold">Cidade</label>
+          <input type="text" id="cliente-cidade" class="form-control form-control-lg" placeholder="Cidade">
+        </div>
       </div>
       <div class="d-flex gap-2">
         <button type="button" class="btn btn-secondary btn-lg w-50 fw-bold" data-bs-dismiss="modal" onclick="manterFocoBusca()">Cancelar</button>
@@ -803,6 +817,9 @@ async function salvarNovoCliente() {
   const nome = document.getElementById('cliente-nome').value.trim();
   const documento = document.getElementById('cliente-doc').value.trim();
   const telefone = document.getElementById('cliente-fone').value.trim();
+  const endereco = document.getElementById('cliente-endereco').value.trim();
+  const bairro = document.getElementById('cliente-bairro').value.trim();
+  const cidade = document.getElementById('cliente-cidade').value.trim();
   const errorDiv = document.getElementById('cliente-error');
 
   if (!nome) {
@@ -815,26 +832,32 @@ async function salvarNovoCliente() {
     codigo: "CLI-" + new Date().getTime(),
     nome: nome,
     documento: documento,
-    telefone: telefone
+    telefone: telefone,
+    endereco: endereco,
+    bairro: bairro,
+    cidade: cidade
   };
 
   try {
-    // Salva localmente no IndexedDB
     await salvarClienteLocal(novoCliente); 
     
-    // Vincula automaticamente à venda atual
     clienteSelecionado = novoCliente;
     
-    // Atualiza o display do cliente na interface principal (se houver)
     const elClienteDisplay = document.getElementById('cliente-display-name');
     if (elClienteDisplay) elClienteDisplay.innerText = nome;
 
-    // Fecha o modal
     const modalEl = document.getElementById('modalCadastroCliente');
     const modal = bootstrap.Modal.getInstance(modalEl);
     modal.hide();
 
-    // Sincroniza com o GAS em segundo plano se houver conexão
+    // Limpa os campos do formulário para o próximo uso
+    document.getElementById('cliente-nome').value = '';
+    document.getElementById('cliente-doc').value = '';
+    document.getElementById('cliente-fone').value = '';
+    document.getElementById('cliente-endereco').value = '';
+    document.getElementById('cliente-bairro').value = '';
+    document.getElementById('cliente-cidade').value = '';
+
     if (navigator.onLine) {
       chamarGoogleScript('cadastrarCliente', { cliente: novoCliente }).catch(err => console.error("Erro ao sincronizar cliente na nuvem:", err));
     }
