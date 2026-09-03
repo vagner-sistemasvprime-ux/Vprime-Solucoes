@@ -190,6 +190,10 @@
           <h3 class="fw-bold mt-2">PRÓXIMO CLIENTE</h3>
           <p class="text-muted fs-5">Passe o leitor ou digite o código do produto para iniciar.</p>
         </div>
+        <!-- Banner de aviso do modo de exclusão (F6) -->
+<div id="banner-exclusao" class="alert alert-danger d-none text-center fw-bold py-2 mb-2" role="alert">
+  <i class="bi bi-exclamation-triangle-fill me-2"></i> Selecione o item a excluir (Use as setas e Enter, ou clique)
+</div>
         <table class="table table-hover cart-table d-none" id="cart-table">
           <thead>
             <tr>
@@ -1541,11 +1545,22 @@ document.getElementById('modalRemoverItem')?.addEventListener('shown.bs.modal', 
 
    function alternarVisualExclusaoCarrinho(ativo) {
   const containerCarrinho = document.getElementById('cart-table')?.closest('.card') || document.getElementById('cart-table');
+  const bannerExclusao = document.getElementById('banner-exclusao');
+
   if (containerCarrinho) {
     if (ativo) {
       containerCarrinho.classList.add('border', 'border-danger', 'border-3');
     } else {
       containerCarrinho.classList.remove('border', 'border-danger', 'border-3');
+    }
+  }
+
+  // Mostra ou oculta o banner dinamicamente
+  if (bannerExclusao) {
+    if (ativo) {
+      bannerExclusao.classList.remove('d-none');
+    } else {
+      bannerExclusao.classList.add('d-none');
     }
   }
 }
