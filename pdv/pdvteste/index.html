@@ -313,8 +313,8 @@
   <script src="db.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <script>
- // ATENÇÃO: Substitua pelo URL da sua Nova Implantação no Apps Script
+ <script>
+// ATENÇÃO: Substitua pelo URL da sua Nova Implantação no Apps Script
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0RLrifY77YiJNdS9qLyJu59P_y0QCxgzLjcrcs0k4HGm3r14FWcr-IDhLHrwI3m-T/exec";
 
 let carrinho = [];
@@ -360,68 +360,76 @@ async function chamarGoogleScript(acao, dados = {}) {
     return { sucesso: false, mensagem: "Erro de conexão com o servidor." };
   }
 }
-  // --- CARREGAMENTO DE CONFIGURAÇÕES DINÂMICAS ---
-  async function carregarConfiguracoes() {
-    try {
-      const dados = await chamarGoogleScript('buscarConfiguracoes');
 
-      if (dados && dados.sucesso) {
-        CONFIG_LOJA = dados;
-        aplicarConfiguracoesGerais();
-      } else {
-        console.error("Erro ao carregar configurações:", dados ? dados.mensagem : "Sem resposta");
-      }
-    } catch (erro) {
-      console.error("Falha ao carregar configurações:", erro);
+// --- CARREGAMENTO DE CONFIGURAÇÕES DINÂMICAS (OFFLINE FIRST) ---
+async function carregarConfiguracoes() {
+  try {
+    let dados = null;
+
+    // Tenta buscar online se tiver rede
+    if (navigator.onLine) {
+      dados = await chamarGoogleScript('buscarConfiguracoes');
     }
+
+    if (dados && dados.sucesso) {
+      CONFIG_LOJA = dados;
+    } else {
+      // Fallback: Se estiver offline ou a chamada falhar, tenta usar a padrão/local
+      console.warn("Utilizando configurações locais/padrão.");
+    }
+
+    aplicarConfiguracoesGerais();
+  } catch (erro) {
+    console.error("Falha ao carregar configurações:", erro);
+  }
+}
+
+function aplicarConfiguracoesGerais() {
+  // 1. Ajustes Visuais e de Texto
+  if (CONFIG_LOJA.nomeLoja) {
+    document.title = `${CONFIG_LOJA.nomeLoja} - ${CONFIG_LOJA.nicho || 'PDV'}`;
+    
+    const elNavStore = document.getElementById('nav-store-name');
+    if (elNavStore) elNavStore.innerText = CONFIG_LOJA.nomeLoja;
+
+    const elLoginTitle = document.getElementById('login-title-name');
+    if (elLoginTitle) elLoginTitle.innerText = CONFIG_LOJA.nomeLoja;
   }
 
-  function aplicarConfiguracoesGerais() {
-    // 1. Ajustes Visuais e de Texto
-    if (CONFIG_LOJA.nomeLoja) {
-      document.title = `${CONFIG_LOJA.nomeLoja} - ${CONFIG_LOJA.nicho || 'PDV'}`;
-      
-      const elNavStore = document.getElementById('nav-store-name');
-      if (elNavStore) elNavStore.innerText = CONFIG_LOJA.nomeLoja;
+  if (CONFIG_LOJA.nicho) {
+    const elSubNicho = document.getElementById('login-sub-nicho');
+    if (elSubNicho) elSubNicho.innerText = CONFIG_LOJA.nicho;
 
-      const elLoginTitle = document.getElementById('login-title-name');
-      if (elLoginTitle) elLoginTitle.innerText = CONFIG_LOJA.nomeLoja;
-    }
+    const elTextNicho = document.getElementById('store-nicho-text');
+    if (elTextNicho) elTextNicho.innerText = CONFIG_LOJA.nicho;
+  }
 
-    if (CONFIG_LOJA.nicho) {
-      const elSubNicho = document.getElementById('login-sub-nicho');
-      if (elSubNicho) elSubNicho.innerText = CONFIG_LOJA.nicho;
+  // 2. Cores e Variáveis CSS
+  if (CONFIG_LOJA.corTemaHex) {
+    document.documentElement.style.setProperty('--cor-primaria', CONFIG_LOJA.corTemaHex);
+  }
+  if (CONFIG_LOJA.tamanhoPapelImpressora) {
+    document.documentElement.style.setProperty('--largura-papel', CONFIG_LOJA.tamanhoPapelImpressora);
+  }
 
-      const elTextNicho = document.getElementById('store-nicho-text');
-      if (elTextNicho) elTextNicho.innerText = CONFIG_LOJA.nicho;
-    }
+  // 3. Modos e Recursos do Nicho
+  // Garante que o banner permaneça OCULTO na inicialização do sistema
+  const bannerOrcamento = document.getElementById('banner-orcamento');
+  if (bannerOrcamento) {
+    bannerOrcamento.classList.add('d-none');
+    bannerOrcamento.style.display = 'none';
+  }
 
-    // 2. Cores e Variáveis CSS
-    if (CONFIG_LOJA.corTemaHex) {
-      document.documentElement.style.setProperty('--cor-primaria', CONFIG_LOJA.corTemaHex);
-    }
-    if (CONFIG_LOJA.tamanhoPapelImpressora) {
-      document.documentElement.style.setProperty('--largura-papel', CONFIG_LOJA.tamanhoPapelImpressora);
-    }
-
-    // 3. Modos e Recursos do Nicho
-    const bannerOrcamento = document.getElementById('banner-orcamento');
-    if (bannerOrcamento && CONFIG_LOJA.recursos) {
-      if (CONFIG_LOJA.recursos.modoOrcamento) {
-        bannerOrcamento.classList.remove('d-none');
-      }
-    }
-
-    // 4. Placeholders de Busca
-    const inputBusca = document.getElementById('search-input');
-    if (inputBusca && CONFIG_LOJA.recursos) {
-      if (CONFIG_LOJA.recursos.permitirVendaFracionada) {
-        inputBusca.placeholder = "Qtd * Código/Nome (Ex: 1.5*queijo ou 3*1001)...";
-      } else {
-        inputBusca.placeholder = "Qtd * Código/Nome (Ex: 3*1001)...";
-      }
+  // 4. Placeholders de Busca
+  const inputBusca = document.getElementById('search-input');
+  if (inputBusca && CONFIG_LOJA.recursos) {
+    if (CONFIG_LOJA.recursos.permitirVendaFracionada) {
+      inputBusca.placeholder = "Qtd * Código/Nome (Ex: 1.5*queijo ou 3*1001)...";
+    } else {
+      inputBusca.placeholder = "Qtd * Código/Nome (Ex: 3*1001)...";
     }
   }
+}
 
   // --- RELÓGIO E UTILITÁRIOS ---
   function atualizarRelogio() {
