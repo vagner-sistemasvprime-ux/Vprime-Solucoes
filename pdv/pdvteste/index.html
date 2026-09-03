@@ -64,18 +64,18 @@
 
 <div class="fullscreen-wrapper">
 
-<!-- Tela de Bloqueio Limpa (Apenas Logo em Tela Cheia) -->
-<div id="tela-bloqueio" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark d-flex justify-content-center align-items-center" style="z-index: 9999;">
-  <!-- Logo ocupando o fundo/tela inteira -->
+<!-- Tela de Bloqueio Limpa (Logo Nítida em Tela Cheia) -->
+<div id="tela-bloqueio" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-white d-flex justify-content-center align-items-center" style="z-index: 9999;">
+  <!-- Logo ocupando a tela inteira sem escurecer -->
   <div class="position-absolute w-100 h-100 d-flex justify-content-center align-items-center overflow-hidden">
-    <img src="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ" alt="Logo Loja" class="w-100 h-100" style="object-fit: cover; opacity: 0.20;">
+    <img src="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ" alt="Logo Loja" class="w-100 h-100" style="object-fit: contain;">
   </div>
 
-  <!-- Input oculto para capturar os códigos do leitor sem poluir a tela -->
+  <!-- Input oculto para capturar os códigos do leitor -->
   <input type="text" id="input-bloqueio-consulta" class="position-absolute opacity-0" style="top: -100px;">
 
   <!-- Card de resultado que surge apenas ao bipar/consultar um produto -->
-  <div id="resultado-bloqueio" class="p-4 rounded shadow-lg bg-white text-dark d-none position-relative text-center" style="z-index: 2; max-width: 550px; width: 90%;">
+  <div id="resultado-bloqueio" class="p-4 rounded shadow-lg bg-white border text-dark d-none position-relative text-center" style="z-index: 2; max-width: 550px; width: 90%;">
     <h3 id="blq-prod-nome" class="fw-bold mb-2">Nome do Produto</h3>
     <p id="blq-prod-codigo" class="text-muted mb-3">CÓD: 0000</p>
     <h1 id="blq-prod-preco" class="text-success fw-bold display-5 m-0">R$ 0,00</h1>
@@ -1522,18 +1522,28 @@ function executarAcaoMenuCaixa(acao) {
 let caixaBloqueado = false;
 let temporizadorLimpezaPreco = null;
 
-// Ouve a tecla F5 globalmente
+// Ouve as teclas globalmente para bloqueio e desbloqueio
 document.addEventListener('keydown', (e) => {
   if (e.key === 'F5') {
     e.preventDefault();
-    
     if (!caixaBloqueado) {
       bloquearCaixa();
     } else {
       abrirModalDesbloqueio();
     }
-  } else if (caixaBloqueado) {
-    // Garante que qualquer tecla digitada com o caixa bloqueado vá direto para o input invisível de captura
+    return;
+  }
+
+  // Se o caixa estiver bloqueado, tratamos teclas específicas ou mantemos o foco no input
+  if (caixaBloqueado) {
+    // Se apertar ESC, também abre o modal de senha para facilitar
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      e.preventDefault();
+      abrirModalDesbloqueio();
+      return;
+    }
+
+    // Garante que qualquer outra tecla digitada vá direto para o input invisível de captura do leitor
     const inputBlq = document.getElementById('input-bloqueio-consulta');
     if (inputBlq && document.activeElement !== inputBlq) {
       inputBlq.focus();
