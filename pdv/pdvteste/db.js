@@ -94,9 +94,11 @@ async function salvarClientesLocal(clientes) {
   });
 }
 
-// Busca ultra-rápida de produto por Código ou Nome (trata multiplicadores ex: 3*1001)
+// Busca otimizada usando Índices do IndexedDB (Ultra-rápida e sem carregar a tabela inteira)
 async function buscarProdutoLocal(termo) {
+  console.time("⏱️ Tempo Total Busca Local");
   const db = await abrirBanco();
+  
   return new Promise((resolve) => {
     const tx = db.transaction('produtos', 'readonly');
     const store = tx.objectStore('produtos');
@@ -114,33 +116,57 @@ async function buscarProdutoLocal(termo) {
       }
     }
 
-    // 1. Tenta buscar direto pela chave primária em milissegundos
+    // 1. Tenta buscar direto pela chave primária (Código exato)
     const reqCodigo = store.get(termoLimpo);
 
     reqCodigo.onsuccess = () => {
       if (reqCodigo.result) {
+        console.timeEnd("⏱️ Tempo Total Busca Local");
         resolve({ ...reqCodigo.result, qtdAdicionada: qtd });
       } else {
-        // 2. Se não achar por código exato, busca parcial por texto no nome ou código
-        const reqAll = store.getAll();
-        reqAll.onsuccess = () => {
-          const produtos = reqAll.result || [];
-          const achado = produtos.find(p => 
-            String(p.codigo).toLowerCase() === termoLimpo || 
-            String(p.nome).toLowerCase().includes(termoLimpo)
-          );
+        // 2. Se não achar por código exato, usa o índice 'nome' para busca otimizada
+        if (!store.indexNames.contains('nome')) {
+          console.timeEnd("⏱️ Tempo Total Busca Local");
+          return resolve(null);
+        }
 
-          if (achado) {
-            resolve({ ...achado, qtdAdicionada: qtd });
+        const indexNome = store.index('nome');
+        const requestCursor = indexNome.openCursor();
+        let encontrado = null;
+
+        requestCursor.onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            const produto = cursor.value;
+            const nomeProd = String(produto.nome || '').toLowerCase();
+            const codigoProd = String(produto.codigo || '').toLowerCase();
+
+            // Verifica se o termo bate parcialmente com o nome ou com o código
+            if (nomeProd.includes(termoLimpo) || codigoProd.includes(termoLimpo)) {
+              encontrado = produto;
+              // Para na primeira ocorrência relevante
+              console.timeEnd("⏱️ Tempo Total Busca Local");
+              resolve({ ...encontrado, qtdAdicionada: qtd });
+              return;
+            }
+            cursor.continue();
           } else {
-            resolve(null);
+            console.timeEnd("⏱️ Tempo Total Busca Local");
+            resolve(null); // Terminou o cursor e não achou
           }
         };
-        reqAll.onerror = () => resolve(null);
+
+        requestCursor.onerror = () => {
+          console.timeEnd("⏱️ Tempo Total Busca Local");
+          resolve(null);
+        };
       }
     };
 
-    reqCodigo.onerror = () => resolve(null);
+    reqCodigo.onerror = () => {
+      console.timeEnd("⏱️ Tempo Total Busca Local");
+      resolve(null);
+    };
   });
 }
 
