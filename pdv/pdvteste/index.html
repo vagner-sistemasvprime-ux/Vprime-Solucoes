@@ -64,32 +64,25 @@
 
 <div class="fullscreen-wrapper">
 
- <!-- Tela de Bloqueio em Tela Cheia (F5) -->
-<div id="tela-bloqueio" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark d-flex flex-column justify-content-center align-items-center" style="z-index: 9999;">
-  <!-- Logo ocupando o fundo/tela inteira com ajuste proporcional -->
-  <div class="position-absolute w-100 h-100 d-flex justify-content-center align-items-center overflow-hidden" style="z-index: 1;">
-    <img src="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ" alt="Logo Loja" class="w-100 h-100" style="object-fit: cover; opacity: 0.15;">
+<!-- Tela de Bloqueio Limpa (Apenas Logo em Tela Cheia) -->
+<div id="tela-bloqueio" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark d-flex justify-content-center align-items-center" style="z-index: 9999;">
+  <!-- Logo ocupando o fundo/tela inteira -->
+  <div class="position-absolute w-100 h-100 d-flex justify-content-center align-items-center overflow-hidden">
+    <img src="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ" alt="Logo Loja" class="w-100 h-100" style="object-fit: cover; opacity: 0.20;">
   </div>
 
-  <!-- Conteúdo centralizado sobre a logo -->
-  <div class="text-center p-4 position-relative" style="z-index: 2;">
-    <img src="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ" alt="Logo Loja" class="img-fluid mb-4 shadow rounded" style="max-height: 180px; object-fit: contain;">
-    <h2 class="fw-bold text-white mb-2">CAIXA BLOQUEADO</h2>
-    <p class="text-light fs-5 mb-4">Pressione <strong>F5</strong> para desbloquear com senha ou bipe um produto para consulta rápida.</p>
-    
-    <!-- Input para bipagem ou senha -->
-    <input type="text" id="input-bloqueio-consulta" class="form-control form-control-lg text-center mx-auto bg-dark text-white border-secondary" style="max-width: 400px;" placeholder="Bipe o produto ou digite..." autofocus>
-    
-    <!-- Container que exibe o resultado temporário por 3 segundos -->
-    <div id="resultado-bloqueio" class="mt-4 p-3 rounded shadow bg-white text-dark d-none" style="max-width: 500px; margin: 0 auto;">
-      <h4 id="blq-prod-nome" class="fw-bold m-0">Nome do Produto</h4>
-      <p id="blq-prod-codigo" class="text-muted small mb-1">CÓD: 0000</p>
-      <h3 id="blq-prod-preco" class="text-success fw-bold m-0">R$ 0,00</h3>
-    </div>
+  <!-- Input oculto para capturar os códigos do leitor sem poluir a tela -->
+  <input type="text" id="input-bloqueio-consulta" class="position-absolute opacity-0" style="top: -100px;">
+
+  <!-- Card de resultado que surge apenas ao bipar/consultar um produto -->
+  <div id="resultado-bloqueio" class="p-4 rounded shadow-lg bg-white text-dark d-none position-relative text-center" style="z-index: 2; max-width: 550px; width: 90%;">
+    <h3 id="blq-prod-nome" class="fw-bold mb-2">Nome do Produto</h3>
+    <p id="blq-prod-codigo" class="text-muted mb-3">CÓD: 0000</p>
+    <h1 id="blq-prod-preco" class="text-success fw-bold display-5 m-0">R$ 0,00</h1>
   </div>
 </div>
 
-<!-- Modal de Senha para Desbloqueio -->
+<!-- Modal de Senha para Desbloqueio (Acionado ao apertar F5 novamente) -->
 <div class="modal fade" id="modalSenhaDesbloqueio" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content shadow">
@@ -1539,6 +1532,12 @@ document.addEventListener('keydown', (e) => {
     } else {
       abrirModalDesbloqueio();
     }
+  } else if (caixaBloqueado) {
+    // Garante que qualquer tecla digitada com o caixa bloqueado vá direto para o input invisível de captura
+    const inputBlq = document.getElementById('input-bloqueio-consulta');
+    if (inputBlq && document.activeElement !== inputBlq) {
+      inputBlq.focus();
+    }
   }
 });
 
@@ -1580,7 +1579,7 @@ function fecharModalDesbloqueio() {
   const bsModal = bootstrap.Modal.getInstance(modalEl);
   if (bsModal) bsModal.hide();
   
-  // Retorna o foco para o input de consulta da tela de bloqueio
+  // Retorna o foco para o input invisível da tela de bloqueio para continuar capturando leituras
   const inputBlq = document.getElementById('input-bloqueio-consulta');
   if (inputBlq) inputBlq.focus();
 }
@@ -1593,7 +1592,6 @@ async function validarSenhaDesbloqueio() {
 
   const passHash = await gerarHash(senhaDigitada);
 
-  // Valida se a senha confere com o usuário logado atual
   if (usuarioLogado && (usuarioLogado.passHash === passHash || usuarioLogado.senha === senhaDigitada)) {
     const modalEl = document.getElementById('modalSenhaDesbloqueio');
     const bsModal = bootstrap.Modal.getInstance(modalEl);
@@ -1614,7 +1612,7 @@ function desbloquearCaixa() {
   manterFocoBusca();
 }
 
-// Ouve a digitação ou bipe na tela de bloqueio para consulta rápida (some em 3 segundos)
+// Ouve o bipe ou código digitado e exibe as informações por 3 segundos na frente da logo
 document.getElementById('input-bloqueio-consulta')?.addEventListener('keypress', async (e) => {
   if (e.key === 'Enter') {
     const termo = e.target.value.trim();
@@ -1642,21 +1640,19 @@ document.getElementById('input-bloqueio-consulta')?.addEventListener('keypress',
       precoEl.innerText = "R$ 0,00";
     }
 
+    // Exibe o card de consulta sobre a logo
     resDiv.classList.remove('d-none');
 
     if (temporizadorLimpezaPreco) {
       clearTimeout(temporizadorLimpezaPreco);
     }
 
+    // Some com os dados após 3 segundos, voltando a exibir apenas a logo limpa em tela cheia
     temporizadorLimpezaPreco = setTimeout(() => {
       resDiv.classList.add('d-none');
     }, 5000);
   }
 });
-
-
-   
-
 
 
 
