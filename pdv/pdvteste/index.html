@@ -1107,41 +1107,51 @@ function atualizarDisplayCliente(nomeCliente, documentoCliente) {
 }
    
 function confirmarIdentificarCliente() {
-  const modalPerg = bootstrap.Modal.getInstance(document.getElementById('modalPerguntaCliente'));
-  if (modalPerg) modalPerg.hide();
+  const modalPergEl = document.getElementById('modalPerguntaCliente');
+  const modalPerg = bootstrap.Modal.getInstance(modalPergEl);
   
-  limpaBackdrops();
+  if (modalPerg) {
+    // Ouve o evento de término do fechamento para abrir o próximo modal com segurança
+    modalPergEl.addEventListener('hidden.bs.modal', function handler() {
+      // Remove o listener para não acumular execuções futuras
+      modalPergEl.removeEventListener('hidden.bs.modal', handler);
 
-  // Limpa o campo de busca de cliente, a listagem e o card de cliente selecionado anterior
-  const inputBuscaCli = document.getElementById('input-busca-cliente');
-  if (inputBuscaCli) inputBuscaCli.value = '';
+      // Limpa os campos necessários
+      const inputBuscaCli = document.getElementById('input-busca-cliente');
+      if (inputBuscaCli) inputBuscaCli.value = '';
 
-  const listaResultadosCli = document.getElementById('lista-clientes-resultados');
-  if (listaResultadosCli) listaResultadosCli.innerHTML = '';
+      const listaResultadosCli = document.getElementById('lista-clientes-resultados');
+      if (listaResultadosCli) listaResultadosCli.innerHTML = '';
 
-  // REPASSE ESSA LIMPEZA PARA OS IDS REAIS DO SEU HTML DE BUSCA:
-  const clientSearchInput = document.getElementById('client-search-input');
-  if (clientSearchInput) clientSearchInput.value = '';
+      const clientSearchInput = document.getElementById('client-search-input');
+      if (clientSearchInput) clientSearchInput.value = '';
 
-  const clientInfoDisplay = document.getElementById('client-info-display');
-  if (clientInfoDisplay) clientInfoDisplay.classList.add('d-none');
+      const clientInfoDisplay = document.getElementById('client-info-display');
+      if (clientInfoDisplay) clientInfoDisplay.classList.add('d-none');
 
-  const clientSelectedName = document.getElementById('client-selected-name');
-  if (clientSelectedName) clientSelectedName.innerText = '';
+      const clientSelectedName = document.getElementById('client-selected-name');
+      if (clientSelectedName) clientSelectedName.innerText = '';
 
-  const modalCli = new bootstrap.Modal(document.getElementById('modalCliente'));
-  modalCli.show();
+      // Abre o próximo modal de forma limpa
+      const modalCliEl = document.getElementById('modalCliente');
+      const modalCli = new bootstrap.Modal(modalCliEl);
+      modalCli.show();
 
-  // Foca no input de busca do modal assim que ele abrir
-  document.getElementById('modalCliente').addEventListener('shown.bs.modal', function () {
-    if (clientSearchInput) {
-      clientSearchInput.focus();
-    } else if (inputBuscaCli) {
-      inputBuscaCli.focus();
-    }
-  }, { once: true });
+      // Foca no input de busca após a abertura
+      modalCliEl.addEventListener('shown.bs.modal', function () {
+        if (clientSearchInput) {
+          clientSearchInput.focus();
+        } else if (inputBuscaCli) {
+          inputBuscaCli.focus();
+        }
+      }, { once: true });
+
+    });
+
+    // Dispara o fechamento do primeiro modal
+    modalPerg.hide();
+  }
 }
-
 async function buscarCliente() {
   const termo = document.getElementById('client-search-input').value.trim();
   if (!termo) return;
