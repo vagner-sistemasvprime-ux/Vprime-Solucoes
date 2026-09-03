@@ -554,7 +554,7 @@
   }, 200); // 200ms garante que a transição do modal terminou
 }
 
-    document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
   atualizarRelogio();
   carregarConfiguracoes();
 
@@ -562,6 +562,15 @@
   document.addEventListener('hidden.bs.modal', () => {
     manterFocoBusca();
   });
+
+  // --- CARREGAMENTO E SINCRONIZAÇÃO OFFLINE ---
+  // Baixa o catálogo para garantir buscas ultra rápidas no IndexedDB
+  carregarDadosParaOffline();
+
+  // Sincroniza vendas que ficaram salvas offline caso já abra com internet
+  if (navigator.onLine) {
+    sincronizarVendasPendentes();
+  }
 });
     
   // --- EVENTOS DE TECLADO ---
@@ -638,59 +647,54 @@
   manterFocoBusca(); // <-- Devolve o foco aqui
 }
 
-  async function tratarBusca(event) {
-    if (event.key === 'Enter') {
-      const termo = document.getElementById('search-input').value;
-      if (!termo) return;
-
-      mostrarProcessando("Buscando produto...");
-
-      const produto = await chamarGoogleScript('buscarProduto', { termo });
-      esconderProcessando();
-
-      if (produto && produto.codigo) {
-        const ePrimeiroProduto = carrinho.length === 0;
-        adicionarAoCarrinho(produto, produto.qtdAdicionada || 1);
-        document.getElementById('search-input').value = '';
-
-        if (ePrimeiroProduto && !clienteSelecionado) {
-          const modalPerg = new bootstrap.Modal(document.getElementById('modalPerguntaCliente'));
-          modalPerg.show();
-        }
-      } else {
-        mostrarAviso('Produto não encontrado!', 'Busca de Produto', 'danger');
-      }
-      manterFocoBusca();
-    }
-  }
-
-  function confirmarIdentificarCliente() {
-    const modalPerg = bootstrap.Modal.getInstance(document.getElementById('modalPerguntaCliente'));
-    if (modalPerg) modalPerg.hide();
-    
-    limpaBackdrops();
-    const modalCli = new bootstrap.Modal(document.getElementById('modalCliente'));
-    modalCli.show();
-  }
-
-  async function buscarCliente() {
-    const termo = document.getElementById('client-search-input').value.trim();
+async function tratarBusca(event) {
+  if (event.key === 'Enter') {
+    const termo = document.getElementById('search-input').value;
     if (!termo) return;
 
-    mostrarProcessando("Buscando cliente...");
-    
-    const cliente = await chamarGoogleScript('buscarCliente', { termo });
-    esconderProcessando();
+    // Busca direta no banco local (ultra rápido)
+    const produto = await buscarProdutoLocal(termo);
 
-    if (cliente && cliente.nome) {
-      clienteSelecionado = cliente;
-      document.getElementById('client-selected-name').innerText = `${cliente.nome} (${cliente.documento})`;
-      document.getElementById('client-info-display').classList.remove('d-none');
+    if (produto && produto.codigo) {
+      const ePrimeiroProduto = carrinho.length === 0;
+      adicionarAoCarrinho(produto, produto.qtdAdicionada || 1);
+      document.getElementById('search-input').value = '';
+
+      if (ePrimeiroProduto && !clienteSelecionado) {
+        const modalPerg = new bootstrap.Modal(document.getElementById('modalPerguntaCliente'));
+        modalPerg.show();
+      }
     } else {
-      mostrarAviso('Cliente não encontrado!', 'Busca', 'danger');
+      mostrarAviso('Produto não encontrado localmente!', 'Busca de Produto', 'danger');
     }
+    manterFocoBusca();
   }
+}
 
+function confirmarIdentificarCliente() {
+  const modalPerg = bootstrap.Modal.getInstance(document.getElementById('modalPerguntaCliente'));
+  if (modalPerg) modalPerg.hide();
+  
+  limpaBackdrops();
+  const modalCli = new bootstrap.Modal(document.getElementById('modalCliente'));
+  modalCli.show();
+}
+
+async function buscarCliente() {
+  const termo = document.getElementById('client-search-input').value.trim();
+  if (!termo) return;
+
+  // Busca direta no banco local (ultra rápido)
+  const cliente = await buscarClienteLocal(termo);
+
+  if (cliente && cliente.nome) {
+    clienteSelecionado = cliente;
+    document.getElementById('client-selected-name').innerText = `${cliente.nome} (${cliente.documento})`;
+    document.getElementById('client-info-display').classList.remove('d-none');
+  } else {
+    mostrarAviso('Cliente não encontrado localmente!', 'Busca', 'danger');
+  }
+}
   function salvarClienteOperacao() {
     const modalCli = bootstrap.Modal.getInstance(document.getElementById('modalCliente'));
     if (modalCli) modalCli.hide();
@@ -946,6 +950,29 @@ async function sincronizarVendasPendentes() {
     console.error("Erro ao sincronizar vendas:", erro);
   } finally {
     esconderProcessando();
+  }
+}
+
+    // Baixa a lista completa de produtos e clientes do Google para o IndexedDB
+async function carregarDadosParaOffline() {
+  if (navigator.onLine) {
+    try {
+      // Busca a lista de produtos no Google Apps Script
+      const prods = await chamarGoogleScript('obterTodosProdutos');
+      if (prods && Array.isArray(prods)) {
+        await salvarProdutosLocal(prods);
+      }
+
+      // Busca a lista de clientes no Google Apps Script
+      const clis = await chamarGoogleScript('obterTodosClientes');
+      if (clis && Array.isArray(clis)) {
+        await salvarClientesLocal(clis);
+      }
+
+      console.log("Catálogo de produtos e clientes atualizados para uso offline!");
+    } catch (erro) {
+      console.error("Erro ao sincronizar dados locais:", erro);
+    }
   }
 }
 </script>
