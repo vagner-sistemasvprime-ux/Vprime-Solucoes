@@ -989,16 +989,16 @@ async function sincronizarVendasPendentes() {
 async function carregarDadosParaOffline() {
   if (navigator.onLine) {
     try {
-      // Busca a lista de produtos no Google Apps Script
-      const prods = await chamarGoogleScript('obterTodosProdutos');
-      if (prods && Array.isArray(prods)) {
-        await salvarProdutosLocal(prods);
+      // Busca a resposta do Google Apps Script
+      const resProds = await chamarGoogleScript('obterTodosProdutos');
+      if (resProds && resProds.sucesso && Array.isArray(resProds.dados)) {
+        await salvarProdutosLocal(resProds.dados);
       }
 
-      // Busca a lista de clientes no Google Apps Script
-      const clis = await chamarGoogleScript('obterTodosClientes');
-      if (clis && Array.isArray(clis)) {
-        await salvarClientesLocal(clis);
+      // Busca a resposta dos clientes
+      const resClis = await chamarGoogleScript('obterTodosClientes');
+      if (resClis && resClis.sucesso && Array.isArray(resClis.dados)) {
+        await salvarClientesLocal(resClis.dados);
       }
 
       console.log("Catálogo de produtos e clientes atualizados para uso offline!");
