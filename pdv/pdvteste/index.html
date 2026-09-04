@@ -317,12 +317,25 @@
             
             <div class="mb-3">
               <label class="form-label fw-bold">Forma de Pagamento</label>
-              <select class="form-select form-select-lg fs-5" id="pay-method">
+              <select class="form-select form-select-lg fs-5" id="pay-method" tabindex="1">
                 <option value="Dinheiro">Dinheiro</option>
                 <option value="Cartão de Crédito">Cartão de Crédito</option>
                 <option value="Cartão de Débito">Cartão de Débito</option>
                 <option value="PIX">PIX</option>
+                <option value="Vale">Vale</option>
               </select>
+            </div>
+
+            <!-- Bloco de Desconto (Oculto inicialmente) -->
+            <div id="container-desconto" class="mb-3 d-none p-3 bg-light rounded border">
+              <label class="form-label fw-bold text-danger">Desconto Aplicado</label>
+              <div class="input-group">
+                <select id="tipo-desconto" class="form-select" tabindex="2">
+                  <option value="porcentagem">Porcentagem (%)</option>
+                  <option value="valor">Valor (R$)</option>
+                </select>
+                <input type="number" id="valor-desconto" class="form-control" placeholder="0.00" tabindex="3" oninput="aplicarDescontoNaVenda()">
+              </div>
             </div>
           </div>
 
@@ -331,7 +344,7 @@
               <h5 class="text-muted fw-bold">RECEBIMENTO</h5>
               <div class="mb-3">
                 <label class="form-label fw-bold">Valor Recebido (R$)</label>
-                <input type="number" id="pay-amount" class="form-control form-control-lg fs-4" placeholder="0.00" oninput="calcularTroco()">
+                <input type="number" id="pay-amount" class="form-control form-control-lg fs-4" placeholder="0.00" tabindex="4" oninput="calcularTroco()">
               </div>
 
               <div class="alert alert-secondary p-3 mt-3">
@@ -342,9 +355,33 @@
               </div>
             </div>
 
-            <button class="btn btn-success btn-lg w-100 fw-bold fs-4 py-3 mt-3" onclick="confirmarVenda()"><i class="bi bi-check2-circle me-2"></i> CONFIRMAR VENDA</button>
+            <button id="btn-confirmar-venda" class="btn btn-success btn-lg w-100 fw-bold fs-4 py-3 mt-3" tabindex="5" onclick="confirmarVenda()">
+              <i class="bi bi-check2-circle me-2"></i> CONFIRMAR VENDA
+            </button>
           </div>
         </div>
+      </div>
+      <!-- Legenda de Atalhos -->
+      <div class="modal-footer bg-light py-2 text-muted small justify-content-between">
+        <span><kbd>[D]</kbd> Exibir Desconto</span>
+        <span><kbd>[I]</kbd> Identificar Cliente</span>
+        <span><kbd>[Esc]</kbd> Cancelar</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE AUTORIZAÇÃO DE DESCONTO (ADMIN/SUPERVISOR) -->
+<div class="modal fade" id="modalAuthDesconto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content border-0 shadow-lg p-3 text-center">
+      <h5 class="fw-bold mb-3"><i class="bi bi-shield-lock-fill text-warning"></i> Autorização Gerencial</h5>
+      <p class="text-muted small">Insira a senha de Administrador/Supervisor para liberar o desconto:</p>
+      <input type="password" id="auth-pass-desconto" class="form-control form-control-lg text-center mb-3" placeholder="Senha">
+      <div id="auth-error-desc" class="text-danger small mb-2 d-none">Senha inválida ou sem permissão.</div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-secondary w-50" onclick="fecharAuthDesconto()">Cancelar</button>
+        <button class="btn btn-primary w-50" onclick="validarAuthDesconto()">Autorizar</button>
       </div>
     </div>
   </div>
@@ -1440,26 +1477,132 @@ function salvarClienteOperacao() {
   }
 }
 
-  function abrirModalPagamento() {
-    if (carrinho.length === 0) {
-      mostrarAviso("O carrinho está vazio para finalizar a compra!", "Atenção", "warning");
-      return;
+  let modalPagamentoObj = null;
+let modalAuthObj = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const elPag = document.getElementById('modalPagamento');
+  if (elPag) modalPagamentoObj = new bootstrap.Modal(elPag, { backdrop: 'static' });
+
+  const elAuth = document.getElementById('modalAuthDesconto');
+  if (elAuth) modalAuthObj = new bootstrap.Modal(elAuth, { backdrop: 'static' });
+});
+
+// Função chamada ao apertar F8 (Finalizar) para abrir o pagamento
+function abrirModalPagamento() {
+  if (carrinho.length === 0) {
+    mostrarAviso("O carrinho está vazio.", "Atenção", "warning");
+    return;
+  }
+
+  // Reseta campos do pagamento
+  document.getElementById('container-desconto').classList.add('d-none');
+  document.getElementById('pay-amount').value = '';
+  document.getElementById('pay-change').innerText = '0,00';
+  
+  if (modalPagamentoObj) {
+    modalPagamentoObj.show();
+  }
+}
+
+// Configura foco inicial e atalhos de teclado dentro do modal de pagamento
+document.getElementById('modalPagamento')?.addEventListener('shown.bs.modal', function () {
+  const selectMethod = document.getElementById('pay-method');
+  if (selectMethod) selectMethod.focus();
+
+  const handlePagamentoKeydown = function(e) {
+    const key = e.key.toLowerCase();
+
+    // Atalho 'i' para abrir modal de identificar cliente
+    if (key === 'i') {
+      e.preventDefault();
+      modalPagamentoObj.hide();
+      setTimeout(() => {
+        const modalCliEl = document.getElementById('modalCliente');
+        if (modalCliEl) {
+          const modalCli = new bootstrap.Modal(modalCliEl);
+          modalCli.show();
+        }
+      }, 200);
     }
-    limpaBackdrops();
-    const modalEl = document.getElementById('modalPagamento');
-    const bsModal = new bootstrap.Modal(modalEl);
-    document.getElementById('pay-amount').value = '';
-    document.getElementById('pay-change').innerText = '0,00';
-    bsModal.show();
-  }
+    
+    // Atalho 'd' para exibir campos de desconto (Exige senha se for caixa)
+    else if (key === 'd') {
+      e.preventDefault();
+      verificarPermissaoDesconto();
+    }
+  };
 
-  function calcularTroco() {
-    const total = carrinho.reduce((sum, item) => sum + item.subtotal, 0);
-    const pago = parseFloat(document.getElementById('pay-amount').value) || 0;
-    const troco = pago - total;
-    document.getElementById('pay-change').innerText = troco > 0 ? troco.toFixed(2).replace('.', ',') : '0,00';
-  }
+  this.addEventListener('keydown', handlePagamentoKeydown);
 
+  this.addEventListener('hidden.bs.modal', function () {
+    this.removeEventListener('keydown', handlePagamentoKeydown);
+  }, { once: true });
+});
+
+// Verifica se o usuário logado tem permissão ou exige senha de admin
+function verificarPermissaoDesconto() {
+  if (usuarioLogado && usuarioLogado.perfil === 'admin') {
+    liberarCamposDesconto();
+  } else {
+    // Se for caixa ou operador comum, abre modal solicitando senha de gerente/admin
+    document.getElementById('auth-pass-desconto').value = '';
+    document.getElementById('auth-error-desc').classList.add('d-none');
+    if (modalAuthObj) modalAuthObj.show();
+    setTimeout(() => document.getElementById('auth-pass-desconto').focus(), 150);
+  }
+}
+
+async function validarAuthDesconto() {
+  const pass = document.getElementById('auth-pass-desconto').value.trim();
+  const errorDiv = document.getElementById('auth-error-desc');
+  
+  if (!pass) return;
+
+  try {
+    const passHash = await gerarHash(pass);
+    
+    // Valida na nuvem ou localmente se a senha pertence a um admin/supervisor
+    let res = null;
+    if (navigator.onLine) {
+      res = await chamarGoogleScript('autenticarUsuario', { user: 'admin', passHash }); // Ou validação genérica de gerente
+    }
+
+    // Validação local de fallback ou confirmação de hash administrativo
+    const usuarioLocal = await buscarUsuarioLocal('admin'); // ou checar permissão no IDB
+    
+    if ((res && res.sucesso && res.usuario.perfil === 'admin') || (usuarioLocal && usuarioLocal.passHash === passHash)) {
+      if (modalAuthObj) modalAuthObj.hide();
+      liberarCamposDesconto();
+    } else {
+      errorDiv.innerText = "Senha inválida ou sem privilégios de administrador.";
+      errorDiv.classList.remove('d-none');
+    }
+  } catch (err) {
+    errorDiv.innerText = "Erro ao validar autorização.";
+    errorDiv.classList.remove('d-none');
+  }
+}
+
+function fecharAuthDesconto() {
+  if (modalAuthObj) modalAuthObj.hide();
+}
+
+function liberarCamposDesconto() {
+  const container = document.getElementById('container-desconto');
+  container.classList.remove('d-none');
+  document.getElementById('valor-desconto').focus();
+}
+
+function calcularTroco() {
+  // Lógica para calcular o troco baseada no total atual e valor recebido
+  const totalTxt = document.getElementById('payment-modal-total').innerText.replace('.', '').replace(',', '.');
+  const total = parseFloat(totalTxt) || 0;
+  const recebido = parseFloat(document.getElementById('pay-amount').value) || 0;
+  
+  const troco = recebido - total;
+  document.getElementById('pay-change').innerText = troco > 0 ? troco.toFixed(2).replace('.', ',') : '0,00';
+}
 async function confirmarVenda() {
   const total = carrinho.reduce((sum, item) => sum + item.subtotal, 0);
   const formaPagamento = document.getElementById('pay-method').value;
