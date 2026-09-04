@@ -694,16 +694,38 @@
 </div>
 
 
-  <!-- RODAPÉ COM ATALHOS DO SISTEMA -->
+ <!-- RODAPÉ COM ATALHOS DO SISTEMA (BOTÕES INTERATIVOS) -->
 <footer id="footer-atalhos" class="bg-dark text-white py-2 px-3 fixed-bottom border-top border-secondary">
-  <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center text-center small gap-2">
-    <div><span class="badge bg-secondary me-1">F3</span> Modo Orçamento / Venda</div>
-    <div><span class="badge bg-secondary me-1">F4</span> Novo Cliente</div>
-    <div><span class="badge bg-secondary me-1">F5</span> Bloquear/Desbloquear PDV</div>
-    <div><span class="badge bg-secondary me-1">F6</span>Exclui Item</div>
-    <div><span class="badge bg-secondary me-1">F7</span> Esvaziar Carrinho</div>
-    <div><span class="badge bg-secondary me-1">F9</span> Menu</div>
-    <div><span class="badge bg-secondary me-1">F10</span> Desconto Item</div>
+  <div class="container-fluid d-flex flex-wrap justify-content-center justify-content-md-between align-items-center text-center small gap-2">
+    
+    <button type="button" class="btn btn-sm btn-outline-light text-start py-1 px-2" onclick="alternarModoOrcamentoVenda()">
+      <span class="badge bg-secondary me-1">F3</span> Modo Orçamento / Venda
+    </button>
+
+    <button type="button" class="btn btn-sm btn-outline-light text-start py-1 px-2" onclick="abrirNovoCliente()">
+      <span class="badge bg-secondary me-1">F4</span> Novo Cliente
+    </button>
+
+    <button type="button" class="btn btn-sm btn-outline-light text-start py-1 px-2" onclick="bloquearDesbloquearPDV()">
+      <span class="badge bg-secondary me-1">F5</span> Bloquear/Desbloquear PDV
+    </button>
+
+    <button type="button" class="btn btn-sm btn-outline-light text-start py-1 px-2" onclick="excluirItemSelecionado()">
+      <span class="badge bg-secondary me-1">F6</span> Excluir Item
+    </button>
+
+    <button type="button" class="btn btn-sm btn-outline-light text-start py-1 px-2" onclick="esvaziarCarrinho()">
+      <span class="badge bg-secondary me-1">F7</span> Esvaziar Carrinho
+    </button>
+
+    <button type="button" class="btn btn-sm btn-outline-light text-start py-1 px-2" onclick="abrirMenuSistema()">
+      <span class="badge bg-secondary me-1">F9</span> Menu
+    </button>
+
+    <button type="button" class="btn btn-sm btn-outline-light text-start py-1 px-2" onclick="aplicarDescontoItem()">
+      <span class="badge bg-secondary me-1">F10</span> Desconto Item
+    </button>
+
   </div>
 </footer>
 
