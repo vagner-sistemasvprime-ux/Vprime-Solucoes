@@ -832,10 +832,10 @@ function aplicarConfiguracoesGerais() {
     bannerOrcamento.style.display = 'none';
   }
 
-  // 4. Placeholders de Busca
+ // 4. Placeholders de Busca ajustados para a raiz
   const inputBusca = document.getElementById('search-input');
-  if (inputBusca && CONFIG_LOJA.recursos) {
-    if (CONFIG_LOJA.recursos.permitirVendaFracionada) {
+  if (inputBusca) {
+    if (CONFIG_LOJA.permitirVendaFracionada) {
       inputBusca.placeholder = "Qtd * Código/Nome (Ex: 1.5*queijo ou 3*1001)...";
     } else {
       inputBusca.placeholder = "Qtd * Código/Nome (Ex: 3*1001)...";
@@ -1550,9 +1550,8 @@ function salvarClienteOperacao() {
   tbody.innerHTML = '';
   let totalGeral = 0;
 
-  // Verifica se a permissão de desconto manual está ativa (considerando o objeto recursos do Apps Script)
+  // Verifica se a permissão de desconto manual está ativa diretamente na raiz
   const permiteDescontoItem = window.CONFIG_LOJA && (
-    window.CONFIG_LOJA.recursos?.descontoManualItem === true ||
     window.CONFIG_LOJA.descontoManualItem === true ||
     String(window.CONFIG_LOJA.descontoManualItem).trim().toLowerCase() === 'true'
   );
@@ -1585,7 +1584,7 @@ function salvarClienteOperacao() {
         <tr class="item-carrinho-row" tabindex="0" data-index="${index}" style="cursor: pointer;">
           <td><span class="badge bg-secondary fs-6">${item.codigo || '-'}</span></td>
           <td><span class="badge bg-primary fs-6">${quantidade}x</span></td>
-          <td>${item.nome} ${permiteDescontoItem ? '<span class="text-muted" style="font-size: 0.75em;">[Pressione D]</span>' : ''}</td>
+          <td>${item.nome} ${permiteDescontoItem ? '<span class="text-muted" style="font-size: 0.75em;">[Pressione F10]</span>' : ''}</td>
           <td style="text-align: right;">R$ ${precoUnitario.toFixed(2).replace('.', ',')}</td>
           <td style="text-align: right;">${textoSubtotal}</td>
         </tr>
@@ -1618,9 +1617,8 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'F10') {
     e.preventDefault();
 
-    // Verifica se a permissão de desconto manual está ativa (buscando também dentro de recursos)
+    // Verifica se a permissão de desconto manual está ativa diretamente na raiz
     const permiteDescontoItem = window.CONFIG_LOJA && (
-      window.CONFIG_LOJA.recursos?.descontoManualItem === true ||
       window.CONFIG_LOJA.descontoManualItem === true ||
       String(window.CONFIG_LOJA.descontoManualItem).trim().toLowerCase() === 'true'
     );
