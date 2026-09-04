@@ -1550,10 +1550,12 @@ function salvarClienteOperacao() {
   tbody.innerHTML = '';
   let totalGeral = 0;
 
-  // Verifica se a permissão de desconto manual está ativa na planilha
-  const permiteDescontoItem = window.CONFIG_LOJA && 
-    (String(window.CONFIG_LOJA.descontoManualItem).trim().toLowerCase() === 'true' || 
-     window.CONFIG_LOJA.descontoManualItem === true);
+  // Verifica se a permissão de desconto manual está ativa (considerando o objeto recursos do Apps Script)
+  const permiteDescontoItem = window.CONFIG_LOJA && (
+    window.CONFIG_LOJA.recursos?.descontoManualItem === true ||
+    window.CONFIG_LOJA.descontoManualItem === true ||
+    String(window.CONFIG_LOJA.descontoManualItem).trim().toLowerCase() === 'true'
+  );
 
   if (carrinho.length === 0) {
     tableEl.classList.add('d-none');
