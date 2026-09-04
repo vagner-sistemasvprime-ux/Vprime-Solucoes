@@ -2098,9 +2098,26 @@ async function confirmarVenda() {
 
   mostrarProcessando("Registrando venda...");
 
+  // Função auxiliar para impor um limite de tempo (timeout) na requisição
+  const chamarComTimeout = async (promise, ms = 5000) => {
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error("Timeout de rede")), ms);
+    });
+    try {
+      const resultado = await Promise.race([promise, timeoutPromise]);
+      clearTimeout(timeoutId);
+      return resultado;
+    } catch (erro) {
+      clearTimeout(timeoutId);
+      throw erro;
+    }
+  };
+
   if (navigator.onLine) {
     try {
-      const res = await chamarGoogleScript('registrarVenda', { dadosVenda: dadosVendaAtual });
+      // Tenta enviar online, mas desiste se demorar mais de 5 segundos
+      const res = await chamarComTimeout(chamarGoogleScript('registrarVenda', { dadosVenda: dadosVendaAtual }), 5000);
       esconderProcessando();
 
       if (res && res.sucesso) {
@@ -2111,17 +2128,19 @@ async function confirmarVenda() {
         await tratarFluxoPosVenda(dadosVendaAtual);
       }
     } catch (erro) {
+      // Se deu erro de rede ou estourou o tempo limite de 5s, cai direto aqui e salva offline
       esconderProcessando();
       await salvarVendaPendente(dadosVendaAtual);
       abrirModalEscolhaDocumento();
+      console.warn("⚠️ Sem resposta do servidor ou sem internet. Venda salva localmente para sincronização posterior.");
     }
   } else {
+    // Se explicitamente offline
     await salvarVendaPendente(dadosVendaAtual);
     esconderProcessando();
     abrirModalEscolhaDocumento();
   }
 }
-
 function abrirModalEscolhaDocumento() {
   if (modalPagamentoObj) modalPagamentoObj.hide();
   if (modalEscolhaObj) {
