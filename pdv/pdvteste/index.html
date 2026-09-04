@@ -2073,6 +2073,8 @@ function aplicarDescontoNaCompra() {
 
    
 async function confirmarVenda() {
+  const btnConfirmar = document.getElementById('btn-confirmar-venda'); // Ajuste o ID conforme o seu HTML
+  
   const totalComDesconto = Math.max(0, totalBrutoVenda - valorDescontoGlobal);
   const totalPago = pagamentosParciais.reduce((acc, p) => acc + (p.valorEfetivo || 0), 0);
 
@@ -2096,8 +2098,6 @@ async function confirmarVenda() {
     dataVenda: new Date().toISOString()
   };
 
-  mostrarProcessando("Registrando venda...");
-
   const chamarComTimeout = async (promise, ms = 5000) => {
     let timeoutId;
     const timeoutPromise = new Promise((_, reject) => {
@@ -2114,6 +2114,9 @@ async function confirmarVenda() {
   };
 
   try {
+    // Desativa o botão para evitar cliques duplos
+    if (btnConfirmar) btnConfirmar.disabled = true;
+
     if (navigator.onLine) {
       try {
         const res = await chamarComTimeout(chamarGoogleScript('registrarVenda', { dadosVenda: dadosVendaAtual }), 5000);
@@ -2134,11 +2137,10 @@ async function confirmarVenda() {
       await tratarFluxoPosVenda(dadosVendaAtual);
     }
   } finally {
-    // BLINDAGEM: O aviso some obrigatoriamente aqui, mesmo se o pós-venda falhar
-    esconderProcessando();
+    // Reativa o botão independentemente do resultado
+    if (btnConfirmar) btnConfirmar.disabled = false;
   }
 }
-
    
 function abrirModalEscolhaDocumento() {
   if (modalPagamentoObj) modalPagamentoObj.hide();
