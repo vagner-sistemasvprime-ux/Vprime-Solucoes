@@ -1978,12 +1978,15 @@ function processarEscolhaDocumento(tipo) {
 
 
    async function tratarFluxoPosVenda(venda) {
-  mostrarProcessando("Verificando preferências de impressão...");
-  
   try {
-    // Chama o Google Apps Script para buscar a regra atualizada da planilha
+    // 1. Fecha os modais e limpa a tela usando a sua lógica
+    finalizarFluxoVenda();
+
+    // 2. Exibe o aviso de sucesso com o número da venda
+    mostrarAviso(`Venda #${venda.idVenda} registrada com sucesso!`, "Sucesso", "success");
+
+    // 3. Busca a configuração de impressão na planilha de forma silenciosa
     const config = await chamarGoogleScript('buscarConfiguracaoImpressao');
-    esconderProcessando();
 
     let tamanhoPapel = '80MM';
     let ativarChaveNf = false;
@@ -1993,24 +1996,20 @@ function processarEscolhaDocumento(tipo) {
       ativarChaveNf = Boolean(config.ativarChaveNf);
     }
 
-    // Atualiza o objeto global da loja para refletir o tamanho atual
     window.CONFIG_LOJA = window.CONFIG_LOJA || {};
     window.CONFIG_LOJA.tamanhoPapelImpressora = tamanhoPapel;
 
-    // Condicional: Se a chave NF estiver ativa, abre o modal de escolha. Se não, imprime direto!
+    // 4. Decide o comportamento baseado estritamente na planilha
     if (ativarChaveNf) {
-      console.log("🔹 Chave NF ativa: Exibindo modal de escolha de documento.");
-      abrirModalEscolhaDocumento(); // Seu modal atual
+      abrirModalEscolhaDocumento(); 
     } else {
-      console.log("⚡ Chave NF desativada: Imprimindo diretamente no tamanho:", tamanhoPapel);
-      executarImpressaoRecibo(venda);
+      executarImpressaoRecibo(venda); 
     }
 
   } catch (erro) {
-    esconderProcessando();
-    console.error("Erro ao verificar configuração de impressão, usando fallback:", erro);
-    // Fallback de segurança caso a requisição falhe: abre o modal padrão
-    abrirModalEscolhaDocumento();
+    console.error("Erro no fluxo pós-venda:", erro);
+    // Fallback de segurança em caso de falha de rede
+    executarImpressaoRecibo(venda);
   }
 }
    
