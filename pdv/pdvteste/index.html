@@ -314,17 +314,15 @@
               <span class="fs-6 text-muted">Total a Pagar</span>
               <h1 class="text-success fw-bold display-5 m-0" id="display-total-geral">R$ <span id="payment-modal-total">0,00</span></h1>
               <div id="info-desconto-aplicado" class="text-danger small fw-bold mt-1 d-none">
-                Desconto: -R$ <span id="valor-desconto-aplicado">0,00</span>
+                Desconto Aplicado: -R$ <span id="valor-desconto-aplicado">0,00</span>
               </div>
             </div>
             
-            <!-- 1. Primeiro o Valor Recebido -->
             <div class="mb-3">
               <label class="form-label fw-bold">Valor Recebido (R$)</label>
               <input type="number" id="pay-amount" class="form-control form-control-lg fs-4" placeholder="0.00" tabindex="1">
             </div>
 
-            <!-- 2. Depois a Forma de Pagamento -->
             <div class="mb-3">
               <label class="form-label fw-bold">Forma de Pagamento</label>
               <select class="form-select form-select-lg fs-5" id="pay-method" tabindex="2">
@@ -366,7 +364,7 @@
         </div>
       </div>
       <div class="modal-footer bg-light py-2 text-muted small justify-content-between">
-        <span><kbd>[D]</kbd> Aplicar Desconto</span>
+        <span><kbd>[D]</kbd> Aplicar Desconto (Senha Gerente)</span>
         <span><kbd>[I]</kbd> Identificar Cliente</span>
         <span><kbd>[Esc]</kbd> Cancelar</span>
       </div>
@@ -374,16 +372,15 @@
   </div>
 </div>
 
-  
 <!-- MODAL DE AUTORIZAÇÃO DE DESCONTO (ADMIN/SUPERVISOR) -->
 <div class="modal fade" id="modalAuthDesconto" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content border-0 shadow-lg p-4 text-center">
       <div class="text-warning display-4 mb-2"><i class="bi bi-shield-lock-fill"></i></div>
-      <h5 class="fw-bold mb-2">Autorização de Desconto</h5>
+      <h5 class="fw-bold mb-2">Autorização Gerencial</h5>
       <p class="text-muted small mb-3">Insira a senha de Administrador/Supervisor:</p>
       <input type="password" id="auth-pass-desconto" class="form-control form-control-lg text-center mb-2" placeholder="Senha">
-      <div id="auth-error-desc" class="text-danger small mb-3 d-none">Senha inválida ou sem permissão.</div>
+      <div id="auth-error-desc" class="text-danger small mb-3 d-none">Senha inválida ou sem privilégios.</div>
       <div class="d-flex gap-2">
         <button type="button" class="btn btn-secondary w-50 fw-bold" onclick="fecharAuthDesconto()">Cancelar</button>
         <button type="button" class="btn btn-primary w-50 fw-bold" onclick="validarAuthDesconto()">Confirmar</button>
@@ -411,18 +408,24 @@
     </div>
   </div>
 </div>
-<!-- MODAL DE AUTORIZAÇÃO DE DESCONTO (ADMIN/SUPERVISOR) -->
-<div class="modal fade" id="modalAuthDesconto" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content border-0 shadow-lg p-3 text-center">
-      <h5 class="fw-bold mb-3"><i class="bi bi-shield-lock-fill text-warning"></i> Autorização Gerencial</h5>
-      <p class="text-muted small">Insira a senha de Administrador/Supervisor para liberar o desconto:</p>
-      <input type="password" id="auth-pass-desconto" class="form-control form-control-lg text-center mb-3" placeholder="Senha">
-      <div id="auth-error-desc" class="text-danger small mb-2 d-none">Senha inválida ou sem permissão.</div>
-      <div class="d-flex gap-2">
-        <button class="btn btn-secondary w-50" onclick="fecharAuthDesconto()">Cancelar</button>
-        <button class="btn btn-primary w-50" onclick="validarAuthDesconto()">Autorizar</button>
+
+<!-- MODAL DE ESCOLHA DE COMPROVANTE PÓS-VENDA -->
+<div class="modal fade" id="modalEscolhaDocumento" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg text-center p-4">
+      <div class="display-4 mb-2 text-primary"><i class="bi bi-printer-fill"></i></div>
+      <h4 class="fw-bold mb-2">Venda Concluída!</h4>
+      <p class="fs-5 text-muted mb-4">Selecione o formato de saída do comprovante:</p>
+      
+      <div class="d-flex gap-3 justify-content-center mb-3">
+        <button type="button" id="btn-escolha-recibo" class="btn btn-outline-secondary btn-lg fw-bold px-4 py-3 w-50" onclick="processarEscolhaDocumento('recibo')">
+          <i class="bi bi-receipt me-1"></i> [R] Recibo
+        </button>
+        <button type="button" id="btn-escolha-nota" class="btn btn-primary btn-lg fw-bold px-4 py-3 w-50" onclick="processarEscolhaDocumento('nota')">
+          <i class="bi bi-file-earmark-text me-1"></i> [N] Nota Fiscal
+        </button>
       </div>
+      <div class="text-muted small">Use as setas para alternar, <kbd>Enter</kbd> para selecionar ou <kbd>N</kbd>/<kbd>R</kbd> direto.</div>
     </div>
   </div>
 </div>
@@ -1517,13 +1520,15 @@ function salvarClienteOperacao() {
   }
 }
 
- let modalPagamentoObj = null;
+let modalPagamentoObj = null;
 let modalAuthObj = null;
 let modalValorDescObj = null;
+let modalEscolhaObj = null;
 
 let totalBrutoVenda = 0;
 let valorDescontoGlobal = 0;
 let pagamentosParciais = [];
+let dadosVendaAtual = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   const elPag = document.getElementById('modalPagamento');
@@ -1534,8 +1539,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const elValDesc = document.getElementById('modalValorDesconto');
   if (elValDesc) modalValorDescObj = new bootstrap.Modal(elValDesc, { backdrop: 'static' });
+
+  const elEscolha = document.getElementById('modalEscolhaDocumento');
+  if (elEscolha) modalEscolhaObj = new bootstrap.Modal(elEscolha, { backdrop: 'static' });
 });
 
+   
 // Função chamada ao apertar F8 (Finalizar) para abrir o pagamento
 function abrirModalPagamento() {
   if (carrinho.length === 0) {
@@ -1554,23 +1563,18 @@ function abrirModalPagamento() {
   }
 }
 
-// --- 3. ATUALIZAÇÃO DA INTERFACE DE PAGAMENTO E CÁLCULO DE TROCO ---
 function atualizarInterfacePagamento() {
   const totalComDesconto = Math.max(0, totalBrutoVenda - valorDescontoGlobal);
-  const totalPagoEfetivo = pagamentosParciais.reduce((acc, p) => acc + p.valorEfetivo, 0);
-  
+  const totalPagoEfetivo = pagamentosParciais.reduce((acc, p) => acc + (p.valorEfetivo || 0), 0);
   const restante = Math.max(0, totalComDesconto - totalPagoEfetivo);
   
-  // O troco só deve existir se houver pagamento em Dinheiro excedente ou sobra geral
-  const totalPagoBruto = pagamentosParciais.reduce((acc, p) => acc + p.valorInformado, 0);
+  const totalPagoBruto = pagamentosParciais.reduce((acc, p) => acc + (p.valorInformado || 0), 0);
   const troco = totalPagoBruto > totalComDesconto ? totalPagoBruto - totalComDesconto : 0;
 
-  // Exibição dos valores na interface
   document.getElementById('payment-modal-total').innerText = totalComDesconto.toFixed(2).replace('.', ',');
   document.getElementById('pay-restante').innerText = `R$ ${restante.toFixed(2).replace('.', ',')}`;
   document.getElementById('pay-change').innerText = `R$ ${troco.toFixed(2).replace('.', ',')}`;
 
-  // Informativo de desconto abaixo do total
   const infoDesc = document.getElementById('info-desconto-aplicado');
   if (valorDescontoGlobal > 0) {
     document.getElementById('valor-desconto-aplicado').innerText = valorDescontoGlobal.toFixed(2).replace('.', ',');
@@ -1579,75 +1583,27 @@ function atualizarInterfacePagamento() {
     infoDesc.classList.add('d-none');
   }
 
-  // Renderiza a lista de pagamentos lançados
   const listaEl = document.getElementById('lista-pagamentos-parciais');
   if (listaEl) {
     listaEl.innerHTML = '';
     pagamentosParciais.forEach((p, index) => {
       listaEl.innerHTML += `
         <li class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 small">
-          <span>${p.metodo}: <strong>R$ ${p.valorInformado.toFixed(2).replace('.', ',')}</strong></span>
+          <span>${p.metodo}: <strong>R$ ${(p.valorInformado || 0).toFixed(2).replace('.', ',')}</strong></span>
           <button type="button" class="btn btn-sm text-danger p-0" onclick="removerPagamentoParcial(${index})"><i class="bi bi-x-circle-fill"></i></button>
         </li>
       `;
     });
   }
 
-  // Preenche o input com o valor restante exato
   const payAmountInput = document.getElementById('pay-amount');
   if (payAmountInput) {
     payAmountInput.value = restante > 0 ? restante.toFixed(2) : '';
   }
 }
-
-// --- 4. ADIÇÃO DE PAGAMENTO PARCIAL (CORRIGINDO O VALOR DO PIX/CARTÃO) ---
-// Atualize a função de adicionar pagamento para alternar o foco inteligentemente
-function adicionarPagamentoParcial() {
-  const metodo = document.getElementById('pay-method').value;
-  const valorInput = parseFloat(document.getElementById('pay-amount').value) || 0;
-
-  if (valorInput <= 0) return;
-
-  const totalComDesconto = Math.max(0, totalBrutoVenda - valorDescontoGlobal);
-  const totalPagoAtual = pagamentosParciais.reduce((acc, p) => acc + p.valorEfetivo, 0);
-  const restante = Math.max(0, totalComDesconto - totalPagoAtual);
-
-  let valorEfetivo = valorInput;
-  if (metodo !== 'Dinheiro' && valorInput > restante) {
-    valorEfetivo = restante;
-  }
-
-  pagamentosParciais.push({
-    metodo: metodo,
-    valorInformado: valorInput,
-    valorEfetivo: valorEfetivo
-  });
-
-  atualizarInterfacePagamento();
-
-  // Verifica se ainda falta pagar
-  const novoTotalPago = pagamentosParciais.reduce((acc, p) => acc + p.valorEfetivo, 0);
-  if (novoTotalPago < totalComDesconto) {
-    // Se ainda falta, volta o foco para o valor para o próximo pagamento parcial
-    const payAmountInput = document.getElementById('pay-amount');
-    payAmountInput.value = (totalComDesconto - novoTotalPago).toFixed(2);
-    payAmountInput.focus();
-    payAmountInput.select();
-  } else {
-    // Se já quitou, joga o foco diretamente no botão de Concluir Venda
-    document.getElementById('btn-confirmar-venda').focus();
-  }
-}
-function removerPagamentoParcial(index) {
-  pagamentosParciais.splice(index, 1);
-  atualizarInterfacePagamento();
-}
-
 document.getElementById('modalPagamento')?.addEventListener('shown.bs.modal', function () {
-  // Foco inicial direto no valor recebido
   const payAmountInput = document.getElementById('pay-amount');
   if (payAmountInput) {
-    payAmountInput.value = window.restanteGlobal > 0 ? window.restanteGlobal.toFixed(2) : '';
     payAmountInput.focus();
     payAmountInput.select();
   }
@@ -1667,31 +1623,63 @@ document.getElementById('modalPagamento')?.addEventListener('shown.bs.modal', fu
       document.getElementById('auth-pass-desconto').value = '';
       document.getElementById('auth-error-desc').classList.add('d-none');
       if (modalAuthObj) modalAuthObj.show();
-      setTimeout(() => document.getElementById('auth-pass-desconto').focus(), 150);
     } else if (e.key === 'Enter') {
       e.preventDefault();
       
-      // Se estiver no campo de valor, pula para o select de forma de pagamento
       if (activeEl.id === 'pay-amount') {
         document.getElementById('pay-method').focus();
-      } 
-      // Se estiver na forma de pagamento, registra o pagamento parcial e volta o foco para o valor (ou botão de concluir se zerou)
-      else if (activeEl.id === 'pay-method') {
+      } else if (activeEl.id === 'pay-method') {
         adicionarPagamentoParcial();
-      }
-      // Se estiver no botão de concluir venda, efetiva a venda
-      else if (activeEl.id === 'btn-confirmar-venda') {
+      } else if (activeEl.id === 'btn-confirmar-venda') {
         confirmarVenda();
       }
     }
   };
 
   this.addEventListener('keydown', handlePagamentoKeydown);
-
   this.addEventListener('hidden.bs.modal', function () {
     this.removeEventListener('keydown', handlePagamentoKeydown);
   }, { once: true });
 });
+
+function adicionarPagamentoParcial() {
+  const metodo = document.getElementById('pay-method').value;
+  const valorInput = parseFloat(document.getElementById('pay-amount').value) || 0;
+
+  if (valorInput <= 0) return;
+
+  const totalComDesconto = Math.max(0, totalBrutoVenda - valorDescontoGlobal);
+  const totalPagoAtual = pagamentosParciais.reduce((acc, p) => acc + (p.valorEfetivo || 0), 0);
+  const restante = Math.max(0, totalComDesconto - totalPagoAtual);
+
+  let valorEfetivo = valorInput;
+  if (metodo !== 'Dinheiro' && valorInput > restante) {
+    valorEfetivo = restante;
+  }
+
+  pagamentosParciais.push({
+    metodo: metodo,
+    valorInformado: valorInput,
+    valorEfetivo: valorEfetivo
+  });
+
+  atualizarInterfacePagamento();
+
+  const novoTotalPago = pagamentosParciais.reduce((acc, p) => acc + (p.valorEfetivo || 0), 0);
+  if (novoTotalPago < totalComDesconto) {
+    const payAmountInput = document.getElementById('pay-amount');
+    payAmountInput.value = (totalComDesconto - novoTotalPago).toFixed(2);
+    payAmountInput.focus();
+    payAmountInput.select();
+  } else {
+    document.getElementById('btn-confirmar-venda').focus();
+  }
+}
+
+function removerPagamentoParcial(index) {
+  pagamentosParciais.splice(index, 1);
+  atualizarInterfacePagamento();
+}
 
 // --- 1. CONFIGURAÇÃO DE FOCO E TECLADO NO MODAL DE AUTORIZAÇÃO DE DESCONTO ---
 document.getElementById('modalAuthDesconto')?.addEventListener('shown.bs.modal', function () {
@@ -1712,13 +1700,11 @@ document.getElementById('modalAuthDesconto')?.addEventListener('shown.bs.modal',
   };
 
   this.addEventListener('keydown', handleAuthKeydown);
-
   this.addEventListener('hidden.bs.modal', function () {
     this.removeEventListener('keydown', handleAuthKeydown);
   }, { once: true });
 });
 
-// --- 2. VALIDAÇÃO ROBUSTA DA SENHA DE GERENTE/ADMIN ---
 async function validarAuthDesconto() {
   const pass = document.getElementById('auth-pass-desconto').value.trim();
   const errorDiv = document.getElementById('auth-error-desc');
@@ -1729,7 +1715,6 @@ async function validarAuthDesconto() {
     const passHash = await gerarHash(pass);
     let autorizado = false;
 
-    // Tenta validar na nuvem se estiver online
     if (navigator.onLine) {
       try {
         const res = await chamarGoogleScript('autenticarUsuario', { passHash });
@@ -1737,13 +1722,12 @@ async function validarAuthDesconto() {
           autorizado = true;
         }
       } catch (err) {
-        console.warn("Falha na validação online, testando localmente...");
+        console.warn("Validação online indisponível, checando local...");
       }
     }
 
-    // Se não validou online, valida no IndexedDB localmente
     if (!autorizado) {
-      const usuarioLocal = await buscarUsuarioLocalPorHash(passHash); // Garanta que sua função local busque por hash e verifique perfil
+      const usuarioLocal = typeof buscarUsuarioLocalPorHash === 'function' ? await buscarUsuarioLocalPorHash(passHash) : null;
       if (usuarioLocal && (usuarioLocal.perfil === 'admin' || usuarioLocal.perfil === 'supervisor')) {
         autorizado = true;
       }
@@ -1751,13 +1735,11 @@ async function validarAuthDesconto() {
 
     if (autorizado) {
       if (modalAuthObj) modalAuthObj.hide();
-      
-      // Abre o modal de inserção do valor do desconto
       document.getElementById('input-valor-desconto').value = '';
       if (modalValorDescObj) modalValorDescObj.show();
       setTimeout(() => document.getElementById('input-valor-desconto').focus(), 150);
     } else {
-      errorDiv.innerText = "Senha inválida ou sem privilégios de Administrador/Supervisor.";
+      errorDiv.innerText = "Senha inválida ou sem privilégios gerenciais.";
       errorDiv.classList.remove('d-none');
     }
   } catch (err) {
@@ -1765,6 +1747,7 @@ async function validarAuthDesconto() {
     errorDiv.classList.remove('d-none');
   }
 }
+
 function fecharAuthDesconto() {
   if (modalAuthObj) modalAuthObj.hide();
 }
@@ -1773,7 +1756,6 @@ function fecharModalValorDesconto() {
   if (modalValorDescObj) modalValorDescObj.hide();
 }
 
-// Aplicação do desconto na compra após confirmação da senha
 function aplicarDescontoNaCompra() {
   const tipo = document.getElementById('tipo-desconto').value;
   const valor = parseFloat(document.getElementById('input-valor-desconto').value) || 0;
@@ -1792,6 +1774,7 @@ function aplicarDescontoNaCompra() {
   atualizarInterfacePagamento();
 }
 
+   
 async function confirmarVenda() {
   const totalComDesconto = Math.max(0, totalBrutoVenda - valorDescontoGlobal);
   const totalPago = pagamentosParciais.reduce((acc, p) => acc + (p.valorEfetivo || 0), 0);
@@ -1801,12 +1784,11 @@ async function confirmarVenda() {
     return;
   }
 
-  // Tratamento seguro para evitar erros de undefined no .map()
   const formaPagamentoPrincipal = (pagamentosParciais && pagamentosParciais.length > 0)
     ? pagamentosParciais.map(p => `${p.metodo}: R$ ${(p.valorInformado || 0).toFixed(2)}`).join(' | ')
     : document.getElementById('pay-method')?.value || "Dinheiro";
 
-  const dadosVenda = {
+  dadosVendaAtual = {
     operador: usuarioLogado ? usuarioLogado.nome : "Operador",
     cliente: clienteSelecionado ? clienteSelecionado.nome : "Não Identificado",
     formaPagamento: formaPagamentoPrincipal,
@@ -1817,53 +1799,106 @@ async function confirmarVenda() {
     dataVenda: new Date().toISOString()
   };
 
-  mostrarProcessando("Finalizando compra...");
+  mostrarProcessando("Registrando venda...");
 
   if (navigator.onLine) {
     try {
-      const res = await chamarGoogleScript('registrarVenda', { dadosVenda });
+      const res = await chamarGoogleScript('registrarVenda', { dadosVenda: dadosVendaAtual });
       esconderProcessando();
 
       if (res && res.sucesso) {
-        mostrarAviso(`Venda registrada com sucesso!\nCódigo: ${res.idVenda}`, "Sucesso", "success");
-        finalizarFluxoVenda();
+        dadosVendaAtual.idVenda = res.idVenda;
+        abrirModalEscolhaDocumento();
       } else {
-        mostrarAviso("Erro ao registrar no servidor. Venda gravada offline.", "Aviso", "warning");
-        await salvarVendaPendente(dadosVenda);
-        finalizarFluxoVenda();
+        await salvarVendaPendente(dadosVendaAtual);
+        abrirModalEscolhaDocumento();
       }
     } catch (erro) {
       esconderProcessando();
-      await salvarVendaPendente(dadosVenda);
-      mostrarAviso("Conexão instável. Venda gravada no armazenamento offline.", "Aviso", "warning");
-      finalizarFluxoVenda();
+      await salvarVendaPendente(dadosVendaAtual);
+      abrirModalEscolhaDocumento();
     }
   } else {
-    await salvarVendaPendente(dadosVenda);
+    await salvarVendaPendente(dadosVendaAtual);
     esconderProcessando();
-    mostrarAviso("Venda salva OFFLINE com sucesso!\nSerá sincronizada assim que a internet voltar.", "Modo Offline", "success");
+    abrirModalEscolhaDocumento();
+  }
+}
+
+function abrirModalEscolhaDocumento() {
+  if (modalPagamentoObj) modalPagamentoObj.hide();
+  if (modalEscolhaObj) {
+    modalEscolhaObj.show();
+  } else {
     finalizarFluxoVenda();
   }
+}
+
+document.getElementById('modalEscolhaDocumento')?.addEventListener('shown.bs.modal', function () {
+  const btnNota = document.getElementById('btn-escolha-nota');
+  if (btnNota) btnNota.focus();
+
+  const handleEscolhaKeydown = function(e) {
+    const key = e.key.toLowerCase();
+    const btnRecibo = document.getElementById('btn-escolha-recibo');
+    const btnNotaFisc = document.getElementById('btn-escolha-nota');
+
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Tab') {
+      e.preventDefault();
+      if (document.activeElement === btnNotaFisc) {
+        if (btnRecibo) btnRecibo.focus();
+      } else {
+        if (btnNotaFisc) btnNotaFisc.focus();
+      }
+    } else if (key === 'r') {
+      e.preventDefault();
+      processarEscolhaDocumento('recibo');
+    } else if (key === 'n') {
+      e.preventDefault();
+      processarEscolhaDocumento('nota');
+    } else if (e.key === 'Escape' || e.key === 'Esc') {
+      e.preventDefault();
+      processarEscolhaDocumento('recibo');
+    }
+  };
+
+  this.addEventListener('keydown', handleEscolhaKeydown);
+  this.addEventListener('hidden.bs.modal', function () {
+    this.removeEventListener('keydown', handleEscolhaKeydown);
+  }, { once: true });
+});
+
+function processarEscolhaDocumento(tipo) {
+  if (modalEscolhaObj) modalEscolhaObj.hide();
+
+  if (tipo === 'nota') {
+    executarEmissaoNotaFiscal(dadosVendaAtual);
+  } else {
+    executarImpressaoRecibo(dadosVendaAtual);
+  }
+
+  finalizarFluxoVenda();
+}
+
+function executarEmissaoNotaFiscal(venda) {
+  mostrarAviso("Transmitindo Nota Fiscal para a SEFAZ...", "Fiscal", "info");
+  // Conecte sua API de NFC-e / NF-e aqui no futuro
+}
+
+function executarImpressaoRecibo(venda) {
+  mostrarAviso("Imprimindo comprovante de venda...", "Recibo", "success");
+  // Lógica de impressão térmica não fiscal
 }
 
 function finalizarFluxoVenda() {
   carrinho = [];
   clienteSelecionado = null;
+  dadosVendaAtual = null;
   renderizarCarrinho();
 
-  if (modalPagamentoObj) modalPagamentoObj.hide();
   limpaBackdrops();
   manterFocoBusca();
 }
- let indiceItemSelecionado = 0;
-let modalRemoverObj = null;
-
-document.addEventListener('DOMContentLoaded', () => {
-  const el = document.getElementById('modalRemoverItem');
-  if (el) {
-    modalRemoverObj = new bootstrap.Modal(el, { backdrop: 'static' });
-  }
-});
 
 // Função acionada pelo F6 para entrar no modo de exclusão do carrinho
 function focarOuNavegarCarrinho() {
