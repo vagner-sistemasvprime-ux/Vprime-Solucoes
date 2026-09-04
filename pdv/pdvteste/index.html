@@ -1618,10 +1618,12 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'F10') {
     e.preventDefault();
 
-    // Verifica se a permissão de desconto manual está ativa na planilha
-    const permiteDescontoItem = window.CONFIG_LOJA && 
-      (String(window.CONFIG_LOJA.descontoManualItem).trim().toLowerCase() === 'true' || 
-       window.CONFIG_LOJA.descontoManualItem === true);
+    // Verifica se a permissão de desconto manual está ativa (buscando também dentro de recursos)
+    const permiteDescontoItem = window.CONFIG_LOJA && (
+      window.CONFIG_LOJA.recursos?.descontoManualItem === true ||
+      window.CONFIG_LOJA.descontoManualItem === true ||
+      String(window.CONFIG_LOJA.descontoManualItem).trim().toLowerCase() === 'true'
+    );
 
     if (!permiteDescontoItem) {
       mostrarAviso("Desconto manual por item desativado nas configurações.", "Atenção", "warning");
