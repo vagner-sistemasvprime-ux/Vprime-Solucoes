@@ -1813,147 +1813,151 @@ function aplicarDescontoNaCompra() {
   atualizarInterfacePagamento();
 }
 
-let modalEscolhaObj = null;
-let dadosVendaAtual = null;
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Inicializa o modal de escolha
-  const elEscolha = document.getElementById('modalEscolhaDocumento');
-  if (elEscolha) modalEscolhaObj = new bootstrap.Modal(elEscolha, { backdrop: 'static' });
-});
-
-// Modifique o final da sua função confirmarVenda para chamar a abertura do modal de escolha
 async function confirmarVenda() {
+
   const totalComDesconto = Math.max(0, totalBrutoVenda - valorDescontoGlobal);
+
   const totalPago = pagamentosParciais.reduce((acc, p) => acc + (p.valorEfetivo || 0), 0);
 
+
+
   if (totalPago < totalComDesconto) {
+
     mostrarAviso("O valor pago é menor que o total da compra!", "Atenção", "warning");
+
     return;
+
   }
+
+
+
+  // Tratamento seguro para evitar erros de undefined no .map()
 
   const formaPagamentoPrincipal = (pagamentosParciais && pagamentosParciais.length > 0)
+
     ? pagamentosParciais.map(p => `${p.metodo}: R$ ${(p.valorInformado || 0).toFixed(2)}`).join(' | ')
+
     : document.getElementById('pay-method')?.value || "Dinheiro";
 
-  // Salva os dados na variável global temporária para uso após a escolha do documento
-  dadosVendaAtual = {
+
+
+  const dadosVenda = {
+
     operador: usuarioLogado ? usuarioLogado.nome : "Operador",
+
     cliente: clienteSelecionado ? clienteSelecionado.nome : "Não Identificado",
+
     formaPagamento: formaPagamentoPrincipal,
+
     total: totalComDesconto,
+
     desconto: valorDescontoGlobal || 0,
+
     pagamentos: pagamentosParciais || [],
+
     itens: carrinho || [],
+
     dataVenda: new Date().toISOString()
+
   };
 
-  mostrarProcessando("Registrando venda...");
+
+
+  mostrarProcessando("Finalizando compra...");
+
+
 
   if (navigator.onLine) {
+
     try {
-      const res = await chamarGoogleScript('registrarVenda', { dadosVenda: dadosVendaAtual });
+
+      const res = await chamarGoogleScript('registrarVenda', { dadosVenda });
+
       esconderProcessando();
+
+
 
       if (res && res.sucesso) {
-        dadosVendaAtual.idVenda = res.idVenda; // Guarda o ID gerado pelo servidor se houver
-        abrirModalEscolhaDocumento();
+
+        mostrarAviso(`Venda registrada com sucesso!\nCódigo: ${res.idVenda}`, "Sucesso", "success");
+
+        finalizarFluxoVenda();
+
       } else {
-        await salvarVendaPendente(dadosVendaAtual);
-        abrirModalEscolhaDocumento();
+
+        mostrarAviso("Erro ao registrar no servidor. Venda gravada offline.", "Aviso", "warning");
+
+        await salvarVendaPendente(dadosVenda);
+
+        finalizarFluxoVenda();
+
       }
+
     } catch (erro) {
+
       esconderProcessando();
-      await salvarVendaPendente(dadosVendaAtual);
-      abrirModalEscolhaDocumento();
+
+      await salvarVendaPendente(dadosVenda);
+
+      mostrarAviso("Conexão instável. Venda gravada no armazenamento offline.", "Aviso", "warning");
+
+      finalizarFluxoVenda();
+
     }
+
   } else {
-    await salvarVendaPendente(dadosVendaAtual);
+
+    await salvarVendaPendente(dadosVenda);
+
     esconderProcessando();
-    abrirModalEscolhaDocumento();
-  }
-}
 
-function abrirModalEscolhaDocumento() {
-  // Fecha o modal de pagamento anterior mantendo o fluxo
-  if (modalPagamentoObj) modalPagamentoObj.hide();
-  
-  if (modalEscolhaObj) {
-    modalEscolhaObj.show();
-  } else {
+    mostrarAviso("Venda salva OFFLINE com sucesso!\nSerá sincronizada assim que a internet voltar.", "Modo Offline", "success");
+
     finalizarFluxoVenda();
-  }
-}
 
-// Gerenciamento de teclado e foco do modal de escolha
-document.getElementById('modalEscolhaDocumento')?.addEventListener('shown.bs.modal', function () {
-  const btnNota = document.getElementById('btn-escolha-nota');
-  if (btnNota) btnNota.focus(); // Foca na nota fiscal por padrão (ou no recibo, conforme preferir)
-
-  const handleEscolhaKeydown = function(e) {
-    const key = e.key.toLowerCase();
-    const btnRecibo = document.getElementById('btn-escolha-recibo');
-    const btnNotaFisc = document.getElementById('btn-escolha-nota');
-
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Tab') {
-      e.preventDefault();
-      if (document.activeElement === btnNotaFisc) {
-        if (btnRecibo) btnRecibo.focus();
-      } else {
-        if (btnNotaFisc) btnNotaFisc.focus();
-      }
-    } else if (key === 'r') {
-      e.preventDefault();
-      processarEscolhaDocumento('recibo');
-    } else if (key === 'n') {
-      e.preventDefault();
-      processarEscolhaDocumento('nota');
-    } else if (e.key === 'Escape' || e.key === 'Esc') {
-      e.preventDefault();
-      processarEscolhaDocumento('recibo'); // Padrão ao escapar se preferir
-    }
-  };
-
-  this.addEventListener('keydown', handleEscolhaKeydown);
-
-  this.addEventListener('hidden.bs.modal', function () {
-    this.removeEventListener('keydown', handleEscolhaKeydown);
-  }, { once: true });
-});
-
-function processarEscolhaDocumento(tipo) {
-  if (modalEscolhaObj) modalEscolhaObj.hide();
-
-  if (tipo === 'nota') {
-    // Dispara a futura API de nota fiscal
-    executarEmissaoNotaFiscal(dadosVendaAtual);
-  } else {
-    // Dispara a impressão do recibo simples
-    executarImpressaoRecibo(dadosVendaAtual);
   }
 
-  finalizarFluxoVenda();
 }
 
-function executarEmissaoNotaFiscal(venda) {
-  mostrarAviso("Transmitindo Nota Fiscal...", "Fiscal", "info");
-  // Aqui entrará a integração futura com a sua API de NFe/NFCe
-}
 
-function executarImpressaoRecibo(venda) {
-  mostrarAviso("Imprimindo comprovante de venda...", "Recibo", "success");
-  // Lógica atual de impressão do recibo
-}
 
 function finalizarFluxoVenda() {
+
   carrinho = [];
+
   clienteSelecionado = null;
-  dadosVendaAtual = null;
+
   renderizarCarrinho();
 
+
+
+  if (modalPagamentoObj) modalPagamentoObj.hide();
+
   limpaBackdrops();
+
   manterFocoBusca();
+
 }
+
+ let indiceItemSelecionado = 0;
+
+let modalRemoverObj = null;
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  const el = document.getElementById('modalRemoverItem');
+
+  if (el) {
+
+    modalRemoverObj = new bootstrap.Modal(el, { backdrop: 'static' });
+
+  }
+
+}); 
+
+
  let indiceItemSelecionado = 0;
 let modalRemoverObj = null;
 
