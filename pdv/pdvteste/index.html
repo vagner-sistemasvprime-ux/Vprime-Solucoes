@@ -630,6 +630,7 @@
     </div>
   </div>
 </div>
+  
 
   
   <!-- Modal Menu Caixa (F9) -->
@@ -718,7 +719,7 @@
       <span class="badge bg-secondary me-1">F7</span> Esvaziar Carrinho
     </button>
 
-    <button type="button" class="btn btn-sm btn-outline-light text-start py-1 px-2" onclick="abrirMenuSistema()">
+    <button type="button" class="btn btn-sm btn-outline-light text-start py-1 px-2" onclick="abrirMenuCaixa()">
       <span class="badge bg-secondary me-1">F9</span> Menu
     </button>
 
@@ -2550,7 +2551,7 @@ function finalizarFluxoVenda() {
   manterFocoBusca();
 }
 
-// Função acionada pelo F6 para entrar no modo de exclusão do carrinho
+// Função acionada pelo F6 ou pelo botão do rodapé para entrar no modo de exclusão do carrinho
 function focarOuNavegarCarrinho() {
   if (carrinho.length === 0) {
     mostrarAviso("O carrinho está vazio.", "Atenção", "warning");
@@ -2559,6 +2560,7 @@ function focarOuNavegarCarrinho() {
 
   const linhas = document.querySelectorAll('.item-carrinho-row');
   if (linhas.length > 0) {
+    // Seleciona o primeiro por padrão ao acionar via atalho/botão
     indiceItemSelecionado = 0;
     linhas[indiceItemSelecionado].focus();
     linhas[indiceItemSelecionado].classList.add('table-active');
@@ -2566,6 +2568,20 @@ function focarOuNavegarCarrinho() {
     // Adiciona destaque visual de alerta (borda/fundo vermelho) no container do carrinho
     alternarVisualExclusaoCarrinho(true);
     ativarNavegacaoCarrinho(linhas);
+
+    // SUPORTE AO CLIQUE DO MOUSE NAS LINHAS:
+    linhas.forEach((linha, idx) => {
+      // Remove eventos antigos clonando ou apenas sobrescrevendo o onclick para evitar duplicação
+      linha.onclick = () => {
+        // Remove o destaque de todas as linhas
+        linhas.forEach(l => l.classList.remove('table-active'));
+        
+        // Destaca a linha clicada, define o foco e atualiza o índice global
+        linha.classList.add('table-active');
+        linha.focus();
+        indiceItemSelecionado = idx;
+      };
+    });
   }
 }
 
