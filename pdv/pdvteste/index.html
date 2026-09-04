@@ -1557,18 +1557,23 @@ function abrirModalPagamento() {
   }
 }
 
+// --- 3. ATUALIZAÇÃO DA INTERFACE DE PAGAMENTO E CÁLCULO DE TROCO ---
 function atualizarInterfacePagamento() {
   const totalComDesconto = Math.max(0, totalBrutoVenda - valorDescontoGlobal);
-  const totalPago = pagamentosParciais.reduce((acc, p) => acc + p.valor, 0);
-  const restante = Math.max(0, totalComDesconto - totalPago);
-  const troco = totalPago > totalComDesconto ? totalPago - totalComDesconto : 0;
+  const totalPagoEfetivo = pagamentosParciais.reduce((acc, p) => acc + p.valorEfetivo, 0);
+  
+  const restante = Math.max(0, totalComDesconto - totalPagoEfetivo);
+  
+  // O troco só deve existir se houver pagamento em Dinheiro excedente ou sobra geral
+  const totalPagoBruto = pagamentosParciais.reduce((acc, p) => acc + p.valorInformado, 0);
+  const troco = totalPagoBruto > totalComDesconto ? totalPagoBruto - totalComDesconto : 0;
 
   // Exibição dos valores na interface
   document.getElementById('payment-modal-total').innerText = totalComDesconto.toFixed(2).replace('.', ',');
   document.getElementById('pay-restante').innerText = `R$ ${restante.toFixed(2).replace('.', ',')}`;
   document.getElementById('pay-change').innerText = `R$ ${troco.toFixed(2).replace('.', ',')}`;
 
-  // Exibe ou oculta o informativo do desconto aplicado abaixo do total
+  // Informativo de desconto abaixo do total
   const infoDesc = document.getElementById('info-desconto-aplicado');
   if (valorDescontoGlobal > 0) {
     document.getElementById('valor-desconto-aplicado').innerText = valorDescontoGlobal.toFixed(2).replace('.', ',');
@@ -1577,28 +1582,28 @@ function atualizarInterfacePagamento() {
     infoDesc.classList.add('d-none');
   }
 
-  // Renderiza a lista de pagamentos parciais realizados
+  // Renderiza a lista de pagamentos lançados
   const listaEl = document.getElementById('lista-pagamentos-parciais');
   if (listaEl) {
     listaEl.innerHTML = '';
     pagamentosParciais.forEach((p, index) => {
       listaEl.innerHTML += `
         <li class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 small">
-          <span>${p.metodo}: <strong>R$ ${p.valor.toFixed(2).replace('.', ',')}</strong></span>
+          <span>${p.metodo}: <strong>R$ ${p.valorInformado.toFixed(2).replace('.', ',')}</strong></span>
           <button type="button" class="btn btn-sm text-danger p-0" onclick="removerPagamentoParcial(${index})"><i class="bi bi-x-circle-fill"></i></button>
         </li>
       `;
     });
   }
 
-  // Sugere o valor restante no input de recebimento
+  // Preenche o input com o valor restante exato
   const payAmountInput = document.getElementById('pay-amount');
   if (payAmountInput) {
     payAmountInput.value = restante > 0 ? restante.toFixed(2) : '';
   }
 }
 
-// Adiciona um valor pago parcial (ex: R$ 40 em dinheiro, depois o resto em PIX)
+// --- 4. ADIÇÃO DE PAGAMENTO PARCIAL (CORRIGINDO O VALOR DO PIX/CARTÃO) ---
 function adicionarPagamentoParcial() {
   const metodo = document.getElementById('pay-method').value;
   const valorInput = parseFloat(document.getElementById('pay-amount').value) || 0;
@@ -1606,16 +1611,27 @@ function adicionarPagamentoParcial() {
   if (valorInput <= 0) return;
 
   const totalComDesconto = Math.max(0, totalBrutoVenda - valorDescontoGlobal);
-  const totalPagoAtual = pagamentosParciais.reduce((acc, p) => acc + p.valor, 0);
+  const totalPagoAtual = pagamentosParciais.reduce((acc, p) => acc + p.valorEfetivo, 0);
   const restante = Math.max(0, totalComDesconto - totalPagoAtual);
 
-  const valorEfetivo = metodo === 'Dinheiro' ? valorInput : Math.min(valorInput, restante);
+  let valorEfetivo = valorInput;
 
-  pagamentosParciais.push({ metodo, valor: valorEfetivo });
+  // Se não for dinheiro (ex: Cartão ou PIX), não permitimos pagar a mais do que o restante para não gerar troco incorreto
+  if (metodo !== 'Dinheiro') {
+    if (valorInput > restante) {
+      valorEfetivo = restante; // Trava o valor informado para o teto do restante se passar
+    }
+  }
+
+  pagamentosParciais.push({
+    metodo: metodo,
+    valorInformado: valorInput, // O que o operador digitou de fato (ex: 40,00)
+    valorEfetivo: valorEfetivo     // O quanto abateu na conta
+  });
+
   atualizarInterfacePagamento();
   document.getElementById('pay-amount').focus();
 }
-
 function removerPagamentoParcial(index) {
   pagamentosParciais.splice(index, 1);
   atualizarInterfacePagamento();
@@ -1662,7 +1678,32 @@ document.getElementById('modalPagamento')?.addEventListener('shown.bs.modal', fu
   }, { once: true });
 });
 
-// Validação da senha de Administrador/Supervisor
+// --- 1. CONFIGURAÇÃO DE FOCO E TECLADO NO MODAL DE AUTORIZAÇÃO DE DESCONTO ---
+document.getElementById('modalAuthDesconto')?.addEventListener('shown.bs.modal', function () {
+  const inputPass = document.getElementById('auth-pass-desconto');
+  if (inputPass) {
+    inputPass.value = '';
+    inputPass.focus();
+  }
+
+  const handleAuthKeydown = function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      validarAuthDesconto();
+    } else if (e.key === 'Escape' || e.key === 'Esc') {
+      e.preventDefault();
+      fecharAuthDesconto();
+    }
+  };
+
+  this.addEventListener('keydown', handleAuthKeydown);
+
+  this.addEventListener('hidden.bs.modal', function () {
+    this.removeEventListener('keydown', handleAuthKeydown);
+  }, { once: true });
+});
+
+// --- 2. VALIDAÇÃO ROBUSTA DA SENHA DE GERENTE/ADMIN ---
 async function validarAuthDesconto() {
   const pass = document.getElementById('auth-pass-desconto').value.trim();
   const errorDiv = document.getElementById('auth-error-desc');
@@ -1671,22 +1712,37 @@ async function validarAuthDesconto() {
 
   try {
     const passHash = await gerarHash(pass);
-    let res = null;
+    let autorizado = false;
+
+    // Tenta validar na nuvem se estiver online
     if (navigator.onLine) {
-      res = await chamarGoogleScript('autenticarUsuario', { user: 'admin', passHash });
+      try {
+        const res = await chamarGoogleScript('autenticarUsuario', { passHash });
+        if (res && res.sucesso && (res.usuario.perfil === 'admin' || res.usuario.perfil === 'supervisor')) {
+          autorizado = true;
+        }
+      } catch (err) {
+        console.warn("Falha na validação online, testando localmente...");
+      }
     }
 
-    const usuarioLocal = await buscarUsuarioLocal('admin');
-    
-    if ((res && res.sucesso && res.usuario.perfil === 'admin') || (usuarioLocal && usuarioLocal.passHash === passHash)) {
+    // Se não validou online, valida no IndexedDB localmente
+    if (!autorizado) {
+      const usuarioLocal = await buscarUsuarioLocalPorHash(passHash); // Garanta que sua função local busque por hash e verifique perfil
+      if (usuarioLocal && (usuarioLocal.perfil === 'admin' || usuarioLocal.perfil === 'supervisor')) {
+        autorizado = true;
+      }
+    }
+
+    if (autorizado) {
       if (modalAuthObj) modalAuthObj.hide();
       
-      // Senha válida: abre o modal para inserir o valor ou porcentagem do desconto
+      // Abre o modal de inserção do valor do desconto
       document.getElementById('input-valor-desconto').value = '';
       if (modalValorDescObj) modalValorDescObj.show();
       setTimeout(() => document.getElementById('input-valor-desconto').focus(), 150);
     } else {
-      errorDiv.innerText = "Senha inválida ou sem privilégios de administrador.";
+      errorDiv.innerText = "Senha inválida ou sem privilégios de Administrador/Supervisor.";
       errorDiv.classList.remove('d-none');
     }
   } catch (err) {
@@ -1694,7 +1750,6 @@ async function validarAuthDesconto() {
     errorDiv.classList.remove('d-none');
   }
 }
-
 function fecharAuthDesconto() {
   if (modalAuthObj) modalAuthObj.hide();
 }
