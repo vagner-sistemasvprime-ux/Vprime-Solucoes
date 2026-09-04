@@ -741,6 +741,10 @@ async function carregarConfiguracoes() {
 
     if (dados && dados.sucesso) {
       CONFIG_LOJA = dados;
+
+      // ADICIONE ESTE CONSOLE.LOG AQUI:
+      console.log("📦 Objeto CONFIG_LOJA completo retornado pela planilha:", CONFIG_LOJA);
+      
       // Salva no IndexedDB para uso offline futuro (opcional, mas recomendado)
       if (typeof salvarConfiguracoesLocal === 'function') {
         await salvarConfiguracoesLocal(dados);
