@@ -209,10 +209,7 @@
   </div>
 </div>
 
-  <!-- BANNER MODO ORÇAMENTO -->
-  <div id="banner-orcamento" class="banner-orcamento d-none" style="display: none;">
-  <i class="bi bi-file-earmark-text-fill me-2"></i> MODO ORÇAMENTO ATIVO (Pressione F4 para voltar ao modo Venda)
-</div>
+
 
   <!-- 2. BARRA SUPERIOR -->
   <nav class="navbar navbar-pdv">
@@ -260,6 +257,11 @@
       <!-- BANNER MODO ORÇAMENTO -->
 <div id="banner-orcamento" class="banner-orcamento d-none">
   <i class="bi bi-file-earmark-text-fill me-2"></i> MODO ORÇAMENTO ATIVO (Pressione F3 para voltar ao modo Venda)
+</div>
+
+      <!-- Banner de aviso do modo de desconto por item (F10) -->
+<div id="banner-desconto-item" class="alert alert-warning d-none text-center fw-bold py-2 mb-2" role="alert">
+  <i class="bi bi-tag-fill me-2"></i> Selecione o item para aplicar o desconto (Use as setas e Enter, ou clique)
 </div>
 
       <div class="input-group input-group-lg shadow-sm">
@@ -467,6 +469,29 @@
       <div class="d-flex gap-2">
         <button type="button" class="btn btn-secondary w-50 fw-bold" onclick="fecharAuthDesconto()">Cancelar</button>
         <button type="button" class="btn btn-primary w-50 fw-bold" onclick="validarAuthDesconto()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Modal para digitar o valor do desconto do item -->
+<div class="modal fade" id="modalValorDescItem" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title"><i class="bi bi-percent me-2"></i>Desconto no Item</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p id="label-info-item-desc" class="fw-bold mb-2"></p>
+        <div class="mb-3">
+          <label for="input-valor-desc-item" class="form-label">Valor do Desconto (R$):</label>
+          <input type="number" step="0.01" class="form-control" id="input-valor-desc-item" placeholder="0.00">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="fecharModalValorDescItem()">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="confirmarAplicacaoDescontoItem()">Aplicar Desconto</button>
       </div>
     </div>
   </div>
@@ -1572,56 +1597,158 @@ function salvarClienteOperacao() {
   if (modalTotal) modalTotal.innerText = totalFormatado;
 }
 
-   document.addEventListener('keydown', function(event) {
-  // Verifica se a tecla pressionada é 'd' ou 'D'
-  if (event.key.toLowerCase() === 'd') {
-    
-    // Verifica se a configuração permite desconto manual por item
+ 
+
+let indiceItemDescSelecionado = 0;
+let modalValorDescItemObj = null;
+let itemParaDescontoIndex = null;
+
+// Inicializa o objeto do modal Bootstrap ao carregar a página
+document.addEventListener('DOMContentLoaded', () => {
+  const elModal = document.getElementById('modalValorDescItem');
+  if (elModal) {
+    modalValorDescItemObj = new bootstrap.Modal(elModal);
+  }
+});
+
+// Escuta a tecla F10 globalmente para ativar o modo de seleção de desconto por item
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F10') {
+    e.preventDefault();
+
+    // Verifica se a permissão de desconto manual está ativa na planilha
     const permiteDescontoItem = window.CONFIG_LOJA && 
       (String(window.CONFIG_LOJA.descontoManualItem).trim().toLowerCase() === 'true' || 
        window.CONFIG_LOJA.descontoManualItem === true);
 
-    if (!permiteDescontoItem) return; // Se desativado na planilha, ignora
-
-    // Identifica qual linha do carrinho está focada atualmente no teclado
-    const linhaAtiva = document.activeElement;
-    
-    if (linhaAtiva && linhaAtiva.classList.contains('item-carrinho-row')) {
-      event.preventDefault(); // Evita comportamentos padrões da tecla no navegador
-      const index = parseInt(linhaAtiva.getAttribute('data-index'), 10);
-      
-      if (!isNaN(index)) {
-        aplicarDescontoItemPorAtalho(index);
-      }
-    }
-  }
-});
-
-function aplicarDescontoItemPorAtalho(index) {
-  const item = carrinho[index];
-  if (!item) return;
-
-  const valorAtualDesc = item.desconto || 0;
-  const input = prompt(`[DESCONTO NO ITEM]\nProduto: ${item.nome}\nInforme o valor do desconto em R$:`, valorAtualDesc.toFixed(2));
-
-  if (input !== null) {
-    const novoDesconto = parseFloat(input.replace(',', '.')) || 0;
-    const maximoPermitido = item.preco * item.qtd;
-
-    if (novoDesconto < 0 || novoDesconto > maximoPermitido) {
-      alert("Valor de desconto inválido ou superior ao total do item.");
+    if (!permiteDescontoItem) {
+      mostrarAviso("Desconto manual por item desativado nas configurações.", "Atenção", "warning");
       return;
     }
 
-    item.desconto = novoDesconto;
-    renderizarCarrinho();
+    if (carrinho.length === 0) {
+      mostrarAviso("O carrinho está vazio.", "Atenção", "warning");
+      return;
+    }
 
-    // Devolve o foco instantaneamente para a linha do item para o operador continuar navegando
-    setTimeout(() => {
-      const novaLinha = document.querySelector(`tr.item-carrinho-row[data-index="${index}"]`);
-      if (novaLinha) novaLinha.focus();
-    }, 50);
+    focarOuNavegarCarrinhoParaDesconto();
   }
+});
+
+// Entra no modo de seleção igualzinho ao da exclusão (F6)
+function focarOuNavegarCarrinhoParaDesconto() {
+  const linhas = document.querySelectorAll('.item-carrinho-row');
+  if (linhas.length > 0) {
+    indiceItemDescSelecionado = 0;
+    linhas[indiceItemDescSelecionado].focus();
+    linhas[indiceItemDescSelecionado].classList.add('table-active');
+    
+    // Exibe o banner de aviso visual
+    const banner = document.getElementById('banner-desconto-item');
+    if (banner) banner.classList.remove('d-none');
+
+    ativarNavegacaoCarrinhoParaDesconto(linhas);
+  }
+}
+
+// Gerencia as setas, Enter e Escape para escolher o item
+function ativarNavegacaoCarrinhoParaDesconto(linhas) {
+  const handleKeydown = function(e) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      linhas[indiceItemDescSelecionado].classList.remove('table-active');
+      indiceItemDescSelecionado = (indiceItemDescSelecionado + 1) % linhas.length;
+      linhas[indiceItemDescSelecionado].focus();
+      linhas[indiceItemDescSelecionado].classList.add('table-active');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      linhas[indiceItemDescSelecionado].classList.remove('table-active');
+      indiceItemDescSelecionado = (indiceItemDescSelecionado - 1 + linhas.length) % linhas.length;
+      linhas[indiceItemDescSelecionado].focus();
+      linhas[indiceItemDescSelecionado].classList.add('table-active');
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const index = parseInt(linhas[indiceItemDescSelecionado].getAttribute('data-index'), 10);
+      sairModoSelecaoDesconto(linhas, handleKeydown);
+      abrirModalDescontoItem(index);
+    } else if (e.key === 'Escape' || e.key === 'Esc') {
+      e.preventDefault();
+      sairModoSelecaoDesconto(linhas, handleKeydown);
+    }
+  };
+
+  document.addEventListener('keydown', handleKeydown);
+}
+
+function sairModoSelecaoDesconto(linhas, handleKeydown) {
+  const banner = document.getElementById('banner-desconto-item');
+  if (banner) banner.classList.add('d-none');
+
+  linhas.forEach(l => l.classList.remove('table-active'));
+  document.removeEventListener('keydown', handleKeydown);
+  manterFocoBusca();
+}
+
+// Abre o modal de input de valor seguindo o padrão do desconto global
+function abrirModalDescontoItem(index) {
+  itemParaDescontoIndex = index;
+  const item = carrinho[index];
+  if (!item) return;
+
+  const labelInfo = document.getElementById('label-info-item-desc');
+  if (labelInfo) labelInfo.innerText = `Produto: ${item.nome} (Preço Total: R$ ${(item.preco * item.qtd).toFixed(2)})`;
+
+  const inputValor = document.getElementById('input-valor-desc-item');
+  if (inputValor) {
+    inputValor.value = item.desconto ? item.desconto.toFixed(2) : '';
+  }
+
+  if (modalValorDescItemObj) modalValorDescItemObj.show();
+
+  setTimeout(() => {
+    if (inputValor) inputValor.focus();
+  }, 150);
+}
+
+// Configuração de foco e eventos de teclado dentro do modal de desconto do item
+document.getElementById('modalValorDescItem')?.addEventListener('shown.bs.modal', function () {
+  const handleModalKeydown = function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      confirmarAplicacaoDescontoItem();
+    } else if (e.key === 'Escape' || e.key === 'Esc') {
+      e.preventDefault();
+      fecharModalValorDescItem();
+    }
+  };
+
+  this.addEventListener('keydown', handleModalKeydown);
+  this.addEventListener('hidden.bs.modal', function () {
+    this.removeEventListener('keydown', handleModalKeydown);
+  }, { once: true });
+});
+
+function fecharModalValorDescItem() {
+  if (modalValorDescItemObj) modalValorDescItemObj.hide();
+  manterFocoBusca();
+}
+
+function confirmarAplicacaoDescontoItem() {
+  if (itemParaDescontoIndex === null || !carrinho[itemParaDescontoIndex]) return;
+
+  const item = carrinho[itemParaDescontoIndex];
+  const valorDesconto = parseFloat(document.getElementById('input-valor-desc-item').value) || 0;
+  const maximoPermitido = item.preco * item.qtd;
+
+  if (valorDesconto < 0 || valorDesconto > maximoPermitido) {
+    mostrarAviso("O desconto não pode ser negativo ou maior que o total do item.", "Atenção", "warning");
+    return;
+  }
+
+  item.desconto = valorDesconto;
+  fecharModalValorDescItem();
+  renderizarCarrinho();
+  manterFocoBusca();
 }
    
   function abrirModalConsulta() {
