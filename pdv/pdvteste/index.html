@@ -1991,20 +1991,11 @@ function executarImpressaoRecibo(venda) {
   const areaImpressao = document.getElementById('area-impressao');
   if (!areaImpressao) return;
 
-  // Mostra no F12 do navegador o que exibe na configuração atual
-  console.log("Configuração de papel recebida:", window.CONFIG_LOJA?.tamanhoPapelImpressora);
+  // Lê diretamente da propriedade que agora sabemos que existe em CONFIG_LOJA
+  let tamanhoPapel = (window.CONFIG_LOJA && window.CONFIG_LOJA.tamanhoPapelImpressora) 
+    ? String(window.CONFIG_LOJA.tamanhoPapelImpressora).trim().toUpperCase() 
+    : '80MM';
 
-  // Busca o tamanho do papel considerando todas as chaves possíveis vindas da planilha
-  let tamanhoBruto = 
-    window.CONFIG_LOJA?.tamanhoPapelImpressora || 
-    window.CONFIG_LOJA?.tamanhoPapel || 
-    window.CONFIG_LOJA?.papel || 
-    window.CONFIG_LOJA?.recursos?.tamanhoPapelImpressora || 
-    '80MM';
-
-  let tamanhoPapel = String(tamanhoBruto).trim().toUpperCase();
-
-  // Mostra no F12 do navegador o que foi detectado para conferência
   console.log("Configuração de papel detectada:", tamanhoPapel);
 
   const nomeLoja = CONFIG_LOJA.nomeLoja || "PDV Comercial";
