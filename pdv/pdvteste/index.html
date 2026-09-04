@@ -1985,12 +1985,12 @@ function executarImpressaoRecibo(venda) {
   const areaImpressao = document.getElementById('area-impressao');
   if (!areaImpressao) return;
 
-  // Lê diretamente da propriedade que agora sabemos que existe em CONFIG_LOJA
- let tamanhoPapel = (window.CONFIG_LOJA && (window.CONFIG_LOJA.tamanhoPapelImpressora || window.CONFIG_LOJA.tamanhoPapel))
-    ? String(window.CONFIG_LOJA.tamanhoPapelImpressora || window.CONFIG_LOJA.tamanhoPapel).trim().toUpperCase()
-    : '80MM'; // Altere o padrão temporário aqui para 58MM se preferir
+  // Lê diretamente do objeto global atualizado
+  let tamanhoPapel = window.CONFIG_LOJA?.tamanhoPapelImpressora 
+    ? String(window.CONFIG_LOJA.tamanhoPapelImpressora).trim().toUpperCase() 
+    : '80MM';
 
-  console.log("Configuração de papel detectada:", tamanhoPapel);
+  console.log("Valor real lido de CONFIG_LOJA:", tamanhoPapel);
 
   const nomeLoja = CONFIG_LOJA.nomeLoja || "PDV Comercial";
   const nichoLoja = CONFIG_LOJA.nicho || "";
