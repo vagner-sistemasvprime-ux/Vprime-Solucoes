@@ -1517,13 +1517,18 @@ function salvarClienteOperacao() {
   }
 }
 
-  async function renderizarCarrinho() {
+ async function renderizarCarrinho() {
   const tbody = document.getElementById('cart-items');
   const tableEl = document.getElementById('cart-table');
   const emptyMsgEl = document.getElementById('empty-cart-message');
 
   tbody.innerHTML = '';
-  let total = 0;
+  let totalGeral = 0;
+
+  // Verifica se a permissão de desconto manual está ativa na planilha
+  const permiteDescontoItem = window.CONFIG_LOJA && 
+    (String(window.CONFIG_LOJA.descontoManualItem).trim().toLowerCase() === 'true' || 
+     window.CONFIG_LOJA.descontoManualItem === true);
 
   if (carrinho.length === 0) {
     tableEl.classList.add('d-none');
@@ -1533,22 +1538,90 @@ function salvarClienteOperacao() {
     emptyMsgEl.classList.add('d-none');
 
     carrinho.forEach((item, index) => {
-      total += item.subtotal;
-      // Adicionamos um atributo data-index para facilitar a seleção via teclado/mouse
+      const precoUnitario = Number(item.preco) || 0;
+      const quantidade = Number(item.qtd) || 1;
+      const descontoItem = Number(item.desconto) || 0;
+
+      const subtotalBruto = precoUnitario * quantidade;
+      const subtotalComDesconto = Math.max(0, subtotalBruto - descontoItem);
+      
+      item.subtotal = subtotalComDesconto;
+      totalGeral += subtotalComDesconto;
+
+      // Exibe indicação de desconto discretamente se houver
+      let textoSubtotal = `R$ ${subtotalComDesconto.toFixed(2).replace('.', ',')}`;
+      if (descontoItem > 0) {
+        textoSubtotal += ` <small style="color: #dc3545; font-size: 0.85em;">(-R$ ${descontoItem.toFixed(2).replace('.', ',')})</small>`;
+      }
+
       tbody.innerHTML += `
         <tr class="item-carrinho-row" tabindex="0" data-index="${index}" style="cursor: pointer;">
-          <td><span class="badge bg-secondary fs-6">${item.codigo}</span></td>
-          <td><span class="badge bg-primary fs-6">${item.qtd}x</span></td>
-          <td>${item.nome}</td>
-          <td style="text-align: right;">R$ ${item.preco.toFixed(2).replace('.', ',')}</td>
-          <td style="text-align: right;">R$ ${item.subtotal.toFixed(2).replace('.', ',')}</td>
+          <td><span class="badge bg-secondary fs-6">${item.codigo || '-'}</span></td>
+          <td><span class="badge bg-primary fs-6">${quantidade}x</span></td>
+          <td>${item.nome} ${permiteDescontoItem ? '<span class="text-muted" style="font-size: 0.75em;">[Pressione D]</span>' : ''}</td>
+          <td style="text-align: right;">R$ ${precoUnitario.toFixed(2).replace('.', ',')}</td>
+          <td style="text-align: right;">${textoSubtotal}</td>
         </tr>
       `;
     });
   }
 
-  document.getElementById('cart-total').innerText = total.toFixed(2).replace('.', ',');
-  document.getElementById('payment-modal-total').innerText = total.toFixed(2).replace('.', ',');
+  const totalFormatado = totalGeral.toFixed(2).replace('.', ',');
+  document.getElementById('cart-total').innerText = totalFormatado;
+  const modalTotal = document.getElementById('payment-modal-total');
+  if (modalTotal) modalTotal.innerText = totalFormatado;
+}
+
+   document.addEventListener('keydown', function(event) {
+  // Verifica se a tecla pressionada é 'd' ou 'D'
+  if (event.key.toLowerCase() === 'd') {
+    
+    // Verifica se a configuração permite desconto manual por item
+    const permiteDescontoItem = window.CONFIG_LOJA && 
+      (String(window.CONFIG_LOJA.descontoManualItem).trim().toLowerCase() === 'true' || 
+       window.CONFIG_LOJA.descontoManualItem === true);
+
+    if (!permiteDescontoItem) return; // Se desativado na planilha, ignora
+
+    // Identifica qual linha do carrinho está focada atualmente no teclado
+    const linhaAtiva = document.activeElement;
+    
+    if (linhaAtiva && linhaAtiva.classList.contains('item-carrinho-row')) {
+      event.preventDefault(); // Evita comportamentos padrões da tecla no navegador
+      const index = parseInt(linhaAtiva.getAttribute('data-index'), 10);
+      
+      if (!isNaN(index)) {
+        aplicarDescontoItemPorAtalho(index);
+      }
+    }
+  }
+});
+
+function aplicarDescontoItemPorAtalho(index) {
+  const item = carrinho[index];
+  if (!item) return;
+
+  const valorAtualDesc = item.desconto || 0;
+  const input = prompt(`[DESCONTO NO ITEM]\nProduto: ${item.nome}\nInforme o valor do desconto em R$:`, valorAtualDesc.toFixed(2));
+
+  if (input !== null) {
+    const novoDesconto = parseFloat(input.replace(',', '.')) || 0;
+    const maximoPermitido = item.preco * item.qtd;
+
+    if (novoDesconto < 0 || novoDesconto > maximoPermitido) {
+      alert("Valor de desconto inválido ou superior ao total do item.");
+      return;
+    }
+
+    item.desconto = novoDesconto;
+    renderizarCarrinho();
+
+    // Devolve o foco instantaneamente para a linha do item para o operador continuar navegando
+    setTimeout(() => {
+      const novaLinha = document.querySelector(`tr.item-carrinho-row[data-index="${index}"]`);
+      if (novaLinha) novaLinha.focus();
+    }, 50);
+  }
 }
    
   function abrirModalConsulta() {
