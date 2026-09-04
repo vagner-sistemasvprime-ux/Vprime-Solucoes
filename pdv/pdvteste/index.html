@@ -1985,12 +1985,9 @@ function executarImpressaoRecibo(venda) {
   const areaImpressao = document.getElementById('area-impressao');
   if (!areaImpressao) return;
 
-  // Lê diretamente do objeto global atualizado
-  let tamanhoPapel = window.CONFIG_LOJA?.tamanhoPapelImpressora 
-    ? String(window.CONFIG_LOJA.tamanhoPapelImpressora).trim().toUpperCase() 
-    : '80MM';
-
-  console.log("Valor real lido de CONFIG_LOJA:", tamanhoPapel);
+  // FORÇA o valor para 58MM ignorando qualquer cache anterior
+  let tamanhoPapel = "58MM";
+  console.log("Forçando tamanho de papel para teste:", tamanhoPapel);
 
   const nomeLoja = CONFIG_LOJA.nomeLoja || "PDV Comercial";
   const nichoLoja = CONFIG_LOJA.nicho || "";
