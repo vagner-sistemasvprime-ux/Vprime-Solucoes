@@ -1792,26 +1792,28 @@ function aplicarDescontoNaCompra() {
   atualizarInterfacePagamento();
 }
 
-// Conclusão final da venda validando se o total pago atinge o total com desconto
 async function confirmarVenda() {
   const totalComDesconto = Math.max(0, totalBrutoVenda - valorDescontoGlobal);
-  const totalPago = pagamentosParciais.reduce((acc, p) => acc + p.valor, 0);
+  const totalPago = pagamentosParciais.reduce((acc, p) => acc + (p.valorEfetivo || 0), 0);
 
   if (totalPago < totalComDesconto) {
     mostrarAviso("O valor pago é menor que o total da compra!", "Atenção", "warning");
     return;
   }
 
-  const formaPagamentoPrincipal = pagamentosParciais.map(p => `${p.metodo}: R$ ${p.valor.toFixed(2)}`).join(' | ');
+  // Tratamento seguro para evitar erros de undefined no .map()
+  const formaPagamentoPrincipal = (pagamentosParciais && pagamentosParciais.length > 0)
+    ? pagamentosParciais.map(p => `${p.metodo}: R$ ${(p.valorInformado || 0).toFixed(2)}`).join(' | ')
+    : document.getElementById('pay-method')?.value || "Dinheiro";
 
   const dadosVenda = {
     operador: usuarioLogado ? usuarioLogado.nome : "Operador",
     cliente: clienteSelecionado ? clienteSelecionado.nome : "Não Identificado",
     formaPagamento: formaPagamentoPrincipal,
     total: totalComDesconto,
-    desconto: valorDescontoGlobal,
-    pagamentos: pagamentosParciais,
-    itens: carrinho,
+    desconto: valorDescontoGlobal || 0,
+    pagamentos: pagamentosParciais || [],
+    itens: carrinho || [],
     dataVenda: new Date().toISOString()
   };
 
