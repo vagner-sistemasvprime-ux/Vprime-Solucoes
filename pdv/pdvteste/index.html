@@ -2133,16 +2133,15 @@ async function confirmarVenda() {
       // DEU ERRO OU TIMEOUT: Esconde o processamento imediatamente!
       esconderProcessando();
       await salvarVendaPendente(dadosVendaAtual);
-      abrirModalEscolhaDocumento();
+      await tratarFluxoPosVenda(dadosVendaAtual);
     }
   } else {
-    // ESTÁ OFFLINE: Salva localmente e esconde o processamento na mesma hora!
+    // ESTÁ OFFLINE: Salva localmente, esconde o processamento e segue o pós-venda
     await salvarVendaPendente(dadosVendaAtual);
     esconderProcessando();
-    abrirModalEscolhaDocumento();
+    await tratarFluxoPosVenda(dadosVendaAtual);
   }
-  }
-   
+}
 function abrirModalEscolhaDocumento() {
   if (modalPagamentoObj) modalPagamentoObj.hide();
   if (modalEscolhaObj) {
