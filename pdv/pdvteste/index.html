@@ -1196,11 +1196,142 @@ function alternarModoOrcamentoVenda() {
     mostrarAviso("O carrinho está vazio para gerar orçamento!", "Atenção", "warning");
     return;
   }
-  mostrarAviso("Orçamento gerado e enviado para impressão!", "Orçamento", "success");
-  carrinho = [];
-  clienteSelecionado = null;
-  renderizarCarrinho();
-  manterFocoBusca(); // <-- Devolve o foco aqui
+
+  const areaImpressao = document.getElementById('area-impressao');
+  if (!areaImpressao) return;
+
+  let tamanhoPapel = (window.CONFIG_LOJA && window.CONFIG_LOJA.tamanhoPapelImpressora)
+    ? String(window.CONFIG_LOJA.tamanhoPapelImpressora).trim().toUpperCase()
+    : '80MM';
+
+  const nomeLoja = (window.CONFIG_LOJA && window.CONFIG_LOJA.nomeLoja) || "PDV Comercial";
+  const nichoLoja = (window.CONFIG_LOJA && window.CONFIG_LOJA.nicho) || "";
+
+  let itensHtmlTermico = '';
+  let itensHtmlA4 = '';
+
+  const totalBrutoOrcamento = carrinho.reduce((acc, item) => acc + ((item.preco || 0) * (item.qtd || item.quantidade || 1)), 0);
+  const descontoOrcamento = typeof valorDescontoGlobal !== 'undefined' ? (valorDescontoGlobal || 0) : 0;
+  const totalOrcamento = Math.max(0, totalBrutoOrcamento - descontoOrcamento);
+  const dataFormatada = new Date().toLocaleString('pt-BR');
+  const operadorNome = (typeof usuarioLogado !== 'undefined' && usuarioLogado && usuarioLogado.nome) ? usuarioLogado.nome : "Operador";
+  const clienteNome = (typeof clienteSelecionado !== 'undefined' && clienteSelecionado && clienteSelecionado.nome) ? clienteSelecionado.nome : "Não Identificado";
+
+  carrinho.forEach((item, idx) => {
+    let qtdItem = item.qtd !== undefined ? item.qtd : (item.quantidade !== undefined ? item.quantidade : 1);
+    let subtotalItem = (item.preco || 0) * qtdItem;
+
+    itensHtmlTermico += `
+      <tr>
+        <td colspan="2"><strong>${item.codigo || ''} - ${item.nome}</strong></td>
+      </tr>
+      <tr>
+        <td>${qtdItem}x R$ ${(item.preco || 0).toFixed(2).replace('.', ',')}</td>
+        <td style="text-align: right;">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</td>
+      </tr>
+    `;
+
+    itensHtmlA4 += `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td>${item.codigo || '-'}</td>
+        <td>${item.nome}</td>
+        <td style="text-align: center;">${qtdItem}</td>
+        <td style="text-align: right;">R$ ${(item.preco || 0).toFixed(2).replace('.', ',')}</td>
+        <td style="text-align: right;">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</td>
+      </tr>
+    `;
+  });
+
+  if (tamanhoPapel.includes('A4')) {
+    areaImpressao.innerHTML = `
+      <div class="recibo-a4">
+        <div style="border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between;">
+          <div>
+            <h2 style="margin: 0; font-size: 20px;">${nomeLoja}</h2>
+            <p style="margin: 2px 0; color: #666;">${nichoLoja}</p>
+          </div>
+          <div style="text-align: right;">
+            <h3 style="margin: 0; color: #0d6efd;">ORÇAMENTO</h3>
+            <p style="margin: 2px 0;"><strong>Data:</strong> ${dataFormatada}</p>
+            <p style="margin: 2px 0;"><strong>Operador:</strong> ${operadorNome}</p>
+          </div>
+        </div>
+        <p><strong>Cliente:</strong> ${clienteNome}</p>
+        <table class="a4-table">
+          <thead>
+            <tr style="background: #f1f3f5;">
+              <th style="width: 5%; text-align: center;">#</th>
+              <th style="width: 15%;">Código</th>
+              <th style="width: 45%;">Produto</th>
+              <th style="width: 10%; text-align: center;">Qtd</th>
+              <th style="width: 12%; text-align: right;">Unit.</th>
+              <th style="width: 13%; text-align: right;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>${itensHtmlA4}</tbody>
+        </table>
+        <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+          <div style="text-align: right;">
+            <p style="margin: 2px 0;">Subtotal: R$ ${totalBrutoOrcamento.toFixed(2).replace('.', ',')}</p>
+            ${descontoOrcamento > 0 ? `<p style="margin: 2px 0; color: red;">Desconto: -R$ ${descontoOrcamento.toFixed(2).replace('.', ',')}</p>` : ''}
+            <h2 style="margin: 5px 0; color: #198754;">TOTAL ORÇAMENTO: R$ ${totalOrcamento.toFixed(2).replace('.', ',')}</h2>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    const classeLargura = tamanhoPapel.includes('58') ? 'cupom-58mm' : 'cupom-80mm';
+
+    areaImpressao.innerHTML = `
+      <div class="cupom-termico ${classeLargura}">
+        <div style="text-align: center;">
+          <h3 style="margin: 0 0 2px 0;">${nomeLoja}</h3>
+          <p style="margin: 2px 0;">${nichoLoja}</p>
+          <p style="margin: 2px 0; font-weight: bold;">ORÇAMENTO</p>
+        </div>
+        <div class="cupom-divider"></div>
+        <p style="margin: 2px 0;"><strong>Data:</strong> ${dataFormatada}</p>
+        <p style="margin: 2px 0;"><strong>Operador:</strong> ${operadorNome}</p>
+        <p style="margin: 2px 0;"><strong>Cliente:</strong> ${clienteNome}</p>
+        <div class="cupom-divider"></div>
+        <table class="cupom-table">
+          <thead>
+            <tr>
+              <th style="border-bottom: 1px solid #000;">Qtd / Item</th>
+              <th style="border-bottom: 1px solid #000; text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>${itensHtmlTermico}</tbody>
+        </table>
+        <div class="cupom-divider"></div>
+        <div style="display: flex; justify-content: space-between;"><span>Subtotal:</span> <span>R$ ${totalBrutoOrcamento.toFixed(2).replace('.', ',')}</span></div>
+        ${descontoOrcamento > 0 ? `<div style="display: flex; justify-content: space-between; color: red;"><span>Desconto:</span> <span>-R$ ${descontoOrcamento.toFixed(2).replace('.', ',')}</span></div>` : ''}
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em;"><span>TOTAL:</span> <span>R$ ${totalOrcamento.toFixed(2).replace('.', ',')}</span></div>
+        <div class="cupom-divider"></div>
+        <div style="text-align: center; margin-top: 5px;">
+          <p style="margin: 2px 0;">Orçamento válido por 3 dias.</p>
+          <p style="margin: 2px 0; font-size: 0.9em;">Obrigado pela preferência!</p>
+        </div>
+      </div>
+    `;
+  }
+
+  areaImpressao.style.display = 'block';
+
+  setTimeout(() => {
+    window.print();
+    areaImpressao.innerHTML = '';
+    areaImpressao.style.display = 'none';
+
+    carrinho = [];
+    if (typeof clienteSelecionado !== 'undefined') clienteSelecionado = null;
+    if (typeof valorDescontoGlobal !== 'undefined') valorDescontoGlobal = 0;
+    if (typeof renderizarCarrinho === 'function') renderizarCarrinho();
+    if (typeof manterFocoBusca === 'function') manterFocoBusca();
+
+    mostrarAviso("Orçamento gerado e impresso com sucesso!", "Orçamento", "success");
+  }, 400);
 }
 
 
