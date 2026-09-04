@@ -308,21 +308,26 @@
       </div>
       <div class="modal-body p-4">
         <div class="row g-4">
-          <!-- Coluna Esquerda: Resumo, Desconto e Formas de Pagamento -->
           <div class="col-md-6 border-end">
             <h5 class="text-muted fw-bold">RESUMO DA COMPRA</h5>
             <div class="my-2">
               <span class="fs-6 text-muted">Total a Pagar</span>
               <h1 class="text-success fw-bold display-5 m-0" id="display-total-geral">R$ <span id="payment-modal-total">0,00</span></h1>
-              <!-- Exibição do Desconto Aplicado (Oculto se não houver) -->
               <div id="info-desconto-aplicado" class="text-danger small fw-bold mt-1 d-none">
                 Desconto: -R$ <span id="valor-desconto-aplicado">0,00</span>
               </div>
             </div>
             
+            <!-- 1. Primeiro o Valor Recebido -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">Valor Recebido (R$)</label>
+              <input type="number" id="pay-amount" class="form-control form-control-lg fs-4" placeholder="0.00" tabindex="1">
+            </div>
+
+            <!-- 2. Depois a Forma de Pagamento -->
             <div class="mb-3">
               <label class="form-label fw-bold">Forma de Pagamento</label>
-              <select class="form-select form-select-lg fs-5" id="pay-method">
+              <select class="form-select form-select-lg fs-5" id="pay-method" tabindex="2">
                 <option value="Dinheiro">Dinheiro</option>
                 <option value="Cartão de Crédito">Cartão de Crédito</option>
                 <option value="Cartão de Débito">Cartão de Débito</option>
@@ -330,17 +335,11 @@
               </select>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label fw-bold">Valor Pago nesta Forma (R$)</label>
-              <input type="number" id="pay-amount" class="form-control form-control-lg fs-4" placeholder="0.00">
-            </div>
-
-            <button type="button" class="btn btn-outline-primary w-100 fw-bold py-2" onclick="adicionarPagamentoParcial()">
-              <i class="bi bi-plus-circle me-1"></i> Adicionar Pagamento (Enter)
+            <button type="button" id="btn-add-parcial" class="btn btn-outline-primary w-100 fw-bold py-2" tabindex="3" onclick="adicionarPagamentoParcial()">
+              <i class="bi bi-plus-circle me-1"></i> Registrar Parcial (Enter)
             </button>
           </div>
 
-          <!-- Coluna Direita: Restante, Lista de Pagamentos Realizados e Troco -->
           <div class="col-md-6 d-flex flex-column justify-content-between">
             <div>
               <h5 class="text-muted fw-bold">STATUS DO PAGAMENTO</h5>
@@ -355,22 +354,19 @@
                 </div>
               </div>
 
-              <!-- Lista de pagamentos parciais efetuados -->
               <h6 class="text-muted fw-bold small">PAGAMENTOS LANÇADOS:</h6>
               <ul id="lista-pagamentos-parciais" class="list-group mb-3" style="max-height: 120px; overflow-y: auto;">
-                <!-- Itens inseridos dinamicamente -->
               </ul>
             </div>
 
-            <button id="btn-confirmar-venda" class="btn btn-success btn-lg w-100 fw-bold fs-4 py-3" onclick="confirmarVendaFinal()">
-              <i class="bi bi-check2-circle me-2"></i> CONCLUIR VENDA
+            <button id="btn-confirmar-venda" class="btn btn-success btn-lg w-100 fw-bold fs-4 py-3" tabindex="4" onclick="confirmarVenda()">
+              <i class="bi bi-check2-circle me-2"></i> CONCLUIR VENDA (Enter Final)
             </button>
           </div>
         </div>
       </div>
-      <!-- Legenda de Atalhos -->
       <div class="modal-footer bg-light py-2 text-muted small justify-content-between">
-        <span><kbd>[D]</kbd> Aplicar Desconto (Senha Gerente)</span>
+        <span><kbd>[D]</kbd> Aplicar Desconto</span>
         <span><kbd>[I]</kbd> Identificar Cliente</span>
         <span><kbd>[Esc]</kbd> Cancelar</span>
       </div>
@@ -378,6 +374,7 @@
   </div>
 </div>
 
+  
 <!-- MODAL DE AUTORIZAÇÃO DE DESCONTO (ADMIN/SUPERVISOR) -->
 <div class="modal fade" id="modalAuthDesconto" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -1604,6 +1601,7 @@ function atualizarInterfacePagamento() {
 }
 
 // --- 4. ADIÇÃO DE PAGAMENTO PARCIAL (CORRIGINDO O VALOR DO PIX/CARTÃO) ---
+// Atualize a função de adicionar pagamento para alternar o foco inteligentemente
 function adicionarPagamentoParcial() {
   const metodo = document.getElementById('pay-method').value;
   const valorInput = parseFloat(document.getElementById('pay-amount').value) || 0;
@@ -1615,59 +1613,76 @@ function adicionarPagamentoParcial() {
   const restante = Math.max(0, totalComDesconto - totalPagoAtual);
 
   let valorEfetivo = valorInput;
-
-  // Se não for dinheiro (ex: Cartão ou PIX), não permitimos pagar a mais do que o restante para não gerar troco incorreto
-  if (metodo !== 'Dinheiro') {
-    if (valorInput > restante) {
-      valorEfetivo = restante; // Trava o valor informado para o teto do restante se passar
-    }
+  if (metodo !== 'Dinheiro' && valorInput > restante) {
+    valorEfetivo = restante;
   }
 
   pagamentosParciais.push({
     metodo: metodo,
-    valorInformado: valorInput, // O que o operador digitou de fato (ex: 40,00)
-    valorEfetivo: valorEfetivo     // O quanto abateu na conta
+    valorInformado: valorInput,
+    valorEfetivo: valorEfetivo
   });
 
   atualizarInterfacePagamento();
-  document.getElementById('pay-amount').focus();
+
+  // Verifica se ainda falta pagar
+  const novoTotalPago = pagamentosParciais.reduce((acc, p) => acc + p.valorEfetivo, 0);
+  if (novoTotalPago < totalComDesconto) {
+    // Se ainda falta, volta o foco para o valor para o próximo pagamento parcial
+    const payAmountInput = document.getElementById('pay-amount');
+    payAmountInput.value = (totalComDesconto - novoTotalPago).toFixed(2);
+    payAmountInput.focus();
+    payAmountInput.select();
+  } else {
+    // Se já quitou, joga o foco diretamente no botão de Concluir Venda
+    document.getElementById('btn-confirmar-venda').focus();
+  }
 }
 function removerPagamentoParcial(index) {
   pagamentosParciais.splice(index, 1);
   atualizarInterfacePagamento();
 }
 
-// Configura foco inicial e atalhos de teclado dentro do modal de pagamento
 document.getElementById('modalPagamento')?.addEventListener('shown.bs.modal', function () {
-  const selectMethod = document.getElementById('pay-method');
-  if (selectMethod) selectMethod.focus();
+  // Foco inicial direto no valor recebido
+  const payAmountInput = document.getElementById('pay-amount');
+  if (payAmountInput) {
+    payAmountInput.value = window.restanteGlobal > 0 ? window.restanteGlobal.toFixed(2) : '';
+    payAmountInput.focus();
+    payAmountInput.select();
+  }
 
   const handlePagamentoKeydown = function(e) {
     const key = e.key.toLowerCase();
+    const activeEl = document.activeElement;
 
-    // Atalho 'i' para abrir modal de identificar cliente SEM fechar o pagamento (fica ao fundo)
     if (key === 'i') {
       e.preventDefault();
       const modalCliEl = document.getElementById('modalCliente');
       if (modalCliEl) {
-        const modalCli = new bootstrap.Modal(modalCliEl);
-        modalCli.show();
+        new bootstrap.Modal(modalCliEl).show();
       }
-    }
-    
-    // Atalho 'd' para abrir diretamente o modal de senha gerencial para o desconto
-    else if (key === 'd') {
+    } else if (key === 'd') {
       e.preventDefault();
       document.getElementById('auth-pass-desconto').value = '';
       document.getElementById('auth-error-desc').classList.add('d-none');
       if (modalAuthObj) modalAuthObj.show();
       setTimeout(() => document.getElementById('auth-pass-desconto').focus(), 150);
-    }
-
-    // Atalho Enter no input de valor para adicionar o pagamento parcial direto
-    else if (e.key === 'Enter' && document.activeElement.id === 'pay-amount') {
+    } else if (e.key === 'Enter') {
       e.preventDefault();
-      adicionarPagamentoParcial();
+      
+      // Se estiver no campo de valor, pula para o select de forma de pagamento
+      if (activeEl.id === 'pay-amount') {
+        document.getElementById('pay-method').focus();
+      } 
+      // Se estiver na forma de pagamento, registra o pagamento parcial e volta o foco para o valor (ou botão de concluir se zerou)
+      else if (activeEl.id === 'pay-method') {
+        adicionarPagamentoParcial();
+      }
+      // Se estiver no botão de concluir venda, efetiva a venda
+      else if (activeEl.id === 'btn-confirmar-venda') {
+        confirmarVenda();
+      }
     }
   };
 
