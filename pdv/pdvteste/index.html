@@ -1980,7 +1980,11 @@ function executarImpressaoRecibo(venda) {
   const areaImpressao = document.getElementById('area-impressao');
   if (!areaImpressao) return;
 
-  let tamanhoPapel = (window.CONFIG_LOJA && CONFIG_LOJA.tamanhoPapelImpressora) ? CONFIG_LOJA.tamanhoPapelImpressora : '80mm';
+  // Pega o tamanho configurado na planilha (CONFIG_LOJA). Se não encontrar, assume '80mm' por padrão.
+  let tamanhoPapel = (window.CONFIG_LOJA && CONFIG_LOJA.tamanhoPapelImpressora) 
+    ? CONFIG_LOJA.tamanhoPapelImpressora.trim().toLowerCase() 
+    : '80mm';
+
   const nomeLoja = CONFIG_LOJA.nomeLoja || "PDV Comercial";
   const nichoLoja = CONFIG_LOJA.nicho || "";
   
@@ -1988,37 +1992,34 @@ function executarImpressaoRecibo(venda) {
   let itensHtmlA4 = '';
 
   venda.itens.forEach((item, idx) => {
-  // Pega a quantidade correta verificando 'qtd' (como no seu carrinho) ou 'quantidade' por segurança
-  let qtdItem = item.qtd !== undefined ? item.qtd : (item.quantidade !== undefined ? item.quantidade : 1);
+    let qtdItem = item.qtd !== undefined ? item.qtd : (item.quantidade !== undefined ? item.quantidade : 1);
 
-  // Para o Cupom Térmico
-  itensHtmlTermico += `
-    <tr>
-      <td colspan="2"><strong>${item.codigo || ''} - ${item.nome}</strong></td>
-    </tr>
-    <tr>
-      <td>${qtdItem}x R$ ${(item.preco || 0).toFixed(2).replace('.', ',')}</td>
-      <td style="text-align: right;">R$ ${(item.subtotal || 0).toFixed(2).replace('.', ',')}</td>
-    </tr>
-  `;
+    itensHtmlTermico += `
+      <tr>
+        <td colspan="2"><strong>${item.codigo || ''} - ${item.nome}</strong></td>
+      </tr>
+      <tr>
+        <td>${qtdItem}x R$ ${(item.preco || 0).toFixed(2).replace('.', ',')}</td>
+        <td style="text-align: right;">R$ ${(item.subtotal || 0).toFixed(2).replace('.', ',')}</td>
+      </tr>
+    `;
 
-  // Para o Recibo A4
-  itensHtmlA4 += `
-    <tr>
-      <td style="text-align: center;">${idx + 1}</td>
-      <td>${item.codigo || '-'}</td>
-      <td>${item.nome}</td>
-      <td style="text-align: center;">${qtdItem}</td>
-      <td style="text-align: right;">R$ ${(item.preco || 0).toFixed(2).replace('.', ',')}</td>
-      <td style="text-align: right;">R$ ${(item.subtotal || 0).toFixed(2).replace('.', ',')}</td>
-    </tr>
-  `;
-});
+    itensHtmlA4 += `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td>${item.codigo || '-'}</td>
+        <td>${item.nome}</td>
+        <td style="text-align: center;">${qtdItem}</td>
+        <td style="text-align: right;">R$ ${(item.preco || 0).toFixed(2).replace('.', ',')}</td>
+        <td style="text-align: right;">R$ ${(item.subtotal || 0).toFixed(2).replace('.', ',')}</td>
+      </tr>
+    `;
+  });
 
   let pagamentosHtml = '';
   if (venda.pagamentos && venda.pagamentos.length > 0) {
     venda.pagamentos.forEach(p => {
-      pagamentosHtml += `<div style="display: flex; justify-content: space-between;"><span>- ${p.metodo}:</span> <span>R$ ${(p.valorInformado || 0).toFixed(2)}</span></div>`;
+      pagamentosHtml += `<div style="display: flex; justify-content: space-between;"><span>- ${p.metodo}:</span> <span>R$ ${(p.valorInformado || 0).toFixed(2).replace('.', ',')}</span></div>`;
     });
   } else {
     pagamentosHtml = `<div>- ${venda.formaPagamento}</div>`;
@@ -2026,7 +2027,9 @@ function executarImpressaoRecibo(venda) {
 
   const dataFormatada = new Date(venda.dataVenda).toLocaleString('pt-BR');
 
-  if (tamanhoPapel === 'A4') {
+  // Verifica se o tamanho configurado na planilha é A4 (aceita 'a4' ou 'A4')
+  if (tamanhoPapel.includes('a4')) {
+    // LAYOUT A4
     areaImpressao.innerHTML = `
       <div class="recibo-a4">
         <div style="border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between;">
@@ -2060,15 +2063,17 @@ function executarImpressaoRecibo(venda) {
             ${pagamentosHtml}
           </div>
           <div style="text-align: right;">
-            <p style="margin: 2px 0;">Subtotal: R$ ${(venda.total + venda.desconto).toFixed(2)}</p>
-            ${venda.desconto > 0 ? `<p style="margin: 2px 0; color: red;">Desconto: -R$ ${venda.desconto.toFixed(2)}</p>` : ''}
-            <h2 style="margin: 5px 0; color: #198754;">TOTAL: R$ ${venda.total.toFixed(2)}</h2>
+            <p style="margin: 2px 0;">Subtotal: R$ ${(venda.total + venda.desconto).toFixed(2).replace('.', ',')}</p>
+            ${venda.desconto > 0 ? `<p style="margin: 2px 0; color: red;">Desconto: -R$ ${venda.desconto.toFixed(2).replace('.', ',')}</p>` : ''}
+            <h2 style="margin: 5px 0; color: #198754;">TOTAL: R$ ${venda.total.toFixed(2).replace('.', ',')}</h2>
           </div>
         </div>
       </div>
     `;
   } else {
-    const classeLargura = tamanhoPapel === '58mm' ? 'cupom-58mm' : 'cupom-80mm';
+    // LAYOUT TÉRMICO (Assume 58mm se contiver '58', caso contrário usa o padrão 80mm)
+    const classeLargura = tamanhoPapel.includes('58') ? 'cupom-58mm' : 'cupom-80mm';
+    
     areaImpressao.innerHTML = `
       <div class="cupom-termico ${classeLargura}">
         <div style="text-align: center;">
@@ -2091,9 +2096,9 @@ function executarImpressaoRecibo(venda) {
           <tbody>${itensHtmlTermico}</tbody>
         </table>
         <div class="cupom-divider"></div>
-        <div style="display: flex; justify-content: space-between;"><span>Total Bruto:</span> <span>R$ ${(venda.total + venda.desconto).toFixed(2)}</span></div>
-        ${venda.desconto > 0 ? `<div style="display: flex; justify-content: space-between; color: red;"><span>Desconto:</span> <span>-R$ ${venda.desconto.toFixed(2)}</span></div>` : ''}
-        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em;"><span>TOTAL A PAGAR:</span> <span>R$ ${venda.total.toFixed(2)}</span></div>
+        <div style="display: flex; justify-content: space-between;"><span>Total Bruto:</span> <span>R$ ${(venda.total + venda.desconto).toFixed(2).replace('.', ',')}</span></div>
+        ${venda.desconto > 0 ? `<div style="display: flex; justify-content: space-between; color: red;"><span>Desconto:</span> <span>-R$ ${venda.desconto.toFixed(2).replace('.', ',')}</span></div>` : ''}
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em;"><span>TOTAL A PAGAR:</span> <span>R$ ${venda.total.toFixed(2).replace('.', ',')}</span></div>
         <div class="cupom-divider"></div>
         <div style="font-weight: bold;">PAGAMENTOS:</div>
         ${pagamentosHtml}
@@ -2106,17 +2111,16 @@ function executarImpressaoRecibo(venda) {
     `;
   }
 
-  // Torna o container visível no DOM antes de imprimir
   areaImpressao.style.display = 'block';
 
-  // Aguarda 400ms para o motor de layout do navegador processar os elementos injetados
   setTimeout(() => {
     window.print();
-    // Limpa e esconde novamente após a janela de impressão fechar
     areaImpressao.innerHTML = '';
     areaImpressao.style.display = 'none';
   }, 400);
 }
+
+   
 function finalizarFluxoVenda() {
   carrinho = [];
   clienteSelecionado = null;
