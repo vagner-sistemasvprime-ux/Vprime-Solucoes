@@ -52,10 +52,135 @@
       text-align: center; color: #64748b;
     }
 
-   <!-- BANNER MODO ORÇAMENTO -->
-<div id="banner-orcamento" class="banner-orcamento d-none">
-  <i class="bi bi-file-earmark-text-fill me-2"></i> MODO ORÇAMENTO ATIVO (Pressione F4 para voltar ao modo Venda)
-</div>
+   
+
+
+    /* ==========================================
+   ESTILOS GLOBAIS DE IMPRESSÃO
+   ================================          */
+@media print {
+  /* Oculta tudo na página por padrão */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Torna visível apenas a área de impressão ativa */
+  #area-impressao, #area-impressao * {
+    visibility: visible;
+  }
+
+  #area-impressao {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+}
+
+/* ------------------------------------------
+   ESTILOS DO CUPOM TÉRMICO (58mm / 80mm)
+   ------------------------------------------ */
+.cupom-termico {
+  font-family: 'Courier New', Courier, monospace;
+  color: #000;
+  background: #fff;
+  padding: 10px;
+  margin: 0 auto;
+}
+
+.cupom-58mm {
+  width: 58mm;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.cupom-80mm {
+  width: 80mm;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.cupom-header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.cupom-header h3 {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0 0 4px 0;
+}
+
+.cupom-header p {
+  margin: 2px 0;
+  font-size: 11px;
+}
+
+.cupom-divider {
+  border-top: 1px dashed #000;
+  margin: 8px 0;
+}
+
+.cupom-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: inherit;
+}
+
+.cupom-table th, .cupom-table td {
+  padding: 3px 0;
+  text-align: left;
+}
+
+.cupom-table th {
+  border-bottom: 1px solid #000;
+}
+
+.text-end { text-align: right; }
+.text-center { text-align: center; }
+.fw-bold { font-weight: bold; }
+
+/* ------------------------------------------
+   ESTILOS DO RECIBO A4
+   ------------------------------------------ */
+.recibo-a4 {
+  font-family: Arial, sans-serif;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm;
+  margin: 0 auto;
+  color: #000;
+  background: #fff;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.a4-header {
+  border-bottom: 2px solid #333;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.a4-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.a4-table th, .a4-table td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.a4-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
   </style>
 </head>
 <body>
@@ -178,6 +303,11 @@
         </div>
         
       </div>
+
+      <!-- BANNER MODO ORÇAMENTO -->
+<div id="banner-orcamento" class="banner-orcamento d-none">
+  <i class="bi bi-file-earmark-text-fill me-2"></i> MODO ORÇAMENTO ATIVO (Pressione F3 para voltar ao modo Venda)
+</div>
 
       <div class="input-group input-group-lg shadow-sm">
         <span class="input-group-text bg-white border-end-0"><i class="bi bi-barcode-scan text-muted fs-4"></i></span>
@@ -429,6 +559,14 @@
     </div>
   </div>
 </div>
+
+
+  
+  <!-- Container invisível onde o layout do recibo é renderizado na hora da impressão -->
+<div id="area-impressao" style="display: none;"></div>
+
+
+  
 
 <!-- MODAL DE MENSAGENS -->
 <div class="modal fade" id="modalAviso" tabindex="-1" aria-hidden="true">
@@ -1886,8 +2024,165 @@ function executarEmissaoNotaFiscal(venda) {
 }
 
 function executarImpressaoRecibo(venda) {
-  mostrarAviso("Imprimindo comprovante de venda...", "Recibo", "success");
-  // Lógica de impressão térmica não fiscal
+  const areaImpressao = document.getElementById('area-impressao');
+  if (!areaImpressao) return;
+
+  // Lê a configuração do lojista (Ex: '58mm', '80mm' ou 'A4'). Se não houver, assume '80mm' como padrão.
+  let tamanhoPapel = (window.CONFIG_LOJA && CONFIG_LOJA.tamanhoPapelImpressora) ? CONFIG_LOJA.tamanhoPapelImpressora : '80mm';
+  
+  // Dados da loja obtidos do objeto global CONFIG_LOJA
+  const nomeLoja = CONFIG_LOJA.nomeLoja || "PDV Comercial";
+  const nichoLoja = CONFIG_LOJA.nicho || "";
+  
+  // Formata itens para o layout
+  let itensHtmlTermico = '';
+  let itensHtmlA4 = '';
+
+  venda.itens.forEach((item, idx) => {
+    // Para Térmico (Compacto)
+    itensHtmlTermico += `
+      <tr>
+        <td colspan="2"><strong>${item.codigo || ''} - ${item.nome}</strong></td>
+      </tr>
+      <tr>
+        <td>${item.quantidade}x R$ ${(item.precoUnitario || 0).toFixed(2)}</td>
+        <td class="text-end">R$ ${(item.subtotal || 0).toFixed(2)}</td>
+      </tr>
+    `;
+
+    // Para A4 (Tabela estruturada)
+    itensHtmlA4 += `
+      <tr>
+        <td class="text-center">${idx + 1}</td>
+        <td>${item.codigo || '-'}</td>
+        <td>${item.nome}</td>
+        <td class="text-center">${item.quantidade}</td>
+        <td class="text-end">R$ ${(item.precoUnitario || 0).toFixed(2)}</td>
+        <td class="text-end">R$ ${(item.subtotal || 0).toFixed(2)}</td>
+      </tr>
+    `;
+  });
+
+  // Formata pagamentos lançados
+  let pagamentosHtml = '';
+  if (venda.pagamentos && venda.pagamentos.length > 0) {
+    venda.pagamentos.forEach(p => {
+      pagamentosHtml += `<div class="d-flex justify-content-between"><span>- ${p.metodo}:</span> <span>R$ ${(p.valorInformado || 0).toFixed(2)}</span></div>`;
+    });
+  } else {
+    pagamentosHtml = `<div>- ${venda.formaPagamento}</div>`;
+  }
+
+  const dataFormatada = new Date(venda.dataVenda).toLocaleString('pt-BR');
+
+  // --- MONTAGEM DO HTML CONFORME O FORMATO ESCOLHIDO ---
+  if (tamanhoPapel === 'A4') {
+    // LAYOUT A4
+    areaImpressao.innerHTML = `
+      <div class="recibo-a4">
+        <div class="a4-header d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="fw-bold mb-1">${nomeLoja}</h2>
+            <p class="text-muted mb-0">${nichoLoja}</p>
+          </div>
+          <div class="text-end">
+            <h4 class="fw-bold text-primary">COMPROVANTE DE VENDA</h4>
+            <p class="mb-0"><strong>Data:</strong> ${dataFormatada}</p>
+            <p class="mb-0"><strong>Operador:</strong> ${venda.operador}</p>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <p class="mb-1"><strong>Cliente:</strong> ${venda.cliente}</p>
+        </div>
+
+        <table class="a4-table">
+          <thead>
+            <tr>
+              <th class="text-center" style="width: 5%;">#</th>
+              <th style="width: 15%;">Código</th>
+              <th style="width: 45%;">Descrição do Produto</th>
+              <th class="text-center" style="width: 10%;">Qtd</th>
+              <th class="text-end" style="width: 12%;">Preço Unit.</th>
+              <th class="text-end" style="width: 13%;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itensHtmlA4}
+          </tbody>
+        </table>
+
+        <div class="row mt-4">
+          <div class="col-7">
+            <p class="fw-bold mb-1">Forma(s) de Pagamento:</p>
+            <div>${pagamentosHtml}</div>
+          </div>
+          <div class="col-5 text-end">
+            <p class="mb-1">Subtotal: R$ ${(venda.total + venda.desconto).toFixed(2)}</p>
+            ${venda.desconto > 0 ? `<p class="text-danger mb-1">Desconto: -R$ ${venda.desconto.toFixed(2)}</p>` : ''}
+            <h3 class="fw-bold text-success mt-2">TOTAL: R$ ${venda.total.toFixed(2)}</h3>
+          </div>
+        </div>
+
+        <div class="text-center mt-5 pt-4 border-top text-muted">
+          <p>Documento gerado por ${nomeLoja} - Sistema PDV</p>
+        </div>
+      </div>
+    `;
+  } else {
+    // LAYOUT TÉRMICO (58mm ou 80mm)
+    const classeLargura = tamanhoPapel === '58mm' ? 'cupom-58mm' : 'cupom-80mm';
+    
+    areaImpressao.innerHTML = `
+      <div class="cupom-termico ${classeLargura}">
+        <div class="cupom-header">
+          <h3>${nomeLoja}</h3>
+          <p>${nichoLoja}</p>
+          <p>COMPROVANTE NÃO FISCAL</p>
+        </div>
+
+        <div class="cupom-divider"></div>
+        <p><strong>Data:</strong> ${dataFormatada}</p>
+        <p><strong>Operador:</strong> ${venda.operador}</p>
+        <p><strong>Cliente:</strong> ${venda.cliente}</p>
+        <div class="cupom-divider"></div>
+
+        <table class="cupom-table">
+          <thead>
+            <tr>
+              <th>Qtd / Item</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itensHtmlTermico}
+          </tbody>
+        </table>
+
+        <div class="cupom-divider"></div>
+        <div class="d-flex justify-content-between"><span>Total Bruto:</span> <span>R$ ${(venda.total + venda.desconto).toFixed(2)}</span></div>
+        ${venda.desconto > 0 ? `<div class="d-flex justify-content-between text-danger"><span>Desconto:</span> <span>-R$ ${venda.desconto.toFixed(2)}</span></div>` : ''}
+        <div class="d-flex justify-content-between fw-bold fs-6"><span>VALOR A PAGAR:</span> <span>R$ ${venda.total.toFixed(2)}</span></div>
+        
+        <div class="cupom-divider"></div>
+        <p class="fw-bold mb-1">PAGAMENTOS:</p>
+        ${pagamentosHtml}
+
+        <div class="cupom-divider"></div>
+        <div class="text-center mt-2">
+          <p>Obrigado pela preferência!</p>
+          <p class="small">Volte sempre!</p>
+        </div>
+      </div>
+    `;
+  }
+
+  // Dispara a impressão nativa do navegador de forma limpa
+  setTimeout(() => {
+    window.print();
+    // Limpa o container após a impressão
+    areaImpressao.innerHTML = '';
+  }, 300);
 }
 
 function finalizarFluxoVenda() {
