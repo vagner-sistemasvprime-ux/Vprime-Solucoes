@@ -1988,27 +1988,32 @@ function executarImpressaoRecibo(venda) {
   let itensHtmlA4 = '';
 
   venda.itens.forEach((item, idx) => {
-    itensHtmlTermico += `
-      <tr>
-        <td colspan="2"><strong>${item.codigo || ''} - ${item.nome}</strong></td>
-      </tr>
-      <tr>
-        <td>${item.quantidade}x R$ ${(item.precoUnitario || 0).toFixed(2)}</td>
-        <td style="text-align: right;">R$ ${(item.subtotal || 0).toFixed(2)}</td>
-      </tr>
-    `;
+  // Pega a quantidade correta verificando 'qtd' (como no seu carrinho) ou 'quantidade' por segurança
+  let qtdItem = item.qtd !== undefined ? item.qtd : (item.quantidade !== undefined ? item.quantidade : 1);
 
-    itensHtmlA4 += `
-      <tr>
-        <td style="text-align: center;">${idx + 1}</td>
-        <td>${item.codigo || '-'}</td>
-        <td>${item.nome}</td>
-        <td style="text-align: center;">${item.quantidade}</td>
-        <td style="text-align: right;">R$ ${(item.precoUnitario || 0).toFixed(2)}</td>
-        <td style="text-align: right;">R$ ${(item.subtotal || 0).toFixed(2)}</td>
-      </tr>
-    `;
-  });
+  // Para o Cupom Térmico
+  itensHtmlTermico += `
+    <tr>
+      <td colspan="2"><strong>${item.codigo || ''} - ${item.nome}</strong></td>
+    </tr>
+    <tr>
+      <td>${qtdItem}x R$ ${(item.preco || 0).toFixed(2).replace('.', ',')}</td>
+      <td style="text-align: right;">R$ ${(item.subtotal || 0).toFixed(2).replace('.', ',')}</td>
+    </tr>
+  `;
+
+  // Para o Recibo A4
+  itensHtmlA4 += `
+    <tr>
+      <td style="text-align: center;">${idx + 1}</td>
+      <td>${item.codigo || '-'}</td>
+      <td>${item.nome}</td>
+      <td style="text-align: center;">${qtdItem}</td>
+      <td style="text-align: right;">R$ ${(item.preco || 0).toFixed(2).replace('.', ',')}</td>
+      <td style="text-align: right;">R$ ${(item.subtotal || 0).toFixed(2).replace('.', ',')}</td>
+    </tr>
+  `;
+});
 
   let pagamentosHtml = '';
   if (venda.pagamentos && venda.pagamentos.length > 0) {
