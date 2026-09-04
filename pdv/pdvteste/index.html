@@ -392,27 +392,6 @@
   </div>
 </div>
 
-  <!-- MODAL DE ESCOLHA DE COMPROVANTE PÓS-VENDA -->
-<div class="modal fade" id="modalEscolhaDocumento" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg text-center p-4">
-      <div class="display-4 mb-2 text-primary"><i class="bi bi-printer-fill"></i></div>
-      <h4 class="fw-bold mb-2">Finalização Concluída!</h4>
-      <p class="fs-5 text-muted mb-4">Como deseja registrar o comprovante desta venda?</p>
-      
-      <div class="d-flex gap-3 justify-content-center mb-3">
-        <button type="button" id="btn-escolha-recibo" class="btn btn-outline-secondary btn-lg fw-bold px-4 py-3 w-50" onclick="processarEscolhaDocumento('recibo')">
-          <i class="bi bi-receipt me-1"></i> [R] Recibo Simples
-        </button>
-        <button type="button" id="btn-escolha-nota" class="btn btn-primary btn-lg fw-bold px-4 py-3 w-50" onclick="processarEscolhaDocumento('nota')">
-          <i class="bi bi-file-earmark-text me-1"></i> [N] Nota Fiscal
-        </button>
-      </div>
-      <div class="text-muted small">Use as setas para alternar, <kbd>Enter</kbd> para selecionar ou <kbd>Esc</kbd> para apenas fechar.</div>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL DE VALOR DO DESCONTO -->
 <div class="modal fade" id="modalValorDesconto" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -1814,150 +1793,68 @@ function aplicarDescontoNaCompra() {
 }
 
 async function confirmarVenda() {
-
   const totalComDesconto = Math.max(0, totalBrutoVenda - valorDescontoGlobal);
-
   const totalPago = pagamentosParciais.reduce((acc, p) => acc + (p.valorEfetivo || 0), 0);
 
-
-
   if (totalPago < totalComDesconto) {
-
     mostrarAviso("O valor pago é menor que o total da compra!", "Atenção", "warning");
-
     return;
-
   }
 
-
-
   // Tratamento seguro para evitar erros de undefined no .map()
-
   const formaPagamentoPrincipal = (pagamentosParciais && pagamentosParciais.length > 0)
-
     ? pagamentosParciais.map(p => `${p.metodo}: R$ ${(p.valorInformado || 0).toFixed(2)}`).join(' | ')
-
     : document.getElementById('pay-method')?.value || "Dinheiro";
 
-
-
   const dadosVenda = {
-
     operador: usuarioLogado ? usuarioLogado.nome : "Operador",
-
     cliente: clienteSelecionado ? clienteSelecionado.nome : "Não Identificado",
-
     formaPagamento: formaPagamentoPrincipal,
-
     total: totalComDesconto,
-
     desconto: valorDescontoGlobal || 0,
-
     pagamentos: pagamentosParciais || [],
-
     itens: carrinho || [],
-
     dataVenda: new Date().toISOString()
-
   };
-
-
 
   mostrarProcessando("Finalizando compra...");
 
-
-
   if (navigator.onLine) {
-
     try {
-
       const res = await chamarGoogleScript('registrarVenda', { dadosVenda });
-
       esconderProcessando();
-
-
 
       if (res && res.sucesso) {
-
         mostrarAviso(`Venda registrada com sucesso!\nCódigo: ${res.idVenda}`, "Sucesso", "success");
-
         finalizarFluxoVenda();
-
       } else {
-
         mostrarAviso("Erro ao registrar no servidor. Venda gravada offline.", "Aviso", "warning");
-
         await salvarVendaPendente(dadosVenda);
-
         finalizarFluxoVenda();
-
       }
-
     } catch (erro) {
-
       esconderProcessando();
-
       await salvarVendaPendente(dadosVenda);
-
       mostrarAviso("Conexão instável. Venda gravada no armazenamento offline.", "Aviso", "warning");
-
       finalizarFluxoVenda();
-
     }
-
   } else {
-
     await salvarVendaPendente(dadosVenda);
-
     esconderProcessando();
-
     mostrarAviso("Venda salva OFFLINE com sucesso!\nSerá sincronizada assim que a internet voltar.", "Modo Offline", "success");
-
     finalizarFluxoVenda();
-
   }
-
 }
-
-
 
 function finalizarFluxoVenda() {
-
   carrinho = [];
-
   clienteSelecionado = null;
-
   renderizarCarrinho();
 
-
-
   if (modalPagamentoObj) modalPagamentoObj.hide();
-
   limpaBackdrops();
-
   manterFocoBusca();
-
 }
-
- let indiceItemSelecionado = 0;
-
-let modalRemoverObj = null;
-
-
-
-document.addEventListener('DOMContentLoaded', () => {
-
-  const el = document.getElementById('modalRemoverItem');
-
-  if (el) {
-
-    modalRemoverObj = new bootstrap.Modal(el, { backdrop: 'static' });
-
-  }
-
-}); 
-
-
  let indiceItemSelecionado = 0;
 let modalRemoverObj = null;
 
