@@ -2551,39 +2551,40 @@ function finalizarFluxoVenda() {
   manterFocoBusca();
 }
 
-// Função acionada pelo F6 ou pelo botão do rodapé para entrar no modo de exclusão do carrinho
 function focarOuNavegarCarrinho() {
+
   if (carrinho.length === 0) {
+
     mostrarAviso("O carrinho está vazio.", "Atenção", "warning");
+
     return;
+
   }
+
+
 
   const linhas = document.querySelectorAll('.item-carrinho-row');
+
   if (linhas.length > 0) {
-    // Seleciona o primeiro por padrão ao acionar via atalho/botão
+
     indiceItemSelecionado = 0;
+
     linhas[indiceItemSelecionado].focus();
+
     linhas[indiceItemSelecionado].classList.add('table-active');
+
     
+
     // Adiciona destaque visual de alerta (borda/fundo vermelho) no container do carrinho
+
     alternarVisualExclusaoCarrinho(true);
+
     ativarNavegacaoCarrinho(linhas);
 
-    // SUPORTE AO CLIQUE DO MOUSE NAS LINHAS:
-    linhas.forEach((linha, idx) => {
-      // Remove eventos antigos clonando ou apenas sobrescrevendo o onclick para evitar duplicação
-      linha.onclick = () => {
-        // Remove o destaque de todas as linhas
-        linhas.forEach(l => l.classList.remove('table-active'));
-        
-        // Destaca a linha clicada, define o foco e atualiza o índice global
-        linha.classList.add('table-active');
-        linha.focus();
-        indiceItemSelecionado = idx;
-      };
-    });
   }
-}
+
+} 
+
 
 
    // Configura a navegação por setas e Enter no modal de remoção de item
