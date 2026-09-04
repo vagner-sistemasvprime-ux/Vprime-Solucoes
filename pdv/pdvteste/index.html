@@ -2116,8 +2116,10 @@ async function confirmarVenda() {
 
   if (navigator.onLine) {
     try {
-      // Tenta enviar online, mas desiste se passar de 5 segundos
+      // Tenta enviar online com o timeout de 5 segundos
       const res = await chamarComTimeout(chamarGoogleScript('registrarVenda', { dadosVenda: dadosVendaAtual }), 5000);
+      
+      // O SUCESSO CHEGOU: Esconde o processamento primeiro!
       esconderProcessando();
 
       if (res && res.sucesso) {
@@ -2128,17 +2130,17 @@ async function confirmarVenda() {
         await tratarFluxoPosVenda(dadosVendaAtual);
       }
     } catch (erro) {
-      // Se a rede falhar ou der timeout, esconde o aviso e salva localmente
+      // DEU ERRO OU TIMEOUT: Esconde o processamento imediatamente!
       esconderProcessando();
       await salvarVendaPendente(dadosVendaAtual);
       abrirModalEscolhaDocumento();
     }
   } else {
+    // ESTÁ OFFLINE: Salva localmente e esconde o processamento na mesma hora!
     await salvarVendaPendente(dadosVendaAtual);
     esconderProcessando();
     abrirModalEscolhaDocumento();
   }
-}
 
    
 function abrirModalEscolhaDocumento() {
