@@ -2754,23 +2754,32 @@ async function sincronizarVendasPendentes() {
   }
 }
 
-    // Baixa a lista completa de produtos e clientes do Google para o IndexedDB
+  // Baixa a lista completa de produtos e clientes do Google para o IndexedDB
 async function carregarDadosParaOffline() {
   if (navigator.onLine) {
     try {
-      // Busca a resposta do Google Apps Script
+      // 1. Atualiza as configurações da loja vindas da planilha
+      const resConfig = await chamarGoogleScript('buscarConfiguracoes');
+      if (resConfig && resConfig.sucesso) {
+        CONFIG_LOJA = resConfig;
+        if (typeof salvarConfiguracoesLocal === 'function') {
+          await salvarConfiguracoesLocal(resConfig);
+        }
+      }
+
+      // 2. Busca a resposta do Google Apps Script (produtos)
       const resProds = await chamarGoogleScript('obterTodosProdutos');
       if (resProds && resProds.sucesso && Array.isArray(resProds.dados)) {
         await salvarProdutosLocal(resProds.dados);
       }
 
-      // Busca a resposta dos clientes
+      // 3. Busca a resposta dos clientes
       const resClis = await chamarGoogleScript('obterTodosClientes');
       if (resClis && resClis.sucesso && Array.isArray(resClis.dados)) {
         await salvarClientesLocal(resClis.dados);
       }
 
-      console.log("Catálogo de produtos e clientes atualizados para uso offline!");
+      console.log("Catálogo de produtos, clientes e configurações atualizados para uso offline!");
     } catch (erro) {
       console.error("Erro ao sincronizar dados locais:", erro);
     }
