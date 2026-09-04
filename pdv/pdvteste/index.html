@@ -789,12 +789,20 @@ function aplicarConfiguracoesGerais() {
   if (CONFIG_LOJA.corTemaHex) {
     document.documentElement.style.setProperty('--cor-primaria', CONFIG_LOJA.corTemaHex);
   }
-  if (CONFIG_LOJA.tamanhoPapelImpressora) {
-    document.documentElement.style.setProperty('--largura-papel', CONFIG_LOJA.tamanhoPapelImpressora);
-  }
+
+  // Tratamento robusto para capturar o tamanho do papel independentemente da variação na planilha
+  const tamanhoPapelConfig = 
+    CONFIG_LOJA.tamanhoPapelImpressora || 
+    CONFIG_LOJA.tamanhoPapel || 
+    CONFIG_LOJA.papel || 
+    CONFIG_LOJA.recursos?.tamanhoPapelImpressora || 
+    '80mm';
+
+  // Padroniza e injeta na raiz para o sistema de impressão usar sem erros
+  CONFIG_LOJA.tamanhoPapelImpressora = tamanhoPapelConfig;
+  document.documentElement.style.setProperty('--largura-papel', tamanhoPapelConfig);
 
   // 3. Modos e Recursos do Nicho
-  // Garante que o banner permaneça OCULTO na inicialização do sistema
   const bannerOrcamento = document.getElementById('banner-orcamento');
   if (bannerOrcamento) {
     bannerOrcamento.classList.add('d-none');
@@ -811,7 +819,6 @@ function aplicarConfiguracoesGerais() {
     }
   }
 }
-
   // --- RELÓGIO E UTILITÁRIOS ---
   function atualizarRelogio() {
     const agora = new Date();
