@@ -1986,8 +1986,12 @@ function executarImpressaoRecibo(venda) {
   if (!areaImpressao) return;
 
   // FORÇA o valor para 58MM ignorando qualquer cache anterior
-  let tamanhoPapel = "58MM";
-  console.log("Forçando tamanho de papel para teste:", tamanhoPapel);
+  // Lê dinamicamente o tamanho do papel vindo da planilha (CONFIG_LOJA)
+  let tamanhoPapel = (window.CONFIG_LOJA && window.CONFIG_LOJA.tamanhoPapelImpressora)
+    ? String(window.CONFIG_LOJA.tamanhoPapelImpressora).trim().toUpperCase()
+    : '80MM'; // Fallback apenas se o objeto estiver vazio
+
+  console.log("🖨️ Tamanho de papel lido da planilha para impressão:", tamanhoPapel);
 
   const nomeLoja = CONFIG_LOJA.nomeLoja || "PDV Comercial";
   const nichoLoja = CONFIG_LOJA.nicho || "";
