@@ -2098,7 +2098,6 @@ async function confirmarVenda() {
 
   mostrarProcessando("Registrando venda...");
 
-  // Função auxiliar para impor um limite de tempo (ex: 5 segundos)
   const chamarComTimeout = async (promise, ms = 5000) => {
     let timeoutId;
     const timeoutPromise = new Promise((_, reject) => {
@@ -2114,34 +2113,33 @@ async function confirmarVenda() {
     }
   };
 
-  if (navigator.onLine) {
-    try {
-      // Tenta enviar online com o timeout de 5 segundos
-      const res = await chamarComTimeout(chamarGoogleScript('registrarVenda', { dadosVenda: dadosVendaAtual }), 5000);
-      
-      // O SUCESSO CHEGOU: Esconde o processamento primeiro!
-      esconderProcessando();
+  try {
+    if (navigator.onLine) {
+      try {
+        const res = await chamarComTimeout(chamarGoogleScript('registrarVenda', { dadosVenda: dadosVendaAtual }), 5000);
 
-      if (res && res.sucesso) {
-        dadosVendaAtual.idVenda = res.idVenda;
-        await tratarFluxoPosVenda(dadosVendaAtual);
-      } else {
+        if (res && res.sucesso) {
+          dadosVendaAtual.idVenda = res.idVenda;
+          await tratarFluxoPosVenda(dadosVendaAtual);
+        } else {
+          await salvarVendaPendente(dadosVendaAtual);
+          await tratarFluxoPosVenda(dadosVendaAtual);
+        }
+      } catch (erro) {
         await salvarVendaPendente(dadosVendaAtual);
         await tratarFluxoPosVenda(dadosVendaAtual);
       }
-    } catch (erro) {
-      // DEU ERRO OU TIMEOUT: Esconde o processamento imediatamente!
-      esconderProcessando();
+    } else {
       await salvarVendaPendente(dadosVendaAtual);
       await tratarFluxoPosVenda(dadosVendaAtual);
     }
-  } else {
-    // ESTÁ OFFLINE: Salva localmente, esconde o processamento e segue o pós-venda
-    await salvarVendaPendente(dadosVendaAtual);
+  } finally {
+    // BLINDAGEM: O aviso some obrigatoriamente aqui, mesmo se o pós-venda falhar
     esconderProcessando();
-    await tratarFluxoPosVenda(dadosVendaAtual);
   }
 }
+
+   
 function abrirModalEscolhaDocumento() {
   if (modalPagamentoObj) modalPagamentoObj.hide();
   if (modalEscolhaObj) {
