@@ -794,13 +794,7 @@ function aplicarConfiguracoesGerais() {
     document.documentElement.style.setProperty('--cor-primaria', CONFIG_LOJA.corTemaHex);
   }
 
-  // Tratamento robusto para capturar o tamanho do papel independentemente da variação na planilha
-  const tamanhoPapelConfig = 
-    CONFIG_LOJA.tamanhoPapelImpressora || 
-    CONFIG_LOJA.tamanhoPapel || 
-    CONFIG_LOJA.papel || 
-    CONFIG_LOJA.recursos?.tamanhoPapelImpressora || 
-    '80mm';
+ const tamanhoPapelConfig = CONFIG_LOJA.tamanhoPapelImpressora || '80mm';
 
   // Padroniza e injeta na raiz para o sistema de impressão usar sem erros
   CONFIG_LOJA.tamanhoPapelImpressora = tamanhoPapelConfig;
