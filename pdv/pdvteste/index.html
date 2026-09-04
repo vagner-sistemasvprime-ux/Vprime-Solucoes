@@ -420,6 +420,22 @@
   </div>
 </div>
 
+ <!-- Modal esvaziar carrinho -->
+  <div class="modal fade" id="modalEsvaziarCarrinho" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg text-center p-4">
+      <div class="display-3 mb-2 text-danger"><i class="bi bi-cart-x-fill"></i></div>
+      <h4 class="fw-bold mb-2">Esvaziar Carrinho?</h4>
+      <p class="fs-5 text-muted mb-4">Deseja realmente remover todos os itens da operação atual?</p>
+      <div class="d-flex gap-3 justify-content-center">
+        <button type="button" class="btn btn-outline-secondary btn-lg fw-bold px-4" onclick="fecharModalEsvaziar()">Não</button>
+        <button type="button" class="btn btn-danger btn-lg fw-bold px-4" onclick="confirmarEsvaziarCarrinho()">Sim</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  
   <!-- Modal Menu Caixa (F9) -->
 <div class="modal fade" id="modalMenuCaixa" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -920,6 +936,11 @@ function tratarEnterLogin(event) {
     if (event.key === 'F6') {
   event.preventDefault();
   focarOuNavegarCarrinho();
+}
+
+    if (event.key === 'F7') {
+  event.preventDefault();
+  abrirModalEsvaziarCarrinho();
 }
 
 
@@ -2006,7 +2027,84 @@ document.getElementById('input-bloqueio-consulta')?.addEventListener('keypress',
   }
 });
 
+let modalEsvaziarObj = null;
 
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('modalEsvaziarCarrinho');
+  if (el) {
+    modalEsvaziarObj = new bootstrap.Modal(el, { backdrop: 'static' });
+  }
+});
+
+function abrirModalEsvaziarCarrinho() {
+  if (carrinho.length === 0) {
+    mostrarAviso("O carrinho já está vazio.", "Atenção", "warning");
+    return;
+  }
+  if (modalEsvaziarObj) {
+    modalEsvaziarObj.show();
+  }
+}
+
+function confirmarEsvaziarCarrinho() {
+  // Limpa o array do carrinho e reinicia o cliente para Consumidor Final
+  carrinho = [];
+  clienteSelecionado = null;
+  
+  const elClienteDisplay = document.getElementById('cliente-display-name');
+  if (elClienteDisplay) {
+    elClienteDisplay.innerText = "Consumidor Final";
+  }
+
+  renderizarCarrinho();
+  fecharModalEsvaziar();
+}
+
+function fecharModalEsvaziar() {
+  if (modalEsvaziarObj) {
+    modalEsvaziarObj.hide();
+  }
+  setTimeout(() => {
+    limpaBackdrops();
+    manterFocoBusca();
+  }, 150);
+}
+
+// Configura a navegação por setas (esquerda/direita) e Enter no modal de esvaziar
+document.getElementById('modalEsvaziarCarrinho')?.addEventListener('shown.bs.modal', function () {
+  const btnNao = this.querySelector('.btn-outline-secondary');
+  const btnSim = this.querySelector('.btn-danger');
+  
+  // Foca no "Não" por padrão para evitar limpezas acidentais
+  if (btnNao) btnNao.focus();
+
+  const handleKeydown = function(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Tab') {
+      e.preventDefault();
+      if (document.activeElement === btnSim) {
+        if (btnNao) btnNao.focus();
+      } else {
+        if (btnSim) btnSim.focus();
+      }
+    } else if (e.key === 'Escape' || e.key === 'Esc') {
+      e.preventDefault();
+      fecharModalEsvaziar();
+    }
+  };
+
+  this.addEventListener('keydown', handleKeydown);
+
+  this.addEventListener('hidden.bs.modal', function () {
+    this.removeEventListener('keydown', handleKeydown);
+  }, { once: true });
+});
+
+
+
+
+
+
+   
 
 
 
