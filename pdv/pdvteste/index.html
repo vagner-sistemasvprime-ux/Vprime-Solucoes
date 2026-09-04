@@ -1904,10 +1904,10 @@ async function confirmarVenda() {
 
       if (res && res.sucesso) {
         dadosVendaAtual.idVenda = res.idVenda;
-        abrirModalEscolhaDocumento();
+        await tratarFluxoPosVenda(dadosVendaAtual);
       } else {
         await salvarVendaPendente(dadosVendaAtual);
-        abrirModalEscolhaDocumento();
+        await tratarFluxoPosVenda(dadosVendaAtual);
       }
     } catch (erro) {
       esconderProcessando();
@@ -1976,6 +1976,44 @@ function processarEscolhaDocumento(tipo) {
   finalizarFluxoVenda();
 }
 
+
+   async function tratarFluxoPosVenda(venda) {
+  mostrarProcessando("Verificando preferências de impressão...");
+  
+  try {
+    // Chama o Google Apps Script para buscar a regra atualizada da planilha
+    const config = await chamarGoogleScript('buscarConfiguracaoImpressao');
+    esconderProcessando();
+
+    let tamanhoPapel = '80MM';
+    let ativarChaveNf = false;
+
+    if (config && config.sucesso) {
+      tamanhoPapel = String(config.tamanhoPapelImpressora || '80MM').trim().toUpperCase();
+      ativarChaveNf = Boolean(config.ativarChaveNf);
+    }
+
+    // Atualiza o objeto global da loja para refletir o tamanho atual
+    window.CONFIG_LOJA = window.CONFIG_LOJA || {};
+    window.CONFIG_LOJA.tamanhoPapelImpressora = tamanhoPapel;
+
+    // Condicional: Se a chave NF estiver ativa, abre o modal de escolha. Se não, imprime direto!
+    if (ativarChaveNf) {
+      console.log("🔹 Chave NF ativa: Exibindo modal de escolha de documento.");
+      abrirModalEscolhaDocumento(); // Seu modal atual
+    } else {
+      console.log("⚡ Chave NF desativada: Imprimindo diretamente no tamanho:", tamanhoPapel);
+      executarImpressaoRecibo(venda);
+    }
+
+  } catch (erro) {
+    esconderProcessando();
+    console.error("Erro ao verificar configuração de impressão, usando fallback:", erro);
+    // Fallback de segurança caso a requisição falhe: abre o modal padrão
+    abrirModalEscolhaDocumento();
+  }
+}
+   
 function executarEmissaoNotaFiscal(venda) {
   mostrarAviso("Transmitindo Nota Fiscal para a SEFAZ...", "Fiscal", "info");
   // Conecte sua API de NFC-e / NF-e aqui no futuro
@@ -2187,6 +2225,28 @@ document.getElementById('modalRemoverItem')?.addEventListener('shown.bs.modal', 
     this.removeEventListener('keydown', handleKeydown);
   }, { once: true });
 });
+
+
+   async function verificarConfiguracaoImpressaoEModoNf() {
+  try {
+    const resposta = await chamarGoogleScript('buscarConfiguracaoImpressao');
+    
+    if (resposta && resposta.sucesso) {
+      return {
+        tamanhoPapel: String(resposta.tamanhoPapelImpressora || '80mm').trim().toUpperCase(),
+        ativarChaveNf: Boolean(resposta.ativarChaveNf)
+      };
+    }
+  } catch (erro) {
+    console.error("Erro ao buscar configurações de impressão:", erro);
+  }
+  
+  // Fallback de segurança caso a rede falhe
+  return {
+    tamanhoPapel: window.CONFIG_LOJA?.tamanhoPapelImpressora || '80MM',
+    ativarChaveNf: false
+  };
+}
 
    function alternarVisualExclusaoCarrinho(ativo) {
   const containerCarrinho = document.getElementById('cart-table')?.closest('.card') || document.getElementById('cart-table');
@@ -2758,11 +2818,10 @@ async function sincronizarVendasPendentes() {
   }
 }
 
-  // Baixa a lista completa de produtos e clientes do Google para o IndexedDB
-async function carregarDadosParaOffline() {
+  async function carregarDadosParaOffline() {
   if (navigator.onLine) {
     try {
-      // 1. Atualiza as configurações da loja vindas da planilha
+      // 1. Atualiza as configurações gerais da loja
       const resConfig = await chamarGoogleScript('buscarConfiguracoes');
       if (resConfig && resConfig.sucesso) {
         CONFIG_LOJA = resConfig;
@@ -2771,13 +2830,22 @@ async function carregarDadosParaOffline() {
         }
       }
 
-      // 2. Busca a resposta do Google Apps Script (produtos)
+      // 1.1 (Opcional) Atualiza também os dados específicos de impressão e NF offline
+      const resImp = await chamarGoogleScript('buscarConfiguracaoImpressao');
+      if (resImp && resImp.sucesso) {
+        window.CONFIG_LOJA = Object.assign({}, window.CONFIG_LOJA, resImp);
+        if (typeof salvarConfiguracoesLocal === 'function') {
+          await salvarConfiguracoesLocal(window.CONFIG_LOJA);
+        }
+      }
+
+      // 2. Produtos
       const resProds = await chamarGoogleScript('obterTodosProdutos');
       if (resProds && resProds.sucesso && Array.isArray(resProds.dados)) {
         await salvarProdutosLocal(resProds.dados);
       }
 
-      // 3. Busca a resposta dos clientes
+      // 3. Clientes
       const resClis = await chamarGoogleScript('obterTodosClientes');
       if (resClis && resClis.sucesso && Array.isArray(resClis.dados)) {
         await salvarClientesLocal(resClis.dados);
