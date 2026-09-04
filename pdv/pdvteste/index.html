@@ -767,10 +767,9 @@ async function carregarConfiguracoes() {
     if (dados && dados.sucesso) {
       CONFIG_LOJA = dados;
 
-      // ADICIONE ESTE CONSOLE.LOG AQUI:
       console.log("📦 Objeto CONFIG_LOJA completo retornado pela planilha:", CONFIG_LOJA);
       
-      // Salva no IndexedDB para uso offline futuro (opcional, mas recomendado)
+      // Salva no IndexedDB para uso offline futuro
       if (typeof salvarConfiguracoesLocal === 'function') {
         await salvarConfiguracoesLocal(dados);
       }
@@ -790,7 +789,7 @@ async function carregarConfiguracoes() {
     aplicarConfiguracoesGerais();
   } catch (erro) {
     console.error("Falha crítica ao carregar configurações:", erro);
-    aplicarConfiguracoesGerais(); // Aplica o padrão para não travar a tela
+    aplicarConfiguracoesGerais();
   }
 }
 
@@ -3021,24 +3020,12 @@ async function sincronizarVendasPendentes() {
   async function carregarDadosParaOffline() {
   if (navigator.onLine) {
     try {
-      // 1. Atualiza as configurações gerais da loja
+      // 1. Atualiza as configurações gerais da loja (que agora traz tudo de forma plana)
       const resConfig = await chamarGoogleScript('buscarConfiguracoes');
       if (resConfig && resConfig.sucesso) {
-        CONFIG_LOJA = resConfig;
+        window.CONFIG_LOJA = resConfig;
         if (typeof salvarConfiguracoesLocal === 'function') {
           await salvarConfiguracoesLocal(resConfig);
-        }
-      }
-
-      // 1.1 Atualiza de forma segura mantendo as configurações gerais e o objeto recursos intactos
-      const resImp = await chamarGoogleScript('buscarConfiguracaoImpressao');
-      if (resImp && resImp.sucesso) {
-        window.CONFIG_LOJA = window.CONFIG_LOJA || {};
-        window.CONFIG_LOJA.tamanhoPapelImpressora = resImp.tamanhoPapelImpressora;
-        window.CONFIG_LOJA.ativarChaveNf = resImp.ativarChaveNf;
-        
-        if (typeof salvarConfiguracoesLocal === 'function') {
-          await salvarConfiguracoesLocal(window.CONFIG_LOJA);
         }
       }
 
