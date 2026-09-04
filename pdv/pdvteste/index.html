@@ -1980,10 +1980,12 @@ function executarImpressaoRecibo(venda) {
   const areaImpressao = document.getElementById('area-impressao');
   if (!areaImpressao) return;
 
-  // Pega o tamanho configurado na planilha (CONFIG_LOJA). Se não encontrar, assume '80mm' por padrão.
+  // Mostra no F12 do navegador o que exibe na configuração atual
+  console.log("Configuração de papel recebida:", window.CONFIG_LOJA?.tamanhoPapelImpressora);
+
   let tamanhoPapel = (window.CONFIG_LOJA && CONFIG_LOJA.tamanhoPapelImpressora) 
-    ? CONFIG_LOJA.tamanhoPapelImpressora.trim().toLowerCase() 
-    : '80mm';
+    ? String(CONFIG_LOJA.tamanhoPapelImpressora).trim().toUpperCase() 
+    : '80MM';
 
   const nomeLoja = CONFIG_LOJA.nomeLoja || "PDV Comercial";
   const nichoLoja = CONFIG_LOJA.nicho || "";
@@ -2027,8 +2029,8 @@ function executarImpressaoRecibo(venda) {
 
   const dataFormatada = new Date(venda.dataVenda).toLocaleString('pt-BR');
 
-  // Verifica se o tamanho configurado na planilha é A4 (aceita 'a4' ou 'A4')
-  if (tamanhoPapel.includes('a4')) {
+  // Validação estrita baseada no texto que vem da planilha
+  if (tamanhoPapel.includes('A4')) {
     // LAYOUT A4
     areaImpressao.innerHTML = `
       <div class="recibo-a4">
@@ -2071,7 +2073,7 @@ function executarImpressaoRecibo(venda) {
       </div>
     `;
   } else {
-    // LAYOUT TÉRMICO (Assume 58mm se contiver '58', caso contrário usa o padrão 80mm)
+    // LAYOUT TÉRMICO (58mm ou 80mm)
     const classeLargura = tamanhoPapel.includes('58') ? 'cupom-58mm' : 'cupom-80mm';
     
     areaImpressao.innerHTML = `
