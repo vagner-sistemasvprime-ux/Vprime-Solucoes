@@ -2189,15 +2189,14 @@ function processarEscolhaDocumento(tipo) {
     // 2. Exibe o aviso de sucesso com o número da venda
     mostrarAviso(`Venda #${venda.idVenda} registrada com sucesso!`, "Sucesso", "success");
 
-    // 3. Busca a configuração de impressão na planilha de forma silenciosa
     const config = await chamarGoogleScript('buscarConfiguracaoImpressao');
 
-    let tamanhoPapel = '80MM';
     let ativarChaveNf = false;
-
     if (config && config.sucesso) {
-      tamanhoPapel = String(config.tamanhoPapelImpressora || '80MM').trim().toUpperCase();
-      ativarChaveNf = Boolean(config.ativarChaveNf);
+      window.CONFIG_LOJA = window.CONFIG_LOJA || {};
+      window.CONFIG_LOJA.tamanhoPapelImpressora = String(config.tamanhoPapelImpressora || '80MM').trim().toUpperCase();
+      window.CONFIG_LOJA.ativarChaveNf = Boolean(config.ativarChaveNf);
+      ativarChaveNf = window.CONFIG_LOJA.ativarChaveNf;
     }
 
     window.CONFIG_LOJA = window.CONFIG_LOJA || {};
@@ -3033,10 +3032,13 @@ async function sincronizarVendasPendentes() {
         }
       }
 
-      // 1.1 (Opcional) Atualiza também os dados específicos de impressão e NF offline
+      // 1.1 Atualiza de forma segura mantendo as configurações gerais e o objeto recursos intactos
       const resImp = await chamarGoogleScript('buscarConfiguracaoImpressao');
       if (resImp && resImp.sucesso) {
-        window.CONFIG_LOJA = Object.assign({}, window.CONFIG_LOJA, resImp);
+        window.CONFIG_LOJA = window.CONFIG_LOJA || {};
+        window.CONFIG_LOJA.tamanhoPapelImpressora = resImp.tamanhoPapelImpressora;
+        window.CONFIG_LOJA.ativarChaveNf = resImp.ativarChaveNf;
+        
         if (typeof salvarConfiguracoesLocal === 'function') {
           await salvarConfiguracoesLocal(window.CONFIG_LOJA);
         }
