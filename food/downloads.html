@@ -1,93 +1,210 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Central de Downloads Oficial dos sistemas e impressoras da VPrime Sistemas.">
 <title>Central de Downloads — VPrime Sistemas</title>
+<link rel="icon" type="image/png" href="https://i.postimg.cc/zBVW5Vzg/Logo-Vprime.png">
+
 <style>
-body{font-family:Arial,sans-serif;background:#f8fafc;margin:0;color:#1e293b}
-.container{max-width:1100px;margin:auto;padding:40px 20px}
-header{text-align:center;margin-bottom:50px}
-h1{font-size:42px}
-.subtitle{color:#64748b;font-size:18px}
-.notice{background:#e0f2fe;color:#0369a1;padding:18px;border-radius:14px;text-align:center;margin:25px 0;font-weight:bold}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:25px}
-.card{background:#fff;padding:30px;border-radius:18px;border:1px solid #e2e8f0;box-shadow:0 8px 18px rgba(0,0,0,.05)}
-.btn{display:inline-block;background:#0ea5e9;color:#fff;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:bold;margin-top:15px;margin-right:10px}
-.btn-support{background:#22c55e}
-.badge{display:inline-block;background:#dcfce7;color:#166534;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:bold}
-ul{padding-left:18px;color:#64748b}
-.footer{text-align:center;margin-top:50px;color:#64748b}
+:root {
+  --red: #e30613;
+  --red2: #b9000b;
+  --yellow: #ffc400;
+  --black: #000000;
+  --white: #ffffff;
+  --light: #f5f5f5;
+  --text: #202124;
+  --muted: #6d7178;
+  --green: #25d366;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: Arial, Helvetica, sans-serif; color: var(--text); background: #fff; line-height: 1.5; }
+
+.container { width: min(1080px, 92%); margin: auto; }
+
+/* Header */
+header { height: 76px; border-bottom: 1px solid #eee; background: #fff; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; }
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.logo { width: 150px; height: auto; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; border-radius: 7px; padding: 12px 18px; font-size: 13px; font-weight: 800; cursor: pointer; border: none; text-align: center; gap: 6px; }
+.btn-red { background: var(--red); color: #fff; }
+.btn-red:hover { background: var(--red2); }
+.btn-dark { background: var(--black); color: #fff; }
+.btn-dark:hover { background: #222; }
+.btn-support { background: #16a34a; color: #fff; }
+.btn-support:hover { background: #15803d; }
+
+/* Hero / Header Dark */
+.hero { background: var(--black); color: #fff; padding: 60px 0; text-align: center; }
+.kicker { color: var(--yellow); font-size: 12px; font-weight: 900; letter-spacing: 1.8px; text-transform: uppercase; }
+h1 { font-size: clamp(32px, 4vw, 48px); line-height: 1.1; letter-spacing: -1.5px; margin: 10px 0 14px; }
+h1 span { color: var(--red); }
+.hero p { font-size: 16px; color: #c8cbd1; max-width: 600px; margin: 0 auto; }
+
+/* Notice Box */
+.notice-box { background: #fffde7; border: 1px solid #ffe082; border-radius: 12px; padding: 18px; text-align: center; margin: 30px 0 10px; color: #856404; font-weight: bold; font-size: 14px; }
+
+/* Layout Sections */
+.section { padding: 50px 0 80px; }
+
+/* Cards Grid */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 24px; margin-top: 20px; }
+.card { border: 1px solid #e3e3e3; border-radius: 16px; padding: 30px; background: #fff; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, box-shadow 0.2s; }
+.card:hover { box-shadow: 0 10px 25px rgba(0,0,0,0.06); transform: translateY(-3px); }
+.card-content { margin-bottom: 20px; }
+
+.badge { display: inline-block; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; }
+.badge-mac { background: #f3e8ff; color: #6b21a8; border-color: #d8b4fe; }
+.badge-win { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+
+.card h2 { font-size: 22px; margin-bottom: 8px; color: var(--black); }
+.card p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+.card ul { list-style: none; margin-bottom: 15px; }
+.card ul li { font-size: 13px; color: var(--text); padding: 5px 0; border-bottom: 1px dashed #eee; display: flex; gap: 8px; align-items: center; }
+.card ul li::before { content: "✓"; color: var(--red); font-weight: bold; }
+
+.btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+
+/* CTA Block */
+.cta { background: var(--red); color: #fff; padding: 45px 0; margin-top: 40px; }
+.cta-inner { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.cta h2 { margin: 0; font-size: 26px; color: #fff; }
+.cta p { color: #ffe6e7; margin-top: 4px; font-size: 14px; }
+.cta .btn { background: #fff; color: #111; white-space: nowrap; }
+
+/* Footer */
+footer { background: #000; color: #858a93; padding: 35px 0; font-size: 12px; text-align: center; }
+footer .logo { width: 130px; margin-bottom: 10px; }
+
+@media(max-width: 768px){
+  .cta-inner { flex-direction: column; text-align: center; }
+  .btn-group { width: 100%; }
+}
 </style>
 </head>
 <body>
-<div class="container">
+
 <header>
-<h1>Central Oficial de Downloads</h1>
-<p class="subtitle">Baixe com segurança os aplicativos oficiais da VPrime Sistemas</p>
+  <div class="container nav">
+    <a href="index.html"><img class="logo" src="https://i.postimg.cc/zBVW5Vzg/Logo-Vprime.png" alt="VPrime Sistemas"></a>
+    <a class="btn btn-red" href="https://wa.me/5522981166221" target="_blank">Suporte Técnico</a>
+  </div>
 </header>
-<div class="notice">
-Após instalar, entre em contato com nosso suporte para ativação e configuração inicial.
-</div>
-<div class="grid">
-<div class="card">
-<span class="badge">Windows</span>
-<h2>Sentinela Printer</h2>
-<p>Responsável pela impressão automática e gerenciamento local.</p>
-<ul>
-<li>Compatível com Windows 10 e 11</li>
-<li>Configuração rápida</li>
-<li>Integração automática</li>
-<li>Versão 2.0.0</li>
-</ul>
-<a class="btn"
-href="https://github.com/vagner-sistemasvprime-ux/vprime-downloads/releases/latest/download/Sentinela_windows.exe"
-target="_blank">
-Baixar para Windows
-</a>
-<a class="btn btn-support"
-href="https://wa.me/5522981166221?text=Olá,%20instalei%20o%20Sentinela%20Windows%20e%20preciso%20de%20configuração"
-target="_blank">
-Configurar com Suporte
-</a>
-</div>
-<div class="card">
-<span class="badge">Android</span>
-<h2>Sentinela Printer Mobile</h2>
-<p>Transforme seu Android em central de impressão automática.</p>
-<ul>
-<li>Compatível com Android 8+</li>
-<li>Instalação simples</li>
-<li>Conexão com impressoras térmicas Bluetooth</li>
-<li>Versão 1.7.0</li>
-</ul>
-<a class="btn"
-href="https://github.com/vagner-sistemasvprime-ux/vprime-downloads/releases/latest/download/Sentinela.apk"
-target="_blank">
-Baixar APK
-</a>
-<a class="btn btn-support"
-href="https://wa.me/5522981166221?text=Olá,%20instalei%20o%20Sentinela%20Android%20e%20preciso%20de%20configuração"
-target="_blank">
-Configurar com Suporte
-</a>
-</div>
-<div class="card">
-<span class="badge">Suporte</span>
-<h2>Instalação Assistida</h2>
-<p>Nossa equipe realiza toda configuração inicial para garantir funcionamento completo.</p>
-<ul>
-<li>Configuração remota</li>
-<li>Teste de impressão</li>
-<li>Integração com painel</li>
-<li>Suporte especializado</li>
-</ul>
-<a class="btn btn-support" href="https://wa.me/5522981166221" target="_blank">Falar com suporte</a>
-</div>
-</div>
-<div class="footer">
-<p>© 2026 VPrime Sistemas — Downloads oficiais e seguros</p>
-</div>
-</div>
+
+<main>
+
+<section class="hero">
+  <div class="container">
+    <div class="kicker">ÁREA DE DOWNLOADS</div>
+    <h1>Central Oficial de <span>Downloads</span></h1>
+    <p>Baixe os utilitários de impressão e softwares oficiais da VPrime Sistemas com total segurança.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    
+    <div class="notice-box">
+      ⚠️ Após baixar e instalar o utilitário, entre em contato com nosso suporte para realizar a ativação e validação do sistema.
+    </div>
+
+    <div class="grid">
+      
+      <!-- WINDOWS -->
+      <article class="card">
+        <div class="card-content">
+          <span class="badge badge-win">Windows</span>
+          <h2>Sentinela Printer</h2>
+          <p>Responsável pela impressão automática de comandas e gerenciamento local de tickets no Windows.</p>
+          <ul>
+            <li>Compatível com Windows 10 e 11</li>
+            <li>Configuração rápida de spooled printer</li>
+            <li>Integração com impressoras térmicas</li>
+            <li>Versão 2.0.0 (Estável)</li>
+          </ul>
+        </div>
+        <div class="btn-group">
+          <a class="btn btn-dark" href="https://github.com/vagner-sistemasvprime-ux/vprime-downloads/releases/latest/download/Sentinela_windows.exe" target="_blank">
+            💾 Baixar para Windows (.exe)
+          </a>
+          <a class="btn btn-support" href="https://wa.me/5522981166221?text=Olá,%20instalei%20o%20Sentinela%20Windows%20e%20preciso%20de%20configuração" target="_blank">
+            💬 Configurar com Suporte
+          </a>
+        </div>
+      </article>
+
+      <!-- macOS -->
+      <article class="card">
+        <div class="card-content">
+          <span class="badge badge-mac">macOS</span>
+          <h2>Sentinela Printer (macOS)</h2>
+          <p>Módulo de impressão automática otimizado para ecossistema Apple macOS.</p>
+          <ul>
+            <li>Compatível com macOS Catalina ou superior</li>
+            <li>Suporte a processadores Intel e Apple Silicon (M1/M2/M3)</li>
+            <li>Pacote comprimido (.zip) para rápida instalação</li>
+            <li>Versão 1.0.0 (macOS)</li>
+          </ul>
+        </div>
+        <div class="btn-group">
+          <a class="btn btn-dark" href="https://github.com/vagner-sistemasvprime-ux/vprime-downloads/releases/latest/download/Sentinela_mac.zip" target="_blank">
+            📦 Baixar para Mac (.zip)
+          </a>
+          <a class="btn btn-support" href="https://wa.me/5522981166221?text=Olá,%20instalei%20o%20Sentinela%20Mac%20e%20preciso%20de%20configuração" target="_blank">
+            💬 Configurar com Suporte
+          </a>
+        </div>
+      </article>
+
+      <!-- SUPORTE ASSISTIDO -->
+      <article class="card">
+        <div class="card-content">
+          <span class="badge">Atendimento</span>
+          <h2>Instalação Assistida</h2>
+          <p>Prefere que nosso time faça a instalação? Nossa equipe realiza todo o processo remotamente.</p>
+          <ul>
+            <li>Instalação remota guiada por técnico</li>
+            <li>Mapeamento e teste de impressão em rede/USB</li>
+            <li>Sincronização com painel web</li>
+            <li>Suporte técnico contínuo</li>
+          </ul>
+        </div>
+        <div class="btn-group">
+          <a class="btn btn-red" href="https://wa.me/5522981166221?text=Olá,%20preciso%20de%20ajuda%20para%20instalar%20os%20aplicativos%20do%20sistema" target="_blank">
+            👨‍💻 Solicitar Suporte Remoto
+          </a>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="container cta-inner">
+    <div>
+      <h2>Dúvidas sobre qual versão baixar?</h2>
+      <p>Nossa equipe está disponível via WhatsApp para auxiliar no processo.</p>
+    </div>
+    <a class="btn" href="https://wa.me/5522981166221" target="_blank">Falar com Consultor</a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <img class="logo" src="https://i.postimg.cc/zBVW5Vzg/Logo-Vprime.png" alt="VPrime Sistemas">
+    <p>© 2026 VPrime Sistemas — Downloads oficiais e seguros.</p>
+  </div>
+</footer>
+
 </body>
 </html>
