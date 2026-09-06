@@ -1,491 +1,297 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Sistema completo para gestão de lanchonetes, restaurantes e delivery. Cardápio digital, controle de caixa e impressão automática.">
+<meta name="keywords" content="sistema para lanchonete, software para restaurante, cardápio digital, pdv lanchonete, gestão de delivery">
+<meta name="author" content="VPrime Sistemas">
 
 <title>VPrime Food — Sistema para Lanchonetes e Delivery</title>
 <link rel="icon" type="image/png" href="https://i.postimg.cc/zBVW5Vzg/Logo-Vprime.png">
 
-<meta name="description" content="Sistema completo para gestão de lanchonetes, restaurantes e delivery. Cardápio digital, controle de caixa e impressão automática.">
-
-<meta name="keywords" content="sistema para lanchonete, software para restaurante, cardápio digital, pdv lanchonete, gestão de delivery">
-<meta name="author" content="VPrime Sistemas">
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-
 <style>
 :root {
-  /* Paleta Light Modern - Foco em Clareza e Profissionalismo */
-  --bg: #fdfdfd;
-  --card: #ffffff;
-  --accent: #0ea5e9; /* Azul vibrante estilo sistema de gestão */
-  --success: #22c55e;
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
-  --glass: rgba(14, 165, 233, 0.05);
-  --radius: 16px;
-  --maxw: 1100px;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --red: #e30613;
+  --red2: #b9000b;
+  --yellow: #ffc400;
+  --black: #000000;
+  --white: #ffffff;
+  --light: #f5f5f5;
+  --text: #202124;
+  --muted: #6d7178;
+  --green: #22c55e;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: Arial, Helvetica, sans-serif; color: var(--text); background: #fff; line-height: 1.5; }
 
-body {
-  margin: 0;
-  background-color: var(--bg);
-  /* Gradiente sutil para profundidade */
-  background-image: radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.03) 0px, transparent 50%), 
-                    radial-gradient(at 100% 0%, rgba(34, 197, 94, 0.02) 0px, transparent 50%);
-  color: var(--text-main);
-  line-height: 1.6;
-}
+.container { width: min(1080px, 92%); margin: auto; }
 
-a { text-decoration: none; color: inherit; }
-.container { max-width: var(--maxw); margin: auto; padding: 20px; }
+/* Header */
+header { height: 76px; border-bottom: 1px solid #eee; background: #fff; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; }
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.logo { width: 150px; height: auto; }
+.menu { display: flex; gap: 24px; align-items: center; }
+.menu a { font-size: 13px; font-weight: 700; text-decoration: none; color: #333; }
+.menu a:hover { color: var(--red); }
 
-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 60px 0 40px;
-  text-align: center;
-}
+/* Buttons */
+.btn { display: inline-block; text-decoration: none; border-radius: 7px; padding: 13px 20px; font-size: 13px; font-weight: 800; cursor: pointer; border: none; text-align: center; }
+.btn-red { background: var(--red); color: #fff; }
+.btn-red:hover { background: var(--red2); }
+.btn-dark { background: var(--black); color: #fff; }
+.btn-outline { background: transparent; border: 1px solid #555; color: #fff; }
+.btn-outline:hover { background: rgba(255,255,255,0.1); }
 
-.logo-img {
-  width: 140px;
-  height: auto;
-  margin-bottom: 20px;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
-}
+/* Hero */
+.hero { background: var(--black); color: #fff; padding: 82px 0 88px; }
+.hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 65px; align-items: center; }
+.kicker { color: var(--yellow); font-size: 12px; font-weight: 900; letter-spacing: 1.8px; text-transform: uppercase; }
+h1 { font-size: clamp(38px, 5vw, 58px); line-height: 1.05; letter-spacing: -2px; margin: 14px 0 22px; }
+h1 span { color: var(--red); }
+.hero p { font-size: 18px; color: #c8cbd1; max-width: 600px; margin-bottom: 27px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.hero .btn-red { padding: 14px 22px; }
 
-.badge {
-  background: var(--glass);
-  color: var(--accent);
-  padding: 8px 16px;
-  border-radius: 50px;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 15px;
-  display: inline-block;
-  border: 1px solid rgba(14, 165, 233, 0.1);
-}
+.hero-box { border: 1px solid #2b2d32; border-radius: 18px; padding: 30px; background: #111317; }
+.hero-box h2 { font-size: 22px; margin-bottom: 15px; color: #fff; letter-spacing: 0; }
+.list { list-style: none; display: grid; gap: 11px; }
+.list li { font-size: 14px; color: #ddd; display: flex; gap: 10px; align-items: center; }
+.list li::before { content: "✓"; color: var(--yellow); font-weight: 900; }
 
-.btn {
-  background: var(--accent);
-  color: #ffffff;
-  padding: 18px 30px;
-  border-radius: 12px;
-  font-weight: 800;
-  display: inline-block;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.2);
-}
-.btn:hover { 
-  transform: translateY(-2px);
-  box-shadow: 0 20px 25px -5px rgba(14, 165, 233, 0.3);
-  filter: brightness(1.05);
-}
+/* Layout Sections */
+.section { padding: 75px 0; }
+.light { background: var(--light); }
+.center { text-align: center; max-width: 700px; margin: 0 auto 42px; }
+h2 { font-size: clamp(28px, 4vw, 42px); line-height: 1.1; letter-spacing: -1px; margin: 9px 0 12px; }
+.center p { color: var(--muted); }
 
-.card {
-  background: var(--card);
-  padding: 40px;
-  border-radius: var(--radius);
-  margin-top: 30px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  border: 1px solid var(--border);
-}
+/* Grid Cards */
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.card { border: 1px solid #e3e3e3; border-radius: 14px; padding: 24px; background: #fff; display: flex; flex-direction: column; }
+.card:hover { box-shadow: 0 12px 30px #0000000c; transform: translateY(-2px); }
+.card h3 { font-size: 18px; margin: 15px 0 6px; }
+.card p { font-size: 13px; color: var(--muted); }
 
-.hero {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 40px;
-  align-items: center;
-}
+.img-responsive { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; cursor: zoom-in; }
 
-.grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 25px;
-}
+/* Planos */
+.planos-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 900px; margin: 0 auto; }
+.plano-card { border: 1px solid #e3e3e3; border-radius: 18px; padding: 32px; background: #fff; position: relative; }
+.plano-card.destaque { border: 2px solid var(--red); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+.badge-destaque { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--red); color: #fff; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; }
 
-.service {
-  background: #f8fafc;
-  padding: 30px;
-  border-radius: 14px;
-  transition: all 0.3s;
-  border: 1px solid transparent;
-  height: 100%;
-}
-.service:hover { 
-  background: #ffffff;
-  border-color: var(--accent);
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-}
-.service h3 { color: var(--accent); margin-top: 15px; font-weight: 700; }
-.service p { color: var(--text-muted); font-size: 15px; }
+.price-box { padding: 12px; border-radius: 8px; margin: 12px 0; }
+.price-box.mensal { background: #f8f9fa; border: 1px solid #e9ecef; }
+.price-box.anual { background: #fffde7; border: 1px solid #ffe082; }
 
-.whatsapp-float {
-  position: fixed;
-  bottom: 25px;
-  right: 25px;
-  background: var(--success);
-  color: #fff;
-  padding: 16px 28px;
-  border-radius: 50px;
-  font-weight: 800;
-  box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3);
-  z-index: 999;
-  transition: all 0.3s;
-}
-.whatsapp-float:hover { transform: scale(1.05) translateY(-5px); }
+.plano-features { list-style: none; margin: 20px 0; text-align: left; }
+.plano-features li { font-size: 13px; color: var(--text); padding: 6px 0; border-bottom: 1px dashed #eee; display: flex; gap: 8px; }
+.plano-features li::before { content: "•"; color: var(--red); font-weight: bold; }
 
-footer {
-  text-align: center;
-  padding: 80px 0 40px;
-  color: var(--text-muted);
-  font-size: 14px;
-}
+/* FAQ */
+.faq-container { max-width: 800px; margin: 0 auto; }
+.faq-item { border: 1px solid #e3e3e3; border-radius: 10px; margin-bottom: 10px; background: #fff; overflow: hidden; }
+.faq-question { padding: 18px 20px; font-weight: 700; font-size: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.faq-answer { padding: 0 20px 18px; color: var(--muted); font-size: 14px; display: none; }
+.faq-item.active .faq-answer { display: block; }
+.faq-item.active .faq-question { color: var(--red); }
 
-/* Responsividade */
-@media(max-width:900px){
-  .hero { grid-template-columns: 1fr; text-align: center; }
-  .grid-3, .planos-grid { grid-template-columns: 1fr !important; }
-  .card { padding: 25px; }
-}
+/* Floating WhatsApp */
+.whatsapp-float { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: #fff; padding: 14px 22px; border-radius: 50px; font-weight: 800; font-size: 14px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); z-index: 999; text-decoration: none; }
 
-.feature-list {
-  list-style: none;
-  padding: 0;
-}
-.feature-list li {
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text-muted);
-}
-.feature-list li::before {
-  content: "✓";
-  color: var(--success);
-  font-weight: bold;
-}
+/* CTA */
+.cta { background: var(--red); color: #fff; padding: 55px 0; }
+.cta-inner { display: flex; justify-content: space-between; align-items: center; gap: 25px; }
+.cta h2 { margin: 0; font-size: 32px; color: #fff; }
+.cta p { color: #ffe6e7; margin-top: 5px; }
+.cta .btn { background: #fff; color: #111; white-space: nowrap; }
 
-.planos-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 30px;
-  margin-top: 40px;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-}
-.plano-card {
-  background: #f8fafc;
-  padding: 40px;
-  border-radius: var(--radius);
-  text-align: center;
-  border: 1px solid var(--border);
-  transition: all 0.3s;
-  display: flex;
-  flex-direction: column;
-}
-.plano-card.destaque {
-  border: 2px solid var(--accent);
-  background: #ffffff;
-  transform: scale(1.03);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-}
-.plano-card h3 { color: var(--text-main); font-size: 24px; margin-bottom: 5px; }
-.preco { font-size: 42px; font-weight: 800; margin: 25px 0; color: var(--text-main); }
-.preco small { font-size: 16px; font-weight: 400; color: var(--text-muted); }
+/* Footer */
+footer { background: #000; color: #858a93; padding: 40px 0; font-size: 12px; }
+footer .logo { width: 140px; margin-bottom: 12px; }
 
-.plano-features { 
-  list-style: none; 
-  padding: 0; 
-  text-align: left; 
-  margin-bottom: 35px; 
-  flex-grow: 1;
-}
-.plano-features li { 
-  margin-bottom: 15px; 
-  font-size: 15px; 
-  color: var(--text-muted);
-  border-bottom: 1px solid rgba(0,0,0,0.03);
-  padding-bottom: 8px;
-}
-.plano-features li::before { content: "•"; color: var(--accent); margin-right: 8px; }
+/* Modal Image */
+.modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); align-items: center; justify-content: center; }
+.modal-content { max-width: 90%; max-height: 85vh; border-radius: 8px; }
 
-.legenda-planos {
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-top: 25px;
-}
-
-.img-responsive {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  background: #f1f5f9;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  margin-bottom: 15px;
-  display: block;
-  border: 1px solid var(--border);
-}
-
-/* Modal Estilizado */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 10000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(15, 23, 42, 0.95);
-  cursor: zoom-out;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-content {
-  max-width: 85%;
-  max-height: 80vh;
-  border-radius: 12px;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-  animation: zoomAnim 0.3s ease-out;
-}
-
-@keyframes zoomAnim {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.img-responsive {
-  cursor: zoom-in;
-  transition: 0.4s;
-}
-.img-responsive:hover {
-  filter: brightness(0.95);
-  transform: scale(1.02);
-}
-
-/* FAQ Styles - Limpos */
-.faq-item {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  margin-bottom: 12px;
-  padding: 20px;
-  cursor: pointer;
-  background: #fff;
-  transition: all 0.2s;
-}
-.faq-item:hover { border-color: var(--accent); }
-.faq-question {
-  font-weight: 700;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--text-main);
-}
-.faq-answer {
-  max-height: 0;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  color: var(--text-muted);
-  font-size: 15px;
-  margin-top: 0;
-}
-.faq-item.active .faq-answer {
-  max-height: 200px;
-  margin-top: 15px;
-}
-.faq-item.active {
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+/* Responsivo */
+@media(max-width:800px){
+  .menu { display: none; }
+  .hero-grid { grid-template-columns: 1fr; }
+  .hero { padding: 50px 0; }
+  .cards, .planos-grid { grid-template-columns: 1fr; }
+  .cta-inner { flex-direction: column; align-items: flex-start; }
 }
 </style>
 </head>
-
 <body>
 
+<a class="whatsapp-float" href="https://wa.me/5522981166221?text=Olá,%20vi%20o%20site%20e%20quero%20conhecer%20o%20sistema%20para%20lanchonetes" target="_blank">📱 Solicitar Demonstração</a>
 
-<a class="whatsapp-float"
-   href="https://wa.me/5522981166221?text=Olá,%20vi%20o%20site%20e%20quero%20conhecer%20o%20sistema%20para%20lanchonetes"
-   target="_blank">📱 Solicitar Demonstração</a>
+<header>
+  <div class="container nav">
+    <a href="#inicio"><img class="logo" src="https://i.postimg.cc/zBVW5Vzg/Logo-Vprime.png" alt="VPrime Food"></a>
+    <nav class="menu">
+      <a href="#funcionalidades">Funcionalidades</a>
+      <a href="#segmentos">Segmentos</a>
+      <a href="#planos">Planos</a>
+      <a href="#faq">Perguntas Frequentes</a>
+      <a href="#downloads">Downloads</a>
+    </nav>
+    <a class="btn btn-red" href="https://wa.me/5522981166221" target="_blank">Falar com Consultor</a>
+  </div>
+</header>
 
-<div class="container">
+<main>
 
-  <header>
-    <img src="https://i.postimg.cc/zBVW5Vzg/Logo-Vprime.png" alt="VPrime Food" class="logo-img">
-    <span class="badge">SISTEMA GESTÃO FOOD</span>
-    <p style="color:var(--text-muted); margin:0;">A solução definitiva para o seu comércio de alimentação</p>
-  </header>
-
-  <section class="hero card">
-    <div class="hero-left">
-      <h1 style="font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.2; margin-bottom: 20px;">
-        Venda mais e organize seu <span style="color:var(--accent)">Delivery</span> com facilidade.
-      </h1>
-      <p style="color:var(--text-muted); font-size: 18px; margin-bottom: 30px;">
-        Do pedido no Cardápio à impressão na cozinha. Um sistema rápido, intuitivo e feito para quem não pode perder tempo.
-      </p>
-      <a class="btn" href="https://wa.me/5522981166221" target="_blank">
-        Solicitar Demonstração
-      </a>
-    </div>
-
-    <div class="hero-right">
-      <div class="service" style="border-left: 4px solid var(--accent);">
-        <ul class="feature-list">
-          <li>Cardápio Digital Integrado</li>
-          <li>PDV de Frente de Caixa</li>
-          <li>Gestão de Pedidos (KDS)</li>
-          <li>Impressão Automática</li>
-          <li>Relatórios de Vendas</li>
-        </ul>
+<section class="hero" id="inicio">
+  <div class="container hero-grid">
+    <div>
+      <div class="kicker">SISTEMA GESTÃO FOOD</div>
+      <h1>Venda mais e organize seu <span>Delivery</span></h1>
+      <p>Do pedido no Cardápio à impressão na cozinha. Um sistema rápido, intuitivo e feito para quem não pode perder tempo.</p>
+      <div class="actions">
+        <a class="btn btn-red" href="https://wa.me/5522981166221" target="_blank">Solicitar Demonstração</a>
+        <a class="btn btn-outline" href="#planos">Ver Planos</a>
       </div>
     </div>
-  </section>
 
-  <section id="funcionalidades" class="card">
-    <h2 style="text-align: center; margin-bottom: 40px;">O que o VPrime Food oferece?</h2>
-    
-    <div class="grid-3" style="margin-bottom: 40px;">
-      <div class="service">
-        <img src="https://lh3.googleusercontent.com/d/1ek1q2dEU97xqs6s4mAQ5l3hFSs_LLdZm" alt="Cardápio Digital no Celular" class="img-responsive">
+    <div class="hero-box">
+      <div class="kicker">Tudo em uma só plataforma</div>
+      <h2>A solução definitiva para o seu comércio de alimentação.</h2>
+      <ul class="list">
+        <li>Cardápio Digital Integrado</li>
+        <li>PDV de Frente de Caixa</li>
+        <li>Gestão de Pedidos (KDS)</li>
+        <li>Impressão Automática</li>
+        <li>Relatórios de Vendas</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="funcionalidades">
+  <div class="container">
+    <div class="center">
+      <div class="kicker" style="color:var(--red);">Recursos Principais</div>
+      <h2>O que o VPrime Food oferece?</h2>
+      <p>Ferramentas completas desenvolvidas para otimizar a rotina do seu restaurante ou lanchonete.</p>
+    </div>
+
+    <div class="cards">
+      <article class="card">
+        <img src="https://lh3.googleusercontent.com/d/1ek1q2dEU97xqs6s4mAQ5l3hFSs_LLdZm" alt="Cardápio Digital" class="img-responsive">
         <h3>Cardápio Digital</h3>
         <p>Seu cliente faz o pedido pelo celular, sem erros. O pedido cai direto no seu painel de gestão.</p>
-      </div>
-    <div class="service">
-  <img src="https://lh3.googleusercontent.com/d/1j7CbBhxR2FzuxRGomlUCYlNc_kQil6c6" alt="Tela do PDV Frente de Caixa" class="img-responsive">
-  <h3>Frente de Caixa</h3>
-  <p>Um PDV intuitivo e rápido para registrar vendas no balcão e gerenciar mesas sem complicações.</p>
-</div>
-      <div class="service">
-        <img src="https://m.media-amazon.com/images/I/71JQiUsEBmL.jpg" alt="Impressão de pedido automática" class="img-responsive">
+      </article>
+
+      <article class="card">
+        <img src="https://lh3.googleusercontent.com/d/1j7CbBhxR2FzuxRGomlUCYlNc_kQil6c6" alt="Frente de Caixa" class="img-responsive">
+        <h3>Frente de Caixa (PDV)</h3>
+        <p>Um PDV intuitivo e rápido para registrar vendas no balcão e gerenciar mesas sem complicações.</p>
+      </article>
+
+      <article class="card">
+        <img src="https://m.media-amazon.com/images/I/71JQiUsEBmL.jpg" alt="Impressão Automática" class="img-responsive">
         <h3>Impressão Automática</h3>
         <p>Economize tempo! O pedido foi confirmado? A impressora da cozinha já roda o ticket na hora.</p>
-      </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section light" id="segmentos">
+  <div class="container">
+    <div class="center">
+      <div class="kicker" style="color:var(--red);">Especialista no seu negócio</div>
+      <h2>Atendemos diversos segmentos</h2>
+      <p>Não importa o seu modelo de atendimento, temos o fluxo ideal.</p>
     </div>
 
-    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 40px;">
+    <div class="cards">
+      <article class="card">
+        <img src="https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=500" alt="Lanchonetes" class="img-responsive">
+        <h3>Lanchonetes & Hamburguerias</h3>
+        <p>Agilidade no pedido de combos, lanches e adicionais personalizados.</p>
+      </article>
 
-    <h3 style="text-align: center; margin-bottom: 30px; color: var(--text-muted);">Especialista no seu negócio</h3>
-    <div class="grid-3">
-      <div class="service">
-        <img src="https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=500" alt="Lanches" class="img-responsive">
-        <h3>Lanchonetes</h3>
-        <p>Agilidade no pedido de combos e hambúrgueres personalizados.</p>
-      </div>
-      
-      <div class="service">
-        <img src="https://www.prosaude.org.br/wp-content/uploads/2021/07/Acai-1.jpg" alt="Açaí" class="img-responsive">
-        <h3>Açaíterias</h3>
-        <p>Gestão completa de adicionais, coberturas e tamanhos.</p>
-      </div>
+      <article class="card">
+        <img src="https://www.prosaude.org.br/wp-content/uploads/2021/07/Acai-1.jpg" alt="Açaíterias" class="img-responsive">
+        <h3>Açaíterias & Sorveterias</h3>
+        <p>Gestão completa de acompanhamentos, coberturas e tamanhos de copos.</p>
+      </article>
 
-      <div class="service">
+      <article class="card">
         <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9?w=500" alt="Restaurantes" class="img-responsive">
-        <h3>Restaurantes</h3>
-        <p>Controle de mesas e pedidos por conta com total precisão.</p>
-      </div>
+        <h3>Restaurantes & Bares</h3>
+        <p>Controle de mesas, comanda individual e fechamento de conta preciso.</p>
+      </article>
     </div>
-  </section>
+  </div>
+</section>
 
-
-<!-- SEÇÃO DE PLANOS ATUALIZADA (COM PLANO ANUAL) -->
-  <section id="planos" class="card">
-    <h2 style="text-align: center;">Escolha o plano ideal para seu restaurante</h2>
-    <p style="text-align: center; color: var(--text-muted); margin-bottom: 20px;">
-      Sistema completo para Delivery e Restaurantes • Montagem do Cardápio Inclusa
-    </p>
-
-    <div style="text-align: center; margin-bottom: 30px;">
-      <span style="background: rgba(34, 197, 94, 0.08); padding: 10px 20px; border-radius: 50px; border: 1px solid rgba(34, 197, 94, 0.3); font-size: 14px; color: var(--success); font-weight: 700;">
-        🚀 ZERO Taxa de Implantação • Montagem do Cardápio Inclusa em Todos os Planos
-      </span>
+<section class="section" id="planos">
+  <div class="container">
+    <div class="center">
+      <div class="kicker" style="color:var(--red);">Investimento Acessível</div>
+      <h2>Escolha o plano ideal</h2>
+      <p style="margin-bottom: 10px;">Montagem do Cardápio Inclusa em Todos os Planos • ZERO Taxa de Implantação</p>
     </div>
 
     <div class="planos-grid">
-
       <!-- PLANO PADRÃO -->
       <div class="plano-card">
-        <h3>🔹 PLANO PADRÃO</h3>
-        <p style="color: var(--text-muted); font-size: 14px;">Ideal para Delivery e Balcão</p>
+        <h3 style="font-size:22px;">🔹 PLANO PADRÃO</h3>
+        <p style="font-size: 13px; color: var(--muted);">Ideal para Delivery e Balcão</p>
 
-        <!-- Opção Mensal -->
-        <div style="background: rgba(14, 165, 233, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(14, 165, 233, 0.2); margin: 20px 0 10px; text-align: left;">
-          <div style="font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase;">Opção Mensal</div>
-          <div style="font-size: 24px; font-weight: 800; color: var(--text-main); margin-top: 2px;">
-            R$ 44,90<span style="font-size: 14px; font-weight: 400; color: var(--text-muted);">/mês</span>
-          </div>
+        <div class="price-box mensal">
+          <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;">Opção Mensal</div>
+          <div style="font-size: 26px; font-weight: 900; color: var(--black);">R$ 44,90<small style="font-size:12px; font-weight:400;">/mês</small></div>
         </div>
 
-        <!-- Opção Anual -->
-        <div style="background: rgba(34, 197, 94, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.2); margin-bottom: 25px; text-align: left;">
-          <div style="font-size: 12px; font-weight: 700; color: var(--success); text-transform: uppercase;">🚀 Plano Anual (Maior Economia)</div>
-          <div style="font-size: 22px; font-weight: 800; color: var(--text-main); margin-top: 2px;">
-            R$ 497,00<span style="font-size: 13px; font-weight: 400; color: var(--text-muted);">/ano</span>
-          </div>
-          <div style="font-size: 12px; color: var(--success); font-weight: 600; margin-top: 4px;">
-            Equivale a apenas R$ 41,41/mês
-          </div>
+        <div class="price-box anual">
+          <div style="font-size: 11px; font-weight: 800; color: #b78103; text-transform: uppercase;">🚀 Plano Anual (Maior Economia)</div>
+          <div style="font-size: 22px; font-weight: 900; color: var(--black);">R$ 497,00<small style="font-size:12px; font-weight:400;">/ano</small></div>
+          <small style="color: var(--green); font-weight: bold; font-size: 11px;">Equivale a apenas R$ 41,41/mês</small>
         </div>
 
         <ul class="plano-features">
-          <li><strong>Montagem do cardápio pela nossa equipe</strong></li>
+          <li><strong>Montagem do cardápio inclusa</strong></li>
           <li>PDV de Frente de Caixa</li>
           <li>Cardápio Digital Personalizado</li>
           <li>Recebimento de Pedidos Online</li>
           <li>Cálculo automático de adicionais</li>
-          <li>Controle de Vendas</li>
+          <li>Controle de Vendas e Relatórios</li>
           <li>Impressão de Tickets automática</li>
           <li>Link exclusivo para divulgação</li>
           <li>Suporte Especializado</li>
         </ul>
 
-        <a href="https://wa.me/5522981166221?text=Olá,%20quero%20contratar%20o%20Plano%20Padrão" class="btn" style="padding: 14px; font-size: 14px;">
-          Contratar Plano Padrão
-        </a>
+        <a href="https://wa.me/5522981166221?text=Olá,%20quero%20contratar%20o%20Plano%20Padrão" class="btn btn-dark" style="width:100%;">Contratar Plano Padrão</a>
       </div>
 
       <!-- PLANO PRIME -->
       <div class="plano-card destaque">
-        <div class="badge" style="margin-bottom: 5px;">⭐ MAIS ESCOLHIDO</div>
-        <h3>🚀 PLANO PRIME</h3>
-        <p style="color: var(--text-muted); font-size: 14px;">Sistema completo para restaurantes</p>
+        <div class="badge-destaque">⭐ MAIS ESCOLHIDO</div>
+        <h3 style="font-size:22px;">🚀 PLANO PRIME</h3>
+        <p style="font-size: 13px; color: var(--muted);">Sistema completo para restaurantes</p>
 
-        <!-- Opção Mensal -->
-        <div style="background: rgba(14, 165, 233, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(14, 165, 233, 0.2); margin: 20px 0 10px; text-align: left;">
-          <div style="font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase;">Opção Mensal</div>
-          <div style="font-size: 24px; font-weight: 800; color: var(--text-main); margin-top: 2px;">
-            R$ 79,90<span style="font-size: 14px; font-weight: 400; color: var(--text-muted);">/mês</span>
-          </div>
+        <div class="price-box mensal">
+          <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;">Opção Mensal</div>
+          <div style="font-size: 26px; font-weight: 900; color: var(--black);">R$ 79,90<small style="font-size:12px; font-weight:400;">/mês</small></div>
         </div>
 
-        <!-- Opção Anual -->
-        <div style="background: rgba(34, 197, 94, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.2); margin-bottom: 25px; text-align: left;">
-          <div style="font-size: 12px; font-weight: 700; color: var(--success); text-transform: uppercase;">🚀 Plano Anual (Maior Economia)</div>
-          <div style="font-size: 22px; font-weight: 800; color: var(--text-main); margin-top: 2px;">
-            R$ 797,00<span style="font-size: 13px; font-weight: 400; color: var(--text-muted);">/ano</span>
-          </div>
-          <div style="font-size: 12px; color: var(--success); font-weight: 600; margin-top: 4px;">
-            Equivale a apenas R$ 66,41/mês
-          </div>
+        <div class="price-box anual">
+          <div style="font-size: 11px; font-weight: 800; color: #b78103; text-transform: uppercase;">🚀 Plano Anual (Maior Economia)</div>
+          <div style="font-size: 22px; font-weight: 900; color: var(--black);">R$ 797,00<small style="font-size:12px; font-weight:400;">/ano</small></div>
+          <small style="color: var(--green); font-weight: bold; font-size: 11px;">Equivale a apenas R$ 66,41/mês</small>
         </div>
 
         <ul class="plano-features">
-          <li><strong>Montagem do cardápio pela nossa equipe</strong></li>
+          <li><strong>Montagem do cardápio inclusa</strong></li>
           <li><strong>Tudo do Plano Padrão</strong></li>
           <li>Confirmação automática de Pix</li>
           <li>Gestão de Delivery Automática</li>
@@ -495,100 +301,97 @@ footer {
           <li>Suporte Prioritário</li>
         </ul>
 
-        <a href="https://wa.me/5522981166221?text=Olá,%20quero%20contratar%20o%20Plano%20Prime" class="btn" style="padding: 14px; font-size: 14px;">
-          Contratar Plano Prime
-        </a>
+        <a href="https://wa.me/5522981166221?text=Olá,%20quero%20contratar%20o%20Plano%20Prime" class="btn btn-red" style="width:100%;">Contratar Plano Prime</a>
       </div>
-
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- FAQ ATUALIZADO -->
-  <section class="card">
-    <h2 style="text-align: center;">Perguntas Frequentes</h2>
-    <div style="max-width: 800px; margin: auto;">
+<section class="section light" id="faq">
+  <div class="container">
+    <div class="center">
+      <div class="kicker" style="color:var(--red);">Tire suas dúvidas</div>
+      <h2>Perguntas Frequentes</h2>
+    </div>
 
-      <div class="faq-item" onclick="this.classList.toggle('active')">
+    <div class="faq-container">
+      <div class="faq-item" onclick="toggleFaq(this)">
         <div class="faq-question">Existe taxa de adesão ou implantação? <span>+</span></div>
-        <div class="faq-answer">
-          Não! Você paga apenas o valor da primeira mensalidade no ato da contratação. Não cobramos taxa inicial de implantação.
-        </div>
+        <div class="faq-answer">Não! Você paga apenas o valor do plano escolhido no ato da contratação. Não cobramos taxa inicial de implantação.</div>
       </div>
 
-      <div class="faq-item" onclick="this.classList.toggle('active')">
+      <div class="faq-item" onclick="toggleFaq(this)">
         <div class="faq-question">Vocês montam o meu cardápio? <span>+</span></div>
-        <div class="faq-answer">
-          Sim! A nossa equipe faz toda a configuração e a montagem do seu cardápio digital. O processo tem início imediatamente após a confirmação da contratação.
-        </div>
+        <div class="faq-answer">Sim! A nossa equipe faz toda a configuração e a montagem do seu cardápio digital logo após a confirmação do pedido.</div>
       </div>
 
-      <div class="faq-item" onclick="this.classList.toggle('active')">
+      <div class="faq-item" onclick="toggleFaq(this)">
         <div class="faq-question">Posso ver como funciona antes de contratar? <span>+</span></div>
-        <div class="faq-answer">
-          Com certeza! Disponibilizamos um cardápio modelo interativo para você testar toda a experiência do seu cliente antes de fechar a contratação.
-        </div>
+        <div class="faq-answer">Com certeza! Disponibilizamos um cardápio modelo interativo para você testar toda a experiência do cliente.</div>
       </div>
 
-      <div class="faq-item" onclick="this.classList.toggle('active')">
+      <div class="faq-item" onclick="toggleFaq(this)">
         <div class="faq-question">Preciso de um computador para usar? <span>+</span></div>
-        <div class="faq-answer">O sistema de gestão e o cardápio funcionam em qualquer dispositivo (celular, tablet ou PC). Porém, para a impressão automática na cozinha, é necessária a instalação do nosso sistema de gerenciamento de pedidos.</div>
+        <div class="faq-answer">O sistema e o cardápio funcionam em qualquer celular, tablet ou PC. Apenas para a impressão automática de tickets na cozinha é recomendado um computador Windows conectado à impressora.</div>
       </div>
 
-      <div class="faq-item" onclick="this.classList.toggle('active')">
+      <div class="faq-item" onclick="toggleFaq(this)">
         <div class="faq-question">Tem contrato de fidelidade? <span>+</span></div>
-        <div class="faq-answer">
-          Não trabalhamos com fidelidade. O pagamento é mensal pré-pago, dando total liberdade para você continuar apenas enquanto fizer sentido para o seu negócio.
-        </div>
+        <div class="faq-answer">Não trabalhamos com fidelidade no plano mensal. O pagamento é pré-pago, dando total liberdade para você continuar quando quiser.</div>
       </div>
 
-      <div class="faq-item" onclick="this.classList.toggle('active')">
+      <div class="faq-item" onclick="toggleFaq(this)">
         <div class="faq-question">Funciona em impressora térmica? <span>+</span></div>
         <div class="faq-answer">Sim! O sistema é compatível com as principais impressoras térmicas (58mm e 80mm) do mercado.</div>
       </div>
-
     </div>
-  </section>
-
-  <section class="card" style="text-align: center; background: linear-gradient(rgba(19,196,227,0.1), transparent);">
-    <h2>Pronto para profissionalizar sua lanchonete?</h2>
-    <p style="color:var(--text-muted); margin-bottom: 30px;">Atendemos em todo Brasil com suporte remoto especializado.</p>
-    <a class="btn" href="https://wa.me/5522981166221" target="_blank">Falar com Consultor</a>
-  </section>
-
-
-  <section class="card" style="text-align:center;">
-  <h3>Já é cliente VPrime?</h3>
-  <p style="color:var(--text-muted);">
-    Baixe a versão mais recente dos aplicativos oficiais e receba suporte para configuração.
-  </p>
-
-  <a class="btn"
-     href="https://vprimesistemas.com.br/food/downloads.html"
-     target="_blank">
-     Acessar Central de Downloads
-  </a>
+  </div>
 </section>
 
-  <footer>
-    <p>© 2026 VPrime Food — Tecnologia para o Setor Gastronômico</p>
-    <small>📍 Suporte em todo o Brasil</small>
-  </footer>
+<section class="section" id="downloads">
+  <div class="container">
+    <div class="hero-box" style="text-align: center; background: #000; border-color: #222;">
+      <div class="kicker">Área do Cliente</div>
+      <h2 style="font-size:26px; margin-bottom:10px;">Já é cliente VPrime Food?</h2>
+      <p style="max-width: 600px; margin: 0 auto 20px;">Baixe a versão mais recente dos aplicativos oficiais e receba suporte para configuração rápida da sua impressora e sistema.</p>
+      <a class="btn btn-red" href="https://vprimesistemas.com.br/food/downloads.html" target="_blank">Acessar Central de Downloads</a>
+    </div>
+  </div>
+</section>
 
-</div>
+<section class="cta" id="contato">
+  <div class="container cta-inner">
+    <div>
+      <h2>Pronto para profissionalizar sua lanchonete?</h2>
+      <p>Atendemos em todo o Brasil com suporte remoto especializado.</p>
+    </div>
+    <a class="btn" href="https://wa.me/5522981166221" target="_blank">Falar pelo WhatsApp</a>
+  </div>
+</section>
 
+</main>
 
-<div class="container"> ... </div>
+<footer>
+  <div class="container">
+    <img class="logo" src="https://i.postimg.cc/zBVW5Vzg/Logo-Vprime.png" alt="VPrime Food">
+    <p>VPrime Food — Tecnologia e automação para o setor gastronômico.</p>
+    <br>
+    <p>© 2026 VPrime Sistemas. Todos os direitos reservados. 📍 Suporte em todo o Brasil</p>
+  </div>
+</footer>
 
-<div id="imageModal" class="modal" style="display:none;" onclick="fecharModal()">
+<div id="imageModal" class="modal" onclick="fecharModal()">
   <img class="modal-content" id="imgExpandida">
-  <span style="position:absolute; top:20px; right:30px; color:white; font-size:40px; font-weight:bold; cursor:pointer;">×</span>
 </div>
 
 <script>
+  function toggleFaq(element) {
+    element.classList.toggle('active');
+  }
+
   const modal = document.getElementById("imageModal");
   const modalImg = document.getElementById("imgExpandida");
 
-  // Captura todas as imagens com a classe img-responsive
   document.querySelectorAll('.img-responsive').forEach(img => {
     img.addEventListener('click', function() {
       modal.style.display = "flex"; 
