@@ -37,9 +37,9 @@
     "priceCurrency": "BRL",
     "lowPrice": "44.90",
     "highPrice": "797.00",
-    "offerCount": "4"
+    "offerCount": "3"
   },
-  "description": "Sistema completo de gestão, PDV de frente de caixa e cardápio digital para lanchonetes, restaurantes, hamburguerias e delivery."
+  "description": "Sistema completo de gestão, PDV de frente de caixa, comandas e cardápio digital para lanchonetes, restaurantes, hamburguerias e delivery."
 }
 </script>
 
@@ -110,17 +110,17 @@ h2 { font-size: clamp(28px, 4vw, 42px); line-height: 1.1; letter-spacing: -1px; 
 
 .img-responsive { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; cursor: zoom-in; }
 
-/* Planos */
-.planos-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 900px; margin: 0 auto; }
-.plano-card { border: 1px solid #e3e3e3; border-radius: 18px; padding: 32px; background: #fff; position: relative; }
+/* Planos Grid de 3 Colunas */
+.planos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1080px; margin: 0 auto; }
+.plano-card { border: 1px solid #e3e3e3; border-radius: 18px; padding: 28px 22px; background: #fff; position: relative; display: flex; flex-direction: column; justify-content: space-between; }
 .plano-card.destaque { border: 2px solid var(--red); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
-.badge-destaque { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--red); color: #fff; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; }
+.badge-destaque { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--red); color: #fff; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; white-space: nowrap; }
 
-.price-box { padding: 12px; border-radius: 8px; margin: 12px 0; }
+.price-box { padding: 10px 12px; border-radius: 8px; margin: 10px 0; }
 .price-box.mensal { background: #f8f9fa; border: 1px solid #e9ecef; }
 .price-box.anual { background: #fffde7; border: 1px solid #ffe082; }
 
-.plano-features { list-style: none; margin: 20px 0; text-align: left; }
+.plano-features { list-style: none; margin: 16px 0 24px; text-align: left; }
 .plano-features li { font-size: 13px; color: var(--text); padding: 6px 0; border-bottom: 1px dashed #eee; display: flex; gap: 8px; }
 .plano-features li::before { content: "•"; color: var(--red); font-weight: bold; }
 
@@ -151,11 +151,14 @@ footer .logo { width: 140px; margin-bottom: 12px; }
 .modal-content { max-width: 90%; max-height: 85vh; border-radius: 8px; }
 
 /* Responsivo */
+@media(max-width:980px){
+  .planos-grid { grid-template-columns: 1fr; max-width: 450px; }
+}
 @media(max-width:800px){
   .menu { display: none; }
   .hero-grid { grid-template-columns: 1fr; }
   .hero { padding: 50px 0; }
-  .cards, .planos-grid { grid-template-columns: 1fr; }
+  .cards { grid-template-columns: 1fr; }
   .cta-inner { flex-direction: column; align-items: flex-start; }
 }
 </style>
@@ -184,7 +187,6 @@ footer .logo { width: 140px; margin-bottom: 12px; }
   <div class="container hero-grid">
     <div>
       <div class="kicker">SISTEMA DE GESTÃO FOOD</div>
-      <!-- H1 Otimizado com palavras-chave principais sem alterar o visual -->
       <h1>VPrime Food — Venda mais e organize seu <span>Delivery</span></h1>
       <p>Do pedido no Cardápio à impressão na cozinha. Um sistema completo para lanchonetes e restaurantes, intuitivo e feito para quem não pode perder tempo.</p>
       <div class="actions">
@@ -217,7 +219,6 @@ footer .logo { width: 140px; margin-bottom: 12px; }
 
     <div class="cards">
       <article class="card">
-        <!-- Atributos alt detalhados para o Google Imagens -->
         <img src="https://lh3.googleusercontent.com/d/1ek1q2dEU97xqs6s4mAQ5l3hFSs_LLdZm" alt="Interface do Cardápio Digital VPrime Food no celular" class="img-responsive">
         <h3>Cardápio Digital</h3>
         <p>Seu cliente faz o pedido pelo celular, sem erros. O pedido cai direto no seu painel de gestão.</p>
@@ -268,76 +269,114 @@ footer .logo { width: 140px; margin-bottom: 12px; }
   </div>
 </section>
 
+<!-- SEÇÃO DE PLANOS ATUALIZADA (PLUS ANUAL R$ 540) -->
 <section class="section" id="planos">
   <div class="container">
     <div class="center">
       <div class="kicker" style="color:var(--red);">Investimento Acessível</div>
-      <h2>Escolha o plano ideal</h2>
+      <h2>Escolha o plano ideal para seu negócio</h2>
       <p style="margin-bottom: 10px;">Montagem do Cardápio Inclusa em Todos os Planos • ZERO Taxa de Implantação</p>
     </div>
 
     <div class="planos-grid">
+      
       <!-- PLANO PADRÃO -->
       <div class="plano-card">
-        <h3 style="font-size:22px;">🔹 PLANO PADRÃO</h3>
-        <p style="font-size: 13px; color: var(--muted);">Ideal para Delivery e Balcão</p>
+        <div>
+          <h3 style="font-size:20px;">🔹 PLANO PADRÃO</h3>
+          <p style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">Ideal para Delivery e Balcão</p>
 
-        <div class="price-box mensal">
-          <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;">Opção Mensal</div>
-          <div style="font-size: 26px; font-weight: 900; color: var(--black);">R$ 44,90<small style="font-size:12px; font-weight:400;">/mês</small></div>
+          <div class="price-box mensal">
+            <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;">Opção Mensal</div>
+            <div style="font-size: 26px; font-weight: 900; color: var(--black);">R$ 44,90<small style="font-size:12px; font-weight:400;">/mês</small></div>
+          </div>
+
+          <div class="price-box anual">
+            <div style="font-size: 10px; font-weight: 800; color: #b78103; text-transform: uppercase;">🚀 Plano Anual (Maior Economia)</div>
+            <div style="font-size: 20px; font-weight: 900; color: var(--black);">R$ 497,00<small style="font-size:11px; font-weight:400;">/ano</small></div>
+            <small style="color: var(--green); font-weight: bold; font-size: 10px;">Apenas R$ 41,41/mês</small>
+          </div>
+
+          <ul class="plano-features">
+            <li><strong>Montagem do cardápio inclusa</strong></li>
+            <li>Cardápio Digital Integrado</li>
+            <li>Frente de Caixa (PDV)</li>
+            <li>Controle de Caixa</li>
+            <li>Gestão para Cozinha (KDS)</li>
+            <li>Impressão Automática de Tickets</li>
+            <li>Controle de Vendas e Entregas</li>
+            <li>Suporte Especializado</li>
+          </ul>
         </div>
 
-        <div class="price-box anual">
-          <div style="font-size: 11px; font-weight: 800; color: #b78103; text-transform: uppercase;">🚀 Plano Anual (Maior Economia)</div>
-          <div style="font-size: 22px; font-weight: 900; color: var(--black);">R$ 497,00<small style="font-size:12px; font-weight:400;">/ano</small></div>
-          <small style="color: var(--green); font-weight: bold; font-size: 11px;">Equivale a apenas R$ 41,41/mês</small>
+        <a href="https://wa.me/5522981166221?text=Olá,%20quero%20contratar%20o%20Plano%20Padrão%20(R$%2044,90)" class="btn btn-dark" style="width:100%;">Contratar Padrão</a>
+      </div>
+
+      <!-- PLANO PLUS -->
+      <div class="plano-card destaque">
+        <div class="badge-destaque">⭐ RECOMENDADO PARA MESAS</div>
+        <div>
+          <h3 style="font-size:20px;">⭐ PLANO PLUS</h3>
+          <p style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">Perfeito para Lanchonetes e Bares</p>
+
+          <div class="price-box mensal">
+            <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;">Opção Mensal</div>
+            <div style="font-size: 26px; font-weight: 900; color: var(--black);">R$ 49,90<small style="font-size:12px; font-weight:400;">/mês</small></div>
+          </div>
+
+          <div class="price-box anual">
+            <div style="font-size: 10px; font-weight: 800; color: #b78103; text-transform: uppercase;">🚀 Plano Anual (Maior Economia)</div>
+            <div style="font-size: 20px; font-weight: 900; color: var(--black);">R$ 540,00<small style="font-size:11px; font-weight:400;">/ano</small></div>
+            <small style="color: var(--green); font-weight: bold; font-size: 10px;">Apenas R$ 45,00/mês</small>
+          </div>
+
+          <ul class="plano-features">
+            <li><strong>Montagem do cardápio inclusa</strong></li>
+            <li><strong>Tudo do Plano Padrão</strong></li>
+            <li>QR Code nas Mesas</li>
+            <li>Gestão Completa de Mesas</li>
+            <li>Gestão de Comandas Individuais</li>
+            <li>Fechamento e divisão de conta</li>
+            <li>Relatórios detalhados por canal</li>
+            <li>Suporte Prioritário</li>
+          </ul>
         </div>
 
-        <ul class="plano-features">
-          <li><strong>Montagem do cardápio inclusa</strong></li>
-          <li>PDV de Frente de Caixa</li>
-          <li>Cardápio Digital Personalizado</li>
-          <li>Recebimento de Pedidos Online</li>
-          <li>Cálculo automático de adicionais</li>
-          <li>Controle de Vendas e Relatórios</li>
-          <li>Impressão de Tickets automática</li>
-          <li>Link exclusivo para divulgação</li>
-          <li>Suporte Especializado</li>
-        </ul>
-
-        <a href="https://wa.me/5522981166221?text=Olá,%20quero%20contratar%20o%20Plano%20Padrão" class="btn btn-dark" style="width:100%;">Contratar Plano Padrão</a>
+        <a href="https://wa.me/5522981166221?text=Olá,%20quero%20contratar%20o%20Plano%20Plus%20(R$%2049,90)" class="btn btn-red" style="width:100%;">Contratar Plus</a>
       </div>
 
       <!-- PLANO PRIME -->
-      <div class="plano-card destaque">
-        <div class="badge-destaque">⭐ MAIS ESCOLHIDO</div>
-        <h3 style="font-size:22px;">🚀 PLANO PRIME</h3>
-        <p style="font-size: 13px; color: var(--muted);">Sistema completo para restaurantes</p>
+      <div class="plano-card">
+        <div>
+          <h3 style="font-size:20px;">🚀 PLANO PRIME</h3>
+          <p style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">Automação Total para Restaurantes</p>
 
-        <div class="price-box mensal">
-          <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;">Opção Mensal</div>
-          <div style="font-size: 26px; font-weight: 900; color: var(--black);">R$ 79,90<small style="font-size:12px; font-weight:400;">/mês</small></div>
+          <div class="price-box mensal">
+            <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;">Opção Mensal</div>
+            <div style="font-size: 26px; font-weight: 900; color: var(--black);">R$ 79,90<small style="font-size:12px; font-weight:400;">/mês</small></div>
+          </div>
+
+          <div class="price-box anual">
+            <div style="font-size: 10px; font-weight: 800; color: #b78103; text-transform: uppercase;">🚀 Plano Anual (Maior Economia)</div>
+            <div style="font-size: 20px; font-weight: 900; color: var(--black);">R$ 797,00<small style="font-size:11px; font-weight:400;">/ano</small></div>
+            <small style="color: var(--green); font-weight: bold; font-size: 10px;">Apenas R$ 66,41/mês</small>
+          </div>
+
+          <ul class="plano-features">
+            <li><strong>Montagem do cardápio inclusa</strong></li>
+            <li><strong>Tudo do Plano Plus</strong></li>
+            <li>📺 Chamada de Pedidos na TV</li>
+            <li>💳 Baixa Automática de Pix</li>
+            <li>🤖 Chatbot Inteligente no WhatsApp</li>
+            <li>Atendimento automático via bot</li>
+            <li>Painel analítico avançado</li>
+            <li>Suporte VIP Preferencial</li>
+          </ul>
         </div>
 
-        <div class="price-box anual">
-          <div style="font-size: 11px; font-weight: 800; color: #b78103; text-transform: uppercase;">🚀 Plano Anual (Maior Economia)</div>
-          <div style="font-size: 22px; font-weight: 900; color: var(--black);">R$ 797,00<small style="font-size:12px; font-weight:400;">/ano</small></div>
-          <small style="color: var(--green); font-weight: bold; font-size: 11px;">Equivale a apenas R$ 66,41/mês</small>
-        </div>
-
-        <ul class="plano-features">
-          <li><strong>Montagem do cardápio inclusa</strong></li>
-          <li><strong>Tudo do Plano Padrão</strong></li>
-          <li>Confirmação automática de Pix</li>
-          <li>Gestão de Delivery Automática</li>
-          <li>Gestão de Mesas e Comandas</li>
-          <li>Chatbot Integrado</li>
-          <li>Sistema automático de vendas (SAVI)</li>
-          <li>Suporte Prioritário</li>
-        </ul>
-
-        <a href="https://wa.me/5522981166221?text=Olá,%20quero%20contratar%20o%20Plano%20Prime" class="btn btn-red" style="width:100%;">Contratar Plano Prime</a>
+        <a href="https://wa.me/5522981166221?text=Olá,%20quero%20contratar%20o%20Plano%20Prime%20(R$%2079,90)" class="btn btn-dark" style="width:100%;">Contratar Prime</a>
       </div>
+
     </div>
   </div>
 </section>
