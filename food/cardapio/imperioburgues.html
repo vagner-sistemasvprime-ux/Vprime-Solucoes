@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impréio Burguês - Cardápio</title>
+  
+  <!-- Favicon (Ícone da aba do navegador) -->
+  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1HzOUjJdAyZYiGB3DpRxi-f7is_3brJ7F">
+
+  <!-- META TAGS PARA PRÉ-VISUALIZAÇÃO / COMPARTILHAMENTO (Open Graph) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Impréio Burguês - Cardápio Digital">
+  <meta property="og:description" content="Confira nosso cardápio e faça seu pedido online!">
+  <meta property="og:image" content="https://lh3.googleusercontent.com/d/1hTUmiFdPe9vNWXcCWhfcUBgxexyTwM33">
+  <meta property="og:image:type" content="image/png">
+  <!-- Opcional, mas melhora a compatibilidade -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Impréio Burguês - Cardápio Digital">
+  <meta name="twitter:description" content="Confira nosso cardápio e faça seu pedido online!">
+  <meta name="twitter:image" content="https://lh3.googleusercontent.com/d/1hTUmiFdPe9vNWXcCWhfcUBgxexyTwM33">
+
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+    iframe { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+  <iframe
+    id="iframeCardapio"
+    src=""
+    title="Impréio Burguês - Cardápio Digital"
+    allow="clipboard-read; clipboard-write"
+    style="width:100%;height:100%;border:none;"
+  ></iframe>
+
+  <script>
+    (function() {
+      // URL do Script do Cardápio
+      const urlCardapio = "https://script.google.com/macros/s/AKfycbyztwiFY7T7F_Di7j1MkOJbmmf50zCI1T8PBKydrSnMrZCcOAAYuzZenbi_qQanQQeSZg/exec";
+      
+      // Captura os parâmetros (ex: ?mesa=1)
+      const params = window.location.search;
+      
+      // Carrega o Iframe com a mesa
+      document.getElementById('iframeCardapio').src = urlCardapio + params;
+    })();
+  </script>
+</body>
+</html>
