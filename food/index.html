@@ -161,6 +161,115 @@ footer .logo { width: 140px; margin-bottom: 12px; }
   .cards { grid-template-columns: 1fr; }
   .cta-inner { flex-direction: column; align-items: flex-start; }
 }
+
+/* Seção Afiliados - Padrão VPrime */
+.afiliados-box {
+  background: var(--black);
+  color: #fff;
+  border-radius: 18px;
+  padding: 40px 30px;
+  border: 1px solid #2b2d32;
+  text-align: center;
+  margin-top: 20px;
+}
+.afiliados-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 30px 0;
+  text-align: left;
+}
+.afiliado-step-card {
+  background: #111317;
+  border: 1px solid #22252a;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+.step-number {
+  width: 36px;
+  height: 36px;
+  background: rgba(227, 6, 19, 0.15);
+  color: var(--red);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  margin: 0 auto 12px;
+  font-size: 14px;
+}
+.afiliado-step-card h3 {
+  font-size: 15px;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.afiliado-step-card p {
+  font-size: 12px;
+  color: #858a93;
+}
+
+/* Modal Afiliado */
+.modal-afiliado-body {
+  background: #fff;
+  padding: 30px;
+  border-radius: 14px;
+  max-width: 420px;
+  width: 90%;
+  position: relative;
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.modal-afiliado-body h3 {
+  font-size: 20px;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+.modal-afiliado-body p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.form-group {
+  margin-bottom: 12px;
+}
+.form-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e3e3e3;
+  border-radius: 7px;
+  font-size: 13px;
+  outline: none;
+}
+.form-control:focus {
+  border-color: var(--red);
+}
+.btn-close-modal {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.btn-close-modal:hover {
+  color: var(--red);
+}
+
+@media(max-width:800px){
+  .afiliados-steps { grid-template-columns: 1fr; }
+}
+
 </style>
 </head>
 <body>
@@ -431,6 +540,85 @@ footer .logo { width: 140px; margin-bottom: 12px; }
   </div>
 </section>
 
+<!-- SEÇÃO DE AFILIADOS (PADRÃO VISUAL DO SITE) -->
+<section class="section light" id="parceiros">
+  <div class="container">
+    <div class="afiliados-box">
+      
+      <div class="kicker">Programa de Parcerias</div>
+      <h2 style="color: #fff; margin-bottom: 8px;">Seja um Parceiro VPrime e Ganhe Comissões</h2>
+      <p style="color: #c8cbd1; max-width: 600px; margin: 0 auto; font-size: 14px;">
+        Indique nosso sistema para restaurantes, lanchonetes e estabelecimentos da sua região e receba comissões no PIX.
+      </p>
+
+      <!-- PASSO A PASSO -->
+      <div class="afiliados-steps">
+        <div class="afiliado-step-card">
+          <div class="step-number">1</div>
+          <h3>Faça seu Cadastro</h3>
+          <p>Crie sua conta em menos de 1 minuto para acessar seu painel exclusivo.</p>
+        </div>
+
+        <div class="afiliado-step-card">
+          <div class="step-number">2</div>
+          <h3>Indique Clientes</h3>
+          <p>Apresente a plataforma para estabelecimentos que precisam de gestão e cardápio.</p>
+        </div>
+
+        <div class="afiliado-step-card">
+          <div class="step-number">3</div>
+          <h3>Receba via PIX</h3>
+          <p>Acompanhe suas vendas pelo painel e receba suas comissões todo mês no PIX.</p>
+        </div>
+      </div>
+
+      <!-- BOTÃO DE AÇÃO -->
+      <button onclick="abrirModalAfiliado()" class="btn btn-red" style="padding: 14px 28px;">
+        Quero me Afiliar Agora
+      </button>
+
+    </div>
+  </div>
+</section>
+
+<!-- MODAL DE CADASTRO DE AFILIADO -->
+<div id="modalCadastroAfiliado" class="modal" onclick="fecharModalAfiliadoFora(event)">
+  <div class="modal-afiliado-body">
+    <button onclick="fecharModalAfiliado()" class="btn-close-modal">&times;</button>
+    
+    <h3>Cadastro de Afiliado</h3>
+    <p>Preencha seus dados abaixo para acessar o painel de parceiros.</p>
+
+    <div id="afiliadoAlert" style="display:none; padding: 10px; font-size: 12px; border-radius: 6px; margin-bottom: 12px;"></div>
+
+    <form id="formCadastroAfiliado" onsubmit="handleCadastrarAfiliado(event)">
+      <div class="form-group">
+        <label for="afiliadoNome">Nome Completo</label>
+        <input type="text" id="afiliadoNome" required placeholder="Seu nome" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="afiliadoEmail">E-mail</label>
+        <input type="email" id="afiliadoEmail" required placeholder="seu@email.com" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="afiliadoTelefone">WhatsApp / Telefone</label>
+        <input type="tel" id="afiliadoTelefone" required placeholder="(00) 00000-0000" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="afiliadoSenha">Crie uma Senha</label>
+        <input type="password" id="afiliadoSenha" required placeholder="••••••••" class="form-control">
+      </div>
+
+      <button type="submit" id="btnCadastrarAfiliado" class="btn btn-red" style="width: 100%; margin-top: 10px;">
+        Enviar Cadastro
+      </button>
+    </form>
+  </div>
+</div>
+
 <section class="cta" id="contato">
   <div class="container cta-inner">
     <div>
@@ -478,6 +666,64 @@ footer .logo { width: 140px; margin-bottom: 12px; }
   document.addEventListener('keydown', (e) => {
     if (e.key === "Escape") fecharModal();
   });
+
+
+function abrirModalAfiliado() {
+  document.getElementById("modalCadastroAfiliado").style.display = "flex";
+}
+
+function fecharModalAfiliado() {
+  document.getElementById("modalCadastroAfiliado").style.display = "none";
+}
+
+function fecharModalAfiliadoFora(e) {
+  if (e.target.id === "modalCadastroAfiliado") {
+    fecharModalAfiliado();
+  }
+}
+
+
+// Cole o URL do seu App da Web implantado aqui:
+const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbwDMHzuy2hi6KJJv5iZAWlVE0sa9t2N0x8vZNBS1e_AxACA70l78EDEGAkaloBNhZ1hDA/exec";
+
+function handleCadastrarAfiliado(e) {
+  e.preventDefault();
+
+  const btn = document.getElementById('btnCadastrarAfiliado');
+  btn.innerText = "Enviando cadastro...";
+  btn.disabled = true;
+
+  const dadosAfiliado = {
+    nome: document.getElementById('afiliadoNome').value,
+    email: document.getElementById('afiliadoEmail').value,
+    telefone: document.getElementById('afiliadoTelefone').value,
+    senha: document.getElementById('afiliadoSenha').value
+  };
+
+  // Envio via requisição HTTP Fetch
+  fetch(URL_WEB_APP, {
+    method: "POST",
+    body: JSON.stringify(dadosAfiliado)
+  })
+  .then(res => res.json())
+  .then(res => {
+    btn.innerText = "Enviar Cadastro";
+    btn.disabled = false;
+
+    if (res.sucesso) {
+      mostrarAlertaAfiliado(res.mensagem, true);
+      document.getElementById('formCadastroAfiliado').reset();
+      setTimeout(fecharModalAfiliado, 2500);
+    } else {
+      mostrarAlertaAfiliado(res.mensagem, false);
+    }
+  })
+  .catch(err => {
+    btn.innerText = "Enviar Cadastro";
+    btn.disabled = false;
+    mostrarAlertaAfiliado("Erro ao conectar com o servidor. Tente novamente.", false);
+  });
+}
 </script>
 
 </body>
