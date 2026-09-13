@@ -713,7 +713,7 @@ function handleCadastrarAfiliado(e) {
     if (res.sucesso) {
       mostrarAlertaAfiliado(res.mensagem, true);
       document.getElementById('formCadastroAfiliado').reset();
-      setTimeout(fecharModalAfiliado, 2500);
+      setTimeout(fecharModalAfiliado,4000);
     } else {
       mostrarAlertaAfiliado(res.mensagem, false);
     }
