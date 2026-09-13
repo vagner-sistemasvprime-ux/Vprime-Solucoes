@@ -724,6 +724,25 @@ function handleCadastrarAfiliado(e) {
     mostrarAlertaAfiliado("Erro ao conectar com o servidor. Tente novamente.", false);
   });
 }
+
+  function mostrarAlertaAfiliado(mensagem, sucesso = true) {
+  const alertBox = document.getElementById('afiliadoAlert');
+  if (!alertBox) return;
+
+  alertBox.style.display = 'block';
+
+  if (sucesso) {
+    alertBox.style.backgroundColor = '#ecfdf5';
+    alertBox.style.color = '#047857';
+    alertBox.style.border = '1px solid #a7f3d0';
+  } else {
+    alertBox.style.backgroundColor = '#fef2f2';
+    alertBox.style.color = '#b91c1c';
+    alertBox.style.border = '1px solid #fecaca';
+  }
+
+  alertBox.innerText = mensagem;
+}
 </script>
 
 </body>
