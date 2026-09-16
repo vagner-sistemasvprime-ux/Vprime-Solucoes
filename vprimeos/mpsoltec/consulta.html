@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acompanhamento de OS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+
+  <div id="container" class="bg-white max-w-md w-full rounded-2xl shadow-xl overflow-hidden border border-slate-200 my-6">
+    <!-- Cabeçalho -->
+    <div class="p-6 bg-blue-600 text-white text-center">
+      <h2 class="text-xl font-bold">Acompanhamento de Ordem de Serviço</h2>
+      <p class="text-blue-100 text-sm mt-1" id="lblOS">Carregando dados...</p>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="p-6 space-y-4" id="conteudoOS">
+      <div class="text-center py-8 text-slate-400">
+        <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-blue-500 mb-2"></i>
+        Buscando informações da ordem...
+      </div>
+    </div>
+  </div>
+
+  <!-- ESTILIZADO: MODAL DE NOTIFICAÇÃO E CONFIRMAÇÃO -->
+  <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-6 text-center shadow-2xl border border-slate-100 transform scale-95 transition-transform duration-300" id="modalBox">
+      <div id="modalIconContainer" class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+        <!-- Ícone Injetado Dinamicamente -->
+      </div>
+      <h3 id="modalTitle" class="text-base font-bold text-slate-800 mb-1">Título</h3>
+      <p id="modalMessage" class="text-xs text-slate-500 mb-5 leading-relaxed">Mensagem explicativa aqui...</p>
+      
+      <div id="modalActions" class="flex gap-2 justify-center">
+        <!-- Botões Injetados Dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. URL do Google Apps Script Web App
+    const URL_WEBAPP_SCRIPT = 'https://script.google.com/macros/s/AKfycbyJsPzCjdveL0TJ09k96De7MZpI8QL5O0puXEmJRIYodfiic4qxWbzw5vMQ23Ark4x7Sw/exec';
+
+    // 2. Extrai o ID da OS da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const idOS = urlParams.get('os');
+
+    // 3. Dicionário de Nichos
+    const DICIONARIO_NICHOS = {
+      'assistencia': {
+        lblEquip: 'Equipamento / Aparelho',
+        lblEstado: 'Estado Físico do Equipamento',
+        lblItens: 'Itens Deixados pelo Cliente',
+        lblDefeito: 'Defeito Relatado / Diagnóstico'
+      },
+      'oficina': {
+        lblEquip: 'Veículo / Placa / Modelo',
+        lblEstado: 'Avarias / Condição do Veículo',
+        lblItens: 'Pertences Deixados no Veículo',
+        lblDefeito: 'Relato do Cliente / Serviços Desejados'
+      },
+      'bike': {
+        lblEquip: 'Bicicleta / Modelo',
+        lblEstado: 'Condição da Bicicleta',
+        lblItens: 'Acessórios Entregues',
+        lblDefeito: 'Problema / Manutenção Solicitada'
+      },
+      'climatizacao': {
+        lblEquip: 'Aparelho / Equipamento',
+        lblEstado: 'Condição do Local / Aparelho',
+        lblItens: 'Acessórios / Materiais Fornecidos',
+        lblDefeito: 'Problema / Serviço Solicitado'
+      },
+      'eletrica_hidraulica': {
+        lblEquip: 'Local / Instalação / Ponto',
+        lblEstado: 'Condição Atual da Instalação',
+        lblItens: 'Materiais / Peças do Cliente',
+        lblDefeito: 'Problema Relatado / Escopo'
+      },
+      'marcenaria_estofados': {
+        lblEquip: 'Móvel / Peça',
+        lblEstado: 'Estado de Conservação',
+        lblItens: 'Acessórios / Puxadores Entregues',
+        lblDefeito: 'Reparo / Modificação Solicitada'
+      },
+      'generico': {
+        lblEquip: 'Item / Serviço',
+        lblEstado: 'Estado Físico / Condição',
+        lblItens: 'Itens Acompanhantes',
+        lblDefeito: 'Descrição da Solicitação'
+      }
+    };
+
+    function obterConfigNicho(nichoBruto) {
+      const raw = String(nichoBruto || '').toLowerCase().trim();
+
+      if (raw.includes('oficina') || raw.includes('mecanica') || raw.includes('auto')) return DICIONARIO_NICHOS['oficina'];
+      if (raw.includes('bike')) return DICIONARIO_NICHOS['bike'];
+      if (raw.includes('climatiza') || raw.includes('ar')) return DICIONARIO_NICHOS['climatizacao'];
+      if (raw.includes('eletrica') || raw.includes('hidraulica')) return DICIONARIO_NICHOS['eletrica_hidraulica'];
+      if (raw.includes('marcenaria') || raw.includes('estofado')) return DICIONARIO_NICHOS['marcenaria_estofados'];
+      if (raw.includes('assistencia') || raw.includes('celular') || raw.includes('informatica')) return DICIONARIO_NICHOS['assistencia'];
+
+      return DICIONARIO_NICHOS['generico'];
+    }
+
+    // --- SITEMA DE MODAL PERSONALIZADO ---
+    function exibirModal({ tipo, titulo, mensagem, textoConfirmar, textoCancelar, aoConfirmar }) {
+      const modal = document.getElementById('customModal');
+      const modalBox = document.getElementById('modalBox');
+      const iconContainer = document.getElementById('modalIconContainer');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalMessage = document.getElementById('modalMessage');
+      const modalActions = document.getElementById('modalActions');
+
+      modalTitle.innerText = titulo;
+      modalMessage.innerText = mensagem;
+
+      // Estilização por tipo
+      if (tipo === 'sucesso') {
+        iconContainer.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 bg-emerald-100 text-emerald-600';
+        iconContainer.innerHTML = '<i data-lucide="check-circle" class="w-6 h-6"></i>';
+      } else if (tipo === 'erro') {
+        iconContainer.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 bg-rose-100 text-rose-600';
+        iconContainer.innerHTML = '<i data-lucide="alert-triangle" class="w-6 h-6"></i>';
+      } else if (tipo === 'confirmacao') {
+        iconContainer.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 bg-blue-100 text-blue-600';
+        iconContainer.innerHTML = '<i data-lucide="help-circle" class="w-6 h-6"></i>';
+      }
+
+      // Configuração de Botões
+      if (tipo === 'confirmacao') {
+        modalActions.innerHTML = `
+          <button id="btnModalCancelar" class="w-1/2 bg-slate-100 text-slate-600 border border-slate-200 py-2 rounded-xl text-xs font-semibold hover:bg-slate-200 transition-colors">
+            ${textoCancelar || 'Cancelar'}
+          </button>
+          <button id="btnModalConfirmar" class="w-1/2 bg-blue-600 text-white py-2 rounded-xl text-xs font-semibold hover:bg-blue-700 shadow-sm transition-colors">
+            ${textoConfirmar || 'Confirmar'}
+          </button>
+        `;
+
+        document.getElementById('btnModalCancelar').onclick = fecharModal;
+        document.getElementById('btnModalConfirmar').onclick = () => {
+          fecharModal();
+          if (aoConfirmar) aoConfirmar();
+        };
+      } else {
+        modalActions.innerHTML = `
+          <button id="btnModalOK" class="w-full bg-slate-800 text-white py-2 rounded-xl text-xs font-semibold hover:bg-slate-900 transition-colors">
+            Entendido
+          </button>
+        `;
+        document.getElementById('btnModalOK').onclick = fecharModal;
+      }
+
+      if (window.lucide) lucide.createIcons();
+
+      // Animação de Entrada
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modalBox.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function fecharModal() {
+      const modal = document.getElementById('customModal');
+      const modalBox = document.getElementById('modalBox');
+
+      modal.classList.add('opacity-0');
+      modalBox.classList.add('scale-95');
+
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    window.onload = function() {
+      if (window.lucide) lucide.createIcons();
+
+      if (!idOS) {
+        document.getElementById('conteudoOS').innerHTML = `
+          <div class="text-center py-6 text-rose-500">
+            <i data-lucide="alert-circle" class="w-10 h-10 mx-auto mb-2"></i>
+            <p class="font-semibold">Nenhum número de OS informado</p>
+            <p class="text-xs text-slate-500 mt-1">Verifique o link enviado pela empresa.</p>
+          </div>`;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+      carregarDadosOS(idOS);
+    };
+
+    function carregarDadosOS(id) {
+      fetch(`${URL_WEBAPP_SCRIPT}?acao=buscar&os=${id}`)
+        .then(res => res.json())
+        .then(os => {
+          renderizarDadosCliente(os);
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('conteudoOS').innerHTML = `
+            <div class="text-center py-6 text-rose-500">
+              <i data-lucide="wifi-off" class="w-10 h-10 mx-auto mb-2"></i>
+              <p class="font-semibold">Erro de Conexão</p>
+              <p class="text-xs text-slate-500 mt-1">Não foi possível conectar ao servidor.</p>
+            </div>`;
+          if (window.lucide) lucide.createIcons();
+        });
+    }
+
+    function renderizarDadosCliente(os) {
+      if (!os || os.erro) {
+        document.getElementById('conteudoOS').innerHTML = `
+          <div class="text-center py-6 text-slate-500">
+            <i data-lucide="search-x" class="w-10 h-10 mx-auto text-slate-400 mb-2"></i>
+            <p class="font-semibold text-slate-700">Ordem de Serviço #${idOS} não encontrada</p>
+            <p class="text-xs mt-1">Verifique o número ou entre em contato com a loja.</p>
+          </div>`;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      document.getElementById('lblOS').innerText = `OS #${os.id} • ${os.data}`;
+
+      const configNicho = obterConfigNicho(os.nicho);
+
+      let acoesOrcamento = '';
+      if (os.status === 'Aguardando Aprovação') {
+        acoesOrcamento = `
+          <div class="pt-4 border-t border-slate-100 space-y-3">
+            <p class="text-xs text-center font-bold text-purple-700 uppercase tracking-wider bg-purple-50 py-1.5 rounded-lg border border-purple-100">
+              Aprovação de Orçamento
+            </p>
+            <div class="grid grid-cols-2 gap-3">
+              <button id="btnRecusar" onclick="confirmarResposta(false)" class="w-full bg-rose-50 text-rose-600 border border-rose-200 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-100 transition-colors flex items-center justify-center gap-1.5">
+                <i data-lucide="x-circle" class="w-4 h-4"></i> Recusar
+              </button>
+              <button id="btnAprovar" onclick="confirmarResposta(true)" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-emerald-700 shadow-sm transition-colors flex items-center justify-center gap-1.5">
+                <i data-lucide="check-circle" class="w-4 h-4"></i> Aprovar Orçamento
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      const temSenhaTexto = os.senhaTexto && os.senhaTexto.trim() !== '';
+      const temSenhaDesenho = os.senhaDesenho && os.senhaDesenho.trim() !== '';
+      const temItens = os.itensEntregues && os.itensEntregues.trim() !== '';
+      const temEstado = os.estadoEquipamento && os.estadoEquipamento.trim() !== '';
+
+      let blocoInformacoesComplementares = '';
+      if (temSenhaTexto || temSenhaDesenho || temItens || temEstado) {
+        blocoInformacoesComplementares = `
+          <div class="pt-3 border-t border-slate-100 space-y-3">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Informações Complementares</span>
+            
+            ${temEstado ? `
+              <div>
+                <span class="text-xs text-slate-500">${configNicho.lblEstado}:</span>
+                <p class="text-slate-700 text-xs bg-slate-50 p-2 rounded-lg border border-slate-100">${os.estadoEquipamento}</p>
+              </div>` : ''}
+
+            ${temItens ? `
+              <div>
+                <span class="text-xs text-slate-500">${configNicho.lblItens}:</span>
+                <p class="text-slate-700 text-xs bg-slate-50 p-2 rounded-lg border border-slate-100">${os.itensEntregues}</p>
+              </div>` : ''}
+
+            ${temSenhaTexto ? `
+              <div>
+                <span class="text-xs text-slate-500">PIN / Senha Cadastrada:</span>
+                <p class="text-slate-800 font-mono font-bold text-sm bg-slate-100 px-2.5 py-1 rounded inline-block">${os.senhaTexto}</p>
+              </div>` : ''}
+
+            ${temSenhaDesenho ? `
+              <div>
+                <span class="text-xs text-slate-500 mb-1 block">Padrão de Desenho:</span>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col items-center">
+                  <canvas id="canvasSenhaVisual" width="140" height="140" class="bg-slate-900 rounded-xl shadow-inner"></canvas>
+                  <div class="mt-2 text-[10px] text-slate-500 flex items-center gap-3">
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> 1º Toque</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Conexão</span>
+                  </div>
+                </div>
+              </div>` : ''}
+          </div>
+        `;
+      }
+
+      document.getElementById('conteudoOS').innerHTML = `
+        <div class="space-y-3">
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Status Atual</span>
+            <div class="mt-1 inline-block px-3 py-1 rounded-full text-xs font-bold ${getCorStatus(os.status)}">
+              ${os.status}
+            </div>
+          </div>
+
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Cliente</span>
+            <p class="text-slate-800 font-medium">${os.cliente || '-'}</p>
+          </div>
+
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">${configNicho.lblEquip}</span>
+            <p class="text-slate-800 font-medium">${os.servico || '-'}</p>
+          </div>
+
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">${configNicho.lblDefeito}</span>
+            <p class="text-slate-600 text-sm bg-slate-50 p-3 rounded-xl border border-slate-100 mt-0.5">${os.defeito || 'Em análise'}</p>
+          </div>
+
+          ${blocoInformacoesComplementares}
+
+          <div class="pt-2 border-t border-slate-100">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Valor Orçado</span>
+            <p class="text-2xl font-bold text-slate-900">${os.valor || 'R$ 0,00'}</p>
+          </div>
+        </div>
+        ${acoesOrcamento}
+      `;
+
+      if (temSenhaDesenho) {
+        setTimeout(() => renderizarDesenhoSenhaVisual(os.senhaDesenho), 50);
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderizarDesenhoSenhaVisual(sequencia) {
+      const canvas = document.getElementById('canvasSenhaVisual');
+      if (!canvas || !sequencia) return;
+
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const posicoes = {
+        1: { x: 25, y: 25 },  2: { x: 70, y: 25 },  3: { x: 115, y: 25 },
+        4: { x: 25, y: 70 },  5: { x: 70, y: 70 },  6: { x: 115, y: 70 },
+        7: { x: 25, y: 115 }, 8: { x: 70, y: 115 }, 9: { x: 115, y: 115 }
+      };
+
+      const sequenciaPontos = sequencia.split('-').map(Number);
+
+      if (sequenciaPontos.length > 1) {
+        ctx.beginPath();
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        for (let i = 0; i < sequenciaPontos.length; i++) {
+          const pt = posicoes[sequenciaPontos[i]];
+          if (pt) {
+            if (i === 0) ctx.moveTo(pt.x, pt.y);
+            else ctx.lineTo(pt.x, pt.y);
+          }
+        }
+        ctx.stroke();
+      }
+
+      for (let i = 1; i <= 9; i++) {
+        const pt = posicoes[i];
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = '#475569';
+        ctx.fill();
+      }
+
+      sequenciaPontos.forEach((numPonto, index) => {
+        const pt = posicoes[numPonto];
+        if (!pt) return;
+
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = (index === 0) ? '#10b981' : '#3b82f6';
+        ctx.fill();
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+      });
+    }
+
+    // Modal de Confirmação antes do Envio
+    function confirmarResposta(aprovado) {
+      const acaoTexto = aprovado ? "Aprovar" : "Recusar";
+      const mensagem = aprovado 
+        ? "Tem certeza que deseja APROVAR este orçamento? O serviço será iniciado em breve."
+        : "Tem certeza que deseja RECUSAR este orçamento? A equipe será notificada.";
+
+      exibirModal({
+        tipo: 'confirmacao',
+        titulo: `${acaoTexto} Orçamento?`,
+        mensagem: mensagem,
+        textoConfirmar: `Sim, ${acaoTexto}`,
+        textoCancelar: 'Voltar',
+        aoConfirmar: () => executarResposta(aprovado)
+      });
+    }
+
+    // Envio dos dados via Fetch HTTP
+    function executarResposta(aprovado) {
+      const btnAprovar = document.getElementById('btnAprovar');
+      const btnRecusar = document.getElementById('btnRecusar');
+
+      if (btnAprovar) btnAprovar.disabled = true;
+      if (btnRecusar) btnRecusar.disabled = true;
+
+      fetch(`${URL_WEBAPP_SCRIPT}?acao=responder&os=${idOS}&aprovado=${aprovado}`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.sucesso) {
+            exibirModal({
+              tipo: 'sucesso',
+              titulo: 'Sucesso!',
+              mensagem: aprovado ? 'Orçamento APROVADO com sucesso!' : 'Sua resposta de RECUSA foi registrada.'
+            });
+            carregarDadosOS(idOS);
+          } else {
+            exibirModal({
+              tipo: 'erro',
+              titulo: 'Atenção',
+              mensagem: res.erro || "Falha ao registrar a resposta."
+            });
+            if (btnAprovar) btnAprovar.disabled = false;
+            if (btnRecusar) btnRecusar.disabled = false;
+          }
+        })
+        .catch(err => {
+          exibirModal({
+            tipo: 'erro',
+            titulo: 'Erro de Comunicação',
+            mensagem: 'Não foi possível conectar ao servidor.'
+          });
+          if (btnAprovar) btnAprovar.disabled = false;
+          if (btnRecusar) btnRecusar.disabled = false;
+        });
+    }
+
+    function getCorStatus(status) {
+      if (status === 'Aberto' || status === 'Em Análise') return 'bg-amber-100 text-amber-800';
+      if (status === 'Aguardando Aprovação') return 'bg-purple-100 text-purple-800';
+      if (status === 'Aprovado') return 'bg-emerald-100 text-emerald-800';
+      if (status === 'Recusado') return 'bg-rose-100 text-rose-800';
+      if (status === 'Concluído') return 'bg-blue-100 text-blue-800';
+      return 'bg-slate-100 text-slate-800';
+    }
+  </script>
+</body>
+</html>
