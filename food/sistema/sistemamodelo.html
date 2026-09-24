@@ -24,7 +24,7 @@
       top: 0;
     }
 
-    /* ESTILO EXCLUSIVO NA HORA DA IMPRESSÃO (Padrão Térmico Monospaced igual ao Kotlin) */
+    /* ESTILO EXCLUSIVO NA HORA DA IMPRESSÃO (Com fontes maiores) */
     @media print {
       body > *:not(#cupom-html-impressao) {
         display: none !important;
@@ -40,29 +40,29 @@
         
         font-family: 'Courier New', Courier, monospace !important;
         font-weight: 700 !important;
-        line-height: 1.15 !important; /* Espaçamento compacto idêntico ao thermal print nativo */
+        line-height: 1.25 !important;
         
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
 
-      /* LARGURAS EXatas baseadas no padrão de colunas do PrinterHelper */
+      /* LARGURAS COM FONTES AUMENTADAS */
       #cupom-html-impressao.largura-58 {
         width: 58mm !important;
-        font-size: 12px !important; /* Equivalente ideal às 32 colunas do Kotlin */
+        font-size: 15px !important; /* Aumentado para melhor legibilidade */
       }
-      #cupom-html-impressao.largura-58 .header-loja { font-size: 13px !important; }
-      #cupom-html-impressao.largura-58 .status-box { font-size: 11px !important; padding: 3px !important; }
-      #cupom-html-impressao.largura-58 .pedido-grande { font-size: 14px !important; }
+      #cupom-html-impressao.largura-58 .header-loja { font-size: 17px !important; }
+      #cupom-html-impressao.largura-58 .status-box { font-size: 13px !important; padding: 4px !important; }
+      #cupom-html-impressao.largura-58 .pedido-grande { font-size: 18px !important; }
 
       #cupom-html-impressao.largura-80 {
         width: 80mm !important;
-        font-size: 14px !important; /* Equivalente ideal para bobinas maiores */
+        font-size: 17px !important; /* Aumentado para melhor legibilidade */
       }
-      #cupom-html-impressao.largura-80 .header-loja { font-size: 16px !important; }
-      #cupom-html-impressao.largura-80 .status-box { font-size: 13px !important; padding: 3px !important; }
-      #cupom-html-impressao.largura-80 .pedido-grande { font-size: 16px !important; }
+      #cupom-html-impressao.largura-80 .header-loja { font-size: 20px !important; }
+      #cupom-html-impressao.largura-80 .status-box { font-size: 15px !important; padding: 4px !important; }
+      #cupom-html-impressao.largura-80 .pedido-grande { font-size: 21px !important; }
       
       /* Classes de utilidade */
       .text-center { text-align: center; }
@@ -70,23 +70,23 @@
       
       .header-loja {
         text-align: center;
-        margin-bottom: 2px;
+        margin-bottom: 3px;
       }
 
       .divider { 
         border-top: 1px dashed #000000; 
-        margin: 3px 0; 
+        margin: 4px 0; 
       }
       
       .divider-strong { 
         border-top: 2px solid #000000; 
-        margin: 3px 0; 
+        margin: 4px 0; 
       }
       
       .status-box {
         text-align: center;
         border: 1.5px solid #000000;
-        margin: 4px 0;
+        margin: 5px 0;
         background-color: #000 !important;
         color: #fff !important;
         -webkit-print-color-adjust: exact !important;
@@ -96,15 +96,15 @@
       .pedido-box {
         text-align: center;
         border: 1px solid #000000;
-        padding: 2px;
-        margin: 3px 0;
+        padding: 3px;
+        margin: 4px 0;
       }
 
       .item-row {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 4px;
+        margin-bottom: 5px;
       }
 
       .item-desc { 
@@ -122,7 +122,7 @@
       .totais-row {
         display: flex;
         justify-content: space-between;
-        margin-top: 3px;
+        margin-top: 4px;
       }
 
       @page {
@@ -206,10 +206,10 @@
                 else if (nome.includes("CASHBACK")) cashback += valor;
               });
 
-              // 3. MONTAGEM DO HTML
+              // 3. MONTAGEM DO HTML COM FONTES Maiores
               divTicket.innerHTML = `
                 <div class="header-loja bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
-                <div class="text-center" style="font-size: 11px;">${venda.dataHora}</div>
+                <div class="text-center" style="font-size: 13px;">${venda.dataHora}</div>
                 <div class="divider-strong"></div>
                 
                 <div class="pedido-box pedido-grande bold text-center">
@@ -227,7 +227,7 @@
                 ${itensHtml}
                 <div class="divider"></div>
 
-                <!-- RODAPÉ FINANCEIRO ORGANIZADO (Igual ao Kotlin) -->
+                <!-- RODAPÉ FINANCEIRO ORGANIZADO -->
                 <div style="display: flex; justify-content: space-between;">
                   <span>SUBTOTAL:</span>
                   <span>R$ ${subtotalProdutos.toFixed(2)}</span>
@@ -253,12 +253,12 @@
                   <span>TOTAL:</span>
                   <span>R$ ${Number(venda.total).toFixed(2)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 2px;">
+                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
                   <span>PAGTO:</span>
                   <span>${venda.formaPagamento}</span>
                 </div>
                 ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
-                <div style="display: flex; justify-content: space-between; margin-top: 2px;">
+                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
                   <span>TROCO:</span>
                   <span>R$ ${venda.troco}</span>
                 </div>` : ''}
