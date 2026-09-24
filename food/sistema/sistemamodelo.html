@@ -18,37 +18,50 @@
     #sistemaIframe { width: 100%; height: 100%; border: none; }
 
     /* ESTILO DO CUPOM NA TELA NORMAL (Oculto) */
-    #cupom-temp-impressao {
+    #cupom-html-impressao {
       position: absolute;
       left: -9999px;
       top: 0;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 14px;
-      white-space: pre-wrap; /* Essencial para respeitar as quebras \n e espaçamentos */
     }
 
     /* ESTILO EXCLUSIVO NA HORA DA IMPRESSÃO */
     @media print {
-      /* Oculta tudo na página */
-      body > *:not(#cupom-temp-impressao) {
+      body > *:not(#cupom-html-impressao) {
         display: none !important;
       }
       
-      /* Libera e posiciona perfeitamente o cupom para impressão */
-      #cupom-temp-impressao {
+      #cupom-html-impressao {
         display: block !important;
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
-        width: 100% !important;
+        width: 58mm !important; /* Mude para 80mm se sua impressora for maior */
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 5px !important;
         font-family: 'Courier New', Courier, monospace !important;
-        font-size: 14px !important;
-        font-weight: bold !important;
+        font-size: 12px !important;
         line-height: 1.2 !important;
         color: #000 !important;
-        white-space: pre-wrap !important;
+      }
+
+      .text-center { text-align: center; }
+      .bold { font-weight: bold; }
+      .divider { border-top: 1px dashed #000; margin: 4px 0; }
+      .divider-strong { border-top: 2px solid #000; margin: 4px 0; }
+      
+      .status-box {
+        text-align: center;
+        border: 1px solid #000;
+        padding: 3px;
+        font-weight: bold;
+        margin: 4px 0;
+        font-size: 11px;
+      }
+
+      .item-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2px;
       }
 
       @page {
@@ -61,43 +74,76 @@
 <body>
   <iframe id="sistemaIframe" src="" allow="clipboard-read; clipboard-write" title="Sistema Lojista"></iframe>
 
+  <!-- Div que recebe o layout formatado em HTML -->
+  <div id="cupom-html-impressao"></div>
+
   <script>
     (function() {
-      // 1. Sua URL do Google Apps Script deste lojista específico
       const urlBase = "https://script.google.com/macros/s/AKfycbyiD33PF8zAGzRl0qmH4lkur7uZD6wmg4IxVXpuzPRCrvEY2jb3WZRZnq-XiDWFLNI3/exec";
 
       const queryParams = window.location.search;
       const iframeApp = document.getElementById('sistemaIframe');
       iframeApp.src = urlBase + queryParams;
 
-      // 2. FUNÇÃO SENTINELA INTERNA: Verifica a fila e imprime diretamente no wrapper
       function verificarFilaImpressao() {
         fetch(urlBase + "?acao=verificarImpressao")
           .then(response => response.json())
           .then(data => {
-            if (data && data.imprimir && data.cupomTexto) {
-              console.log("Sentinela: Pedido encontrado, disparando impressão...", data.pedido);
+            if (data && data.imprimir && data.pedidoObj) {
+              console.log("Sentinela: Pedido encontrado, formatando cupom...", data.pedidoObj.pedido);
               
-              // Cria o elemento visual do cupom no wrapper
-              let divTicket = document.getElementById('cupom-temp-impressao');
-              if (!divTicket) {
-                divTicket = document.createElement('div');
-                divTicket.id = "cupom-temp-impressao";
-                document.body.appendChild(divTicket);
-              }
+              let venda = data.pedidoObj;
+              let divTicket = document.getElementById('cupom-html-impressao');
               
-              // Aplica a formatação do cupom térmica
-              divTicket.style.fontFamily = 'monospace';
-              divTicket.style.whiteSpace = 'pre-wrap';
-              divTicket.style.fontSize = '12px';
-              divTicket.innerText = data.cupomTexto;
+              let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
+              let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
+              
+              let itensHtml = venda.itens.map((i, index) => `
+                <div class="item-row">
+                  <span>${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
+                  <span>R$ ${i.subtotal.toFixed(2)}</span>
+                </div>
+              `).join('');
 
-              // Dispara a impressão (o --kiosk-printing do atalho vai capturar de forma silenciosa)
+              divTicket.innerHTML = `
+                <div class="text-center bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
+                <div class="text-center">${venda.dataHora}</div>
+                <div class="divider-strong"></div>
+                <div><b>PEDIDO:</b> #${venda.pedido}</div>
+                <div><b>CLIENTE:</b> ${venda.cliente}</div>
+                ${venda.telefone ? `<div><b>FONE:</b> ${venda.telefone}</div>` : ''}
+                <div><b>END:</b> ${venda.endereco || 'RETIRADA'}</div>
+                <div class="divider"></div>
+                <div class="status-box">${msgPagto}</div>
+                <div class="divider"></div>
+                <div class="bold text-center">ITENS DO PEDIDO</div>
+                <div class="divider"></div>
+                ${itensHtml}
+                <div class="divider"></div>
+                <div style="display: flex; justify-content: space-between;" class="bold">
+                  <span>TOTAL:</span>
+                  <span>R$ ${venda.total.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>PAGTO:</span>
+                  <span>${venda.formaPagamento}</span>
+                </div>
+                ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span>TROCO:</span>
+                  <span>R$ ${venda.troco}</span>
+                </div>` : ''}
+                <div class="divider-strong"></div>
+                <div class="text-center bold">OBRIGADO PELA PREFERENCIA!</div>
+                <br><br><br>
+              `;
+
+              // Dispara a impressão limpa
               window.print();
 
-              // Limpa o texto do cupom após o comando
+              // Limpa o conteúdo após imprimir
               setTimeout(() => {
-                if (divTicket) divTicket.innerText = "";
+                divTicket.innerHTML = "";
               }, 1000);
             }
           })
@@ -106,10 +152,8 @@
           });
       }
 
-      // Roda a verificação a cada 10 segundos
       setInterval(verificarFilaImpressao, 10000);
 
-      // 3. ALERTA DE SEGURANÇA: Impede que o lojista feche a aba sem querer
       window.addEventListener("beforeunload", function (e) {
         e.preventDefault();
         e.returnValue = "Atenção! Se fechar esta aba, o monitoramento de pedidos automáticos será interrompido.";
