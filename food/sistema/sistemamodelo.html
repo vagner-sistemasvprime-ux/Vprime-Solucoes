@@ -14,16 +14,8 @@
       width: 100%;
       overflow: hidden;
     }
-
-    body {
-      font-family: Arial, sans-serif;
-    }
-
-    #sistemaIframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
+    body { font-family: Arial, sans-serif; }
+    #sistemaIframe { width: 100%; height: 100%; border: none; }
   </style>
 </head>
 <body>
@@ -31,45 +23,37 @@
 
   <script>
     (function() {
-      // 1. Sua URL atualizada do Google Apps Script
+      // 1. Sua URL do Google Apps Script deste lojista específico
       const urlBase = "https://script.google.com/macros/s/AKfycbyiD33PF8zAGzRl0qmH4lkur7uZD6wmg4IxVXpuzPRCrvEY2jb3WZRZnq-XiDWFLNI3/exec";
 
-      // 2. Pega os parâmetros da URL (ex: ?loja=sil)
       const queryParams = window.location.search;
+      document.getElementById('sistemaIframe').src = urlBase + queryParams;
 
-      // 3. Monta a URL final (Base + parâmetros)
-      const urlFinal = urlBase + queryParams;
-
-      // 4. Carrega o sistema no Iframe principal
-      document.getElementById('sistemaIframe').src = urlFinal;
-
-      // ==========================================================
-      // 5. INICIALIZAÇÃO DO SENTINELA DE IMPRESSÃO (NOVO)
-      // ==========================================================
-      // Criamos um iframe invisível para cuidar apenas da fila de impressão
+      // 2. Cria o Iframe Invisível do Sentinela
+      // Passamos a URL do Apps Script codificada para o sentinela monitorar
       const iframeSentinela = document.createElement('iframe');
       iframeSentinela.id = 'iframe_sentinela';
       iframeSentinela.style.display = 'none';
       
-      // Passamos a mesma URL base do Apps Script e os parâmetros para o sentinela
-      // O sentinela.html vai rodar no seu domínio principal conversando com esse Apps Script
-      iframeSentinela.src = `https://seu-dominio.com/sentinela.html${queryParams}`;
-      
+      const urlGasCodificada = encodeURIComponent(urlBase);
+      iframeSentinela.src = `https://seu-dominio.com/sentinela.html?gas=${urlGasCodificada}`;
       document.body.appendChild(iframeSentinela);
 
-      // ==========================================================
-      // 6. OUVINTE DE MENSAGENS (RETRANSMISSÃO PARA O SISTEMA)
-      // ==========================================================
-      // Como o sentinela avisa a janela principal, repassamos o pedido para dentro 
-      // do iframe do sistema onde roda a função imprimirComprovanteAdaptado
+      // 3. Ouvinte que repassa o comando de impressão para dentro do sistema
       window.addEventListener("message", (event) => {
         if (event.data && event.data.acao === "IMPRIMIR_PEDIDO") {
           const iframeApp = document.getElementById('sistemaIframe');
           if (iframeApp && iframeApp.contentWindow) {
-            // Envia o pedido para dentro do sistema do lojista executar a impressão
             iframeApp.contentWindow.postMessage(event.data, "*");
           }
         }
+      });
+
+      // 4. ALERTA DE SEGURANÇA: Impede que o lojista feche a aba sem querer
+      window.addEventListener("beforeunload", function (e) {
+        e.preventDefault();
+        e.returnValue = "Atenção! Se fechar esta aba, o monitoramento de pedidos automáticos será interrompido.";
+        return e.returnValue;
       });
     })();
   </script>
