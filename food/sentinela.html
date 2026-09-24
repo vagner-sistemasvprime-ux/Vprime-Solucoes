@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sentinela Cardápio Digital</title>
+</head>
+<body>
+    <script>
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const gasUrl = urlParams.get('gas');
+
+            if (!gasUrl) {
+                console.error("Sentinela: URL do Apps Script não informada.");
+                return;
+            }
+
+            // Intervalo padrão de verificação (ex: 10 segundos)
+            const intervaloChecagem = 10000;
+
+            function verificarFilaImpressao() {
+                fetch(gasUrl + "?acao=verificarImpressao")
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.imprimir && data.pedido) {
+                            // Envia o pedido para a janela principal (wrapper) que repassará ao sistema
+                            window.parent.postMessage({
+                                acao: "IMPRIMIR_PEDIDO",
+                                dados: data.pedido
+                            }, "*");
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Sentinela: Erro ao consultar fila de impressão", err);
+                    });
+            }
+
+            // Inicia o ciclo de monitoramento
+            setInterval(verificarFilaImpressao, intervaloChecagem);
+        })();
+    </script>
+</body>
+</html>
