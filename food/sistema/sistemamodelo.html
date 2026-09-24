@@ -197,7 +197,7 @@
                 }
               });
 
-              // Usa a quantidade correta do item (i.qtd) em vez de enumerar 01x, 02x sequencial
+              // Usa a quantidade correta do item (i.qtd)
               let itensHtml = itensFiltrados.map((i) => {
                 let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
                 let qtdReal = i.qtd || 1;
@@ -209,9 +209,9 @@
                 `;
               }).join('');
 
-              // MONTAGEM DO HTML DO CUPOM
+              // MONTAGEM DO HTML DO CUPOM (Utiliza cfg.nomeLoja de H4 e dataHora da Cozinha)
               divTicket.innerHTML = `
-                <div class="header-loja bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
+                <div class="header-loja bold">${cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS'}</div>
                 <div class="text-center" style="font-size: 13px;">${venda.dataHora}</div>
                 <div class="divider-strong"></div>
                 
