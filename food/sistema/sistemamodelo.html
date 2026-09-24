@@ -174,56 +174,40 @@
               let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
               let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
               
-              // 1. SEPARAÇÃO INTELIGENTE DE PRODUTOS E BENEFÍCIOS VINDO DA PLANILHA
-let itensFiltrados = [];
-let taxaEntrega = Number(venda.taxaEntrega) || 0;
-let descontoTotal = Number(venda.desconto) || 0;
-let cashbackTotal = Number(venda.cashback) || 0;
-
-let subtotalProdutos = 0;
-
-(venda.itens || []).forEach(i => {
-  let nome = String(i.nome || "").toUpperCase();
-  let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
-
-  // Identifica se é taxa, cupom, desconto ou cashback pelas palavras-chave que o GAS grava
-  if (nome.includes("TAXA") || i.id === "FRETE" || i.isTaxa) {
-    taxaEntrega += Math.abs(subtotalItem);
-  } else if (nome.includes("CUPOM") || nome.includes("DESCONTO MANUAL") || nome.includes("DESCONTO")) {
-    descontoTotal += Math.abs(subtotalItem);
-  } else if (nome.includes("CASHBACK")) {
-    cashbackTotal += Math.abs(subtotalItem);
-  } else {
-    // É um item/produto normal do cardápio
-    subtotalProdutos += subtotalItem;
-    itensFiltrados.push(i);
-  }
-});
-
-let itensHtml = itensFiltrados.map((i, index) => {
-  let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
-  return `
-    <div class="item-row">
-      <span class="item-desc">${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
-      <span class="item-val">R$ ${subtotalItem.toFixed(2)}</span>
-    </div>
-  `;
-}).join('');
-
-              // 2. CAPTURA DE TAXAS, DESCONTOS E CASHBACK (Busca tanto em itens quanto em propriedades diretas do objeto)
+              // SEPARAÇÃO INTELIGENTE DE PRODUTOS E BENEFÍCIOS
+              let itensFiltrados = [];
               let taxaEntrega = Number(venda.taxaEntrega) || 0;
-              let desconto = Number(venda.desconto) || 0;
-              let cashback = Number(venda.cashback) || 0;
+              let descontoTotal = Number(venda.desconto) || 0;
+              let cashbackTotal = Number(venda.cashback) || 0;
+              let subtotalProdutos = 0;
 
               (venda.itens || []).forEach(i => {
                 let nome = String(i.nome || "").toUpperCase();
-                let valor = Math.abs(Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0);
-                if (nome.includes("TAXA") && taxaEntrega === 0) taxaEntrega += valor;
-                else if ((nome.includes("CUPOM") || nome.includes("DESCONTO")) && desconto === 0) desconto += valor;
-                else if (nome.includes("CASHBACK") && cashback === 0) cashback += valor;
+                let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
+
+                if (nome.includes("TAXA") || i.id === "FRETE" || i.isTaxa) {
+                  taxaEntrega += Math.abs(subtotalItem);
+                } else if (nome.includes("CUPOM") || nome.includes("DESCONTO MANUAL") || nome.includes("DESCONTO")) {
+                  descontoTotal += Math.abs(subtotalItem);
+                } else if (nome.includes("CASHBACK")) {
+                  cashbackTotal += Math.abs(subtotalItem);
+                } else {
+                  subtotalProdutos += subtotalItem;
+                  itensFiltrados.push(i);
+                }
               });
 
-              // 3. MONTAGEM DO HTML DO CUPOM
+              let itensHtml = itensFiltrados.map((i, index) => {
+                let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
+                return `
+                  <div class="item-row">
+                    <span class="item-desc">${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
+                    <span class="item-val">R$ ${subtotalItem.toFixed(2)}</span>
+                  </div>
+                `;
+              }).join('');
+
+              // MONTAGEM DO HTML DO CUPOM
               divTicket.innerHTML = `
                 <div class="header-loja bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
                 <div class="text-center" style="font-size: 13px;">${venda.dataHora}</div>
@@ -254,15 +238,15 @@ let itensHtml = itensFiltrados.map((i, index) => {
                   <span>TAXA ENT:</span>
                   <span>R$ ${taxaEntrega.toFixed(2)}</span>
                 </div>` : ''}
-                ${desconto > 0 ? `
+                ${descontoTotal > 0 ? `
                 <div style="display: flex; justify-content: space-between;">
                   <span>DESCONTO:</span>
-                  <span>-R$ ${desconto.toFixed(2)}</span>
+                  <span>-R$ ${descontoTotal.toFixed(2)}</span>
                 </div>` : ''}
-                ${cashback > 0 ? `
+                ${cashbackTotal > 0 ? `
                 <div style="display: flex; justify-content: space-between;">
                   <span>CASHBACK:</span>
-                  <span>-R$ ${cashback.toFixed(2)}</span>
+                  <span>-R$ ${cashbackTotal.toFixed(2)}</span>
                 </div>` : ''}
 
                 <div class="divider"></div>
