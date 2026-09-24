@@ -83,20 +83,26 @@
 
       const queryParams = window.location.search;
       const iframeApp = document.getElementById('sistemaIframe');
-      
-      // Passa a URL do GAS e injeta o Sentinela se necessário, ou carrega o sistema
       iframeApp.src = urlBase + queryParams;
 
-      // OUVINTE DE MENSAGENS: Recebe o aviso do Sentinela quando há um pedido para imprimir
+      // OUVINTE DE MENSAGENS
       window.addEventListener("message", function(event) {
+        console.log("💬 Wrapper recebeu uma mensagem:", event.data);
+
         if (event.data && event.data.acao === "IMPRIMIR_PEDIDO") {
           let venda = event.data.pedidoObj;
-          if (!venda) return;
+          if (!venda) {
+            console.warn("⚠️ Wrapper: PedidoObj veio vazio na mensagem!");
+            return;
+          }
 
-          console.log("Wrapper: Recebeu ordem de impressão para o pedido", venda.pedido);
+          console.log("🖨️ Wrapper: Processando impressão para o pedido:", venda.pedido);
           
           let divTicket = document.getElementById('cupom-html-impressao');
-          if (!divTicket) return;
+          if (!divTicket) {
+            console.error("❌ Wrapper: Div 'cupom-html-impressao' não encontrada no DOM!");
+            return;
+          }
 
           let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
           let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
@@ -141,19 +147,18 @@
             <br><br><br>
           `;
 
-          // Dispara a impressão imediatamente após montar o HTML
+          console.log("🚀 Wrapper: Chamando window.print()...");
           setTimeout(() => {
             window.print();
             
-            // Limpa o conteúdo após disparar a impressão
             setTimeout(() => {
               divTicket.innerHTML = "";
+              console.log("🧹 Wrapper: Cupom limpo da memória.");
             }, 1000);
           }, 300);
         }
       });
 
-      // Alerta de segurança ao fechar a aba
       window.addEventListener("beforeunload", function (e) {
         e.preventDefault();
         e.returnValue = "Atenção! Se fechar esta aba, o monitoramento de pedidos automáticos será interrompido.";
