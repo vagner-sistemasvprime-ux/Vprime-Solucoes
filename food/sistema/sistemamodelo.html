@@ -185,7 +185,7 @@
                 let nome = String(i.nome || "").toUpperCase();
                 let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
 
-                if (nome.includes("TAXA") || i.id === "FRETE" || i.isTaxa) {
+                if (nome.includes("TAXA") || nome.includes("FRETE") || i.id === "FRETE" || i.isTaxa) {
                   taxaEntrega += Math.abs(subtotalItem);
                 } else if (nome.includes("CUPOM") || nome.includes("DESCONTO MANUAL") || nome.includes("DESCONTO")) {
                   descontoTotal += Math.abs(subtotalItem);
@@ -197,11 +197,13 @@
                 }
               });
 
-              let itensHtml = itensFiltrados.map((i, index) => {
+              // Usa a quantidade correta do item (i.qtd) em vez de enumerar 01x, 02x sequencial
+              let itensHtml = itensFiltrados.map((i) => {
                 let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
+                let qtdReal = i.qtd || 1;
                 return `
                   <div class="item-row">
-                    <span class="item-desc">${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
+                    <span class="item-desc">${qtdReal}x ${i.nome}</span>
                     <span class="item-val">R$ ${subtotalItem.toFixed(2)}</span>
                   </div>
                 `;
