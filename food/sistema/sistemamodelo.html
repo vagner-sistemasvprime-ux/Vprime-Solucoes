@@ -1,12 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema VPrime</title>
-  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ">
-
- <style>
+  <title>Sistema Modelo - Impressão Térmica</title>
+  <style>
     html, body {
       margin: 0;
       padding: 0;
@@ -47,10 +44,10 @@
         print-color-adjust: exact !important;
       }
 
-      /* LARGURAS DINÂMICAS COM LETRAS MAIORES E CONFORTÁVEIS */
+      /* LARGURAS DINÂMICAS CONFIGURÁVEIS (58mm e 80mm) */
       #cupom-html-impressao.largura-58 {
         width: 58mm !important;
-        font-size: 13px !important; /* Aumentado para 13px */
+        font-size: 13px !important;
       }
       #cupom-html-impressao.largura-58 .header-loja { font-size: 15px !important; }
       #cupom-html-impressao.largura-58 .status-box { font-size: 12px !important; padding: 4px !important; }
@@ -58,14 +55,13 @@
 
       #cupom-html-impressao.largura-80 {
         width: 80mm !important;
-        font-size: 15px !important; /* Aumentado para 15px */
+        font-size: 15px !important;
       }
       #cupom-html-impressao.largura-80 .header-loja { font-size: 18px !important; }
       #cupom-html-impressao.largura-80 .status-box { font-size: 14px !important; padding: 4px !important; }
       #cupom-html-impressao.largura-80 .pedido-grande { font-size: 18px !important; }
 
-      
-      /* Classes de utilidade */
+      /* CLASSES DE UTILIDADE */
       .text-center { text-align: center; }
       .bold { font-weight: 700 !important; }
       
@@ -94,7 +90,6 @@
         print-color-adjust: exact !important;
       }
 
-      /* Bloco do pedido em destaque para não quebrar errado */
       .pedido-box {
         text-align: center;
         border: 1px solid #000000;
@@ -102,24 +97,23 @@
         margin: 4px 0;
       }
 
-      /* Espaçamento e comportamento perfeito entre os itens */
       .item-row {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 6px; /* Espaço maior entre as linhas de cada item */
+        margin-bottom: 6px;
       }
 
       .item-desc { 
         width: 70%; 
-        word-break: break-word; /* Evita quebra de palavra estourada */
+        word-break: break-word; 
         padding-right: 4px;
       }
       
       .item-val { 
         width: 30%; 
         text-align: right; 
-        white-space: nowrap; /* Garante que o preço não quebre pra linha de baixo */
+        white-space: nowrap; 
       }
 
       .totais-row {
@@ -136,120 +130,156 @@
   </style>
 </head>
 <body>
-  <!-- Iframe que carrega o seu sistema principal do GAS -->
-  <iframe id="sistemaIframe" src="" allow="clipboard-read; clipboard-write" title="Sistema Lojista"></iframe>
 
-  <!-- Div invisível que recebe o layout formatado em HTML para impressão -->
+  <!-- ELEMENTO QUE RECEBE O CUPOM PARA IMPRESSÃO -->
   <div id="cupom-html-impressao"></div>
 
+  <!-- SEU IFRAME OU CONTEÚDO PRINCIPAL DO SISTEMA -->
+  <iframe id="sistemaIframe" src="URL_DO_SEU_SISTEMA_AQUI"></iframe>
+
   <script>
-    (function() {
-      // COLOQUE AQUI O SEU LINK ATUALIZADO DO GOOGLE APPS SCRIPT (Web App)
-      const urlBase = "https://script.google.com/macros/s/AKfycbyiD33PF8zAGzRl0qmH4lkur7uZD6wmg4IxVXpuzPRCrvEY2jb3WZRZnq-XiDWFLNI3/exec";
+    // Defina a URL base do seu Apps Script (Web App)
+    const urlBase = "SUA_URL_DO_WEB_APP_AQUI";
 
-      const queryParams = window.location.search;
-      const iframeApp = document.getElementById('sistemaIframe');
-      iframeApp.src = urlBase + queryParams;
+    // Função que verifica periodicamente se há novos pedidos na planilha
+    function verificarFilaImpressao() {
+      const endpoint = urlBase + (urlBase.includes('?') ? '&' : '?') + 'acao=verificarImpressao';
+      
+      fetch(endpoint, { method: 'GET', mode: 'cors' })
+        .then(response => {
+          if (!response.ok) throw new Error('Erro na rede: ' + response.status);
+          return response.json();
+        })
+        .then(data => {
+          if (data && data.imprimir && data.pedidoObj) {
+            console.log("🟢 Sentinela Web: Pedido encontrado!", data.pedidoObj.pedido);
+            
+            let venda = data.pedidoObj;
+            let cfg = data.config || { larguraPadrao: "58" };
+            let divTicket = document.getElementById('cupom-html-impressao');
+            
+            // Define a largura dinamicamente baseada na célula da planilha (J3)
+            divTicket.className = "";
+            let larguraStr = String(cfg.larguraPadrao).toLowerCase();
+            if (larguraStr.includes("80")) {
+              divTicket.classList.add("largura-80");
+            } else {
+              divTicket.classList.add("largura-58");
+            }
+            
+            let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
+            let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
+            
+            // 1. FILTRAGEM DE ITENS REAIS (Igual ao seu PrinterHelper em Kotlin)
+            let itensFiltrados = (venda.itens || []).filter(i => {
+              let nome = String(i.nome || "").toUpperCase();
+              return !nome.includes("TAXA") && !nome.includes("CUPOM") && !nome.includes("DESCONTO") && !nome.includes("CASHBACK");
+            });
 
-      // Função que verifica periodicamente se há novos pedidos na planilha
-      function verificarFilaImpressao() {
-        const endpoint = urlBase + (urlBase.includes('?') ? '&' : '?') + 'acao=verificarImpressao';
-        
-        fetch(endpoint, { method: 'GET', mode: 'cors' })
-          .then(response => {
-            if (!response.ok) throw new Error('Erro na rede: ' + response.status);
-            return response.json();
-          })
-          .then(data => {
-            if (data && data.imprimir && data.pedidoObj) {
-              console.log("🟢 Sentinela Web: Pedido encontrado!", data.pedidoObj.pedido);
-              
-              let venda = data.pedidoObj;
-              let cfg = data.config || { larguraPadrao: "58" };
-              let divTicket = document.getElementById('cupom-html-impressao');
-              
-              // Define a largura dinamicamente com base no config
-              divTicket.className = "";
-              let larguraStr = String(cfg.larguraPadrao).toLowerCase();
-              if (larguraStr.includes("80")) {
-                divTicket.classList.add("largura-80");
-              } else {
-                divTicket.classList.add("largura-58");
-              }
-              
-              let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
-              let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
-              
-              // Itens com classes separadas para desc e valor (sem quebrar preço)
-              let itensHtml = venda.itens.map((i, index) => `
+            let subtotalProdutos = 0;
+            let itensHtml = itensFiltrados.map((i, index) => {
+              let subtotalItem = Number(i.subtotal) || 0;
+              subtotalProdutos += subtotalItem;
+              return `
                 <div class="item-row">
                   <span class="item-desc">${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
-                  <span class="item-val">R$ ${Number(i.subtotal).toFixed(2)}</span>
+                  <span class="item-val">R$ ${subtotalItem.toFixed(2)}</span>
                 </div>
-              `).join('');
-
-              divTicket.innerHTML = `
-                <div class="header-loja bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
-                <div class="text-center" style="font-size: 11px;">${venda.dataHora}</div>
-                <div class="divider-strong"></div>
-                
-                <div class="pedido-box pedido-grande bold text-center">
-                  PEDIDO: #${venda.pedido}
-                </div>
-
-                <div><b>CLIENTE:</b> ${venda.cliente}</div>
-                ${venda.telefone ? `<div><b>FONE:</b> ${venda.telefone}</div>` : ''}
-                <div><b>END:</b> ${venda.endereco || 'RETIRADA'}</div>
-                <div class="divider"></div>
-                <div class="status-box">${msgPagto}</div>
-                <div class="divider"></div>
-                <div class="bold text-center">ITENS DO PEDIDO</div>
-                <div class="divider"></div>
-                ${itensHtml}
-                <div class="divider"></div>
-                <div class="totais-row bold" style="font-size: 1.1em;">
-                  <span>TOTAL:</span>
-                  <span>R$ ${Number(venda.total).toFixed(2)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
-                  <span>PAGTO:</span>
-                  <span>${venda.formaPagamento}</span>
-                </div>
-                ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
-                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
-                  <span>TROCO:</span>
-                  <span>R$ ${venda.troco}</span>
-                </div>` : ''}
-                <div class="divider-strong"></div>
-                <div class="text-center bold">OBRIGADO PELA PREFERENCIA!</div>
-                <br><br><br>
               `;
+            }).join('');
 
-              // Dispara a impressão limpa
+            // 2. CÁLCULO DE TAXAS, DESCONTOS E CASHBACK SEPARADOS (Lógica do Kotlin)
+            let taxaEntrega = 0;
+            let desconto = 0;
+            let cashback = 0;
+
+            (venda.itens || []).forEach(i => {
+              let nome = String(i.nome || "").toUpperCase();
+              let valor = Math.abs(Number(i.subtotal) || 0);
+              if (nome.includes("TAXA")) taxaEntrega += valor;
+              else if (nome.includes("CUPOM") || nome.includes("DESCONTO")) desconto += valor;
+              else if (nome.includes("CASHBACK")) cashback += valor;
+            });
+
+            // 3. MONTAGEM DO HTML COM O LAYOUT ESTRUTURADO
+            divTicket.innerHTML = `
+              <div class="header-loja bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
+              <div class="text-center" style="font-size: 11px;">${venda.dataHora}</div>
+              <div class="divider-strong"></div>
+              
+              <div class="pedido-box pedido-grande bold text-center">
+                PEDIDO: #${venda.pedido}
+              </div>
+
+              <div><b>CLIENTE:</b> ${venda.cliente}</div>
+              ${venda.telefone ? `<div><b>FONE:</b> ${venda.telefone}</div>` : ''}
+              <div><b>END:</b> ${venda.endereco || 'RETIRADA'}</div>
+              <div class="divider"></div>
+              <div class="status-box">${msgPagto}</div>
+              <div class="divider"></div>
+              <div class="bold text-center">ITENS DO PEDIDO</div>
+              <div class="divider"></div>
+              ${itensHtml}
+              <div class="divider"></div>
+
+              <!-- RODAPÉ FINANCEIRO ORGANIZADO -->
+              <div style="display: flex; justify-content: space-between;">
+                <span>SUBTOTAL:</span>
+                <span>R$ ${subtotalProdutos.toFixed(2)}</span>
+              </div>
+              ${taxaEntrega > 0 ? `
+              <div style="display: flex; justify-content: space-between;">
+                <span>TAXA ENT:</span>
+                <span>R$ ${taxaEntrega.toFixed(2)}</span>
+              </div>` : ''}
+              ${desconto > 0 ? `
+              <div style="display: flex; justify-content: space-between;">
+                <span>DESCONTO:</span>
+                <span>-R$ ${desconto.toFixed(2)}</span>
+              </div>` : ''}
+              ${cashback > 0 ? `
+              <div style="display: flex; justify-content: space-between;">
+                <span>CASHBACK:</span>
+                <span>-R$ ${cashback.toFixed(2)}</span>
+              </div>` : ''}
+
+              <div class="divider"></div>
+              <div class="totais-row bold" style="font-size: 1.1em;">
+                <span>TOTAL:</span>
+                <span>R$ ${Number(venda.total).toFixed(2)}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                <span>PAGTO:</span>
+                <span>${venda.formaPagamento}</span>
+              </div>
+              ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
+              <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                <span>TROCO:</span>
+                <span>R$ ${venda.troco}</span>
+              </div>` : ''}
+              <div class="divider-strong"></div>
+              <div class="text-center bold">CARDAPIO DIGITAL</div>
+              <br><br><br>
+            `;
+
+            // Dispara a impressão limpa
+            setTimeout(() => {
+              window.print();
+              
+              // Limpa o cupom após 1 segundo
               setTimeout(() => {
-                window.print();
-                
-                // Limpa o cupom após 1 segundo
-                setTimeout(() => {
-                  divTicket.innerHTML = "";
-                }, 1000);
-              }, 300);
-            }
-          })
-          .catch(err => {
-            // Silencia erros de rede temporários para não poluir o console
-          });
-      }
-      // Roda a verificação a cada 10 segundos
-      setInterval(verificarFilaImpressao, 10000);
+                divTicket.innerHTML = "";
+              }, 1000);
+            }, 300);
+          }
+        })
+        .catch(err => {
+          // Silencia erros de rede temporários
+        });
+    }
 
-      // Aviso ao tentar fechar a aba acidentalmente
-      window.addEventListener("beforeunload", function (e) {
-        e.preventDefault();
-        e.returnValue = "Atenção! Se fechar esta aba, o monitoramento de pedidos automáticos será interrompido.";
-        return e.returnValue;
-      });
-    })();
+    // Executa a verificação a cada 5 segundos (ajuste o tempo se necessário)
+    setInterval(verificarFilaImpressao, 5000);
   </script>
 </body>
 </html>
