@@ -6,50 +6,45 @@
 </head>
 <body>
     <script>
-        // Pega a URL do GAS passada via parâmetro ?gas=...
         const urlParams = new URLSearchParams(window.location.search);
         const urlGas = urlParams.get('gas');
 
         function verificarFilaImpressao() {
             if (!urlGas) {
-                console.error("Sentinela: URL do GAS não informada nos parâmetros.");
+                console.error("🔴 Sentinela: URL do GAS não informada nos parâmetros.");
                 return;
             }
 
-            // Adiciona a ação de verificar impressão na URL base do GAS
             const endpoint = urlGas + (urlGas.includes('?') ? '&' : '?') + 'acao=verificarImpressao';
+            console.log("🔍 Sentinela: Consultando GAS...", endpoint);
 
-            fetch(endpoint, { 
-                method: 'GET',
-                mode: 'cors' // Garante requisição cross-origin
-            })
+            fetch(endpoint, { method: 'GET', mode: 'cors' })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erro na rede: ' + response.status);
-                }
+                if (!response.ok) throw new Error('Erro na rede: ' + response.status);
                 return response.json();
             })
             .then(data => {
+                console.log("📥 Sentinela recebeu resposta do GAS:", data);
                 if (data && data.imprimir) {
-                    console.log("Sentinela: Pedido pendente encontrado!", data.pedidoObj?.pedido);
+                    console.log("🟢 Sentinela: Pedido pendente encontrado! Disparando postMessage...", data.pedidoObj?.pedido);
                     
-                    // Envia o comando de impressão e o objeto formatado para a janela principal (Wrapper)
                     window.parent.postMessage({
                         acao: "IMPRIMIR_PEDIDO",
-                        pedidoObj: data.pedidoObj, // Alterado para enviar o objeto estruturado
+                        pedidoObj: data.pedidoObj,
                         config: data.config
                     }, "*");
+                } else {
+                    console.log("ℹ️ Sentinela: Fila limpa, nenhum pedido para imprimir.");
                 }
             })
             .catch(err => {
-                console.warn("Sentinela: Erro ao consultar fila de impressão", err);
+                console.warn("❌ Sentinela: Erro ao consultar fila de impressão", err);
             });
         }
 
-        // Executa a primeira vez e depois a cada 10 segundos
         if (urlGas) {
             setInterval(verificarFilaImpressao, 10000);
-            verificarFilaImpressao(); // Executa logo ao abrir
+            verificarFilaImpressao();
         }
     </script>
 </body>
