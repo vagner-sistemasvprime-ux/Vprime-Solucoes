@@ -1,43 +1,56 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Sentinela Cardápio Digital</title>
+    <title>Sentinela VPrime</title>
 </head>
 <body>
     <script>
-        (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const gasUrl = urlParams.get('gas');
+        // Pega a URL do GAS passada via parâmetro ?gas=...
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlGas = urlParams.get('gas');
 
-            if (!gasUrl) {
-                console.error("Sentinela: URL do Apps Script não informada.");
+        function verificarFilaImpressao() {
+            if (!urlGas) {
+                console.error("Sentinela: URL do GAS não informada nos parâmetros.");
                 return;
             }
 
-            // Intervalo padrão de verificação (ex: 30 segundos)
-            const intervaloChecagem = 30000;
+            // Adiciona a ação de verificar impressão na URL base do GAS
+            const endpoint = urlGas + (urlGas.includes('?') ? '&' : '?') + 'acao=verificarImpressao';
 
-            function verificarFilaImpressao() {
-                fetch(gasUrl + "?acao=verificarImpressao")
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data && data.imprimir && data.pedido) {
-                            // Envia o pedido para a janela principal (wrapper) que repassará ao sistema
-                            window.parent.postMessage({
-                                acao: "IMPRIMIR_PEDIDO",
-                                dados: data.pedido
-                            }, "*");
-                        }
-                    })
-                    .catch(err => {
-                        console.error("Sentinela: Erro ao consultar fila de impressão", err);
-                    });
-            }
+            fetch(endpoint, { 
+                method: 'GET',
+                mode: 'cors' // Garante requisição cross-origin
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro na rede: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.imprimir) {
+                    console.log("Sentinela: Pedido pendente encontrado!", data.pedido);
+                    // Envia o comando de impressão para a janela principal (Wrapper)
+                    window.parent.postMessage({
+                        acao: "IMPRIMIR_PEDIDO",
+                        dados: data.pedido,
+                        cupomTexto: data.cupomTexto,
+                        config: data.config
+                    }, "*");
+                }
+            })
+            .catch(err => {
+                console.warn("Sentinela: Erro ao consultar fila de impressão", err);
+            });
+        }
 
-            // Inicia o ciclo de monitoramento
-            setInterval(verificarFilaImpressao, intervaloChecagem);
-        })();
+        // Executa a primeira vez e depois a cada 10 segundos
+        if (urlGas) {
+            setInterval(verificarFilaImpressao, 10000);
+            verificarFilaImpressao(); // Executa logo ao abrir
+        }
     </script>
 </body>
 </html>
