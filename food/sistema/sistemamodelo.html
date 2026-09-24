@@ -6,7 +6,7 @@
   <title>Sistema VPrime</title>
   <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ">
 
- <style>
+  <style>
     html, body {
       margin: 0;
       padding: 0;
@@ -24,7 +24,7 @@
       top: 0;
     }
 
-    /* ESTILO EXCLUSIVO NA HORA DA IMPRESSÃO */
+    /* ESTILO EXCLUSIVO NA HORA DA IMPRESSÃO (Com fontes maiores) */
     @media print {
       body > *:not(#cupom-html-impressao) {
         display: none !important;
@@ -40,30 +40,29 @@
         
         font-family: 'Courier New', Courier, monospace !important;
         font-weight: 700 !important;
-        line-height: 1.3 !important;
+        line-height: 1.25 !important;
         
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
 
-      /* LARGURAS DINÂMICAS COM LETRAS MAIORES E CONFORTÁVEIS */
+      /* LARGURAS COM FONTES AUMENTADAS */
       #cupom-html-impressao.largura-58 {
         width: 58mm !important;
-        font-size: 13px !important; /* Aumentado para 13px */
+        font-size: 15px !important; /* Aumentado para melhor legibilidade */
       }
-      #cupom-html-impressao.largura-58 .header-loja { font-size: 15px !important; }
-      #cupom-html-impressao.largura-58 .status-box { font-size: 12px !important; padding: 4px !important; }
-      #cupom-html-impressao.largura-58 .pedido-grande { font-size: 16px !important; }
+      #cupom-html-impressao.largura-58 .header-loja { font-size: 17px !important; }
+      #cupom-html-impressao.largura-58 .status-box { font-size: 13px !important; padding: 4px !important; }
+      #cupom-html-impressao.largura-58 .pedido-grande { font-size: 18px !important; }
 
       #cupom-html-impressao.largura-80 {
         width: 80mm !important;
-        font-size: 15px !important; /* Aumentado para 15px */
+        font-size: 17px !important; /* Aumentado para melhor legibilidade */
       }
-      #cupom-html-impressao.largura-80 .header-loja { font-size: 18px !important; }
-      #cupom-html-impressao.largura-80 .status-box { font-size: 14px !important; padding: 4px !important; }
-      #cupom-html-impressao.largura-80 .pedido-grande { font-size: 18px !important; }
-
+      #cupom-html-impressao.largura-80 .header-loja { font-size: 20px !important; }
+      #cupom-html-impressao.largura-80 .status-box { font-size: 15px !important; padding: 4px !important; }
+      #cupom-html-impressao.largura-80 .pedido-grande { font-size: 21px !important; }
       
       /* Classes de utilidade */
       .text-center { text-align: center; }
@@ -71,7 +70,7 @@
       
       .header-loja {
         text-align: center;
-        margin-bottom: 2px;
+        margin-bottom: 3px;
       }
 
       .divider { 
@@ -94,7 +93,6 @@
         print-color-adjust: exact !important;
       }
 
-      /* Bloco do pedido em destaque para não quebrar errado */
       .pedido-box {
         text-align: center;
         border: 1px solid #000000;
@@ -102,24 +100,23 @@
         margin: 4px 0;
       }
 
-      /* Espaçamento e comportamento perfeito entre os itens */
       .item-row {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 6px; /* Espaço maior entre as linhas de cada item */
+        margin-bottom: 5px;
       }
 
       .item-desc { 
         width: 70%; 
-        word-break: break-word; /* Evita quebra de palavra estourada */
+        word-break: break-word; 
         padding-right: 4px;
       }
       
       .item-val { 
         width: 30%; 
         text-align: right; 
-        white-space: nowrap; /* Garante que o preço não quebre pra linha de baixo */
+        white-space: nowrap; 
       }
 
       .totais-row {
@@ -144,7 +141,6 @@
 
   <script>
     (function() {
-      // COLOQUE AQUI O SEU LINK ATUALIZADO DO GOOGLE APPS SCRIPT (Web App)
       const urlBase = "https://script.google.com/macros/s/AKfycbyiD33PF8zAGzRl0qmH4lkur7uZD6wmg4IxVXpuzPRCrvEY2jb3WZRZnq-XiDWFLNI3/exec";
 
       const queryParams = window.location.search;
@@ -168,7 +164,6 @@
               let cfg = data.config || { larguraPadrao: "58" };
               let divTicket = document.getElementById('cupom-html-impressao');
               
-              // Define a largura dinamicamente com base no config
               divTicket.className = "";
               let larguraStr = String(cfg.larguraPadrao).toLowerCase();
               if (larguraStr.includes("80")) {
@@ -180,17 +175,41 @@
               let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
               let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
               
-              // Itens com classes separadas para desc e valor (sem quebrar preço)
-              let itensHtml = venda.itens.map((i, index) => `
-                <div class="item-row">
-                  <span class="item-desc">${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
-                  <span class="item-val">R$ ${Number(i.subtotal).toFixed(2)}</span>
-                </div>
-              `).join('');
+              // 1. FILTRAGEM DE ITENS (Exclui taxas, cupons, descontos e cashbacks da lista principal)
+              let itensFiltrados = (venda.itens || []).filter(i => {
+                let nome = String(i.nome || "").toUpperCase();
+                return !nome.includes("TAXA") && !nome.includes("CUPOM") && !nome.includes("DESCONTO") && !nome.includes("CASHBACK");
+              });
 
+              let subtotalProdutos = 0;
+              let itensHtml = itensFiltrados.map((i, index) => {
+                let subtotalItem = Number(i.subtotal) || 0;
+                subtotalProdutos += subtotalItem;
+                return `
+                  <div class="item-row">
+                    <span class="item-desc">${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
+                    <span class="item-val">R$ ${subtotalItem.toFixed(2)}</span>
+                  </div>
+                `;
+              }).join('');
+
+              // 2. CÁLCULO SEPARADO DE TAXAS, DESCONTOS E CASHBACK (Lógica do Kotlin)
+              let taxaEntrega = 0;
+              let desconto = 0;
+              let cashback = 0;
+
+              (venda.itens || []).forEach(i => {
+                let nome = String(i.nome || "").toUpperCase();
+                let valor = Math.abs(Number(i.subtotal) || 0);
+                if (nome.includes("TAXA")) taxaEntrega += valor;
+                else if (nome.includes("CUPOM") || nome.includes("DESCONTO")) desconto += valor;
+                else if (nome.includes("CASHBACK")) cashback += valor;
+              });
+
+              // 3. MONTAGEM DO HTML COM FONTES Maiores
               divTicket.innerHTML = `
                 <div class="header-loja bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
-                <div class="text-center" style="font-size: 11px;">${venda.dataHora}</div>
+                <div class="text-center" style="font-size: 13px;">${venda.dataHora}</div>
                 <div class="divider-strong"></div>
                 
                 <div class="pedido-box pedido-grande bold text-center">
@@ -207,7 +226,30 @@
                 <div class="divider"></div>
                 ${itensHtml}
                 <div class="divider"></div>
-                <div class="totais-row bold" style="font-size: 1.1em;">
+
+                <!-- RODAPÉ FINANCEIRO ORGANIZADO -->
+                <div style="display: flex; justify-content: space-between;">
+                  <span>SUBTOTAL:</span>
+                  <span>R$ ${subtotalProdutos.toFixed(2)}</span>
+                </div>
+                ${taxaEntrega > 0 ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span>TAXA ENT:</span>
+                  <span>R$ ${taxaEntrega.toFixed(2)}</span>
+                </div>` : ''}
+                ${desconto > 0 ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span>DESCONTO:</span>
+                  <span>-R$ ${desconto.toFixed(2)}</span>
+                </div>` : ''}
+                ${cashback > 0 ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span>CASHBACK:</span>
+                  <span>-R$ ${cashback.toFixed(2)}</span>
+                </div>` : ''}
+
+                <div class="divider"></div>
+                <div class="totais-row bold" style="font-size: 1.15em;">
                   <span>TOTAL:</span>
                   <span>R$ ${Number(venda.total).toFixed(2)}</span>
                 </div>
@@ -221,7 +263,7 @@
                   <span>R$ ${venda.troco}</span>
                 </div>` : ''}
                 <div class="divider-strong"></div>
-                <div class="text-center bold">OBRIGADO PELA PREFERENCIA!</div>
+                <div class="text-center bold">CARDAPIO DIGITAL</div>
                 <br><br><br>
               `;
 
@@ -229,21 +271,17 @@
               setTimeout(() => {
                 window.print();
                 
-                // Limpa o cupom após 1 segundo
                 setTimeout(() => {
                   divTicket.innerHTML = "";
                 }, 1000);
               }, 300);
             }
           })
-          .catch(err => {
-            // Silencia erros de rede temporários para não poluir o console
-          });
+          .catch(err => {});
       }
-      // Roda a verificação a cada 10 segundos
+
       setInterval(verificarFilaImpressao, 10000);
 
-      // Aviso ao tentar fechar a aba acidentalmente
       window.addEventListener("beforeunload", function (e) {
         e.preventDefault();
         e.returnValue = "Atenção! Se fechar esta aba, o monitoramento de pedidos automáticos será interrompido.";
