@@ -50,7 +50,7 @@
       /* LARGURAS COM FONTES AUMENTADAS */
       #cupom-html-impressao.largura-58 {
         width: 58mm !important;
-        font-size: 15px !important; /* Aumentado para melhor legibilidade */
+        font-size: 15px !important;
       }
       #cupom-html-impressao.largura-58 .header-loja { font-size: 17px !important; }
       #cupom-html-impressao.largura-58 .status-box { font-size: 13px !important; padding: 4px !important; }
@@ -58,7 +58,7 @@
 
       #cupom-html-impressao.largura-80 {
         width: 80mm !important;
-        font-size: 17px !important; /* Aumentado para melhor legibilidade */
+        font-size: 17px !important;
       }
       #cupom-html-impressao.largura-80 .header-loja { font-size: 20px !important; }
       #cupom-html-impressao.largura-80 .status-box { font-size: 15px !important; padding: 4px !important; }
@@ -147,7 +147,6 @@
       const iframeApp = document.getElementById('sistemaIframe');
       iframeApp.src = urlBase + queryParams;
 
-      // Função que verifica periodicamente se há novos pedidos na planilha
       function verificarFilaImpressao() {
         const endpoint = urlBase + (urlBase.includes('?') ? '&' : '?') + 'acao=verificarImpressao';
         
@@ -175,7 +174,7 @@
               let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
               let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
               
-              // 1. FILTRAGEM DE ITENS (Exclui taxas, cupons, descontos e cashbacks da lista principal)
+              // 1. FILTRAGEM DE ITENS (Exclui taxas, cupons, descontos e cashbacks da lista principal de produtos)
               let itensFiltrados = (venda.itens || []).filter(i => {
                 let nome = String(i.nome || "").toUpperCase();
                 return !nome.includes("TAXA") && !nome.includes("CUPOM") && !nome.includes("DESCONTO") && !nome.includes("CASHBACK");
@@ -183,7 +182,7 @@
 
               let subtotalProdutos = 0;
               let itensHtml = itensFiltrados.map((i, index) => {
-                let subtotalItem = Number(i.subtotal) || 0;
+                let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
                 subtotalProdutos += subtotalItem;
                 return `
                   <div class="item-row">
@@ -193,20 +192,20 @@
                 `;
               }).join('');
 
-              // 2. CÁLCULO SEPARADO DE TAXAS, DESCONTOS E CASHBACK (Lógica do Kotlin)
-              let taxaEntrega = 0;
-              let desconto = 0;
-              let cashback = 0;
+              // 2. CAPTURA DE TAXAS, DESCONTOS E CASHBACK (Busca tanto em itens quanto em propriedades diretas do objeto)
+              let taxaEntrega = Number(venda.taxaEntrega) || 0;
+              let desconto = Number(venda.desconto) || 0;
+              let cashback = Number(venda.cashback) || 0;
 
               (venda.itens || []).forEach(i => {
                 let nome = String(i.nome || "").toUpperCase();
-                let valor = Math.abs(Number(i.subtotal) || 0);
-                if (nome.includes("TAXA")) taxaEntrega += valor;
-                else if (nome.includes("CUPOM") || nome.includes("DESCONTO")) desconto += valor;
-                else if (nome.includes("CASHBACK")) cashback += valor;
+                let valor = Math.abs(Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0);
+                if (nome.includes("TAXA") && taxaEntrega === 0) taxaEntrega += valor;
+                else if ((nome.includes("CUPOM") || nome.includes("DESCONTO")) && desconto === 0) desconto += valor;
+                else if (nome.includes("CASHBACK") && cashback === 0) cashback += valor;
               });
 
-              // 3. MONTAGEM DO HTML COM FONTES Maiores
+              // 3. MONTAGEM DO HTML DO CUPOM
               divTicket.innerHTML = `
                 <div class="header-loja bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
                 <div class="text-center" style="font-size: 13px;">${venda.dataHora}</div>
