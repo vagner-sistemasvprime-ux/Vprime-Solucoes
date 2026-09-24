@@ -31,12 +31,12 @@
             })
             .then(data => {
                 if (data && data.imprimir) {
-                    console.log("Sentinela: Pedido pendente encontrado!", data.pedido);
-                    // Envia o comando de impressão para a janela principal (Wrapper)
+                    console.log("Sentinela: Pedido pendente encontrado!", data.pedidoObj?.pedido);
+                    
+                    // Envia o comando de impressão e o objeto formatado para a janela principal (Wrapper)
                     window.parent.postMessage({
                         acao: "IMPRIMIR_PEDIDO",
-                        dados: data.pedido,
-                        cupomTexto: data.cupomTexto,
+                        pedidoObj: data.pedidoObj, // Alterado para enviar o objeto estruturado
                         config: data.config
                     }, "*");
                 }
