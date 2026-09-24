@@ -16,27 +16,45 @@
     }
     body { font-family: Arial, sans-serif; }
     #sistemaIframe { width: 100%; height: 100%; border: none; }
-    
-    /* Estilo opcional para garantir que o cupom fique oculto na tela mas visível na hora de imprimir */
-    @media screen {
-      #cupom-temp-impressao {
-        position: absolute;
-        left: -9999px;
-      }
-    }
+
+    /* CONFIGURAÇÃO EXCLUSIVA PARA A IMPRESSÃO TÉRMICA */
     @media print {
+      /* Oculta tudo na página, exceto o cupom */
       body * {
         visibility: hidden;
       }
       #cupom-temp-impressao, #cupom-temp-impressao * {
         visibility: visible;
       }
+      
+      /* Posiciona o cupom no topo absoluto, zerando margens */
       #cupom-temp-impressao {
         position: absolute;
         left: 0;
         top: 0;
-        width: 100%;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        
+        /* Aumenta a letra para ficar bem legível na térmica */
+        font-family: 'Courier New', Courier, monospace !important;
+        font-size: 14px !important;
+        font-weight: bold !important;
+        line-height: 1.2 !important;
+        color: #000 !important;
       }
+
+      /* COMANDO CRUCIANTE: Remove margens da página, URL, data e título do rodapé do Chrome */
+      @page {
+        margin: 0mm;
+        size: auto;
+      }
+    }
+
+    /* Estilo oculto na tela normal */
+    #cupom-temp-impressao {
+      position: absolute;
+      left: -9999px;
     }
   </style>
 </head>
