@@ -36,65 +36,63 @@
         left: 0 !important;
         top: 0 !important;
         margin: 0 !important;
-        padding: 2mm !important;
+        padding: 1mm 1.5mm !important;
         
         font-family: 'Courier New', Courier, monospace !important;
-        font-weight: 900 !important;
-        line-height: 1.3 !important;
+        font-weight: 700 !important; /* Negrito firme, sem exagerar no peso */
+        line-height: 1.2 !important;
         
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
 
-      /* LARGURAS DINÂMICAS BASEADAS NA PLANILHA */
+      /* LARGURAS DINÂMICAS COM TAMANHOS EQUILIBRADOS */
       #cupom-html-impressao.largura-58 {
         width: 58mm !important;
-        font-size: 14px !important;
+        font-size: 11px !important; /* Tamanho padrão ideal para 58mm */
       }
-      #cupom-html-impressao.largura-58 .header-loja { font-size: 16px !important; }
-      #cupom-html-impressao.largura-58 .status-box { font-size: 13px !important; }
+      #cupom-html-impressao.largura-58 .header-loja { font-size: 13px !important; }
+      #cupom-html-impressao.largura-58 .status-box { font-size: 11px !important; padding: 3px !important; }
 
       #cupom-html-impressao.largura-80 {
         width: 80mm !important;
-        font-size: 15px !important;
+        font-size: 12px !important; /* Tamanho padrão ideal para 80mm */
       }
-      #cupom-html-impressao.largura-80 .header-loja { font-size: 18px !important; }
-      #cupom-html-impressao.largura-80 .status-box { font-size: 14px !important; }
+      #cupom-html-impressao.largura-80 .header-loja { font-size: 14px !important; }
+      #cupom-html-impressao.largura-80 .status-box { font-size: 12px !important; padding: 3px !important; }
 
-      /* FUTURO: Meia Folha A4 (Aprox 148mm de largura) */
+      /* FUTURO: Meia Folha A4 */
       #cupom-html-impressao.largura-a4-metade {
         width: 140mm !important;
-        font-size: 16px !important;
-        font-family: Arial, sans-serif !important; /* A4 costuma ficar melhor em Arial limpa */
+        font-size: 14px !important;
+        font-family: Arial, sans-serif !important;
       }
-      #cupom-html-impressao.largura-a4-metade .header-loja { font-size: 22px !important; }
+      #cupom-html-impressao.largura-a4-metade .header-loja { font-size: 18px !important; }
 
       /* Classes de utilidade */
       .text-center { text-align: center; }
-      .bold { font-weight: 900 !important; }
+      .bold { font-weight: 700 !important; }
       
       .header-loja {
         text-align: center;
-        margin-bottom: 3px;
+        margin-bottom: 2px;
       }
 
       .divider { 
-        border-top: 2px dashed #000000; 
-        margin: 5px 0; 
+        border-top: 1px dashed #000000; 
+        margin: 3px 0; 
       }
       
       .divider-strong { 
-        border-top: 3px solid #000000; 
-        margin: 5px 0; 
+        border-top: 2px solid #000000; 
+        margin: 3px 0; 
       }
       
       .status-box {
         text-align: center;
-        border: 2px solid #000000;
-        padding: 5px;
-        font-weight: 900 !important;
-        margin: 6px 0;
+        border: 1.5px solid #000000;
+        margin: 4px 0;
         background-color: #000 !important;
         color: #fff !important;
         -webkit-print-color-adjust: exact !important;
@@ -104,16 +102,16 @@
       .item-row {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
       }
 
-      .item-desc { width: 70%; overflow: hidden; }
-      .item-val { width: 30%; text-align: right; }
+      .item-desc { width: 72%; overflow: hidden; }
+      .item-val { width: 28%; text-align: right; }
 
       .totais-row {
         display: flex;
         justify-content: space-between;
-        margin-top: 3px;
+        margin-top: 2px;
       }
 
       @page {
