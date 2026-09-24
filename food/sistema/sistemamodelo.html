@@ -27,29 +27,38 @@
       const urlBase = "https://script.google.com/macros/s/AKfycbyiD33PF8zAGzRl0qmH4lkur7uZD6wmg4IxVXpuzPRCrvEY2jb3WZRZnq-XiDWFLNI3/exec";
 
       const queryParams = window.location.search;
-      document.getElementById('sistemaIframe').src = urlBase + queryParams;
+      const iframeApp = document.getElementById('sistemaIframe');
+      iframeApp.src = urlBase + queryParams;
 
-      // 2. Cria o Iframe Invisível do Sentinela
-      // Passamos a URL do Apps Script codificada para o sentinela monitorar
-      const iframeSentinela = document.createElement('iframe');
-      iframeSentinela.id = 'iframe_sentinela';
-      iframeSentinela.style.display = 'none';
-      
-      const urlGasCodificada = encodeURIComponent(urlBase);
-      iframeSentinela.src = `https://vprimesistemas.com.br/food/sentinela.html?gas=${urlGasCodificada}`;
-      document.body.appendChild(iframeSentinela);
+      // 2. FUNÇÃO SENTINELA INTERNA (Roda direto no wrapper, sem conflito de iframe externo)
+      function verificarFilaImpressao() {
+        fetch(urlBase + "?acao=verificarImpressao")
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.imprimir && data.cupomTexto) {
+              console.log("Sentinela: Pedido encontrado, repassando para o sistema...", data.pedido);
+              
+              // Como o wrapper é dono da mesma origem ou pode conversar com o iframe do GAS 
+              // (ou se preferir, podemos disparar a impressão direto aqui se o wrapper carregar o texto):
+              if (iframeApp && iframeApp.contentWindow) {
+                iframeApp.contentWindow.postMessage({
+                  acao: "IMPRIMIR_PEDIDO",
+                  dados: data.pedido,
+                  cupomTexto: data.cupomTexto,
+                  config: data.config
+                }, "*");
+              }
+            }
+          })
+          .catch(err => {
+            console.log("Sentinela aguardando...");
+          });
+      }
 
-      // 3. Ouvinte que repassa o comando de impressão para dentro do sistema
-      window.addEventListener("message", (event) => {
-        if (event.data && event.data.acao === "IMPRIMIR_PEDIDO") {
-          const iframeApp = document.getElementById('sistemaIframe');
-          if (iframeApp && iframeApp.contentWindow) {
-            iframeApp.contentWindow.postMessage(event.data, "*");
-          }
-        }
-      });
+      // Roda a verificação a cada 10 segundos
+      setInterval(verificarFilaImpressao, 10000);
 
-      // 4. ALERTA DE SEGURANÇA: Impede que o lojista feche a aba sem querer
+      // 3. ALERTA DE SEGURANÇA: Impede que o lojista feche a aba sem querer
       window.addEventListener("beforeunload", function (e) {
         e.preventDefault();
         e.returnValue = "Atenção! Se fechar esta aba, o monitoramento de pedidos automáticos será interrompido.";
