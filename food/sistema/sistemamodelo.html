@@ -83,77 +83,77 @@
 
       const queryParams = window.location.search;
       const iframeApp = document.getElementById('sistemaIframe');
+      
+      // Passa a URL do GAS e injeta o Sentinela se necessário, ou carrega o sistema
       iframeApp.src = urlBase + queryParams;
 
-      function verificarFilaImpressao() {
-        fetch(urlBase + "?acao=verificarImpressao")
-          .then(response => response.json())
-          .then(data => {
-            if (data && data.imprimir && data.pedidoObj) {
-              console.log("Sentinela: Pedido encontrado, formatando cupom...", data.pedidoObj.pedido);
-              
-              let venda = data.pedidoObj;
-              let divTicket = document.getElementById('cupom-html-impressao');
-              
-              let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
-              let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
-              
-              let itensHtml = venda.itens.map((i, index) => `
-                <div class="item-row">
-                  <span>${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
-                  <span>R$ ${i.subtotal.toFixed(2)}</span>
-                </div>
-              `).join('');
+      // OUVINTE DE MENSAGENS: Recebe o aviso do Sentinela quando há um pedido para imprimir
+      window.addEventListener("message", function(event) {
+        if (event.data && event.data.acao === "IMPRIMIR_PEDIDO") {
+          let venda = event.data.pedidoObj;
+          if (!venda) return;
 
-              divTicket.innerHTML = `
-                <div class="text-center bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
-                <div class="text-center">${venda.dataHora}</div>
-                <div class="divider-strong"></div>
-                <div><b>PEDIDO:</b> #${venda.pedido}</div>
-                <div><b>CLIENTE:</b> ${venda.cliente}</div>
-                ${venda.telefone ? `<div><b>FONE:</b> ${venda.telefone}</div>` : ''}
-                <div><b>END:</b> ${venda.endereco || 'RETIRADA'}</div>
-                <div class="divider"></div>
-                <div class="status-box">${msgPagto}</div>
-                <div class="divider"></div>
-                <div class="bold text-center">ITENS DO PEDIDO</div>
-                <div class="divider"></div>
-                ${itensHtml}
-                <div class="divider"></div>
-                <div style="display: flex; justify-content: space-between;" class="bold">
-                  <span>TOTAL:</span>
-                  <span>R$ ${venda.total.toFixed(2)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span>PAGTO:</span>
-                  <span>${venda.formaPagamento}</span>
-                </div>
-                ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
-                <div style="display: flex; justify-content: space-between;">
-                  <span>TROCO:</span>
-                  <span>R$ ${venda.troco}</span>
-                </div>` : ''}
-                <div class="divider-strong"></div>
-                <div class="text-center bold">OBRIGADO PELA PREFERENCIA!</div>
-                <br><br><br>
-              `;
+          console.log("Wrapper: Recebeu ordem de impressão para o pedido", venda.pedido);
+          
+          let divTicket = document.getElementById('cupom-html-impressao');
+          if (!divTicket) return;
 
-              // Dispara a impressão limpa
-              window.print();
+          let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
+          let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
+          
+          let itensHtml = venda.itens.map((i, index) => `
+            <div class="item-row">
+              <span>${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
+              <span>R$ ${i.subtotal.toFixed(2)}</span>
+            </div>
+          `).join('');
 
-              // Limpa o conteúdo após imprimir
-              setTimeout(() => {
-                divTicket.innerHTML = "";
-              }, 1000);
-            }
-          })
-          .catch(err => {
-            console.log("Sentinela aguardando...");
-          });
-      }
+          divTicket.innerHTML = `
+            <div class="text-center bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
+            <div class="text-center">${venda.dataHora}</div>
+            <div class="divider-strong"></div>
+            <div><b>PEDIDO:</b> #${venda.pedido}</div>
+            <div><b>CLIENTE:</b> ${venda.cliente}</div>
+            ${venda.telefone ? `<div><b>FONE:</b> ${venda.telefone}</div>` : ''}
+            <div><b>END:</b> ${venda.endereco || 'RETIRADA'}</div>
+            <div class="divider"></div>
+            <div class="status-box">${msgPagto}</div>
+            <div class="divider"></div>
+            <div class="bold text-center">ITENS DO PEDIDO</div>
+            <div class="divider"></div>
+            ${itensHtml}
+            <div class="divider"></div>
+            <div style="display: flex; justify-content: space-between;" class="bold">
+              <span>TOTAL:</span>
+              <span>R$ ${venda.total.toFixed(2)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>PAGTO:</span>
+              <span>${venda.formaPagamento}</span>
+            </div>
+            ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
+            <div style="display: flex; justify-content: space-between;">
+              <span>TROCO:</span>
+              <span>R$ ${venda.troco}</span>
+            </div>` : ''}
+            <div class="divider-strong"></div>
+            <div class="text-center bold">OBRIGADO PELA PREFERENCIA!</div>
+            <br><br><br>
+          `;
 
-      setInterval(verificarFilaImpressao, 10000);
+          // Dispara a impressão imediatamente após montar o HTML
+          setTimeout(() => {
+            window.print();
+            
+            // Limpa o conteúdo após disparar a impressão
+            setTimeout(() => {
+              divTicket.innerHTML = "";
+            }, 1000);
+          }, 300);
+        }
+      });
 
+      // Alerta de segurança ao fechar a aba
       window.addEventListener("beforeunload", function (e) {
         e.preventDefault();
         e.returnValue = "Atenção! Se fechar esta aba, o monitoramento de pedidos automáticos será interrompido.";
