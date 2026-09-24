@@ -16,6 +16,28 @@
     }
     body { font-family: Arial, sans-serif; }
     #sistemaIframe { width: 100%; height: 100%; border: none; }
+    
+    /* Estilo opcional para garantir que o cupom fique oculto na tela mas visível na hora de imprimir */
+    @media screen {
+      #cupom-temp-impressao {
+        position: absolute;
+        left: -9999px;
+      }
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #cupom-temp-impressao, #cupom-temp-impressao * {
+        visibility: visible;
+      }
+      #cupom-temp-impressao {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -30,24 +52,35 @@
       const iframeApp = document.getElementById('sistemaIframe');
       iframeApp.src = urlBase + queryParams;
 
-      // 2. FUNÇÃO SENTINELA INTERNA (Roda direto no wrapper, sem conflito de iframe externo)
+      // 2. FUNÇÃO SENTINELA INTERNA: Verifica a fila e imprime diretamente no wrapper
       function verificarFilaImpressao() {
         fetch(urlBase + "?acao=verificarImpressao")
           .then(response => response.json())
           .then(data => {
             if (data && data.imprimir && data.cupomTexto) {
-              console.log("Sentinela: Pedido encontrado, repassando para o sistema...", data.pedido);
+              console.log("Sentinela: Pedido encontrado, disparando impressão...", data.pedido);
               
-              // Como o wrapper é dono da mesma origem ou pode conversar com o iframe do GAS 
-              // (ou se preferir, podemos disparar a impressão direto aqui se o wrapper carregar o texto):
-              if (iframeApp && iframeApp.contentWindow) {
-                iframeApp.contentWindow.postMessage({
-                  acao: "IMPRIMIR_PEDIDO",
-                  dados: data.pedido,
-                  cupomTexto: data.cupomTexto,
-                  config: data.config
-                }, "*");
+              // Cria o elemento visual do cupom no wrapper
+              let divTicket = document.getElementById('cupom-temp-impressao');
+              if (!divTicket) {
+                divTicket = document.createElement('div');
+                divTicket.id = "cupom-temp-impressao";
+                document.body.appendChild(divTicket);
               }
+              
+              // Aplica a formatação do cupom térmica
+              divTicket.style.fontFamily = 'monospace';
+              divTicket.style.whiteSpace = 'pre-wrap';
+              divTicket.style.fontSize = '12px';
+              divTicket.innerText = data.cupomTexto;
+
+              // Dispara a impressão (o --kiosk-printing do atalho vai capturar de forma silenciosa)
+              window.print();
+
+              // Limpa o texto do cupom após o comando
+              setTimeout(() => {
+                if (divTicket) divTicket.innerText = "";
+              }, 1000);
             }
           })
           .catch(err => {
