@@ -174,23 +174,41 @@
               let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
               let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
               
-              // 1. FILTRAGEM DE ITENS (Exclui taxas, cupons, descontos e cashbacks da lista principal de produtos)
-              let itensFiltrados = (venda.itens || []).filter(i => {
-                let nome = String(i.nome || "").toUpperCase();
-                return !nome.includes("TAXA") && !nome.includes("CUPOM") && !nome.includes("DESCONTO") && !nome.includes("CASHBACK");
-              });
+              // 1. SEPARAÇÃO INTELIGENTE DE PRODUTOS E BENEFÍCIOS VINDO DA PLANILHA
+let itensFiltrados = [];
+let taxaEntrega = Number(venda.taxaEntrega) || 0;
+let descontoTotal = Number(venda.desconto) || 0;
+let cashbackTotal = Number(venda.cashback) || 0;
 
-              let subtotalProdutos = 0;
-              let itensHtml = itensFiltrados.map((i, index) => {
-                let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
-                subtotalProdutos += subtotalItem;
-                return `
-                  <div class="item-row">
-                    <span class="item-desc">${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
-                    <span class="item-val">R$ ${subtotalItem.toFixed(2)}</span>
-                  </div>
-                `;
-              }).join('');
+let subtotalProdutos = 0;
+
+(venda.itens || []).forEach(i => {
+  let nome = String(i.nome || "").toUpperCase();
+  let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
+
+  // Identifica se é taxa, cupom, desconto ou cashback pelas palavras-chave que o GAS grava
+  if (nome.includes("TAXA") || i.id === "FRETE" || i.isTaxa) {
+    taxaEntrega += Math.abs(subtotalItem);
+  } else if (nome.includes("CUPOM") || nome.includes("DESCONTO MANUAL") || nome.includes("DESCONTO")) {
+    descontoTotal += Math.abs(subtotalItem);
+  } else if (nome.includes("CASHBACK")) {
+    cashbackTotal += Math.abs(subtotalItem);
+  } else {
+    // É um item/produto normal do cardápio
+    subtotalProdutos += subtotalItem;
+    itensFiltrados.push(i);
+  }
+});
+
+let itensHtml = itensFiltrados.map((i, index) => {
+  let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
+  return `
+    <div class="item-row">
+      <span class="item-desc">${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
+      <span class="item-val">R$ ${subtotalItem.toFixed(2)}</span>
+    </div>
+  `;
+}).join('');
 
               // 2. CAPTURA DE TAXAS, DESCONTOS E CASHBACK (Busca tanto em itens quanto em propriedades diretas do objeto)
               let taxaEntrega = Number(venda.taxaEntrega) || 0;
