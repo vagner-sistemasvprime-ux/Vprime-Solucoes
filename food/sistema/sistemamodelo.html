@@ -10,16 +10,16 @@
     html, body {
       margin: 0;
       padding: 0;
-      height: 100%; /* Ajustei para 100% para não sobrar espaço */
+      height: 100%;
       width: 100%;
-      overflow: hidden; /* Evita barras de rolagem duplas */
+      overflow: hidden;
     }
 
     body {
       font-family: Arial, sans-serif;
     }
 
-    iframe {
+    #sistemaIframe {
       width: 100%;
       height: 100%;
       border: none;
@@ -27,21 +27,50 @@
   </style>
 </head>
 <body>
-  <iframe id="sistemaIframe" src="" allow="clipboard-read; clipboard-write" title="Cachorro Quente da Sil"></iframe>
+  <iframe id="sistemaIframe" src="" allow="clipboard-read; clipboard-write" title="Sistema Lojista"></iframe>
 
   <script>
     (function() {
       // 1. Sua URL atualizada do Google Apps Script
       const urlBase = "https://script.google.com/macros/s/AKfycbyiD33PF8zAGzRl0qmH4lkur7uZD6wmg4IxVXpuzPRCrvEY2jb3WZRZnq-XiDWFLNI3/exec";
 
-      // 2. Pega os parâmetros da URL (ex: ?mesa=1)
+      // 2. Pega os parâmetros da URL (ex: ?loja=sil)
       const queryParams = window.location.search;
 
       // 3. Monta a URL final (Base + parâmetros)
       const urlFinal = urlBase + queryParams;
 
-      // 4. Carrega o sistema no Iframe
+      // 4. Carrega o sistema no Iframe principal
       document.getElementById('sistemaIframe').src = urlFinal;
+
+      // ==========================================================
+      // 5. INICIALIZAÇÃO DO SENTINELA DE IMPRESSÃO (NOVO)
+      // ==========================================================
+      // Criamos um iframe invisível para cuidar apenas da fila de impressão
+      const iframeSentinela = document.createElement('iframe');
+      iframeSentinela.id = 'iframe_sentinela';
+      iframeSentinela.style.display = 'none';
+      
+      // Passamos a mesma URL base do Apps Script e os parâmetros para o sentinela
+      // O sentinela.html vai rodar no seu domínio principal conversando com esse Apps Script
+      iframeSentinela.src = `https://seu-dominio.com/sentinela.html${queryParams}`;
+      
+      document.body.appendChild(iframeSentinela);
+
+      // ==========================================================
+      // 6. OUVINTE DE MENSAGENS (RETRANSMISSÃO PARA O SISTEMA)
+      // ==========================================================
+      // Como o sentinela avisa a janela principal, repassamos o pedido para dentro 
+      // do iframe do sistema onde roda a função imprimirComprovanteAdaptado
+      window.addEventListener("message", (event) => {
+        if (event.data && event.data.acao === "IMPRIMIR_PEDIDO") {
+          const iframeApp = document.getElementById('sistemaIframe');
+          if (iframeApp && iframeApp.contentWindow) {
+            // Envia o pedido para dentro do sistema do lojista executar a impressão
+            iframeApp.contentWindow.postMessage(event.data, "*");
+          }
+        }
+      });
     })();
   </script>
 </body>
