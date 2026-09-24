@@ -164,23 +164,38 @@
               console.log("🟢 Sentinela Web: Pedido encontrado!", data.pedidoObj.pedido);
               
               let venda = data.pedidoObj;
+              let cfg = data.config || { larguraPadrao: "58" };
               let divTicket = document.getElementById('cupom-html-impressao');
+              
+              // Define a largura dinamicamente com base no config
+              divTicket.className = "";
+              let larguraStr = String(cfg.larguraPadrao).toLowerCase();
+              if (larguraStr.includes("80")) {
+                divTicket.classList.add("largura-80");
+              } else {
+                divTicket.classList.add("largura-58");
+              }
               
               let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
               let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
               
+              // Itens com classes separadas para desc e valor (sem quebrar preço)
               let itensHtml = venda.itens.map((i, index) => `
                 <div class="item-row">
-                  <span>${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
-                  <span>R$ ${Number(i.subtotal).toFixed(2)}</span>
+                  <span class="item-desc">${String(index + 1).padStart(2, '0')}x ${i.nome}</span>
+                  <span class="item-val">R$ ${Number(i.subtotal).toFixed(2)}</span>
                 </div>
               `).join('');
 
               divTicket.innerHTML = `
-                <div class="text-center bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
-                <div class="text-center">${venda.dataHora}</div>
+                <div class="header-loja bold">${venda.loja || 'GESTAO DE PEDIDOS'}</div>
+                <div class="text-center" style="font-size: 11px;">${venda.dataHora}</div>
                 <div class="divider-strong"></div>
-                <div><b>PEDIDO:</b> #${venda.pedido}</div>
+                
+                <div class="pedido-box pedido-grande bold text-center">
+                  PEDIDO: #${venda.pedido}
+                </div>
+
                 <div><b>CLIENTE:</b> ${venda.cliente}</div>
                 ${venda.telefone ? `<div><b>FONE:</b> ${venda.telefone}</div>` : ''}
                 <div><b>END:</b> ${venda.endereco || 'RETIRADA'}</div>
@@ -191,16 +206,16 @@
                 <div class="divider"></div>
                 ${itensHtml}
                 <div class="divider"></div>
-                <div style="display: flex; justify-content: space-between;" class="bold">
+                <div class="totais-row bold" style="font-size: 1.1em;">
                   <span>TOTAL:</span>
                   <span>R$ ${Number(venda.total).toFixed(2)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
                   <span>PAGTO:</span>
                   <span>${venda.formaPagamento}</span>
                 </div>
                 ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
-                <div style="display: flex; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
                   <span>TROCO:</span>
                   <span>R$ ${venda.troco}</span>
                 </div>` : ''}
@@ -209,7 +224,7 @@
                 <br><br><br>
               `;
 
-              // Dispara a impressão limpa usando o atalho do Chrome (--kiosk-printing)
+              // Dispara a impressão limpa
               setTimeout(() => {
                 window.print();
                 
@@ -224,7 +239,6 @@
             // Silencia erros de rede temporários para não poluir o console
           });
       }
-
       // Roda a verificação a cada 10 segundos
       setInterval(verificarFilaImpressao, 10000);
 
