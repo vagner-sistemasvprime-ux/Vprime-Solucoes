@@ -35,33 +35,40 @@
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
-        width: 58mm !important; /* Mude para 80mm se sua impressora for maior */
+        width: 58mm !important; /* Mude para 80mm se sua bobina for de 80mm */
         margin: 0 !important;
-        padding: 5px !important;
+        padding: 2mm !important;
+        
+        /* Fontes ajustadas para preto forte e legível */
         font-family: 'Courier New', Courier, monospace !important;
-        font-size: 12px !important;
-        line-height: 1.2 !important;
-        color: #000 !important;
+        font-size: 14px !important; /* Aumentado de 12 para 14 para melhorar leitura */
+        font-weight: bold !important; /* Força negrito geral para escurecer o texto */
+        line-height: 1.25 !important;
+        
+        /* Força cor totalmente preta e elimina efeitos de transparência do navegador */
+        color: #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
 
       .text-center { text-align: center; }
-      .bold { font-weight: bold; }
-      .divider { border-top: 1px dashed #000; margin: 4px 0; }
-      .divider-strong { border-top: 2px solid #000; margin: 4px 0; }
+      .bold { font-weight: 900 !important; } /* Negrito extra forte para títulos */
+      .divider { border-top: 1px dashed #000000; margin: 4px 0; }
+      .divider-strong { border-top: 2px solid #000000; margin: 4px 0; }
       
       .status-box {
         text-align: center;
-        border: 1px solid #000;
-        padding: 3px;
-        font-weight: bold;
-        margin: 4px 0;
-        font-size: 11px;
+        border: 2px solid #000000; /* Borda mais grossa */
+        padding: 4px;
+        font-weight: 900 !important;
+        margin: 6px 0;
+        font-size: 13px;
       }
 
       .item-row {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 2px;
+        margin-bottom: 3px;
       }
 
       @page {
