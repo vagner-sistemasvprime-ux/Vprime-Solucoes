@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema VPrime - Aeroburg</title>
+  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1iDXINR797Xv-L8hUzwqQXKTBTEESwH-v">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+    body { font-family: Arial, sans-serif; }
+    #sistemaIframe { width: 100%; height: 100%; border: none; }
+
+    /* ESTILO DO CUPOM NA TELA NORMAL (Oculto) */
+    #cupom-html-impressao {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+    }
+
+    /* ESTILO EXCLUSIVO NA HORA DA IMPRESSÃO (Com fontes maiores) */
+    @media print {
+      body > *:not(#cupom-html-impressao) {
+        display: none !important;
+      }
+      
+      #cupom-html-impressao {
+        display: block !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        margin: 0 !important;
+        padding: 1mm 1.5mm !important;
+        
+        font-family: 'Courier New', Courier, monospace !important;
+        font-weight: 700 !important;
+        line-height: 1.25 !important;
+        
+        color: #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      /* LARGURAS COM FONTES AUMENTADAS */
+      #cupom-html-impressao.largura-58 {
+        width: 58mm !important;
+        font-size: 15px !important;
+      }
+      #cupom-html-impressao.largura-58 .header-loja { font-size: 17px !important; }
+      #cupom-html-impressao.largura-58 .status-box { font-size: 13px !important; padding: 4px !important; }
+      #cupom-html-impressao.largura-58 .pedido-grande { font-size: 18px !important; }
+
+      #cupom-html-impressao.largura-80 {
+        width: 80mm !important;
+        font-size: 17px !important;
+      }
+      #cupom-html-impressao.largura-80 .header-loja { font-size: 20px !important; }
+      #cupom-html-impressao.largura-80 .status-box { font-size: 15px !important; padding: 4px !important; }
+      #cupom-html-impressao.largura-80 .pedido-grande { font-size: 21px !important; }
+      
+      /* Classes de utilidade */
+      .text-center { text-align: center; }
+      .bold { font-weight: 700 !important; }
+      
+      .header-loja {
+        text-align: center;
+        margin-bottom: 3px;
+      }
+
+      .divider { 
+        border-top: 1px dashed #000000; 
+        margin: 4px 0; 
+      }
+      
+      .divider-strong { 
+        border-top: 2px solid #000000; 
+        margin: 4px 0; 
+      }
+      
+      .status-box {
+        text-align: center;
+        border: 1.5px solid #000000;
+        margin: 5px 0;
+        background-color: #000 !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .pedido-box {
+        text-align: center;
+        border: 1px solid #000000;
+        padding: 3px;
+        margin: 4px 0;
+      }
+
+      .item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 5px;
+      }
+
+      .item-desc { 
+        width: 70%; 
+        word-break: break-word; 
+        padding-right: 4px;
+      }
+      
+      .item-val { 
+        width: 30%; 
+        text-align: right; 
+        white-space: nowrap; 
+      }
+
+      .totais-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 4px;
+      }
+
+      @page {
+        margin: 0mm;
+        size: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Iframe que carrega o seu sistema principal do GAS -->
+  <iframe id="sistemaIframe" src="" allow="clipboard-read; clipboard-write" title="Sistema Vprime"></iframe>
+
+  <!-- Div invisível que recebe o layout formatado em HTML para impressão -->
+  <div id="cupom-html-impressao"></div>
+
+  <script>
+    (function() {
+      const urlBase = "https://script.google.com/macros/s/AKfycbxY4G_l493N_KyEqRSuJHczOAfc8sd2pWLwf-qsM7MFDYzCF3XciKfvlTjhlF-_9rZY/exec";
+
+      const queryParams = window.location.search;
+      const iframeApp = document.getElementById('sistemaIframe');
+      iframeApp.src = urlBase + queryParams;
+
+     function verificarFilaImpressao() {
+        // --- TRAVA: SE FOR CELULAR, ENCERRA A FUNÇÃO IMEDIATAMENTE ---
+        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          return; // Para aqui e não faz nada, deixando o Sentinela Android cuidar de tudo
+        }
+        // -----------------------------------------------------------
+
+        const endpoint = urlBase + (urlBase.includes('?') ? '&' : '?') + 'acao=verificarImpressao';
+        
+        fetch(endpoint, { method: 'GET', mode: 'cors' })
+          .then(response => {
+            if (!response.ok) throw new Error('Erro na rede: ' + response.status);
+            return response.json();
+          })
+          .then(data => {
+            if (data && data.imprimir && data.pedidoObj) {
+              console.log("🟢 Sentinela Web: Pedido encontrado!", data.pedidoObj.pedido);
+              
+              let venda = data.pedidoObj;
+              let cfg = data.config || { larguraPadrao: "58" };
+              let divTicket = document.getElementById('cupom-html-impressao');
+              
+              divTicket.className = "";
+              let larguraStr = String(cfg.larguraPadrao).toLowerCase();
+              if (larguraStr.includes("80")) {
+                divTicket.classList.add("largura-80");
+              } else {
+                divTicket.classList.add("largura-58");
+              }
+              
+              let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
+              let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
+              
+              // SEPARAÇÃO INTELIGENTE DE PRODUTOS E BENEFÍCIOS
+              let itensFiltrados = [];
+              let taxaEntrega = Number(venda.taxaEntrega) || 0;
+              let descontoTotal = Number(venda.desconto) || 0;
+              let cashbackTotal = Number(venda.cashback) || 0;
+              let subtotalProdutos = 0;
+
+              (venda.itens || []).forEach(i => {
+                let nome = String(i.nome || "").toUpperCase();
+                let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
+
+                if (nome.includes("TAXA") || nome.includes("FRETE") || i.id === "FRETE" || i.isTaxa) {
+                  taxaEntrega += Math.abs(subtotalItem);
+                } else if (nome.includes("CUPOM") || nome.includes("DESCONTO MANUAL") || nome.includes("DESCONTO")) {
+                  descontoTotal += Math.abs(subtotalItem);
+                } else if (nome.includes("CASHBACK")) {
+                  cashbackTotal += Math.abs(subtotalItem);
+                } else {
+                  subtotalProdutos += subtotalItem;
+                  itensFiltrados.push(i);
+                }
+              });
+
+              // Usa a quantidade correta do item (i.qtd)
+              let itensHtml = itensFiltrados.map((i) => {
+                let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
+                let qtdReal = i.qtd || 1;
+                return `
+                  <div class="item-row">
+                    <span class="item-desc">${qtdReal}x ${i.nome}</span>
+                    <span class="item-val">R$ ${subtotalItem.toFixed(2)}</span>
+                  </div>
+                `;
+              }).join('');
+
+              // MONTAGEM DO HTML DO CUPOM (Utiliza cfg.nomeLoja de H4 e dataHora da Cozinha)
+              divTicket.innerHTML = `
+                <div class="header-loja bold">${cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS'}</div>
+                <div class="text-center" style="font-size: 13px;">${venda.dataHora}</div>
+                <div class="divider-strong"></div>
+                
+                <div class="pedido-box pedido-grande bold text-center">
+                  PEDIDO: #${venda.pedido}
+                </div>
+
+                <div><b>CLIENTE:</b> ${venda.cliente}</div>
+                ${venda.telefone ? `<div><b>FONE:</b> ${venda.telefone}</div>` : ''}
+                <div><b>END:</b> ${venda.endereco || 'RETIRADA'}</div>
+                <div class="divider"></div>
+                <div class="status-box">${msgPagto}</div>
+                <div class="divider"></div>
+                <div class="bold text-center">ITENS DO PEDIDO</div>
+                <div class="divider"></div>
+                ${itensHtml}
+                <div class="divider"></div>
+
+                <!-- RODAPÉ FINANCEIRO ORGANIZADO -->
+                <div style="display: flex; justify-content: space-between;">
+                  <span>SUBTOTAL:</span>
+                  <span>R$ ${subtotalProdutos.toFixed(2)}</span>
+                </div>
+                ${taxaEntrega > 0 ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span>TAXA ENT:</span>
+                  <span>R$ ${taxaEntrega.toFixed(2)}</span>
+                </div>` : ''}
+                ${descontoTotal > 0 ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span>DESCONTO:</span>
+                  <span>-R$ ${descontoTotal.toFixed(2)}</span>
+                </div>` : ''}
+                ${cashbackTotal > 0 ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span>CASHBACK:</span>
+                  <span>-R$ ${cashbackTotal.toFixed(2)}</span>
+                </div>` : ''}
+
+                <div class="divider"></div>
+                <div class="totais-row bold" style="font-size: 1.15em;">
+                  <span>TOTAL:</span>
+                  <span>R$ ${Number(venda.total).toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                  <span>PAGTO:</span>
+                  <span>${venda.formaPagamento}</span>
+                </div>
+                ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
+                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                  <span>TROCO:</span>
+                  <span>R$ ${venda.troco}</span>
+                </div>` : ''}
+                <div class="divider-strong"></div>
+                <div class="text-center bold">CARDAPIO DIGITAL</div>
+                <br><br><br>
+              `;
+
+              // Dispara a impressão limpa
+              setTimeout(() => {
+                window.print();
+                
+                setTimeout(() => {
+                  divTicket.innerHTML = "";
+                }, 1000);
+              }, 300);
+            }
+          })
+          .catch(err => {});
+      }
+
+      setInterval(verificarFilaImpressao, 30000);
+
+      window.addEventListener("beforeunload", function (e) {
+        e.preventDefault();
+        e.returnValue = "Atenção! Se fechar esta aba, o monitoramento de pedidos automáticos será interrompido.";
+        return e.returnValue;
+      });
+    })();
+  </script>
+</body>
+</html>
