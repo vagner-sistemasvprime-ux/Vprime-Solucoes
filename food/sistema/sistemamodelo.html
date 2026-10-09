@@ -6,7 +6,7 @@
   <title>Sistema VPrime</title>
   <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ">
 
-  <style>
+ <style>
     html, body {
       margin: 0;
       padding: 0;
@@ -24,7 +24,7 @@
       top: 0;
     }
 
-    /* ESTILO EXCLUSIVO NA HORA DA IMPRESSÃO (Idêntico ao APK ESC/POS) */
+    /* ESTILO EXCLUSIVO NA HORA DA IMPRESSÃO (Fontes grandes e margens zeradas) */
     @media print {
       body > *:not(#cupom-html-impressao) {
         display: none !important;
@@ -36,34 +36,33 @@
         left: 0 !important;
         top: 0 !important;
         margin: 0 !important;
-        padding: 1mm 1.5mm !important;
+        padding: 0 1mm !important; /* Remove margens internas excessivas */
         
-        /* Fonte estritamente monoespaçada para simular impressora térmica */
         font-family: 'Courier New', Courier, monospace !important;
         font-weight: 700 !important;
-        line-height: 1.2 !important;
+        line-height: 1.15 !important;
         
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
 
-      /* LARGURAS COM TAMANHOS CALIBRADOS PARA O PADRÃO TÉRMICO */
+      /* LARGURAS COM FONTES BEM MAIORES E OCUPANDO TODO O PAPEL */
       #cupom-html-impressao.largura-58 {
         width: 58mm !important;
-        font-size: 14px !important;
+        font-size: 16px !important; /* Aumentado para preencher bem */
       }
-      #cupom-html-impressao.largura-58 .header-loja { font-size: 16px !important; }
-      #cupom-html-impressao.largura-58 .status-box { font-size: 12px !important; padding: 3px !important; }
-      #cupom-html-impressao.largura-58 .pedido-box { font-size: 17px !important; }
+      #cupom-html-impressao.largura-58 .header-loja { font-size: 19px !important; }
+      #cupom-html-impressao.largura-58 .status-box { font-size: 14px !important; padding: 4px !important; }
+      #cupom-html-impressao.largura-58 .pedido-box { font-size: 22px !important; }
 
       #cupom-html-impressao.largura-80 {
         width: 80mm !important;
-        font-size: 16px !important;
+        font-size: 19px !important;
       }
-      #cupom-html-impressao.largura-80 .header-loja { font-size: 19px !important; }
-      #cupom-html-impressao.largura-80 .status-box { font-size: 14px !important; padding: 3px !important; }
-      #cupom-html-impressao.largura-80 .pedido-box { font-size: 20px !important; }
+      #cupom-html-impressao.largura-80 .header-loja { font-size: 23px !important; }
+      #cupom-html-impressao.largura-80 .status-box { font-size: 16px !important; padding: 4px !important; }
+      #cupom-html-impressao.largura-80 .pedido-box { font-size: 26px !important; }
       
       /* Classes de utilidade */
       .text-center { text-align: center; }
@@ -71,7 +70,7 @@
       
       .header-loja {
         text-align: center;
-        margin-bottom: 3px;
+        margin-bottom: 4px;
       }
 
       .divider { 
@@ -125,8 +124,9 @@
         margin-top: 4px;
       }
 
+      /* Zera totalmente as margens da página de impressão do navegador */
       @page {
-        margin: 0mm;
+        margin: 0mm !important;
         size: auto;
       }
     }
