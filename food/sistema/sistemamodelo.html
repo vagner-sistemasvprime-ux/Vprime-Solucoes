@@ -40,28 +40,35 @@
         left: 0 !important;
         top: 0 !important;
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 0 2px !important; /* Respiro lateral para evitar corte de caracteres */
         box-sizing: border-box !important;
         
         font-family: 'Courier New', Courier, monospace !important;
         font-weight: 700 !important;
-        line-height: 1.15 !important;
+        line-height: 1.2 !important;
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
 
-      /* 32 colunas para 58mm e 48 colunas para 80mm */
+      /* Aumentado levemente para 15px (evita letra miúda) e largura ajustada para 34ch para não cortar nas pontas */
       #cupom-html-impressao.largura-58 {
-        width: 32ch !important;
-        max-width: 32ch !important;
-        font-size: 14px !important;
-      }
-      #cupom-html-impressao.largura-80 {
-        width: 48ch !important;
-        max-width: 48ch !important;
+        width: 34ch !important;
+        max-width: 100% !important;
         font-size: 15px !important;
       }
+      #cupom-html-impressao.largura-58 .header-loja { font-size: 18px !important; }
+      #cupom-html-impressao.largura-58 .status-box { font-size: 13px !important; padding: 4px !important; }
+      #cupom-html-impressao.largura-58 .pedido-box { font-size: 22px !important; } /* Pedido bem grandão */
+
+      #cupom-html-impressao.largura-80 {
+        width: 48ch !important;
+        max-width: 100% !important;
+        font-size: 17px !important;
+      }
+      #cupom-html-impressao.largura-80 .header-loja { font-size: 21px !important; }
+      #cupom-html-impressao.largura-80 .status-box { font-size: 15px !important; padding: 4px !important; }
+      #cupom-html-impressao.largura-80 .pedido-box { font-size: 26px !important; }
       
       .text-center { text-align: center; }
       .bold { font-weight: 700 !important; }
@@ -98,25 +105,26 @@
 
       .pedido-box {
         text-align: center;
-        margin: 5px 0;
+        margin: 6px 0;
+        letter-spacing: 1px;
       }
 
       .item-row {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 4px;
+        margin-bottom: 5px;
         width: 100% !important;
       }
 
       .item-desc { 
-        width: 72% !important; 
+        width: 70% !important; 
         word-break: break-word; 
         padding-right: 4px;
       }
       
       .item-val { 
-        width: 28% !important; 
+        width: 30% !important; 
         text-align: right; 
         white-space: nowrap; 
       }
@@ -124,7 +132,7 @@
       .totais-row {
         display: flex;
         justify-content: space-between;
-        margin-top: 4px;
+        margin-top: 5px;
       }
 
       @page {
@@ -219,7 +227,7 @@
                 <div class="text-center" style="font-size: 13px;">${venda.dataHora}</div>
                 <div class="divider-strong"></div>
                 
-                <div class="pedido-box pedido-grande bold text-center">
+                <div class="pedido-box bold text-center">
                   ==============================<br>
                   ${venda.pedido}<br>
                   ==============================
@@ -243,7 +251,7 @@
                 ${taxaEntrega > 0 ? `
                 <div style="display: flex; justify-content: space-between;">
                   <span>TAXA ENT:</span>
-                  <span>R$ ${taxaEntrega.toFixed(2)}</span>
+                  <span>R$ ${taxaPreço = taxaEntrega.toFixed(2)}</span>
                 </div>` : ''}
                 ${descontoTotal > 0 ? `
                 <div style="display: flex; justify-content: space-between;">
@@ -257,7 +265,7 @@
                 </div>` : ''}
 
                 <div class="divider"></div>
-                <div class="totais-row bold" style="font-size: 1.1em;">
+                <div class="totais-row bold" style="font-size: 1.15em;">
                   <span>TOTAL:</span>
                   <span>R$ ${Number(venda.total).toFixed(2)}</span>
                 </div>
