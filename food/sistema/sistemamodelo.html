@@ -24,7 +24,7 @@
       top: 0;
     }
 
-    /* ESTILO EXCLUSIVO NA HORA DA IMPRESSÃO (Com fontes maiores) */
+    /* ESTILO EXCLUSIVO NA HORA DA IMPRESSÃO (Idêntico ao APK ESC/POS) */
     @media print {
       body > *:not(#cupom-html-impressao) {
         display: none !important;
@@ -38,31 +38,32 @@
         margin: 0 !important;
         padding: 1mm 1.5mm !important;
         
+        /* Fonte estritamente monoespaçada para simular impressora térmica */
         font-family: 'Courier New', Courier, monospace !important;
         font-weight: 700 !important;
-        line-height: 1.25 !important;
+        line-height: 1.2 !important;
         
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
 
-      /* LARGURAS COM FONTES AUMENTADAS */
+      /* LARGURAS COM TAMANHOS CALIBRADOS PARA O PADRÃO TÉRMICO */
       #cupom-html-impressao.largura-58 {
         width: 58mm !important;
-        font-size: 15px !important;
+        font-size: 14px !important;
       }
-      #cupom-html-impressao.largura-58 .header-loja { font-size: 17px !important; }
-      #cupom-html-impressao.largura-58 .status-box { font-size: 13px !important; padding: 4px !important; }
-      #cupom-html-impressao.largura-58 .pedido-grande { font-size: 18px !important; }
+      #cupom-html-impressao.largura-58 .header-loja { font-size: 16px !important; }
+      #cupom-html-impressao.largura-58 .status-box { font-size: 12px !important; padding: 3px !important; }
+      #cupom-html-impressao.largura-58 .pedido-box { font-size: 17px !important; }
 
       #cupom-html-impressao.largura-80 {
         width: 80mm !important;
-        font-size: 17px !important;
+        font-size: 16px !important;
       }
-      #cupom-html-impressao.largura-80 .header-loja { font-size: 20px !important; }
-      #cupom-html-impressao.largura-80 .status-box { font-size: 15px !important; padding: 4px !important; }
-      #cupom-html-impressao.largura-80 .pedido-grande { font-size: 21px !important; }
+      #cupom-html-impressao.largura-80 .header-loja { font-size: 19px !important; }
+      #cupom-html-impressao.largura-80 .status-box { font-size: 14px !important; padding: 3px !important; }
+      #cupom-html-impressao.largura-80 .pedido-box { font-size: 20px !important; }
       
       /* Classes de utilidade */
       .text-center { text-align: center; }
@@ -96,13 +97,14 @@
       .pedido-box {
         text-align: center;
         margin: 4px 0;
+        letter-spacing: 1px;
       }
 
       .item-row {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 5px;
+        margin-bottom: 4px;
       }
 
       .item-desc { 
