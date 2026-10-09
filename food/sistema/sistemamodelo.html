@@ -6,7 +6,7 @@
   <title>Sistema VPrime</title>
   <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ">
 
- <style>
+  <style>
     html, body {
       margin: 0;
       padding: 0;
@@ -28,7 +28,6 @@
         display: none !important;
       }
       
-      /* FORÇA O CORPO DA PÁGINA DE IMPRESSÃO A OCUPAR 100% */
       html, body {
         width: 100% !important;
         margin: 0 !important;
@@ -52,24 +51,17 @@
         print-color-adjust: exact !important;
       }
 
-      /* LARGURAS EXATAS PARA FORÇAR O NAVEGADOR A USAR O TAMANHO CORRETO */
+      /* 32 colunas para 58mm e 48 colunas para 80mm */
       #cupom-html-impressao.largura-58 {
-        width: 58mm !important;
-        max-width: 58mm !important;
-        font-size: 15px !important; 
+        width: 32ch !important;
+        max-width: 32ch !important;
+        font-size: 14px !important;
       }
-      #cupom-html-impressao.largura-58 .header-loja { font-size: 18px !important; }
-      #cupom-html-impressao.largura-58 .status-box { font-size: 13px !important; padding: 4px !important; }
-      #cupom-html-impressao.largura-58 .pedido-box { font-size: 21px !important; }
-
       #cupom-html-impressao.largura-80 {
-        width: 80mm !important;
-        max-width: 80mm !important;
-        font-size: 18px !important;
+        width: 48ch !important;
+        max-width: 48ch !important;
+        font-size: 15px !important;
       }
-      #cupom-html-impressao.largura-80 .header-loja { font-size: 21px !important; }
-      #cupom-html-impressao.largura-80 .status-box { font-size: 15px !important; padding: 4px !important; }
-      #cupom-html-impressao.largura-80 .pedido-box { font-size: 24px !important; }
       
       .text-center { text-align: center; }
       .bold { font-weight: 700 !important; }
@@ -135,15 +127,12 @@
         margin-top: 4px;
       }
 
-      /* COMANDO CRUCIAL: DIZ AO NAVEGADOR O TAMANHO FÍSICO DA PÁGINA PARA ANular O A4 */
       @page {
-        size: 58mm auto; /* Se a sua bobina for de 80mm, altere para: size: 80mm auto; */
+        size: auto;
         margin: 0mm !important;
       }
     }
   </style>
-
-  
 </head>
 <body>
   <!-- Iframe que carrega o seu sistema principal do GAS -->
