@@ -95,8 +95,6 @@
 
       .pedido-box {
         text-align: center;
-        border: 1px solid #000000;
-        padding: 3px;
         margin: 4px 0;
       }
 
@@ -147,7 +145,7 @@
       const iframeApp = document.getElementById('sistemaIframe');
       iframeApp.src = urlBase + queryParams;
 
-     function verificarFilaImpressao() {
+      function verificarFilaImpressao() {
         // --- TRAVA: SE FOR CELULAR, ENCERRA A FUNÇÃO IMEDIATAMENTE ---
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
@@ -216,14 +214,16 @@
                 `;
               }).join('');
 
-              // MONTAGEM DO HTML DO CUPOM (Utiliza cfg.nomeLoja de H4 e dataHora da Cozinha)
+              // MONTAGEM DO HTML DO CUPOM (Com o layout exato solicitado no formato enquadrado)
               divTicket.innerHTML = `
                 <div class="header-loja bold">${cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS'}</div>
                 <div class="text-center" style="font-size: 13px;">${venda.dataHora}</div>
                 <div class="divider-strong"></div>
                 
                 <div class="pedido-box pedido-grande bold text-center">
-                  PEDIDO: #${venda.pedido}
+                  ==============================<br>
+                  ${venda.pedido}<br>
+                  ==============================
                 </div>
 
                 <div><b>CLIENTE:</b> ${venda.cliente}</div>
