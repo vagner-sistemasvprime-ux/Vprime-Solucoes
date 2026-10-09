@@ -34,60 +34,60 @@
         left: 0 !important;
         top: 0 !important;
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 0 1mm !important;
         width: 100% !important;
         box-sizing: border-box !important;
         
         font-family: 'Courier New', Courier, monospace !important;
         font-weight: 700 !important;
-        line-height: 1.15 !important;
+        line-height: 1.2 !important;
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
 
-      /* LARGURAS COM FONTES GRANDES E OCUPANDO 100% DA BOBINA */
+      /* FONTES CALIBRADAS E PROPORCIONAIS PARA NÃO QUEBRAR EXAGERADAMENTE */
       #cupom-html-impressao.largura-58 {
         width: 58mm !important;
-        font-size: 20px !important;
+        font-size: 13px !important; 
       }
-      #cupom-html-impressao.largura-58 .header-loja { font-size: 23px !important; }
-      #cupom-html-impressao.largura-58 .status-box { font-size: 16px !important; padding: 5px !important; }
-      #cupom-html-impressao.largura-58 .pedido-box { font-size: 26px !important; }
+      #cupom-html-impressao.largura-58 .header-loja { font-size: 15px !important; }
+      #cupom-html-impressao.largura-58 .status-box { font-size: 12px !important; padding: 3px !important; }
+      #cupom-html-impressao.largura-58 .pedido-box { font-size: 18px !important; }
 
       #cupom-html-impressao.largura-80 {
         width: 80mm !important;
-        font-size: 23px !important;
+        font-size: 16px !important;
       }
-      #cupom-html-impressao.largura-80 .header-loja { font-size: 26px !important; }
-      #cupom-html-impressao.largura-80 .status-box { font-size: 18px !important; padding: 5px !important; }
-      #cupom-html-impressao.largura-80 .pedido-box { font-size: 30px !important; }
+      #cupom-html-impressao.largura-80 .header-loja { font-size: 18px !important; }
+      #cupom-html-impressao.largura-80 .status-box { font-size: 14px !important; padding: 3px !important; }
+      #cupom-html-impressao.largura-80 .pedido-box { font-size: 21px !important; }
       
       .text-center { text-align: center; }
       .bold { font-weight: 700 !important; }
       
       .header-loja {
         text-align: center;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
         width: 100%;
       }
 
       .divider { 
-        border-top: 1.5px dashed #000000; 
-        margin: 5px 0; 
+        border-top: 1px dashed #000000; 
+        margin: 4px 0; 
         width: 100%;
       }
       
       .divider-strong { 
-        border-top: 2.5px solid #000000; 
-        margin: 5px 0; 
+        border-top: 2px solid #000000; 
+        margin: 4px 0; 
         width: 100%;
       }
       
       .status-box {
         text-align: center;
-        border: 2px solid #000000;
-        margin: 6px 0;
+        border: 1.5px solid #000000;
+        margin: 4px 0;
         background-color: #000 !important;
         color: #fff !important;
         width: 100% !important;
@@ -98,27 +98,41 @@
 
       .pedido-box {
         text-align: center;
-        margin: 6px 0;
+        margin: 4px 0;
         width: 100% !important;
         box-sizing: border-box !important;
       }
 
-      /* ESTILO FLUIDO PARA OS ITENS (Nome em cima ocupando largura total e valor logo abaixo) */
+      /* LAYOUT FLEXÍVEL INTELIGENTE PARA OS ITENS */
       .item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 5px;
         width: 100% !important;
         box-sizing: border-box !important;
-        margin-bottom: 6px !important;
+      }
+
+      .item-desc { 
+        width: 72% !important; 
+        word-break: break-word; 
+        padding-right: 4px;
+      }
+      
+      .item-val { 
+        width: 28% !important; 
+        text-align: right; 
+        white-space: nowrap; 
       }
 
       .totais-row {
         display: flex;
         justify-content: space-between;
-        margin-top: 5px;
+        margin-top: 4px;
         width: 100% !important;
         box-sizing: border-box !important;
       }
 
-      /* Zera totalmente as margens da página do navegador */
       @page {
         margin: 0mm !important;
         size: auto;
@@ -145,7 +159,7 @@
         // --- TRAVA: SE FOR CELULAR, ENCERRA A FUNÇÃO IMEDIATAMENTE ---
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
-          return; // Para aqui e não faz nada, deixando o Sentinela Android cuidar de tudo
+          return; 
         }
         // -----------------------------------------------------------
 
@@ -175,7 +189,6 @@
               let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
               let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
               
-              // SEPARAÇÃO INTELIGENTE DE PRODUTOS E BENEFÍCIOS
               let itensFiltrados = [];
               let taxaEntrega = Number(venda.taxaEntrega) || 0;
               let descontoTotal = Number(venda.desconto) || 0;
@@ -198,22 +211,21 @@
                 }
               });
 
-              // ITENS COM LARGURA TOTAL E VALOR ABAIXO (Elimina esmagamento de descrições longas)
+              // ITENS EM FORMATO LADO A LADO EQUILIBRADO (Nome na esq, valor na dir)
               let itensHtml = itensFiltrados.map((i) => {
                 let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
                 let qtdReal = i.qtd || 1;
                 return `
                   <div class="item-row">
-                    <div style="font-weight: 700; word-break: break-word;">${qtdReal}x ${i.nome}</div>
-                    <div style="text-align: right; font-weight: 700; margin-top: 2px;">R$ ${subtotalItem.toFixed(2)}</div>
+                    <div class="item-desc">${qtdReal}x ${i.nome}</div>
+                    <div class="item-val">R$ ${subtotalItem.toFixed(2)}</div>
                   </div>
                 `;
               }).join('');
 
-              // MONTAGEM DO HTML DO CUPOM (Padrão exato com moldura do pedido)
               divTicket.innerHTML = `
                 <div class="header-loja bold">${cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS'}</div>
-                <div class="text-center" style="font-size: 14px;">${venda.dataHora}</div>
+                <div class="text-center" style="font-size: 12px;">${venda.dataHora}</div>
                 <div class="divider-strong"></div>
                 
                 <div class="pedido-box pedido-grande bold text-center">
@@ -233,7 +245,6 @@
                 ${itensHtml}
                 <div class="divider"></div>
 
-                <!-- RODAPÉ FINANCEIRO ORGANIZADO -->
                 <div style="display: flex; justify-content: space-between; width: 100%;">
                   <span>SUBTOTAL:</span>
                   <span>R$ ${subtotalProdutos.toFixed(2)}</span>
@@ -255,16 +266,16 @@
                 </div>` : ''}
 
                 <div class="divider"></div>
-                <div class="totais-row bold" style="font-size: 1.15em;">
+                <div class="totais-row bold" style="font-size: 1.1em;">
                   <span>TOTAL:</span>
                   <span>R$ ${Number(venda.total).toFixed(2)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 3px; width: 100%;">
+                <div style="display: flex; justify-content: space-between; margin-top: 2px; width: 100%;">
                   <span>PAGTO:</span>
                   <span>${venda.formaPagamento}</span>
                 </div>
                 ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
-                <div style="display: flex; justify-content: space-between; margin-top: 3px; width: 100%;">
+                <div style="display: flex; justify-content: space-between; margin-top: 2px; width: 100%;">
                   <span>TROCO:</span>
                   <span>R$ ${venda.troco}</span>
                 </div>` : ''}
@@ -273,7 +284,6 @@
                 <br><br><br>
               `;
 
-              // Dispara a impressão limpa
               setTimeout(() => {
                 window.print();
                 
