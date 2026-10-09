@@ -40,7 +40,7 @@
         left: 0 !important;
         top: 0 !important;
         margin: 0 !important;
-        padding: 0 2px !important; /* Respiro lateral para evitar corte de caracteres */
+        padding: 0 2px !important;
         box-sizing: border-box !important;
         
         font-family: 'Courier New', Courier, monospace !important;
@@ -51,24 +51,25 @@
         print-color-adjust: exact !important;
       }
 
-      /* Aumentado levemente para 15px (evita letra miúda) e largura ajustada para 34ch para não cortar nas pontas */
+      /* CONFIGURAÇÃO 58MM (Fontes aumentadas e 34ch para evitar cortes) */
       #cupom-html-impressao.largura-58 {
         width: 34ch !important;
         max-width: 100% !important;
-        font-size: 15px !important;
+        font-size: 16px !important;
       }
-      #cupom-html-impressao.largura-58 .header-loja { font-size: 18px !important; }
-      #cupom-html-impressao.largura-58 .status-box { font-size: 13px !important; padding: 4px !important; }
-      #cupom-html-impressao.largura-58 .pedido-box { font-size: 22px !important; } /* Pedido bem grandão */
+      #cupom-html-impressao.largura-58 .header-loja { font-size: 19px !important; }
+      #cupom-html-impressao.largura-58 .status-box { font-size: 14px !important; padding: 5px !important; }
+      #cupom-html-impressao.largura-58 .pedido-box { font-size: 25px !important; } /* Pedido bem destacado */
 
+      /* CONFIGURAÇÃO 80MM (Proporcionalmente maior e 48ch) */
       #cupom-html-impressao.largura-80 {
         width: 48ch !important;
         max-width: 100% !important;
-        font-size: 17px !important;
+        font-size: 18px !important;
       }
-      #cupom-html-impressao.largura-80 .header-loja { font-size: 21px !important; }
-      #cupom-html-impressao.largura-80 .status-box { font-size: 15px !important; padding: 4px !important; }
-      #cupom-html-impressao.largura-80 .pedido-box { font-size: 26px !important; }
+      #cupom-html-impressao.largura-80 .header-loja { font-size: 22px !important; }
+      #cupom-html-impressao.largura-80 .status-box { font-size: 16px !important; padding: 5px !important; }
+      #cupom-html-impressao.largura-80 .pedido-box { font-size: 30px !important; } /* Pedido gigantesco para 80mm */
       
       .text-center { text-align: center; }
       .bold { font-weight: 700 !important; }
@@ -224,7 +225,7 @@
 
               divTicket.innerHTML = `
                 <div class="header-loja bold">${cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS'}</div>
-                <div class="text-center" style="font-size: 13px;">${venda.dataHora}</div>
+                <div class="text-center" style="font-size: 14px;">${venda.dataHora}</div>
                 <div class="divider-strong"></div>
                 
                 <div class="pedido-box bold text-center">
@@ -251,7 +252,7 @@
                 ${taxaEntrega > 0 ? `
                 <div style="display: flex; justify-content: space-between;">
                   <span>TAXA ENT:</span>
-                  <span>R$ ${taxaPreço = taxaEntrega.toFixed(2)}</span>
+                  <span>R$ ${taxaEntrega.toFixed(2)}</span>
                 </div>` : ''}
                 ${descontoTotal > 0 ? `
                 <div style="display: flex; justify-content: space-between;">
