@@ -6,7 +6,7 @@
   <title>Sistema VPrime</title>
   <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ">
 
-  <style>
+ <style>
     html, body {
       margin: 0;
       padding: 0;
@@ -28,6 +28,13 @@
         display: none !important;
       }
       
+      /* FORÇA O CORPO DA PÁGINA DE IMPRESSÃO A ALINHAR À ESQUERDA SEM CENTRALIZAR */
+      html, body {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
       #cupom-html-impressao {
         display: block !important;
         position: absolute !important;
@@ -35,7 +42,6 @@
         top: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
-        width: 100% !important;
         box-sizing: border-box !important;
         
         font-family: 'Courier New', Courier, monospace !important;
@@ -46,9 +52,10 @@
         print-color-adjust: exact !important;
       }
 
-      /* FONTES IDEAIS E FORÇANDO 100% DE LARGURA EM TODOS OS ELEMENTOS INTERNOS */
+      /* DEFINE A LARGURA EXATA DA BOBINA PARA QUE O NAVEGADOR NÃO CRIE MARGEM À DIREITA */
       #cupom-html-impressao.largura-58 {
         width: 58mm !important;
+        max-width: 58mm !important;
         font-size: 15px !important; 
       }
       #cupom-html-impressao.largura-58 .header-loja { font-size: 18px !important; }
@@ -57,6 +64,7 @@
 
       #cupom-html-impressao.largura-80 {
         width: 80mm !important;
+        max-width: 80mm !important;
         font-size: 18px !important;
       }
       #cupom-html-impressao.largura-80 .header-loja { font-size: 21px !important; }
@@ -66,7 +74,6 @@
       .text-center { text-align: center; }
       .bold { font-weight: 700 !important; }
       
-      /* GARANTE QUE CADA BLOCO DE TEXTO OCUPE A LARGURA TOTAL SEM DEIXAR BORDAS */
       #cupom-html-impressao div {
         width: 100% !important;
         box-sizing: border-box !important;
@@ -129,11 +136,13 @@
       }
 
       @page {
-        margin: 0mm !important;
-        size: auto;
+        margin: 0 !important;
+        size: 58mm auto; /* Força o tamanho do papel para a largura térmica (mude para 80mm se sua bobina for de 80mm) */
       }
     }
   </style>
+
+  
 </head>
 <body>
   <!-- Iframe que carrega o seu sistema principal do GAS -->
