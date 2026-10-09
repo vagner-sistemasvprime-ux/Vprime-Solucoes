@@ -49,7 +49,7 @@
       /* LARGURAS COM FONTES GRANDES E OCUPANDO 100% DA BOBINA */
       #cupom-html-impressao.largura-58 {
         width: 58mm !important;
-        font-size: 20px !important; /* Fonte bem grande e legível */
+        font-size: 20px !important;
       }
       #cupom-html-impressao.largura-58 .header-loja { font-size: 23px !important; }
       #cupom-html-impressao.largura-58 .status-box { font-size: 16px !important; padding: 5px !important; }
@@ -103,26 +103,11 @@
         box-sizing: border-box !important;
       }
 
-      /* Garante que o corpo e as linhas preencham toda a largura sem sobrar espaço lateral */
+      /* ESTILO FLUIDO PARA OS ITENS (Nome em cima ocupando largura total e valor logo abaixo) */
       .item-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 5px;
         width: 100% !important;
         box-sizing: border-box !important;
-      }
-
-      .item-desc { 
-        width: 70% !important; 
-        word-break: break-word; 
-        padding-right: 4px;
-      }
-      
-      .item-val { 
-        width: 30% !important; 
-        text-align: right; 
-        white-space: nowrap; 
+        margin-bottom: 6px !important;
       }
 
       .totais-row {
@@ -213,14 +198,14 @@
                 }
               });
 
-              // Usa a quantidade correta do item (i.qtd)
+              // ITENS COM LARGURA TOTAL E VALOR ABAIXO (Elimina esmagamento de descrições longas)
               let itensHtml = itensFiltrados.map((i) => {
                 let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
                 let qtdReal = i.qtd || 1;
                 return `
                   <div class="item-row">
-                    <span class="item-desc">${qtdReal}x ${i.nome}</span>
-                    <span class="item-val">R$ ${subtotalItem.toFixed(2)}</span>
+                    <div style="font-weight: 700; word-break: break-word;">${qtdReal}x ${i.nome}</div>
+                    <div style="text-align: right; font-weight: 700; margin-top: 2px;">R$ ${subtotalItem.toFixed(2)}</div>
                   </div>
                 `;
               }).join('');
