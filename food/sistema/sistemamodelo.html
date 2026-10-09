@@ -6,7 +6,7 @@
   <title>Sistema VPrime</title>
   <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1l8pCAVl1Om3oIJ60pn1r4r9GSuBeZkhQ">
 
- <style>
+  <style>
     html, body {
       margin: 0;
       padding: 0;
@@ -35,33 +35,33 @@
         top: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
-        width: 100% !important; /* Força consumir 100% da largura disponível */
+        width: 100% !important;
+        box-sizing: border-box !important;
         
         font-family: 'Courier New', Courier, monospace !important;
         font-weight: 700 !important;
         line-height: 1.15 !important;
-        
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
 
-      /* LARGURAS COM FONTES BEM MAIORES E OCUPANDO TOTALMENTE O ESPAÇO */
+      /* LARGURAS COM FONTES GRANDES E OCUPANDO 100% DA BOBINA */
       #cupom-html-impressao.largura-58 {
         width: 58mm !important;
-        font-size: 18px !important; /* Aumentado consideravelmente */
+        font-size: 20px !important; /* Fonte bem grande e legível */
       }
-      #cupom-html-impressao.largura-58 .header-loja { font-size: 21px !important; }
-      #cupom-html-impressao.largura-58 .status-box { font-size: 15px !important; padding: 4px !important; width: 100% !important; box-sizing: border-box; }
-      #cupom-html-impressao.largura-58 .pedido-box { font-size: 24px !important; }
+      #cupom-html-impressao.largura-58 .header-loja { font-size: 23px !important; }
+      #cupom-html-impressao.largura-58 .status-box { font-size: 16px !important; padding: 5px !important; }
+      #cupom-html-impressao.largura-58 .pedido-box { font-size: 26px !important; }
 
       #cupom-html-impressao.largura-80 {
         width: 80mm !important;
-        font-size: 21px !important;
+        font-size: 23px !important;
       }
-      #cupom-html-impressao.largura-80 .header-loja { font-size: 25px !important; }
-      #cupom-html-impressao.largura-80 .status-box { font-size: 17px !important; padding: 4px !important; width: 100% !important; box-sizing: border-box; }
-      #cupom-html-impressao.largura-80 .pedido-box { font-size: 28px !important; }
+      #cupom-html-impressao.largura-80 .header-loja { font-size: 26px !important; }
+      #cupom-html-impressao.largura-80 .status-box { font-size: 18px !important; padding: 5px !important; }
+      #cupom-html-impressao.largura-80 .pedido-box { font-size: 30px !important; }
       
       .text-center { text-align: center; }
       .bold { font-weight: 700 !important; }
@@ -73,51 +73,54 @@
       }
 
       .divider { 
-        border-top: 1px dashed #000000; 
-        margin: 4px 0; 
+        border-top: 1.5px dashed #000000; 
+        margin: 5px 0; 
         width: 100%;
       }
       
       .divider-strong { 
-        border-top: 2px solid #000000; 
-        margin: 4px 0; 
+        border-top: 2.5px solid #000000; 
+        margin: 5px 0; 
         width: 100%;
       }
       
       .status-box {
         text-align: center;
-        border: 1.5px solid #000000;
-        margin: 5px 0;
+        border: 2px solid #000000;
+        margin: 6px 0;
         background-color: #000 !important;
         color: #fff !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
 
       .pedido-box {
         text-align: center;
-        margin: 4px 0;
-        letter-spacing: 1px;
-        width: 100%;
+        margin: 6px 0;
+        width: 100% !important;
+        box-sizing: border-box !important;
       }
 
-      /* Garante que o corpo e os blocos de itens estiquem até a borda */
+      /* Garante que o corpo e as linhas preencham toda a largura sem sobrar espaço lateral */
       .item-row {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 4px;
-        width: 100%;
+        margin-bottom: 5px;
+        width: 100% !important;
+        box-sizing: border-box !important;
       }
 
       .item-desc { 
-        width: 72%; 
+        width: 70% !important; 
         word-break: break-word; 
-        padding-right: 2px;
+        padding-right: 4px;
       }
       
       .item-val { 
-        width: 28%; 
+        width: 30% !important; 
         text-align: right; 
         white-space: nowrap; 
       }
@@ -125,19 +128,18 @@
       .totais-row {
         display: flex;
         justify-content: space-between;
-        margin-top: 4px;
-        width: 100%;
+        margin-top: 5px;
+        width: 100% !important;
+        box-sizing: border-box !important;
       }
 
-      /* Zera totalmente as margens e força ajuste de largura da página */
+      /* Zera totalmente as margens da página do navegador */
       @page {
         margin: 0mm !important;
         size: auto;
       }
     }
   </style>
-
-  
 </head>
 <body>
   <!-- Iframe que carrega o seu sistema principal do GAS -->
@@ -223,10 +225,10 @@
                 `;
               }).join('');
 
-              // MONTAGEM DO HTML DO CUPOM (Com o layout exato solicitado no formato enquadrado)
+              // MONTAGEM DO HTML DO CUPOM (Padrão exato com moldura do pedido)
               divTicket.innerHTML = `
                 <div class="header-loja bold">${cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS'}</div>
-                <div class="text-center" style="font-size: 13px;">${venda.dataHora}</div>
+                <div class="text-center" style="font-size: 14px;">${venda.dataHora}</div>
                 <div class="divider-strong"></div>
                 
                 <div class="pedido-box pedido-grande bold text-center">
@@ -247,22 +249,22 @@
                 <div class="divider"></div>
 
                 <!-- RODAPÉ FINANCEIRO ORGANIZADO -->
-                <div style="display: flex; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; width: 100%;">
                   <span>SUBTOTAL:</span>
                   <span>R$ ${subtotalProdutos.toFixed(2)}</span>
                 </div>
                 ${taxaEntrega > 0 ? `
-                <div style="display: flex; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; width: 100%;">
                   <span>TAXA ENT:</span>
                   <span>R$ ${taxaEntrega.toFixed(2)}</span>
                 </div>` : ''}
                 ${descontoTotal > 0 ? `
-                <div style="display: flex; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; width: 100%;">
                   <span>DESCONTO:</span>
                   <span>-R$ ${descontoTotal.toFixed(2)}</span>
                 </div>` : ''}
                 ${cashbackTotal > 0 ? `
-                <div style="display: flex; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; width: 100%;">
                   <span>CASHBACK:</span>
                   <span>-R$ ${cashbackTotal.toFixed(2)}</span>
                 </div>` : ''}
@@ -272,12 +274,12 @@
                   <span>TOTAL:</span>
                   <span>R$ ${Number(venda.total).toFixed(2)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                <div style="display: flex; justify-content: space-between; margin-top: 3px; width: 100%;">
                   <span>PAGTO:</span>
                   <span>${venda.formaPagamento}</span>
                 </div>
                 ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
-                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                <div style="display: flex; justify-content: space-between; margin-top: 3px; width: 100%;">
                   <span>TROCO:</span>
                   <span>R$ ${venda.troco}</span>
                 </div>` : ''}
