@@ -40,99 +40,26 @@
         left: 0 !important;
         top: 0 !important;
         margin: 0 !important;
-        padding: 0 1mm !important; /* Margem interna mínima de segurança */
+        padding: 0 !important;
         box-sizing: border-box !important;
         
         font-family: 'Courier New', Courier, monospace !important;
         font-weight: 700 !important;
         line-height: 1.15 !important;
+        white-space: pre !important;
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
 
-      /* CONFIGURAÇÃO 58MM (30ch exatos para evitar estourar o rolo e cortar a direita) */
       #cupom-html-impressao.largura-58 {
-        width: 30ch !important;
-        max-width: 30ch !important;
-        font-size: 13px !important;
+        width: 48mm !important;
+        font-size: 11px !important;
       }
-      #cupom-html-impressao.largura-58 .header-loja { font-size: 15px !important; }
-      #cupom-html-impressao.largura-58 .status-box { font-size: 12px !important; padding: 3px !important; }
-      #cupom-html-impressao.largura-58 .pedido-box { font-size: 18px !important; }
 
-      /* CONFIGURAÇÃO 80MM (44ch seguros) */
       #cupom-html-impressao.largura-80 {
-        width: 44ch !important;
-        max-width: 44ch !important;
-        font-size: 15px !important;
-      }
-      #cupom-html-impressao.largura-80 .header-loja { font-size: 18px !important; }
-      #cupom-html-impressao.largura-80 .status-box { font-size: 14px !important; padding: 4px !important; }
-      #cupom-html-impressao.largura-80 .pedido-box { font-size: 24px !important; }
-      
-      .text-center { text-align: center; }
-      .bold { font-weight: 700 !important; }
-      
-      #cupom-html-impressao div {
-        width: 100% !important;
-        box-sizing: border-box !important;
-      }
-
-      .header-loja {
-        text-align: center;
-        margin-bottom: 3px;
-      }
-
-      .divider { 
-        border-top: 1.5px dashed #000000; 
-        margin: 3px 0; 
-      }
-      
-      .divider-strong { 
-        border-top: 2.5px solid #000000; 
-        margin: 3px 0; 
-      }
-      
-      .status-box {
-        text-align: center;
-        border: 1.5px solid #000000;
-        margin: 4px 0;
-        background-color: #000 !important;
-        color: #fff !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-
-      .pedido-box {
-        text-align: center;
-        margin: 4px 0;
-      }
-
-      .item-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 3px;
-        width: 100% !important;
-      }
-
-      .item-desc { 
-        width: 68% !important; 
-        word-break: break-word; 
-        padding-right: 2px;
-      }
-      
-      .item-val { 
-        width: 32% !important; 
-        text-align: right; 
-        white-space: nowrap; 
-      }
-
-      .totais-row {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 3px;
+        width: 72mm !important;
+        font-size: 13px !important;
       }
 
       @page {
@@ -180,12 +107,66 @@
               
               divTicket.className = "";
               let larguraStr = String(cfg.larguraPadrao).toLowerCase();
-              if (larguraStr.includes("80")) {
+              let is80 = larguraStr.includes("80");
+              
+              if (is80) {
                 divTicket.classList.add("largura-80");
               } else {
                 divTicket.classList.add("largura-58");
               }
-              
+
+              // Lógica de colunas estritas por caractere
+              const largura = is80 ? 42 : 24;
+
+              const limparTexto = (str) => {
+                if (!str) return "";
+                return String(str).normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "")
+                  .replace(/[^\x20-\x7E]/g, "")
+                  .toUpperCase()
+                  .trim();
+              };
+
+              const line = (char = "-") => char.repeat(largura);
+
+              const centralizar = (texto) => {
+                texto = limparTexto(texto);
+                const espacos = Math.floor((largura - texto.length) / 2);
+                return " ".repeat(Math.max(0, espacos)) + texto;
+              };
+
+              const esquerdaDireita = (esq, dir) => {
+                esq = limparTexto(esq);
+                dir = limparTexto(dir);
+                const espacos = largura - esq.length - dir.length;
+                return esq + " ".repeat(Math.max(1, espacos)) + dir;
+              };
+
+              const quebrarLinha = (texto) => {
+                texto = limparTexto(texto);
+                const palavras = texto.split(" ");
+                const linhas = [];
+                let linhaAtual = "";
+                
+                palavras.forEach(palavra => {
+                  if (palavra.length > largura) {
+                    if (linhaAtual) linhas.push(linhaAtual);
+                    linhas.push(palavra.substring(0, largura));
+                    linhaAtual = "";
+                    return;
+                  }
+                  if ((linhaAtual + " " + palavra).trim().length <= largura) {
+                    linhaAtual += (linhaAtual ? " " : "") + palavra;
+                  } else {
+                    if (linhaAtual) linhas.push(linhaAtual);
+                    linhaAtual = palavra;
+                  }
+                });
+                if (linhaAtual) linhas.push(linhaAtual); 
+                return linhas;
+              };
+
+              // Tratamento Financeiro
               let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
               let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
               
@@ -211,77 +192,74 @@
                 }
               });
 
-              let itensHtml = itensFiltrados.map((i) => {
+              // Montagem do texto em colunas
+              let txt = "";
+
+              // Cabeçalho
+              const nomeLoja = cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS';
+              quebrarLinha(nomeLoja).forEach(l => txt += centralizar(l) + "\n");
+              txt += centralizar(venda.dataHora || "") + "\n";
+              txt += line("=") + "\n";
+
+              // Pedido
+              quebrarLinha(venda.pedido || "PEDIDO").forEach(l => txt += centralizar(l) + "\n");
+              txt += line("=") + "\n";
+
+              // Cliente
+              txt += "CLIENTE:\n";
+              quebrarLinha(venda.cliente || "CONSUMIDOR").forEach(l => txt += l + "\n");
+              if (venda.telefone) txt += "FONE: " + limparTexto(venda.telefone) + "\n";
+              
+              txt += "ENDERECO:\n";
+              quebrarLinha(venda.endereco || 'RETIRADA').forEach(l => txt += l + "\n");
+              txt += line() + "\n";
+
+              txt += centralizar(msgPagto) + "\n";
+              txt += line() + "\n";
+
+              txt += centralizar("ITENS DO PEDIDO") + "\n";
+              txt += line() + "\n";
+
+              // Itens
+              itensFiltrados.forEach(i => {
                 let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
-                let qtdReal = i.qtd || 1;
-                return `
-                  <div class="item-row">
-                    <div class="item-desc">${qtdReal}x ${i.nome}</div>
-                    <div class="item-val">R$ ${subtotalItem.toFixed(2)}</div>
-                  </div>
-                `;
-              }).join('');
+                let qtdReal = String(i.qtd || 1).padStart(2, '0') + 'X';
+                let totalStr = `R$ ${subtotalItem.toFixed(2)}`;
+                let descItem = `${qtdReal} ${limparTexto(i.nome)}`;
 
-              divTicket.innerHTML = `
-                <div class="header-loja bold">${cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS'}</div>
-                <div class="text-center" style="font-size: 11px;">${venda.dataHora}</div>
-                <div class="divider-strong"></div>
-                
-                <div class="pedido-box bold text-center">
-                  ==============================<br>
-                  ${venda.pedido}<br>
-                  ==============================
-                </div>
+                let linhasDesc = quebrarLinha(descItem);
+                if (linhasDesc.length > 0) {
+                  if ((linhasDesc[0].length + totalStr.length + 1) <= largura) {
+                    txt += esquerdaDireita(linhasDesc[0], totalStr) + "\n";
+                    linhasDesc.slice(1).forEach(l => txt += l + "\n");
+                  } else {
+                    txt += linhasDesc[0] + "\n";
+                    linhasDesc.slice(1).forEach(l => txt += l + "\n");
+                    txt += " ".repeat(Math.max(0, largura - totalStr.length)) + totalStr + "\n";
+                  }
+                }
+              });
 
-                <div><b>CLIENTE:</b> ${venda.cliente}</div>
-                ${venda.telefone ? `<div><b>FONE:</b> ${venda.telefone}</div>` : ''}
-                <div><b>END:</b> ${venda.endereco || 'RETIRADA'}</div>
-                <div class="divider"></div>
-                <div class="status-box">${msgPagto}</div>
-                <div class="divider"></div>
-                <div class="bold text-center">ITENS DO PEDIDO</div>
-                <div class="divider"></div>
-                ${itensHtml}
-                <div class="divider"></div>
+              txt += line() + "\n";
 
-                <div style="display: flex; justify-content: space-between;">
-                  <span>SUBTOTAL:</span>
-                  <span>R$ ${subtotalProdutos.toFixed(2)}</span>
-                </div>
-                ${taxaEntrega > 0 ? `
-                <div style="display: flex; justify-content: space-between;">
-                  <span>TAXA ENT:</span>
-                  <span>R$ ${taxaEntrega.toFixed(2)}</span>
-                </div>` : ''}
-                ${descontoTotal > 0 ? `
-                <div style="display: flex; justify-content: space-between;">
-                  <span>DESCONTO:</span>
-                  <span>-R$ ${descontoTotal.toFixed(2)}</span>
-                </div>` : ''}
-                ${cashbackTotal > 0 ? `
-                <div style="display: flex; justify-content: space-between;">
-                  <span>CASHBACK:</span>
-                  <span>-R$ ${cashbackTotal.toFixed(2)}</span>
-                </div>` : ''}
+              // Totais
+              txt += esquerdaDireita("SUBTOTAL", `R$ ${subtotalProdutos.toFixed(2)}`) + "\n";
+              if (taxaEntrega > 0) txt += esquerdaDireita("TAXA ENT", `R$ ${taxaEntrega.toFixed(2)}`) + "\n";
+              if (descontoTotal > 0) txt += esquerdaDireita("DESCONTO", `-R$ ${descontoTotal.toFixed(2)}`) + "\n";
+              if (cashbackTotal > 0) txt += esquerdaDireita("CASHBACK", `-R$ ${cashbackTotal.toFixed(2)}`) + "\n";
 
-                <div class="divider"></div>
-                <div class="totais-row bold">
-                  <span>TOTAL:</span>
-                  <span>R$ ${Number(venda.total).toFixed(2)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 2px;">
-                  <span>PAGTO:</span>
-                  <span>${venda.formaPagamento}</span>
-                </div>
-                ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
-                <div style="display: flex; justify-content: space-between; margin-top: 2px;">
-                  <span>TROCO:</span>
-                  <span>R$ ${venda.troco}</span>
-                </div>` : ''}
-                <div class="divider-strong"></div>
-                <div class="text-center bold">CARDAPIO DIGITAL</div>
-                <br><br><br>
-              `;
+              txt += line() + "\n";
+              txt += esquerdaDireita("TOTAL", `R$ ${Number(venda.total).toFixed(2)}`) + "\n";
+              txt += esquerdaDireita("PAGTO", venda.formaPagamento || "A DEFINIR") + "\n";
+
+              if (venda.troco && venda.troco !== "0" && venda.troco !== "") {
+                txt += esquerdaDireita("TROCO", `R$ ${venda.troco}`) + "\n";
+              }
+
+              txt += line("=") + "\n";
+              txt += centralizar("CARDAPIO DIGITAL") + "\n\n\n\n\n";
+
+              divTicket.innerHTML = txt;
 
               setTimeout(() => {
                 window.print();
