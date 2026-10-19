@@ -40,7 +40,6 @@
         left: 0 !important;
         top: 0 !important;
         margin: 0 !important;
-        padding: 0 !important;
         box-sizing: border-box !important;
         
         font-family: 'Courier New', Courier, monospace !important;
@@ -52,9 +51,11 @@
         print-color-adjust: exact !important;
       }
 
+      /* CONFIGURAÇÃO DENSIDADE E MARGEM DE SEGURANÇA PARA A KNUP 58MM */
       #cupom-html-impressao.largura-58 {
-        width: 48mm !important;
-        font-size: 11px !important;
+        width: 44mm !important;
+        padding-left: 1mm !important; /* Margem de recuo para nao colar na ponta */
+        font-size: 10.5px !important; /* Fonte ligeiramente menor para a Knup acomodar tudo */
       }
 
       #cupom-html-impressao.largura-80 {
@@ -115,8 +116,8 @@
                 divTicket.classList.add("largura-58");
               }
 
-              // Lógica de colunas estritas por caractere
-              const largura = is80 ? 42 : 24;
+              // Lógica de colunas ultra-seguras (21 colunas garante que NENHUMA impressora 58mm corte a direita)
+              const largura = is80 ? 42 : 21;
 
               const limparTexto = (str) => {
                 if (!str) return "";
@@ -168,7 +169,7 @@
 
               // Tratamento Financeiro
               let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
-              let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
+              let msgPagto = isPendente ? ">>> PENDENTE <<<" : "*** PAGO ***";
               
               let itensFiltrados = [];
               let taxaEntrega = Number(venda.taxaEntrega) || 0;
@@ -192,7 +193,7 @@
                 }
               });
 
-              // Montagem do texto em colunas
+              // Montagem do texto em colunas reduzidas
               let txt = "";
 
               // Cabeçalho
