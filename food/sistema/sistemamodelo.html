@@ -40,36 +40,36 @@
         left: 0 !important;
         top: 0 !important;
         margin: 0 !important;
-        padding: 0 2px !important;
+        padding: 0 1mm !important; /* Margem interna mínima de segurança */
         box-sizing: border-box !important;
         
-        font-family: 'Courier New', Courier, Lucida Console, monospace !important;
+        font-family: 'Courier New', Courier, monospace !important;
         font-weight: 700 !important;
-        line-height: 1.2 !important;
+        line-height: 1.15 !important;
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
 
-      /* CONFIGURAÇÃO 58MM (Fontes aumentadas e 34ch para evitar cortes) */
+      /* CONFIGURAÇÃO 58MM (30ch exatos para evitar estourar o rolo e cortar a direita) */
       #cupom-html-impressao.largura-58 {
-        width: 34ch !important;
-        max-width: 100% !important;
-        font-size: 16px !important;
+        width: 30ch !important;
+        max-width: 30ch !important;
+        font-size: 13px !important;
       }
-      #cupom-html-impressao.largura-58 .header-loja { font-size: 19px !important; }
-      #cupom-html-impressao.largura-58 .status-box { font-size: 14px !important; padding: 5px !important; }
-      #cupom-html-impressao.largura-58 .pedido-box { font-size: 25px !important; } /* Pedido bem destacado */
+      #cupom-html-impressao.largura-58 .header-loja { font-size: 15px !important; }
+      #cupom-html-impressao.largura-58 .status-box { font-size: 12px !important; padding: 3px !important; }
+      #cupom-html-impressao.largura-58 .pedido-box { font-size: 18px !important; }
 
-      /* CONFIGURAÇÃO 80MM (Proporcionalmente maior e 48ch) */
+      /* CONFIGURAÇÃO 80MM (44ch seguros) */
       #cupom-html-impressao.largura-80 {
-        width: 48ch !important;
-        max-width: 100% !important;
-        font-size: 18px !important;
+        width: 44ch !important;
+        max-width: 44ch !important;
+        font-size: 15px !important;
       }
-      #cupom-html-impressao.largura-80 .header-loja { font-size: 22px !important; }
-      #cupom-html-impressao.largura-80 .status-box { font-size: 16px !important; padding: 5px !important; }
-      #cupom-html-impressao.largura-80 .pedido-box { font-size: 30px !important; } /* Pedido gigantesco para 80mm */
+      #cupom-html-impressao.largura-80 .header-loja { font-size: 18px !important; }
+      #cupom-html-impressao.largura-80 .status-box { font-size: 14px !important; padding: 4px !important; }
+      #cupom-html-impressao.largura-80 .pedido-box { font-size: 24px !important; }
       
       .text-center { text-align: center; }
       .bold { font-weight: 700 !important; }
@@ -81,23 +81,23 @@
 
       .header-loja {
         text-align: center;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
       }
 
       .divider { 
         border-top: 1.5px dashed #000000; 
-        margin: 4px 0; 
+        margin: 3px 0; 
       }
       
       .divider-strong { 
         border-top: 2.5px solid #000000; 
-        margin: 4px 0; 
+        margin: 3px 0; 
       }
       
       .status-box {
         text-align: center;
         border: 1.5px solid #000000;
-        margin: 5px 0;
+        margin: 4px 0;
         background-color: #000 !important;
         color: #fff !important;
         -webkit-print-color-adjust: exact !important;
@@ -106,26 +106,25 @@
 
       .pedido-box {
         text-align: center;
-        margin: 6px 0;
-        letter-spacing: 1px;
+        margin: 4px 0;
       }
 
       .item-row {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 5px;
+        margin-bottom: 3px;
         width: 100% !important;
       }
 
       .item-desc { 
-        width: 70% !important; 
+        width: 68% !important; 
         word-break: break-word; 
-        padding-right: 4px;
+        padding-right: 2px;
       }
       
       .item-val { 
-        width: 30% !important; 
+        width: 32% !important; 
         text-align: right; 
         white-space: nowrap; 
       }
@@ -133,7 +132,7 @@
       .totais-row {
         display: flex;
         justify-content: space-between;
-        margin-top: 5px;
+        margin-top: 3px;
       }
 
       @page {
@@ -225,7 +224,7 @@
 
               divTicket.innerHTML = `
                 <div class="header-loja bold">${cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS'}</div>
-                <div class="text-center" style="font-size: 14px;">${venda.dataHora}</div>
+                <div class="text-center" style="font-size: 11px;">${venda.dataHora}</div>
                 <div class="divider-strong"></div>
                 
                 <div class="pedido-box bold text-center">
@@ -266,16 +265,16 @@
                 </div>` : ''}
 
                 <div class="divider"></div>
-                <div class="totais-row bold" style="font-size: 1.15em;">
+                <div class="totais-row bold">
                   <span>TOTAL:</span>
                   <span>R$ ${Number(venda.total).toFixed(2)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                <div style="display: flex; justify-content: space-between; margin-top: 2px;">
                   <span>PAGTO:</span>
                   <span>${venda.formaPagamento}</span>
                 </div>
                 ${venda.troco && venda.troco !== "0" && venda.troco !== "" ? `
-                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                <div style="display: flex; justify-content: space-between; margin-top: 2px;">
                   <span>TROCO:</span>
                   <span>R$ ${venda.troco}</span>
                 </div>` : ''}
