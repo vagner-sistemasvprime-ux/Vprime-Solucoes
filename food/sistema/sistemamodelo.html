@@ -16,66 +16,11 @@
     }
     body { font-family: Arial, sans-serif; }
     #sistemaIframe { width: 100%; height: 100%; border: none; }
-
-    #cupom-html-impressao {
-      position: absolute;
-      left: -9999px;
-      top: 0;
-    }
-
-    @media print {
-      body > *:not(#cupom-html-impressao) {
-        display: none !important;
-      }
-      
-      html, body {
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-
-      #cupom-html-impressao {
-        display: block !important;
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
-        margin: 0 !important;
-        box-sizing: border-box !important;
-        
-        font-family: 'Courier New', Courier, monospace !important;
-        font-weight: 700 !important;
-        line-height: 1.15 !important;
-        white-space: pre !important;
-        color: #000000 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-
-      /* CONFIGURAÇÃO DENSIDADE E MARGEM DE SEGURANÇA PARA A KNUP 58MM */
-      #cupom-html-impressao.largura-58 {
-        width: 44mm !important;
-        padding-left: 1mm !important; /* Margem de recuo para nao colar na ponta */
-        font-size: 10.5px !important; /* Fonte ligeiramente menor para a Knup acomodar tudo */
-      }
-
-      #cupom-html-impressao.largura-80 {
-        width: 72mm !important;
-        font-size: 13px !important;
-      }
-
-      @page {
-        size: auto;
-        margin: 0mm !important;
-      }
-    }
   </style>
 </head>
 <body>
-  <!-- Iframe que carrega o seu sistema principal do GAS -->
+  <!-- Iframe principal do sistema -->
   <iframe id="sistemaIframe" src="" allow="clipboard-read; clipboard-write" title="Sistema Lojista"></iframe>
-
-  <!-- Div invisível que recebe o layout formatado em HTML para impressão -->
-  <div id="cupom-html-impressao"></div>
 
   <script>
     (function() {
@@ -84,6 +29,222 @@
       const queryParams = window.location.search;
       const iframeApp = document.getElementById('sistemaIframe');
       iframeApp.src = urlBase + queryParams;
+
+      function imprimirPedidoSentinela(venda, cfg) {
+        const tamanhoPapel = cfg.larguraPadrao || "58";
+        const largura = tamanhoPapel === "80" ? 42 : 24; 
+
+        const limparTexto = (str) => {
+          if (!str) return "";
+          return String(str).normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^\x20-\x7E]/g, "")
+            .toUpperCase()
+            .trim();
+        };
+
+        const line = (char = "-") => char.repeat(largura);
+
+        const centralizar = (texto) => {
+          texto = limparTexto(texto);
+          const espacos = Math.floor((largura - texto.length) / 2);
+          return " ".repeat(Math.max(0, espacos)) + texto;
+        };
+
+        const esquerdaDireita = (esq, dir) => {
+          esq = limparTexto(esq);
+          dir = limparTexto(dir);
+          const espacos = largura - esq.length - dir.length;
+          return esq + " ".repeat(Math.max(1, espacos)) + dir;
+        };
+
+        const quebrarLinha = (texto) => {
+          texto = limparTexto(texto);
+          const palavras = texto.split(" ");
+          const linhas = [];
+          let linhaAtual = "";
+          
+          palavras.forEach(palavra => {
+            if (palavra.length > largura) {
+              if (linhaAtual) linhas.push(linhaAtual);
+              linhas.push(palavra.substring(0, largura));
+              linhaAtual = "";
+              return;
+            }
+            if ((linhaAtual + " " + palavra).trim().length <= largura) {
+              linhaAtual += (linhaAtual ? " " : "") + palavra;
+            } else {
+              if (linhaAtual) linhas.push(linhaAtual);
+              linhaAtual = palavra;
+            }
+          });
+          if (linhaAtual) linhas.push(linhaAtual); 
+          return linhas;
+        };
+
+        // --- FILTRAGEM E CÁLCULO DE ITENS (LAYOUT ORIGINAL) ---
+        let itensFiltrados = [];
+        let taxaEntrega = Number(venda.taxaEntrega) || 0;
+        let descontoTotal = Number(venda.desconto) || 0;
+        let cashbackTotal = Number(venda.cashback) || 0;
+        let subtotalProdutos = 0;
+
+        (venda.itens || []).forEach(i => {
+          let nome = String(i.nome || "").toUpperCase();
+          let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
+
+          if (nome.includes("TAXA") || nome.includes("FRETE") || i.id === "FRETE" || i.isTaxa) {
+            taxaEntrega += Math.abs(subtotalItem);
+          } else if (nome.includes("CUPOM") || nome.includes("DESCONTO MANUAL") || nome.includes("DESCONTO")) {
+            descontoTotal += Math.abs(subtotalItem);
+          } else if (nome.includes("CASHBACK")) {
+            cashbackTotal += Math.abs(subtotalItem);
+          } else {
+            subtotalProdutos += subtotalItem;
+            itensFiltrados.push(i);
+          }
+        });
+
+        let textoFinal = "";
+
+        // Header Loja e Data
+        const nomeLoja = cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS';
+        quebrarLinha(nomeLoja).forEach(l => textoFinal += centralizar(l) + "\n");
+        textoFinal += centralizar(venda.dataHora || "") + "\n";
+        textoFinal += line("=") + "\n";
+
+        // Bloco do Pedido Destacado
+        const pedStr = String(venda.pedido || "0").toUpperCase();
+        textoFinal += centralizar(pedStr) + "\n";
+        textoFinal += line("=") + "\n";
+
+        // Cliente e Endereço
+        textoFinal += "CLIENTE: " + limparTexto(venda.cliente || "CONSUMIDOR") + "\n";
+        if (venda.telefone) {
+          textoFinal += "FONE: " + limparTexto(venda.telefone) + "\n";
+        }
+        textoFinal += "END: " + limparTexto(venda.endereco || 'RETIRADA') + "\n";
+        textoFinal += line() + "\n";
+
+        // Status Financeiro
+        let isPendente = String(venda.statusFinanceiro || "").toUpperCase().includes("PENDENTE");
+        let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
+        quebrarLinha(msgPagto).forEach(l => textoFinal += centralizar(l) + "\n");
+        textoFinal += line() + "\n";
+
+        // Tabela de Itens
+        textoFinal += centralizar("ITENS DO PEDIDO") + "\n";
+        textoFinal += line() + "\n";
+
+        itensFiltrados.forEach(i => {
+          let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
+          let qtdReal = String(i.qtd || 1).padStart(2, '0') + 'X';
+          let totalStr = `R$ ${subtotalItem.toFixed(2)}`;
+          let descItem = `${qtdReal} ${limparTexto(i.nome)}`;
+
+          let linhasDesc = quebrarLinha(descItem);
+          if (linhasDesc.length > 0) {
+            if ((linhasDesc[0].length + totalStr.length + 1) <= largura) {
+              textoFinal += esquerdaDireita(linhasDesc[0], totalStr) + "\n";
+              linhasDesc.slice(1).forEach(l => textoFinal += l + "\n");
+            } else {
+              textoFinal += linhasDesc[0] + "\n";
+              linhasDesc.slice(1).forEach(l => textoFinal += l + "\n");
+              textoFinal += " ".repeat(Math.max(0, largura - totalStr.length)) + totalStr + "\n";
+            }
+          }
+        });
+
+        textoFinal += line() + "\n";
+
+        // Totais e Financeiro
+        textoFinal += esquerdaDireita("SUBTOTAL", `R$ ${subtotalProdutos.toFixed(2)}`) + "\n";
+        if (taxaEntrega > 0) textoFinal += esquerdaDireita("TAXA ENT", `R$ ${taxaEntrega.toFixed(2)}`) + "\n";
+        if (descontoTotal > 0) textoFinal += esquerdaDireita("DESCONTO", `-R$ ${descontoTotal.toFixed(2)}`) + "\n";
+        if (cashbackTotal > 0) textoFinal += esquerdaDireita("CASHBACK", `-R$ ${cashbackTotal.toFixed(2)}`) + "\n";
+
+        textoFinal += line() + "\n";
+        textoFinal += esquerdaDireita("TOTAL", `R$ ${Number(venda.total || 0).toFixed(2)}`) + "\n";
+        textoFinal += esquerdaDireita("PAGTO", venda.formaPagamento || "A DEFINIR") + "\n";
+
+        if (venda.troco && venda.troco !== "0" && venda.troco !== "") {
+          let trocoVal = typeof venda.troco === 'number' ? venda.troco.toFixed(2) : String(venda.troco);
+          textoFinal += esquerdaDireita("TROCO", `R$ ${trocoVal}`) + "\n";
+        }
+
+        textoFinal += line("=") + "\n";
+        textoFinal += centralizar("CARDAPIO DIGITAL") + "\n\n\n\n\n";
+
+        // --- MONTAGEM DO IFRAME E IMPRESSÃO (IGUAL À SUA FUNÇÃO) ---
+        const larguraHtml = tamanhoPapel === "80" ? "72mm" : "48mm";
+        const urlLogoCliente = cfg.urlLogo || CONFIG.cliente.urlLogo || "";
+
+        const html = `
+        <html>
+          <head>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              @page { size: ${tamanhoPapel}mm auto; margin: 0; }
+              body {
+                font-family: 'Courier New', Courier, monospace;
+                font-weight: bold;
+                font-size: ${tamanhoPapel === "80" ? "13px" : "11px"};
+                line-height: 1.15;
+                width: ${larguraHtml};
+                margin: 0;
+                padding: 0;
+                color: #000;
+              }
+              .container-logo {
+                display: block;
+                text-align: center;
+                width: 100%;
+                padding: 6px 0;
+              }
+              .logo-impressao {
+                max-width: 60%;
+                height: auto;
+                display: ${urlLogoCliente ? 'block' : 'none'};
+                margin: 0 auto;
+                filter: grayscale(100%) contrast(200%);
+              }
+              .conteudo-texto {
+                white-space: pre;
+                width: 100%;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container-logo">
+              <img class="logo-impressao" src="${urlLogoCliente}" alt="Logo">
+            </div>
+            <div class="conteudo-texto">${textoFinal}</div>
+          </body>
+        </html>`;
+
+        let iframe = document.getElementById('iframe_impressao');
+        if (!iframe) {
+          iframe = document.createElement('iframe');
+          iframe.id = 'iframe_impressao';
+          iframe.style.position = 'fixed';
+          iframe.style.right = '0';
+          iframe.style.bottom = '0';
+          iframe.style.width = '0';
+          iframe.style.height = '0';
+          iframe.style.border = 'none';
+          document.body.appendChild(iframe);
+        }
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+
+        setTimeout(() => {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        }, 500);
+      }
 
       function verificarFilaImpressao() {
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -104,171 +265,8 @@
               
               let venda = data.pedidoObj;
               let cfg = data.config || { larguraPadrao: "58" };
-              let divTicket = document.getElementById('cupom-html-impressao');
               
-              divTicket.className = "";
-              let larguraStr = String(cfg.larguraPadrao).toLowerCase();
-              let is80 = larguraStr.includes("80");
-              
-              if (is80) {
-                divTicket.classList.add("largura-80");
-              } else {
-                divTicket.classList.add("largura-58");
-              }
-
-              // Lógica de colunas ultra-seguras (21 colunas garante que NENHUMA impressora 58mm corte a direita)
-              const largura = is80 ? 42 : 21;
-
-              const limparTexto = (str) => {
-                if (!str) return "";
-                return String(str).normalize("NFD")
-                  .replace(/[\u0300-\u036f]/g, "")
-                  .replace(/[^\x20-\x7E]/g, "")
-                  .toUpperCase()
-                  .trim();
-              };
-
-              const line = (char = "-") => char.repeat(largura);
-
-              const centralizar = (texto) => {
-                texto = limparTexto(texto);
-                const espacos = Math.floor((largura - texto.length) / 2);
-                return " ".repeat(Math.max(0, espacos)) + texto;
-              };
-
-              const esquerdaDireita = (esq, dir) => {
-                esq = limparTexto(esq);
-                dir = limparTexto(dir);
-                const espacos = largura - esq.length - dir.length;
-                return esq + " ".repeat(Math.max(1, espacos)) + dir;
-              };
-
-              const quebrarLinha = (texto) => {
-                texto = limparTexto(texto);
-                const palavras = texto.split(" ");
-                const linhas = [];
-                let linhaAtual = "";
-                
-                palavras.forEach(palavra => {
-                  if (palavra.length > largura) {
-                    if (linhaAtual) linhas.push(linhaAtual);
-                    linhas.push(palavra.substring(0, largura));
-                    linhaAtual = "";
-                    return;
-                  }
-                  if ((linhaAtual + " " + palavra).trim().length <= largura) {
-                    linhaAtual += (linhaAtual ? " " : "") + palavra;
-                  } else {
-                    if (linhaAtual) linhas.push(linhaAtual);
-                    linhaAtual = palavra;
-                  }
-                });
-                if (linhaAtual) linhas.push(linhaAtual); 
-                return linhas;
-              };
-
-              // Tratamento Financeiro
-              let isPendente = String(venda.statusFinanceiro).toUpperCase().includes("PENDENTE");
-              let msgPagto = isPendente ? ">>> PENDENTE <<<" : "*** PAGO ***";
-              
-              let itensFiltrados = [];
-              let taxaEntrega = Number(venda.taxaEntrega) || 0;
-              let descontoTotal = Number(venda.desconto) || 0;
-              let cashbackTotal = Number(venda.cashback) || 0;
-              let subtotalProdutos = 0;
-
-              (venda.itens || []).forEach(i => {
-                let nome = String(i.nome || "").toUpperCase();
-                let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
-
-                if (nome.includes("TAXA") || nome.includes("FRETE") || i.id === "FRETE" || i.isTaxa) {
-                  taxaEntrega += Math.abs(subtotalItem);
-                } else if (nome.includes("CUPOM") || nome.includes("DESCONTO MANUAL") || nome.includes("DESCONTO")) {
-                  descontoTotal += Math.abs(subtotalItem);
-                } else if (nome.includes("CASHBACK")) {
-                  cashbackTotal += Math.abs(subtotalItem);
-                } else {
-                  subtotalProdutos += subtotalItem;
-                  itensFiltrados.push(i);
-                }
-              });
-
-              // Montagem do texto em colunas reduzidas
-              let txt = "";
-
-              // Cabeçalho
-              const nomeLoja = cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS';
-              quebrarLinha(nomeLoja).forEach(l => txt += centralizar(l) + "\n");
-              txt += centralizar(venda.dataHora || "") + "\n";
-              txt += line("=") + "\n";
-
-              // Pedido
-              quebrarLinha(venda.pedido || "PEDIDO").forEach(l => txt += centralizar(l) + "\n");
-              txt += line("=") + "\n";
-
-              // Cliente
-              txt += "CLIENTE:\n";
-              quebrarLinha(venda.cliente || "CONSUMIDOR").forEach(l => txt += l + "\n");
-              if (venda.telefone) txt += "FONE: " + limparTexto(venda.telefone) + "\n";
-              
-              txt += "ENDERECO:\n";
-              quebrarLinha(venda.endereco || 'RETIRADA').forEach(l => txt += l + "\n");
-              txt += line() + "\n";
-
-              txt += centralizar(msgPagto) + "\n";
-              txt += line() + "\n";
-
-              txt += centralizar("ITENS DO PEDIDO") + "\n";
-              txt += line() + "\n";
-
-              // Itens
-              itensFiltrados.forEach(i => {
-                let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
-                let qtdReal = String(i.qtd || 1).padStart(2, '0') + 'X';
-                let totalStr = `R$ ${subtotalItem.toFixed(2)}`;
-                let descItem = `${qtdReal} ${limparTexto(i.nome)}`;
-
-                let linhasDesc = quebrarLinha(descItem);
-                if (linhasDesc.length > 0) {
-                  if ((linhasDesc[0].length + totalStr.length + 1) <= largura) {
-                    txt += esquerdaDireita(linhasDesc[0], totalStr) + "\n";
-                    linhasDesc.slice(1).forEach(l => txt += l + "\n");
-                  } else {
-                    txt += linhasDesc[0] + "\n";
-                    linhasDesc.slice(1).forEach(l => txt += l + "\n");
-                    txt += " ".repeat(Math.max(0, largura - totalStr.length)) + totalStr + "\n";
-                  }
-                }
-              });
-
-              txt += line() + "\n";
-
-              // Totais
-              txt += esquerdaDireita("SUBTOTAL", `R$ ${subtotalProdutos.toFixed(2)}`) + "\n";
-              if (taxaEntrega > 0) txt += esquerdaDireita("TAXA ENT", `R$ ${taxaEntrega.toFixed(2)}`) + "\n";
-              if (descontoTotal > 0) txt += esquerdaDireita("DESCONTO", `-R$ ${descontoTotal.toFixed(2)}`) + "\n";
-              if (cashbackTotal > 0) txt += esquerdaDireita("CASHBACK", `-R$ ${cashbackTotal.toFixed(2)}`) + "\n";
-
-              txt += line() + "\n";
-              txt += esquerdaDireita("TOTAL", `R$ ${Number(venda.total).toFixed(2)}`) + "\n";
-              txt += esquerdaDireita("PAGTO", venda.formaPagamento || "A DEFINIR") + "\n";
-
-              if (venda.troco && venda.troco !== "0" && venda.troco !== "") {
-                txt += esquerdaDireita("TROCO", `R$ ${venda.troco}`) + "\n";
-              }
-
-              txt += line("=") + "\n";
-              txt += centralizar("CARDAPIO DIGITAL") + "\n\n\n\n\n";
-
-              divTicket.innerHTML = txt;
-
-              setTimeout(() => {
-                window.print();
-                
-                setTimeout(() => {
-                  divTicket.innerHTML = "";
-                }, 1000);
-              }, 300);
+              imprimirPedidoSentinela(venda, cfg);
             }
           })
           .catch(err => {});
