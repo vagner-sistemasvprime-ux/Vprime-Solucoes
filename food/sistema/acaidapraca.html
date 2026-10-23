@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema VPrime</title>
+  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/17O3yXCIHhFZgqLaXjKbE9PLFX4Aq2hFI">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+    body { font-family: Arial, sans-serif; }
+    #sistemaIframe { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+  <!-- Iframe principal do sistema -->
+  <iframe id="sistemaIframe" src="" allow="clipboard-read; clipboard-write" title="Sistema Lojista"></iframe>
+
+  <script>
+    (function() {
+      const urlBase = "https://script.google.com/macros/s/AKfycbyIyKdg01dvGzzaWgUo0yiBbApu9I5jYjtl4k8Dfrr_L9QQqlp5-lmkFBbjOeNC0wOe/exec";
+
+      const queryParams = window.location.search;
+      const iframeApp = document.getElementById('sistemaIframe');
+      iframeApp.src = urlBase + queryParams;
+
+      function imprimirPedidoSentinela(venda, cfg) {
+        const tamanhoPapel = cfg.larguraPadrao || "58";
+        const largura = tamanhoPapel === "80" ? 42 : 24; 
+
+        const limparTexto = (str) => {
+          if (!str) return "";
+          return String(str).normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^\x20-\x7E]/g, "")
+            .toUpperCase()
+            .trim();
+        };
+
+        const line = (char = "-") => char.repeat(largura);
+
+        const centralizar = (texto) => {
+          texto = limparTexto(texto);
+          const espacos = Math.floor((largura - texto.length) / 2);
+          return " ".repeat(Math.max(0, espacos)) + texto;
+        };
+
+        const esquerdaDireita = (esq, dir) => {
+          esq = limparTexto(esq);
+          dir = limparTexto(dir);
+          const espacos = largura - esq.length - dir.length;
+          return esq + " ".repeat(Math.max(1, espacos)) + dir;
+        };
+
+        const quebrarLinha = (texto) => {
+          texto = limparTexto(texto);
+          const palavras = texto.split(" ");
+          const linhas = [];
+          let linhaAtual = "";
+          
+          palavras.forEach(palavra => {
+            if (palavra.length > largura) {
+              if (linhaAtual) linhas.push(linhaAtual);
+              linhas.push(palavra.substring(0, largura));
+              linhaAtual = "";
+              return;
+            }
+            if ((linhaAtual + " " + palavra).trim().length <= largura) {
+              linhaAtual += (linhaAtual ? " " : "") + palavra;
+            } else {
+              if (linhaAtual) linhas.push(linhaAtual);
+              linhaAtual = palavra;
+            }
+          });
+          if (linhaAtual) linhas.push(linhaAtual); 
+          return linhas;
+        };
+
+        // --- FILTRAGEM E CÁLCULO DE ITENS (LAYOUT ORIGINAL) ---
+        let itensFiltrados = [];
+        let taxaEntrega = Number(venda.taxaEntrega) || 0;
+        let descontoTotal = Number(venda.desconto) || 0;
+        let cashbackTotal = Number(venda.cashback) || 0;
+        let subtotalProdutos = 0;
+
+        (venda.itens || []).forEach(i => {
+          let nome = String(i.nome || "").toUpperCase();
+          let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
+
+          if (nome.includes("TAXA") || nome.includes("FRETE") || i.id === "FRETE" || i.isTaxa) {
+            taxaEntrega += Math.abs(subtotalItem);
+          } else if (nome.includes("CUPOM") || nome.includes("DESCONTO MANUAL") || nome.includes("DESCONTO")) {
+            descontoTotal += Math.abs(subtotalItem);
+          } else if (nome.includes("CASHBACK")) {
+            cashbackTotal += Math.abs(subtotalItem);
+          } else {
+            subtotalProdutos += subtotalItem;
+            itensFiltrados.push(i);
+          }
+        });
+
+        let textoFinal = "";
+
+        // Header Loja e Data
+        const nomeLoja = cfg.nomeLoja || venda.loja || 'GESTAO DE PEDIDOS';
+        quebrarLinha(nomeLoja).forEach(l => textoFinal += centralizar(l) + "\n");
+        textoFinal += centralizar(venda.dataHora || "") + "\n";
+        textoFinal += line("=") + "\n";
+
+        // Bloco do Pedido Destacado
+        const pedStr = String(venda.pedido || "0").toUpperCase();
+        textoFinal += centralizar(pedStr) + "\n";
+        textoFinal += line("=") + "\n";
+
+        // Cliente e Endereço
+        textoFinal += "CLIENTE: " + limparTexto(venda.cliente || "CONSUMIDOR") + "\n";
+        if (venda.telefone) {
+          textoFinal += "FONE: " + limparTexto(venda.telefone) + "\n";
+        }
+        textoFinal += "END: " + limparTexto(venda.endereco || 'RETIRADA') + "\n";
+        textoFinal += line() + "\n";
+
+        // Status Financeiro
+        let isPendente = String(venda.statusFinanceiro || "").toUpperCase().includes("PENDENTE");
+        let msgPagto = isPendente ? ">>> PAGAMENTO PENDENTE <<<" : "*** PAGAMENTO JA REALIZADO ***";
+        quebrarLinha(msgPagto).forEach(l => textoFinal += centralizar(l) + "\n");
+        textoFinal += line() + "\n";
+
+        // Tabela de Itens
+        textoFinal += centralizar("ITENS DO PEDIDO") + "\n";
+        textoFinal += line() + "\n";
+
+        itensFiltrados.forEach(i => {
+          let subtotalItem = Number(i.subtotal !== undefined ? i.subtotal : (i.preco * i.qtd)) || 0;
+          let qtdReal = String(i.qtd || 1).padStart(2, '0') + 'X';
+          let totalStr = `R$ ${subtotalItem.toFixed(2)}`;
+          let descItem = `${qtdReal} ${limparTexto(i.nome)}`;
+
+          let linhasDesc = quebrarLinha(descItem);
+          if (linhasDesc.length > 0) {
+            if ((linhasDesc[0].length + totalStr.length + 1) <= largura) {
+              textoFinal += esquerdaDireita(linhasDesc[0], totalStr) + "\n";
+              linhasDesc.slice(1).forEach(l => textoFinal += l + "\n");
+            } else {
+              textoFinal += linhasDesc[0] + "\n";
+              linhasDesc.slice(1).forEach(l => textoFinal += l + "\n");
+              textoFinal += " ".repeat(Math.max(0, largura - totalStr.length)) + totalStr + "\n";
+            }
+          }
+        });
+
+        textoFinal += line() + "\n";
+
+        // Totais e Financeiro
+        textoFinal += esquerdaDireita("SUBTOTAL", `R$ ${subtotalProdutos.toFixed(2)}`) + "\n";
+        if (taxaEntrega > 0) textoFinal += esquerdaDireita("TAXA ENT", `R$ ${taxaEntrega.toFixed(2)}`) + "\n";
+        if (descontoTotal > 0) textoFinal += esquerdaDireita("DESCONTO", `-R$ ${descontoTotal.toFixed(2)}`) + "\n";
+        if (cashbackTotal > 0) textoFinal += esquerdaDireita("CASHBACK", `-R$ ${cashbackTotal.toFixed(2)}`) + "\n";
+
+        textoFinal += line() + "\n";
+        textoFinal += esquerdaDireita("TOTAL", `R$ ${Number(venda.total || 0).toFixed(2)}`) + "\n";
+        textoFinal += esquerdaDireita("PAGTO", venda.formaPagamento || "A DEFINIR") + "\n";
+
+        if (venda.troco && venda.troco !== "0" && venda.troco !== "") {
+          let trocoVal = typeof venda.troco === 'number' ? venda.troco.toFixed(2) : String(venda.troco);
+          textoFinal += esquerdaDireita("TROCO", `R$ ${trocoVal}`) + "\n";
+        }
+
+        textoFinal += line("=") + "\n";
+        textoFinal += centralizar("CARDAPIO DIGITAL") + "\n\n\n\n\n";
+
+        // --- MONTAGEM DO IFRAME E IMPRESSÃO (IGUAL À SUA FUNÇÃO) ---
+        const larguraHtml = tamanhoPapel === "80" ? "72mm" : "48mm";
+        const urlLogoCliente = cfg.urlLogo || CONFIG.cliente.urlLogo || "";
+
+        const html = `
+        <html>
+          <head>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              @page { size: ${tamanhoPapel}mm auto; margin: 0; }
+              body {
+                font-family: 'Courier New', Courier, monospace;
+                font-weight: bold;
+                font-size: ${tamanhoPapel === "80" ? "13px" : "13px"};
+                line-height: 1.15;
+                width: ${larguraHtml};
+                margin: 0;
+                padding: 0;
+                color: #000;
+              }
+              .container-logo {
+                display: block;
+                text-align: center;
+                width: 100%;
+                padding: 6px 0;
+              }
+              .logo-impressao {
+                max-width: 60%;
+                height: auto;
+                display: ${urlLogoCliente ? 'block' : 'none'};
+                margin: 0 auto;
+                filter: grayscale(100%) contrast(200%);
+              }
+              .conteudo-texto {
+                white-space: pre;
+                width: 100%;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container-logo">
+              <img class="logo-impressao" src="${urlLogoCliente}" alt="Logo">
+            </div>
+            <div class="conteudo-texto">${textoFinal}</div>
+          </body>
+        </html>`;
+
+        let iframe = document.getElementById('iframe_impressao');
+        if (!iframe) {
+          iframe = document.createElement('iframe');
+          iframe.id = 'iframe_impressao';
+          iframe.style.position = 'fixed';
+          iframe.style.right = '0';
+          iframe.style.bottom = '0';
+          iframe.style.width = '0';
+          iframe.style.height = '0';
+          iframe.style.border = 'none';
+          document.body.appendChild(iframe);
+        }
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+
+        setTimeout(() => {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        }, 500);
+      }
+
+      function verificarFilaImpressao() {
+        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          return; 
+        }
+
+        const endpoint = urlBase + (urlBase.includes('?') ? '&' : '?') + 'acao=verificarImpressao';
+        
+        fetch(endpoint, { method: 'GET', mode: 'cors' })
+          .then(response => {
+            if (!response.ok) throw new Error('Erro na rede: ' + response.status);
+            return response.json();
+          })
+          .then(data => {
+            if (data && data.imprimir && data.pedidoObj) {
+              console.log("🟢 Sentinela Web: Pedido encontrado!", data.pedidoObj.pedido);
+              
+              let venda = data.pedidoObj;
+              let cfg = data.config || { larguraPadrao: "58" };
+              
+              imprimirPedidoSentinela(venda, cfg);
+            }
+          })
+          .catch(err => {});
+      }
+
+      setInterval(verificarFilaImpressao, 30000);
+
+      window.addEventListener("beforeunload", function (e) {
+        e.preventDefault();
+        e.returnValue = "Atenção! Se fechar esta aba, o monitoramento de pedidos automáticos será interrompido.";
+        return e.returnValue;
+      });
+    })();
+  </script>
+</body>
+</html>
