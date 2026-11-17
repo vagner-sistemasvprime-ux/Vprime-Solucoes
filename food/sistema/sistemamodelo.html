@@ -280,6 +280,27 @@
         return e.returnValue;
       });
     })();
+
+
+
+
+  window.addEventListener("message", function(event) {
+    if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
+      const numeroPedido = event.data.pedido;
+      
+      // Use "127.0.0.1:8080" se o PDV roda no mesmo aparelho, ou o IP fixo do celular na rede (ex: "192.168.1.100:8080")
+      const urlSentinela = "http://127.0.0.1:8080/imprimir?pedido=" + numeroPedido;
+
+      fetch(urlSentinela, { mode: "no-cors" })
+        .then(() => console.log("Comando enviado ao Sentinela para o pedido: " + numeroPedido))
+        .catch(err => console.error("Erro ao contactar Sentinela:", err));
+    }
+  });
+
+
+
+
+    
   </script>
 </body>
 </html>
