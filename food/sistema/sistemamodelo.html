@@ -288,7 +288,7 @@ window.addEventListener("message", function(event) {
     if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
       const numeroPedido = event.data.pedido;
       
-      // Usa o package name baseado no seu domínio
+      // A Intent corrigida para o seu pacote do Sentinela:
       const intentUrl = "intent://imprimir?pedido=" + numeroPedido + "#Intent;scheme=http;package=br.com.vprime.sentinela;end;";
 
       const link = document.createElement('a');
@@ -297,7 +297,7 @@ window.addEventListener("message", function(event) {
       link.click();
       link.remove();
 
-      console.log("Intent disparada para o Sentinela - Pedido: " + numeroPedido);
+      console.log("Comando de impressão enviado via Intent para o pedido: " + numeroPedido);
     }
   });
 
