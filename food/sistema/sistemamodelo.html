@@ -284,20 +284,7 @@
 
 
 
-window.addEventListener("message", function(event) {
-    if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
-      const numeroPedido = event.data.pedido;
-      
-      // Dispara o Custom Scheme para abrir o app Sentinela em background
-      const customUrl = "vprimesentinela://imprimir?pedido=" + numeroPedido;
 
-      const link = document.createElement('a');
-      link.href = customUrl;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    }
-  });
 
     
     
