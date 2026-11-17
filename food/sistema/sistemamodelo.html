@@ -291,21 +291,17 @@ window.addEventListener("message", function(event) {
       // Monta a URL do Sentinela
       const urlSentinela = "http://127.0.0.1:8080/imprimir?pedido=" + numeroPedido;
 
-      // Disparo 100% invisível via imagem oculta (ignora bloqueio de aba e de mixed content visual)
-      const imgInvisivel = document.createElement("img");
-      imgInvisivel.src = urlSentinela;
-      imgInvisivel.style.display = "none";
-      document.body.appendChild(imgInvisivel);
+      // Tenta usar o sendBeacon (dispara o pedido para o app local sem abrir abas ou telas)
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(urlSentinela);
+      } else {
+        // Fallback caso o navegador seja mais antigo: usa fetch silencioso
+        fetch(urlSentinela, { mode: 'no-cors' }).catch(() => {});
+      }
 
-      // Remove o elemento após 2 segundos para manter a página limpa
-      setTimeout(function() {
-        imgInvisivel.remove();
-      }, 2000);
-
-      console.log("Comando disparado em segundo plano para o pedido: " + numeroPedido);
+      console.log("Comando de impressão enviado silenciosamente para o pedido: " + numeroPedido);
     }
   });
-
 
 
 
