@@ -287,25 +287,22 @@
 window.addEventListener("message", function(event) {
     if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
       const numeroPedido = event.data.pedido;
-      const urlSentinela = "http://127.0.0.1:8080/imprimir?pedido=" + numeroPedido;
+      
+      // Usa o package name baseado no seu domínio
+      const intentUrl = "intent://imprimir?pedido=" + numeroPedido + "#Intent;scheme=http;package=br.com.vprime.sentinela;end;";
 
-      // Cria um link invisível e simula um clique programático
       const link = document.createElement('a');
-      link.href = urlSentinela;
-      link.target = '_blank';
-      link.style.display = 'none';
+      link.href = intentUrl;
       document.body.appendChild(link);
-      
       link.click();
-      
-      setTimeout(() => {
-        link.remove();
-      }, 1000);
+      link.remove();
 
-      console.log("Comando disparado via link simulado para o pedido: " + numeroPedido);
+      console.log("Intent disparada para o Sentinela - Pedido: " + numeroPedido);
     }
   });
 
+
+    
     
   </script>
 </body>
