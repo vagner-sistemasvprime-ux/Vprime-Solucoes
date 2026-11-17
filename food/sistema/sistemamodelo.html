@@ -284,27 +284,25 @@
 
 
 
- window.addEventListener("message", function(event) {
+window.addEventListener("message", function(event) {
     if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
       const numeroPedido = event.data.pedido;
       
-      // Monta a URL do Sentinela (use "127.0.0.1:8080" ou o IP do celular)
+      // Monta a URL do Sentinela
       const urlSentinela = "http://127.0.0.1:8080/imprimir?pedido=" + numeroPedido;
 
-      // Abre a URL do Sentinela de forma oculta ou em uma aba rápida
-      const abaImpressao = window.open(urlSentinela, "_blank");
+      // Disparo 100% invisível via imagem oculta (ignora bloqueio de aba e de mixed content visual)
+      const imgInvisivel = document.createElement("img");
+      imgInvisivel.src = urlSentinela;
+      imgInvisivel.style.display = "none";
+      document.body.appendChild(imgInvisivel);
 
-      // Se a aba abriu com sucesso, programa para fechá-la sozinha após 1,5 segundo 
-      // (tempo suficiente para o Sentinela receber o comando e processar a impressão)
-      if (abaImpressao) {
-        setTimeout(function() {
-          try {
-            abaImpressao.close();
-          } catch (e) {
-            console.log("Aba fechada ou bloqueada pelo navegador.");
-          }
-        }, 1500);
-      }
+      // Remove o elemento após 2 segundos para manter a página limpa
+      setTimeout(function() {
+        imgInvisivel.remove();
+      }, 2000);
+
+      console.log("Comando disparado em segundo plano para o pedido: " + numeroPedido);
     }
   });
 
