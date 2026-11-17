@@ -288,19 +288,16 @@ window.addEventListener("message", function(event) {
     if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
       const numeroPedido = event.data.pedido;
       
-      // A Intent corrigida para o seu pacote do Sentinela:
-      const intentUrl = "intent://imprimir?pedido=" + numeroPedido + "#Intent;scheme=http;package=br.com.vprime.sentinela;end;";
+      // Dispara o Custom Scheme para abrir o app Sentinela em background
+      const customUrl = "vprimesentinela://imprimir?pedido=" + numeroPedido;
 
       const link = document.createElement('a');
-      link.href = intentUrl;
+      link.href = customUrl;
       document.body.appendChild(link);
       link.click();
       link.remove();
-
-      console.log("Comando de impressão enviado via Intent para o pedido: " + numeroPedido);
     }
   });
-
 
     
     
