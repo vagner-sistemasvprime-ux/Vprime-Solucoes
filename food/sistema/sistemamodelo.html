@@ -289,26 +289,22 @@ window.addEventListener("message", function(event) {
       const numeroPedido = event.data.pedido;
       const urlSentinela = "http://127.0.0.1:8080/imprimir?pedido=" + numeroPedido;
 
-      // Criação de um iframe totalmente oculto e isolado para injetar a requisição
-      let iframeOculto = document.createElement("iframe");
-      iframeOculto.style.display = "none";
-      iframeOculto.style.width = "0px";
-      iframeOculto.style.height = "0px";
-      iframeOculto.src = urlSentinela;
+      // Cria um link invisível e simula um clique programático
+      const link = document.createElement('a');
+      link.href = urlSentinela;
+      link.target = '_blank';
+      link.style.display = 'none';
+      document.body.appendChild(link);
       
-      document.body.appendChild(iframeOculto);
-
-      // Remove o iframe após 1 segundo (tempo suficiente para o Sentinela capturar o GET na Socket)
-      setTimeout(function() {
-        try {
-          iframeOculto.remove();
-        } catch (e) {}
+      link.click();
+      
+      setTimeout(() => {
+        link.remove();
       }, 1000);
 
-      console.log("Comando enviado via iframe oculto para o pedido: " + numeroPedido);
+      console.log("Comando disparado via link simulado para o pedido: " + numeroPedido);
     }
   });
-
 
     
   </script>
