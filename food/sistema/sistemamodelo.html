@@ -287,22 +287,27 @@
 window.addEventListener("message", function(event) {
     if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
       const numeroPedido = event.data.pedido;
-      
-      // Monta a URL do Sentinela
       const urlSentinela = "http://127.0.0.1:8080/imprimir?pedido=" + numeroPedido;
 
-      // Tenta usar o sendBeacon (dispara o pedido para o app local sem abrir abas ou telas)
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(urlSentinela);
-      } else {
-        // Fallback caso o navegador seja mais antigo: usa fetch silencioso
-        fetch(urlSentinela, { mode: 'no-cors' }).catch(() => {});
-      }
+      // Criação de um iframe totalmente oculto e isolado para injetar a requisição
+      let iframeOculto = document.createElement("iframe");
+      iframeOculto.style.display = "none";
+      iframeOculto.style.width = "0px";
+      iframeOculto.style.height = "0px";
+      iframeOculto.src = urlSentinela;
+      
+      document.body.appendChild(iframeOculto);
 
-      console.log("Comando de impressão enviado silenciosamente para o pedido: " + numeroPedido);
+      // Remove o iframe após 1 segundo (tempo suficiente para o Sentinela capturar o GET na Socket)
+      setTimeout(function() {
+        try {
+          iframeOculto.remove();
+        } catch (e) {}
+      }, 1000);
+
+      console.log("Comando enviado via iframe oculto para o pedido: " + numeroPedido);
     }
   });
-
 
 
     
