@@ -284,16 +284,27 @@
 
 
 
-  window.addEventListener("message", function(event) {
+ window.addEventListener("message", function(event) {
     if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
       const numeroPedido = event.data.pedido;
       
-      // Use "127.0.0.1:8080" se o PDV roda no mesmo aparelho, ou o IP fixo do celular na rede (ex: "192.168.1.100:8080")
+      // Monta a URL do Sentinela (use "127.0.0.1:8080" ou o IP do celular)
       const urlSentinela = "http://127.0.0.1:8080/imprimir?pedido=" + numeroPedido;
 
-      fetch(urlSentinela, { mode: "no-cors" })
-        .then(() => console.log("Comando enviado ao Sentinela para o pedido: " + numeroPedido))
-        .catch(err => console.error("Erro ao contactar Sentinela:", err));
+      // Abre a URL do Sentinela de forma oculta ou em uma aba rápida
+      const abaImpressao = window.open(urlSentinela, "_blank");
+
+      // Se a aba abriu com sucesso, programa para fechá-la sozinha após 1,5 segundo 
+      // (tempo suficiente para o Sentinela receber o comando e processar a impressão)
+      if (abaImpressao) {
+        setTimeout(function() {
+          try {
+            abaImpressao.close();
+          } catch (e) {
+            console.log("Aba fechada ou bloqueada pelo navegador.");
+          }
+        }, 1500);
+      }
     }
   });
 
