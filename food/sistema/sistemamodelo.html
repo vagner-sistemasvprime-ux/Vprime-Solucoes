@@ -321,6 +321,36 @@
   }
 });
 
+    
+// Função para disparar a impressão via link invisível (bula o bloqueio do navegador)
+  function dispararImpressaoSentinela(numeroPedido) {
+    try {
+      var urlServidorLocal = "http://localhost:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
+      
+      var linkFalso = document.createElement('a');
+      linkFalso.href = urlServidorLocal;
+      linkFalso.target = '_blank';
+      linkFalso.style.display = 'none';
+      
+      document.body.appendChild(linkFalso);
+      linkFalso.click();
+      
+      setTimeout(function() {
+        document.body.removeChild(linkFalso);
+      }, 1000);
+      
+      console.log("Disparo de impressão via link efetuado para o pedido:", numeroPedido);
+    } catch (err) {
+      console.log("Erro ao disparar impressão via link:", err);
+    }
+  }
+
+  // Ouvinte que recebe o aviso de dentro do iframe e chama a função acima
+  window.addEventListener("message", function(event) {
+    if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
+      dispararImpressaoSentinela(event.data.pedido);
+    }
+  });
 
 
     
