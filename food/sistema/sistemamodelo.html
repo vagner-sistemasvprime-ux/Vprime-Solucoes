@@ -294,35 +294,9 @@
 
 
 
-  window.addEventListener("message", function(event) {
-  console.log("🟡 HTML Principal: Mensagem recebida do iframe:", event.data);
   
-  if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
-    var numeroPedido = event.data.pedido;
-    console.log("🟢 HTML Principal: Pedido identificado para impressão:", numeroPedido);
-    
-    var urlServidorLocal = "http://localhost:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
-    console.log("🌐 HTML Principal: Tentando disparar para URL:", urlServidorLocal);
-    
-    try {
-      var img = new Image();
-      img.onload = function() {
-        console.log("✅ HTML Principal: Requisição local enviada com sucesso!");
-      };
-      img.onerror = function() {
-        // O onerror costuma disparar porque o servidor local retorna JSON e não uma imagem, 
-        // mas o importante é que a requisição HTTP chegou no app Kotlin!
-        console.log("ℹ️ HTML Principal: Requisição despachada para o app Kotlin.");
-      };
-      img.src = urlServidorLocal;
-    } catch (err) {
-      console.error("❌ HTML Principal: Erro ao disparar a Image():", err);
-    }
-  }
-});
 
-    
-// Função para disparar a impressão via link invisível (bula o bloqueio do navegador)
+// Função para disparar a impressão chamando a URL local do Sentinela
   function dispararImpressaoSentinela(numeroPedido) {
     try {
       var urlServidorLocal = "http://localhost:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
@@ -339,20 +313,26 @@
         document.body.removeChild(linkFalso);
       }, 1000);
       
-      console.log("Disparo de impressão via link efetuado para o pedido:", numeroPedido);
+      console.log("✅ Sucesso! Disparo efetuado para o pedido:", numeroPedido);
     } catch (err) {
-      console.log("Erro ao disparar impressão via link:", err);
+      console.log("❌ Erro ao disparar impressão:", err);
     }
   }
 
-  // Ouvinte que recebe o aviso de dentro do iframe e chama a função acima
-  window.addEventListener("message", function(event) {
-    if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
-      dispararImpressaoSentinela(event.data.pedido);
+  // Monitora alterações no localStorage enviadas pelo PDV
+  window.addEventListener("storage", function(event) {
+    if (event.key === "trigger_impressao_sentinela" && event.newValue) {
+      try {
+        var dados = JSON.parse(event.newValue);
+        if (dados && dados.pedido) {
+          console.log("📥 Sinal de impressão capturado via Storage para o pedido:", dados.pedido);
+          dispararImpressaoSentinela(dados.pedido);
+        }
+      } catch (e) {
+        console.error("Erro ao processar dados do storage:", e);
+      }
     }
   });
-
-
     
     
   </script>
