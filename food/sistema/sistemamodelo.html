@@ -294,27 +294,23 @@
 
 
 
-  // Função para disparar o link invisível para a porta 8080 do app Sentinela
-  function dispararImpressaoSentinela(numeroPedido) {
+function dispararImpressaoSentinela(numeroPedido) {
     if (!numeroPedido) return;
     try {
-      var urlServidorLocal = "http://127.0.0.1:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
+      var urlCustomizada = "vprimesentinela://imprimir?pedido=" + encodeURIComponent(numeroPedido);
       
-      var linkFalso = document.createElement('a');
-      linkFalso.href = urlServidorLocal;
-      linkFalso.target = '_blank';
-      linkFalso.style.display = 'none';
-      
-      document.body.appendChild(linkFalso);
-      linkFalso.click();
+      var iframeFalso = document.createElement('iframe');
+      iframeFalso.style.display = 'none';
+      iframeFalso.src = urlCustomizada;
+      document.body.appendChild(iframeFalso);
       
       setTimeout(function() {
-        document.body.removeChild(linkFalso);
+        document.body.removeChild(iframeFalso);
       }, 1000);
       
-      console.log("✅ Disparo enviado para o app Sentinela - Pedido:", numeroPedido);
+      console.log("🚀 Disparo via Custom Scheme enviado para o Sentinela - Pedido:", numeroPedido);
     } catch (err) {
-      console.log("❌ Erro ao disparar impressão:", err);
+      console.log("❌ Erro ao disparar via Custom Scheme:", err);
     }
   }
 
@@ -330,7 +326,7 @@
     }
   });
 
-  // MÉTODO 2 (O Pulo do Gato): Expõe a função globalmente para o iframe chamar diretamente!
+  // MÉTODO 2: Expõe a função globalmente para o iframe chamar diretamente
   window.imprimirNoSentinela = function(numeroPedido) {
     dispararImpressaoSentinela(numeroPedido);
   };
