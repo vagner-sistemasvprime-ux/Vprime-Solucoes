@@ -297,24 +297,17 @@
 function dispararImpressaoSentinela(numeroPedido) {
     if (!numeroPedido) return;
     try {
-      var urlCustomizada = "vprimesentinela://imprimir?pedido=" + encodeURIComponent(numeroPedido);
+      // Abre a aba estilizada que dispara o app e oferece o botão de fechar
+      var urlPaginaImpressao = "https://vprimesistemas/food/imprimir.html?pedido=" + encodeURIComponent(numeroPedido);
+      window.open(urlPaginaImpressao, '_blank');
       
-      var iframeFalso = document.createElement('iframe');
-      iframeFalso.style.display = 'none';
-      iframeFalso.src = urlCustomizada;
-      document.body.appendChild(iframeFalso);
-      
-      setTimeout(function() {
-        document.body.removeChild(iframeFalso);
-      }, 1000);
-      
-      console.log("🚀 Disparo via Custom Scheme enviado para o Sentinela - Pedido:", numeroPedido);
+      console.log("🖨️ Aba de impressão aberta para o pedido:", numeroPedido);
     } catch (err) {
-      console.log("❌ Erro ao disparar via Custom Scheme:", err);
+      console.log("❌ Erro ao abrir aba de impressão:", err);
     }
   }
 
-  // MÉTODO 1: Escuta o evento de storage (para abas diferentes)
+  // Ouve o localStorage para acionar a abertura da aba
   window.addEventListener("storage", function(event) {
     if (event.key === "trigger_impressao_sentinela" && event.newValue) {
       try {
@@ -326,7 +319,6 @@ function dispararImpressaoSentinela(numeroPedido) {
     }
   });
 
-  // MÉTODO 2: Expõe a função globalmente para o iframe chamar diretamente
   window.imprimirNoSentinela = function(numeroPedido) {
     dispararImpressaoSentinela(numeroPedido);
   };
