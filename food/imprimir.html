@@ -3,36 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <title>Imprimindo Pedido...</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; background-color: #f4f4f9; }
+        .card { background: white; padding: 30px; border-radius: 8px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; }
+        #status-texto { font-weight: bold; color: #333; margin-top: 15px; }
+        button { background-color: #28a745; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+    </style>
 </head>
-<body style="font-family: Arial, sans-serif; text-align: center; padding-top: 50px; background-color: #f4f4f9;">
-    <div style="background: white; padding: 30px; border-radius: 8px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-        <h2>🖨️ Enviando para Impressora...</h2>
-        <p id="status-texto">Processando o pedido <strong id="num-pedido"></strong></p>
-        <button onclick="window.close()" style="background-color: #28a745; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; margin-top: 20px;">Fechar Aba</button>
+<body>
+
+    <div class="card">
+        <h2>🖨️ Diagnóstico de Impressão</h2>
+        <p>Pedido: <strong id="num-pedido">--</strong></p>
+        <p id="status-texto">Iniciando conexão com o app Sentinela...</p>
+        <button onclick="window.close()">Fechar Aba</button>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const numeroPedido = urlParams.get('pedido');
+        const statusEl = document.getElementById('status-texto');
 
-        if (numeroPedido) {
+        console.log("🔍 [IMPRESSÃO] Página aberta. Número do pedido recebido:", numeroPedido);
+
+        if (!numeroPedido) {
+            console.error("❌ [IMPRESSÃO] Erro: Nenhum número de pedido foi encontrado na URL!");
+            statusEl.innerText = "❌ Erro: Pedido não informado.";
+        } else {
             document.getElementById('num-pedido').innerText = "#" + numeroPedido;
+            
+            // Tenta falar com o servidor local do app Sentinela na porta 8080
             const urlServidorLocal = "http://127.0.0.1:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
+            console.log("🌐 [IMPRESSÃO] Tentando requisitar URL local:", urlServidorLocal);
 
-            // Dispara o fetch em segundo plano para o app Sentinela
-            fetch(urlServidorLocal, { method: 'GET', mode: 'no-cors' })
-                .then(() => {
-                    document.getElementById('status-texto').innerText = "✅ Pedido enviado com sucesso!";
-                })
-                .catch(err => {
-                    console.log("Erro no disparo:", err);
-                    document.getElementById('status-texto').innerText = "⚠️ Comando enviado.";
-                });
+            statusEl.innerText = "Enviando para o app Sentinela (8080)...";
 
-            // Fecha a aba automaticamente após 1.2 segundo para retornar ao PDV
-            setTimeout(function() {
-                window.close();
-            }, 1200);
+            fetch(urlServidorLocal, { 
+                method: 'GET',
+                mode: 'no-cors' 
+            })
+            .then(response => {
+                console.log("✅ [IMPRESSÃO] Requisição fetch concluída com sucesso (modo no-cors).");
+                statusEl.innerText = "✅ Comando enviado com sucesso! O Sentinela deve imprimir.";
+                
+                // Fecha a aba automaticamente após 2 segundos se deu tudo certo
+                setTimeout(() => {
+                    console.log("🔒 [IMPRESSÃO] Fechando aba automaticamente.");
+                    window.close();
+                }, 2000);
+            })
+            .catch(err => {
+                console.error("❌ [IMPRESSÃO] Falha crítica na requisição fetch para a porta 8080:", err);
+                statusEl.innerHTML = "❌ Erro de conexão com a porta 8080.<br><small>" + err.message + "</small>";
+            });
         }
     </script>
 </body>
