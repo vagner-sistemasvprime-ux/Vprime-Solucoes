@@ -2,37 +2,80 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Imprimindo...</title>
+    <title>Imprimindo Pedido...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 50px;
+            background-color: #f4f4f9;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
 </head>
 <body>
-    <div style="text-align: center; margin-top: 50px; font-family: Arial;">
-        <h2>🖨️ Enviando para a impressora...</h2>
-        <p id="status">Aguarde um instante.</p>
+
+    <div class="card">
+        <h2>🖨️ Enviando para Impressora...</h2>
+        <p id="status-texto">Processando o pedido <strong id="num-pedido"></strong></p>
+        <button onclick="fecharJanela()">OK / Fechar</button>
     </div>
 
     <script>
+        // Pega o número do pedido da URL (ex: ?pedido=PED-00282)
         const urlParams = new URLSearchParams(window.location.search);
         const numeroPedido = urlParams.get('pedido');
 
         if (numeroPedido) {
-            // URL do servidor local embutido no app Sentinela na porta 8080
+            document.getElementById('num-pedido').innerText = "#" + numeroPedido;
+
+            // URL do servidor TCP local rodando dentro do app Sentinela na porta 8080
             const urlServidorLocal = "http://127.0.0.1:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
 
-            // Dispara a requisição em segundo plano sem tirar o foco do navegador/PDV
-            fetch(urlServidorLocal, { mode: 'no-cors' })
-                .then(() => {
-                    document.getElementById('status').innerText = "✅ Pedido enviado com sucesso!";
-                })
-                .catch(err => {
-                    console.log("Erro no disparo:", err);
-                    document.getElementById('status').innerText = "⚠️ Comando enviado.";
-                });
-
-            // Fecha a aba automaticamente após 1.5 segundo para retornar ao PDV fluidamente
+            // Dispara a requisição em background de forma totalmente silenciosa
             setTimeout(function() {
-                window.close();
-            }, 1500);
+                fetch(urlServidorLocal, { mode: 'no-cors' })
+                    .then(() => {
+                        document.getElementById('status-texto').innerText = "✅ Pedido enviado com sucesso!";
+                    })
+                    .catch(err => {
+                        console.log("Erro no disparo:", err);
+                        document.getElementById('status-texto').innerText = "⚠️ Comando enviado para a impressora.";
+                    });
+            }, 300);
         }
+
+        function fecharJanela() {
+            window.close();
+            setTimeout(() => {
+                document.body.innerHTML = "<h2>✅ Pedido concluído. Você pode fechar esta aba.</h2>";
+            }, 300);
+        }
+
+        // Fecha a aba automaticamente após 2 segundos para retornar fluidamente ao PDV
+        setTimeout(function() {
+            window.close();
+        }, 2000);
     </script>
+
 </body>
 </html>
