@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Imprimindo Pedido...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 50px;
+            background-color: #f4f4f9;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>🖨️ Enviando para Impressora...</h2>
+        <p id="status-texto">Processando o pedido <strong id="num-pedido"></strong></p>
+        <button onclick="fecharJanela()">OK / Fechar</button>
+    </div>
+
+    <script>
+        // Pega o número do pedido da URL (ex: ?pedido=PED-00282)
+        const urlParams = new URLSearchParams(window.location.search);
+        const numeroPedido = urlParams.get('pedido');
+
+        if (numeroPedido) {
+            document.getElementById('num-pedido').innerText = "#" + numeroPedido;
+
+            // Dispara o Custom Scheme para o app Sentinela rodando no Android
+            setTimeout(function() {
+                window.location.href = "vprimesentinela://imprimir?pedido=" + encodeURIComponent(numeroPedido);
+            }, 500);
+        }
+
+        function fecharJanela() {
+            window.close();
+            // Fallback caso o navegador bloqueie o fechamento automático da aba
+            setTimeout(() => {
+                document.body.innerHTML = "<h2>✅ Pedido concluído. Você pode fechar esta aba.</h2>";
+            }, 300);
+        }
+
+        // Tenta fechar a aba automaticamente após 3 segundos da impressão
+        setTimeout(function() {
+            window.close();
+        }, 3500);
+    </script>
+
+</body>
+</html>
