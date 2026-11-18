@@ -298,7 +298,7 @@ function dispararImpressaoSentinela(numeroPedido) {
     if (!numeroPedido) return;
     try {
       // Abre a aba estilizada que dispara o app e oferece o botão de fechar
-      var urlPaginaImpressao = "https://vprimesistemas/food/imprimir.html?pedido=" + encodeURIComponent(numeroPedido);
+      var urlPaginaImpressao = "https://vprimesistemas.com.br/food/imprimir.html?pedido=" + encodeURIComponent(numeroPedido);
       window.open(urlPaginaImpressao, '_blank');
       
       console.log("🖨️ Aba de impressão aberta para o pedido:", numeroPedido);
