@@ -286,6 +286,33 @@
 
 
 
+
+
+
+
+
+
+
+
+    // Escuta as mensagens vindas de dentro do iframe do Google Apps Script
+  window.addEventListener("message", function(event) {
+    if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
+      var numeroPedido = event.data.pedido;
+      var urlServidorLocal = "http://127.0.0.1:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
+      
+      // Dispara o fetch para o aplicativo Sentinela rodando no Android localmente
+      fetch(urlServidorLocal, { mode: 'no-cors' })
+        .then(function() {
+          console.log("Comando de impressão enviado para o Sentinela (Pedido: " + numeroPedido + ")");
+        })
+        .catch(function(err) {
+          console.warn("Erro ao comunicar com o Sentinela local:", err);
+        });
+    }
+  });
+
+
+
     
     
   </script>
