@@ -298,7 +298,7 @@
   function dispararImpressaoSentinela(numeroPedido) {
     if (!numeroPedido) return;
     try {
-      var urlServidorLocal = "http://localhost:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
+      var urlServidorLocal = "http://127.0.0.1:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
       
       var linkFalso = document.createElement('a');
       linkFalso.href = urlServidorLocal;
