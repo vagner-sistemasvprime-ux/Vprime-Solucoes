@@ -294,10 +294,9 @@
 
 
 
-  
-
-// Função para disparar a impressão chamando a URL local do Sentinela
+  // Função para disparar o link invisível para a porta 8080 do app Sentinela
   function dispararImpressaoSentinela(numeroPedido) {
+    if (!numeroPedido) return;
     try {
       var urlServidorLocal = "http://localhost:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
       
@@ -313,26 +312,28 @@
         document.body.removeChild(linkFalso);
       }, 1000);
       
-      console.log("✅ Sucesso! Disparo efetuado para o pedido:", numeroPedido);
+      console.log("✅ Disparo enviado para o app Sentinela - Pedido:", numeroPedido);
     } catch (err) {
       console.log("❌ Erro ao disparar impressão:", err);
     }
   }
 
-  // Monitora alterações no localStorage enviadas pelo PDV
+  // MÉTODO 1: Escuta o evento de storage (para abas diferentes)
   window.addEventListener("storage", function(event) {
     if (event.key === "trigger_impressao_sentinela" && event.newValue) {
       try {
         var dados = JSON.parse(event.newValue);
         if (dados && dados.pedido) {
-          console.log("📥 Sinal de impressão capturado via Storage para o pedido:", dados.pedido);
           dispararImpressaoSentinela(dados.pedido);
         }
-      } catch (e) {
-        console.error("Erro ao processar dados do storage:", e);
-      }
+      } catch (e) {}
     }
   });
+
+  // MÉTODO 2 (O Pulo do Gato): Expõe a função globalmente para o iframe chamar diretamente!
+  window.imprimirNoSentinela = function(numeroPedido) {
+    dispararImpressaoSentinela(numeroPedido);
+  };
     
     
   </script>
