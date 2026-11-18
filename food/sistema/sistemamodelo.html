@@ -290,57 +290,31 @@
 
 
 
-
 function dispararImpressaoSentinela(numeroPedido) {
-    console.log("🟡 [PASSO 3] Função dispararImpressaoSentinela chamada com o pedido:", numeroPedido);
-    
-    if (!numeroPedido) {
-      console.warn("⚠️ [AVISO] Número do pedido veio vazio ou nulo!");
-      return;
-    }
-
+    console.log("🖨️ Abrindo aba para o pedido:", numeroPedido);
+    if (!numeroPedido) return;
     try {
       var urlPaginaImpressao = "https://vprimesistemas.com.br/food/imprimir.html?pedido=" + encodeURIComponent(numeroPedido);
-      console.log("🌐 [PASSO 4] Tentando abrir a URL:", urlPaginaImpressao);
-
       var novaJanela = window.open(urlPaginaImpressao, '_blank');
-      
       if (!novaJanela) {
-        console.error("❌ [ERRO] O navegador bloqueou a abertura da nova aba (Popup Blocked).");
-      } else {
-        console.log("✅ [SUCESSO] Aba de impressão aberta com sucesso!");
+        console.error("❌ O navegador bloqueou o popup!");
       }
     } catch (err) {
-      console.error("❌ [ERRO CRÍTICO] Falha ao tentar executar window.open:", err);
+      console.error("❌ Erro ao abrir aba:", err);
     }
   }
 
-  // Ouve o localStorage para acionar a abertura da aba
+  // Ouve o evento de storage da alteração do pedido
   window.addEventListener("storage", function(event) {
-    console.log("📥 [EVENTO STORAGE] Detectada alteração na chave:", event.key);
-    
     if (event.key === "trigger_impressao_sentinela" && event.newValue) {
       try {
-        console.log("📦 [PASSO 1] Valor bruto recebido no storage:", event.newValue);
         var dados = JSON.parse(event.newValue);
-        
         if (dados && dados.pedido) {
-          console.log("🔍 [PASSO 2] Pedido extraído do JSON com sucesso:", dados.pedido);
           dispararImpressaoSentinela(dados.pedido);
-        } else {
-          console.warn("⚠️ [AVISO] O JSON do storage não continha a propriedade 'pedido'.");
         }
-      } catch (e) {
-        console.error("❌ [ERRO] Falha ao fazer o JSON.parse do storage:", e);
-      }
+      } catch (e) {}
     }
   });
-
-  // Função global caso queira chamar diretamente
-  window.imprimirNoSentinela = function(numeroPedido) {
-    console.log("🎯 [CHAMADA DIRETA] window.imprimirNoSentinela acionada externamente para:", numeroPedido);
-    dispararImpressaoSentinela(numeroPedido);
-  };
     
     
   </script>
