@@ -294,24 +294,32 @@
 
 
 
-   // Escuta as mensagens vindas de dentro do iframe do Google Apps Script
-    window.addEventListener("message", function(event) {
-      if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
-        var numeroPedido = event.data.pedido;
-        
-        // URL do seu servidor local em Kotlin no Android
-        var urlServidorLocal = "http://localhost:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
-        
-        try {
-          // O método da Image() é ignorado pelas travas de HTTPS->HTTP do navegador e força o Android a bater no servidor local
-          var img = new Image();
-          img.src = urlServidorLocal;
-          console.log("Comando de impressão enviado via requisição local para o pedido: " + numeroPedido);
-        } catch (err) {
-          console.warn("Erro ao disparar requisição local:", err);
-        }
-      }
-    });
+  window.addEventListener("message", function(event) {
+  console.log("🟡 HTML Principal: Mensagem recebida do iframe:", event.data);
+  
+  if (event.data && event.data.acao === "IMPRIMIR_SENTINELA") {
+    var numeroPedido = event.data.pedido;
+    console.log("🟢 HTML Principal: Pedido identificado para impressão:", numeroPedido);
+    
+    var urlServidorLocal = "http://localhost:8080/imprimir?pedido=" + encodeURIComponent(numeroPedido);
+    console.log("🌐 HTML Principal: Tentando disparar para URL:", urlServidorLocal);
+    
+    try {
+      var img = new Image();
+      img.onload = function() {
+        console.log("✅ HTML Principal: Requisição local enviada com sucesso!");
+      };
+      img.onerror = function() {
+        // O onerror costuma disparar porque o servidor local retorna JSON e não uma imagem, 
+        // mas o importante é que a requisição HTTP chegou no app Kotlin!
+        console.log("ℹ️ HTML Principal: Requisição despachada para o app Kotlin.");
+      };
+      img.src = urlServidorLocal;
+    } catch (err) {
+      console.error("❌ HTML Principal: Erro ao disparar a Image():", err);
+    }
+  }
+});
 
 
 
