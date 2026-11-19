@@ -38,41 +38,44 @@
         <button onclick="window.close()">Fechar Aba</button>
     </div>
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const numeroPedido = urlParams.get('pedido');
+   <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const numeroPedido = urlParams.get('pedido');
 
-        if (numeroPedido) {
-            document.getElementById('num-pedido').innerText = "#" + numeroPedido;
+    if (numeroPedido) {
+        document.getElementById('num-pedido').innerText = "#" + numeroPedido;
 
-            // Detecta se é celular ou computador pelo tipo de sistema operacional na USER-AGENT
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-            if (isMobile) {
-                // FLUXO DO CELULAR: Mantém o Custom Scheme original intacto
-                setTimeout(function() {
-                    window.location.href = "vprimesentinela://imprimir?pedido=" + encodeURIComponent(numeroPedido);
-                }, 500);
-            } else {
-                // FLUXO DO COMPUTADOR (WINDOWS): Chama o sentinela.exe via fetch local
-                setTimeout(function() {
-                    fetch(`http://localhost:8080/imprimir?pedido=${encodeURIComponent(numeroPedido)}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log("Impresso com sucesso no PC:", data);
-                        })
-                        .catch(err => {
-                            console.error("Sentinela.exe não está aberto no PC:", err);
-                        });
-                }, 300);
-            }
+        if (isMobile) {
+            // FLUXO DO CELULAR
+            setTimeout(function() {
+                window.location.href = "vprimesentinela://imprimir?pedido=" + encodeURIComponent(numeroPedido);
+            }, 500);
+        } else {
+            // FLUXO DO COMPUTADOR (WINDOWS) - Com tratamento de erro visível
+            setTimeout(function() {
+                fetch(`http://127.0.0.1:8080/imprimir?pedido=${encodeURIComponent(numeroPedido)}`, {
+                    method: 'GET',
+                    mode: 'cors'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Sucesso:", data);
+                })
+                .catch(err => {
+                    console.error("Erro de conexão:", err);
+                    alert("Erro ao falar com o Sentinela.exe local. Verifique se o aplicativo está aberto no PC.");
+                });
+            }, 300);
         }
+    }
 
-        // Fecha a aba automaticamente após 2.5 segundos para retornar ao PDV
-        setTimeout(function() {
-            window.close();
-        }, 2500);
-    </script>
+    // Aumentamos para 4 segundos para dar tempo de ver caso dê algum alerta de erro
+    setTimeout(function() {
+        window.close();
+    }, 4000);
+</script>
 
 </body>
 </html>
