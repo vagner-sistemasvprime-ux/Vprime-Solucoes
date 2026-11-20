@@ -7,24 +7,42 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding-top: 60px;
+            padding-top: 80px;
             background-color: #f4f4f9;
         }
         .card {
             background: white;
-            padding: 30px;
-            border-radius: 8px;
+            padding: 40px;
+            border-radius: 10px;
             display: inline-block;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 320px;
         }
+        /* Estilo do Spinner de Carregamento */
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #28a745;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h2 { color: #333; margin-bottom: 10px; }
+        p { color: #666; font-size: 14px; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>🖨️ Disparando Impressão...</h2>
+        <h2>🖨️ Imprimindo...</h2>
+        <div class="spinner"></div>
         <p>Pedido: <strong id="num-pedido"></strong></p>
-        <p style="color: #666; font-size: 14px;">O app Sentinela foi acionado.</p>
+        <p id="status-txt">Aguardando impressora...</p>
     </div>
 
     <script>
@@ -38,31 +56,42 @@
 
             if (isMobile) {
                 // FLUXO DO CELULAR
+                document.getElementById('status-txt').innerText = "Abrindo aplicativo Sentinela...";
                 setTimeout(function() {
                     window.location.href = "vprimesentinela://imprimir?pedido=" + encodeURIComponent(numeroPedido);
                 }, 500);
-            } else {
-                // FLUXO DO COMPUTADOR (WINDOWS) - Silencioso e direto
-                setTimeout(function() {
-                    fetch(`http://127.0.0.1:8080/imprimir?pedido=${encodeURIComponent(numeroPedido)}`, {
-                        method: 'GET',
-                        mode: 'cors'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log("Sucesso:", data);
-                    })
-                    .catch(err => {
-                        console.error("Erro de conexão (ignorado):", err);
-                    });
-                }, 300);
-            }
-        }
 
-        // Fecha a aba automaticamente após 2 segundos
-        setTimeout(function() {
-            window.close();
-        }, 2000);
+                setTimeout(function() {
+                    window.close();
+                }, 2500);
+
+            } else {
+                // FLUXO DO COMPUTADOR (WINDOWS) - Aguarda a resposta real do Python
+                fetch(`http://127.0.0.1:8080/imprimir?pedido=${encodeURIComponent(numeroPedido)}`, {
+                    method: 'GET',
+                    mode: 'cors'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Sucesso:", data);
+                    // Atualiza a tela informando que concluiu
+                    document.querySelector('.spinner').style.display = 'none';
+                    document.getElementById('status-txt').innerHTML = "✅ <b style='color:#28a745;'>Impresso com sucesso!</b>";
+                    
+                    // Fecha a aba após 1 segundo de feedback visual positivo
+                    setTimeout(function() {
+                        window.close();
+                    }, 1000);
+                })
+                .catch(err => {
+                    console.error("Erro de conexão:", err);
+                    document.querySelector('.spinner').style.display = 'none';
+                    document.getElementById('status-txt').innerHTML = "❌ <b style='color:#dc3545;'>Erro ao comunicar com o PC.</b>";
+                });
+            }
+        } else {
+            document.getElementById('status-txt').innerText = "Número do pedido não informado.";
+        }
     </script>
 
 </body>
