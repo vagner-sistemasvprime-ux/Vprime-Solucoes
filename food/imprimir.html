@@ -17,16 +17,6 @@
             display: inline-block;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
     </style>
 </head>
 <body>
@@ -35,47 +25,45 @@
         <h2>🖨️ Disparando Impressão...</h2>
         <p>Pedido: <strong id="num-pedido"></strong></p>
         <p style="color: #666; font-size: 14px;">O app Sentinela foi acionado.</p>
-        <button onclick="window.close()">Fechar Aba</button>
     </div>
 
-   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const numeroPedido = urlParams.get('pedido');
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const numeroPedido = urlParams.get('pedido');
 
-    if (numeroPedido) {
-        document.getElementById('num-pedido').innerText = "#" + numeroPedido;
+        if (numeroPedido) {
+            document.getElementById('num-pedido').innerText = "#" + numeroPedido;
 
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        if (isMobile) {
-            // FLUXO DO CELULAR
-            setTimeout(function() {
-                window.location.href = "vprimesentinela://imprimir?pedido=" + encodeURIComponent(numeroPedido);
-            }, 500);
-        } else {
-            // FLUXO DO COMPUTADOR (WINDOWS) - Com tratamento de erro visível
-            setTimeout(function() {
-                fetch(`http://127.0.0.1:8080/imprimir?pedido=${encodeURIComponent(numeroPedido)}`, {
-                    method: 'GET',
-                    mode: 'cors'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Sucesso:", data);
-                })
-                .catch(err => {
-                    console.error("Erro de conexão:", err);
-                    alert("Erro ao falar com o Sentinela.exe local. Verifique se o aplicativo está aberto no PC.");
-                });
-            }, 300);
+            if (isMobile) {
+                // FLUXO DO CELULAR
+                setTimeout(function() {
+                    window.location.href = "vprimesentinela://imprimir?pedido=" + encodeURIComponent(numeroPedido);
+                }, 500);
+            } else {
+                // FLUXO DO COMPUTADOR (WINDOWS) - Silencioso e direto
+                setTimeout(function() {
+                    fetch(`http://127.0.0.1:8080/imprimir?pedido=${encodeURIComponent(numeroPedido)}`, {
+                        method: 'GET',
+                        mode: 'cors'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Sucesso:", data);
+                    })
+                    .catch(err => {
+                        console.error("Erro de conexão (ignorado):", err);
+                    });
+                }, 300);
+            }
         }
-    }
 
-    // Aumentamos para 4 segundos para dar tempo de ver caso dê algum alerta de erro
-    setTimeout(function() {
-        window.close();
-    }, 4000);
-</script>
+        // Fecha a aba automaticamente após 2 segundos
+        setTimeout(function() {
+            window.close();
+        }, 2000);
+    </script>
 
 </body>
 </html>
